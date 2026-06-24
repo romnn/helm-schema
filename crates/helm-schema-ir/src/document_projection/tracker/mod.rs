@@ -37,19 +37,10 @@ pub(crate) enum OutputSlotKind {
     Opaque,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct ControlSite {
     pub(crate) path: YamlPath,
     pub(crate) range_mapping_entry_path: Option<YamlPath>,
-}
-
-impl Default for ControlSite {
-    fn default() -> Self {
-        Self {
-            path: YamlPath(Vec::new()),
-            range_mapping_entry_path: None,
-        }
-    }
 }
 
 impl OutputSlot {

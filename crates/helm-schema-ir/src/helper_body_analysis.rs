@@ -123,7 +123,7 @@ fn abstract_config_binding(binding: AbstractValue) -> AbstractValue {
     if paths.is_empty() {
         AbstractValue::Top
     } else {
-        AbstractValue::PathSet(paths)
+        AbstractValue::path_choices(paths).unwrap_or(AbstractValue::Top)
     }
 }
 

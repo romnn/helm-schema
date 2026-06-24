@@ -57,9 +57,7 @@ fn dict_value_can_be_nested_helper_call() {
 fn printf_preserves_nested_helper_provenance_path() {
     sim_assert_eq!(
         have: eval(r#"printf "%s-sfx" (include "common.name" .)"#),
-        want: Some(AbstractValue::PathSet(
-            ["nameOverride".to_string()].into_iter().collect()
-        ))
+        want: Some(AbstractValue::ValuesPath("nameOverride".to_string()))
     );
 }
 

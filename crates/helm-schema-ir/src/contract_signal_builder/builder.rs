@@ -1,11 +1,14 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::ProviderSchemaUse;
-use crate::contract::{ContractPathObservation, ContractUse, contract_path_observations};
-use crate::contract_signals::{
-    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
-    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
-    ContractValuePathFacts, MetadataFieldKind,
+use crate::predicate::Predicate;
+use crate::{
+    Guard, ProviderSchemaUse, ValueKind,
+    contract::ContractUse,
+    contract_signals::{
+        ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
+        ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
+        ContractValuePathFacts, MetadataFieldKind,
+    },
 };
 
 pub(crate) fn derive_schema_signals_from_contract_parts(
@@ -18,17 +21,18 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         record_contract_use(&mut paths, contract_use);
     }
     for value_path in dependency_values_root_fragments {
-        if let Some((path, observation)) =
-            ContractPathObservation::dependency_values_root_fragment(value_path)
-        {
-            path_accumulator(&mut paths, &path).observe_path_observation(&observation);
+        if !value_path.trim().is_empty() {
+            path_accumulator(&mut paths, value_path).record_dependency_values_root_fragment();
         }
     }
     for (value_path, schema_types) in type_hints {
-        if let Some((path, observation)) =
-            ContractPathObservation::type_hint(value_path, schema_types)
-        {
-            path_accumulator(&mut paths, &path).observe_path_observation(&observation);
+        let schema_types = schema_types
+            .iter()
+            .filter(|schema_type| !schema_type.trim().is_empty())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        if !value_path.trim().is_empty() && !schema_types.is_empty() {
+            path_accumulator(&mut paths, value_path).record_type_hints(schema_types);
         }
     }
     finish_schema_signals(paths)
@@ -73,19 +77,22 @@ impl PathSchemaFactsAccumulator {
         self.all_uses_nullable &= nullable;
     }
 
-    fn record_observation_facts(&mut self, observation: &ContractPathObservation) {
-        if let Some(field_kind) = observation.metadata_field_kind {
+    fn record_metadata_field_kind(&mut self, field_kind: Option<MetadataFieldKind>) {
+        if let Some(field_kind) = field_kind {
             self.metadata_field_kinds.insert(field_kind);
         }
-        self.facts.used_as_fragment |= observation.facts.used_as_fragment;
-        self.facts.used_as_pathless_fragment |= observation.facts.used_as_pathless_fragment;
-        self.facts.accepted_values_root_fragment |= observation.facts.accepted_values_root_fragment;
+    }
+
+    fn record_facts(&mut self, facts: ContractValuePathFacts) {
+        self.facts.used_as_fragment |= facts.used_as_fragment;
+        self.facts.used_as_pathless_fragment |= facts.used_as_pathless_fragment;
+        self.facts.accepted_values_root_fragment |= facts.accepted_values_root_fragment;
         self.facts.accepted_dependency_values_root_fragment |=
-            observation.facts.accepted_dependency_values_root_fragment;
-        self.facts.is_ranged_source |= observation.facts.is_ranged_source;
-        self.facts.is_partial_scalar_value_path |= observation.facts.is_partial_scalar_value_path;
-        self.facts.is_nullable |= observation.facts.is_nullable;
-        self.facts.merge_render_use_facts(observation.facts);
+            facts.accepted_dependency_values_root_fragment;
+        self.facts.is_ranged_source |= facts.is_ranged_source;
+        self.facts.is_partial_scalar_value_path |= facts.is_partial_scalar_value_path;
+        self.facts.is_nullable |= facts.is_nullable;
+        self.facts.merge_render_use_facts(facts);
     }
 
     fn record_provider_schema_use(&mut self, provider_schema_use: ProviderSchemaUse) {
@@ -120,9 +127,140 @@ fn record_contract_use(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
 ) {
-    for (path, observation) in contract_path_observations(contract_use) {
-        path_accumulator(paths, &path).observe_path_observation(&observation);
+    let predicates = contract_use
+        .guards
+        .iter()
+        .cloned()
+        .map(Predicate::from)
+        .collect::<Vec<_>>();
+    let has_source = !contract_use.source_expr.trim().is_empty();
+    let path_is_empty = contract_use.path.0.is_empty();
+    let self_range_guarded = predicates.iter().any(|predicate| {
+        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == &contract_use.source_expr)
+    });
+    let has_matching_self_guard = predicates
+        .iter()
+        .any(|predicate| predicate_is_self_guarding(predicate, &contract_use.source_expr));
+    let pathless_self_default_guarded = path_is_empty
+        && predicates.iter().any(|predicate| {
+            matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
+        });
+    let range_guard_paths = predicates
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::Range { path }) => Some(path.clone()),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+
+    if has_source {
+        record_source_path_use(
+            paths,
+            contract_use,
+            &predicates,
+            path_is_empty,
+            self_range_guarded,
+            has_matching_self_guard,
+            pathless_self_default_guarded,
+        );
     }
+
+    for path in predicates
+        .iter()
+        .flat_map(Predicate::conditionally_optional_paths)
+    {
+        path_accumulator(paths, &path)
+            .requiredness
+            .is_conditionally_optional = true;
+    }
+    for path in predicates.iter().filter_map(|predicate| match predicate {
+        Predicate::Guard(Guard::Default { path }) => Some(path),
+        _ => None,
+    }) {
+        path_accumulator(paths, path)
+            .requiredness
+            .has_default_fallback = true;
+    }
+    if has_source {
+        for predicate in conditional_guard_predicates(&predicates) {
+            for path in predicate.value_paths() {
+                path_accumulator(paths, &path).record_guard_predicate(predicate.clone());
+            }
+        }
+    }
+    for path in predicates.iter().flat_map(Predicate::value_paths) {
+        if has_source && path == contract_use.source_expr.as_str() {
+            continue;
+        }
+        let acc = path_accumulator(paths, &path);
+        acc.referenced |= has_source;
+        if !path_is_empty {
+            let mut facts = ContractValuePathFacts::default();
+            facts.record_render_use(range_guard_paths.contains(&path), None);
+            acc.facts.record_facts(facts);
+        }
+    }
+    if has_source {
+        for path in range_guard_paths {
+            let mut facts = ContractValuePathFacts {
+                is_ranged_source: true,
+                is_nullable: true,
+                ..ContractValuePathFacts::default()
+            };
+            facts.all_render_uses_self_guarded = true;
+            path_accumulator(paths, &path).facts.record_facts(facts);
+        }
+    }
+}
+
+fn record_source_path_use(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    contract_use: &ContractUse,
+    predicates: &[Predicate],
+    path_is_empty: bool,
+    self_range_guarded: bool,
+    has_matching_self_guard: bool,
+    pathless_self_default_guarded: bool,
+) {
+    let mut facts = ContractValuePathFacts {
+        used_as_fragment: contract_use.kind == ValueKind::Fragment,
+        used_as_pathless_fragment: contract_use.kind == ValueKind::Fragment && path_is_empty,
+        is_partial_scalar_value_path: contract_use.kind == ValueKind::PartialScalar
+            && !path_is_empty,
+        is_nullable: !path_is_empty
+            || self_range_guarded
+            || contract_use.kind == ValueKind::Fragment
+            || pathless_self_default_guarded,
+        ..ContractValuePathFacts::default()
+    };
+    if !path_is_empty {
+        facts.record_render_use(self_range_guarded, Some(has_matching_self_guard));
+        facts.has_unconditional_render_use = contract_use.guards.is_empty();
+    }
+
+    let source_null_tolerant = path_is_empty || has_matching_self_guard;
+    let lowerable_guards = lowerable_conditional_guard_set(contract_use, predicates);
+    let provider_schema_use = provider_schema_use(contract_use, self_range_guarded);
+    let positive_header = contract_use.kind == ValueKind::Scalar
+        && path_is_empty
+        && !predicates.is_empty()
+        && predicates
+            .iter()
+            .all(|predicate| predicate_is_positive_header(predicate, &contract_use.source_expr));
+
+    let metadata_field_kind = metadata_field_kind_from_yaml_path(&contract_use.path.0);
+    let acc = path_accumulator(paths, &contract_use.source_expr);
+    acc.referenced = true;
+    acc.requiredness.is_positive_header |= positive_header;
+    acc.facts.record_metadata_field_kind(metadata_field_kind);
+    acc.record_source_use(
+        facts,
+        source_null_tolerant,
+        lowerable_guards,
+        provider_schema_use,
+        metadata_field_kind,
+    );
+    acc.facts.record_facts(facts);
 }
 
 fn finish_schema_signals(
@@ -169,42 +307,49 @@ fn path_accumulator<'a>(
 }
 
 impl ContractPathAccumulator {
-    fn observe_path_observation(&mut self, observation: &ContractPathObservation) {
-        self.observe_source_use(observation);
-        self.referenced |= observation.referenced;
-        self.type_hints
-            .extend(observation.type_hints.iter().cloned());
-        self.facts.record_observation_facts(observation);
-        self.requiredness.is_positive_header |= observation.requiredness.is_positive_header;
-        self.requiredness.is_conditionally_optional |=
-            observation.requiredness.is_conditionally_optional;
-        self.requiredness.has_default_fallback |= observation.requiredness.has_default_fallback;
-        for predicate in &observation.guard_predicates {
-            if !self.guard_predicates.contains(predicate) {
-                self.guard_predicates.push(predicate.clone());
-            }
+    fn record_dependency_values_root_fragment(&mut self) {
+        self.referenced = true;
+        self.facts.record_facts(ContractValuePathFacts {
+            accepted_values_root_fragment: true,
+            accepted_dependency_values_root_fragment: true,
+            ..ContractValuePathFacts::default()
+        });
+    }
+
+    fn record_type_hints(&mut self, schema_types: BTreeSet<String>) {
+        self.referenced = true;
+        self.type_hints.extend(schema_types);
+    }
+
+    fn record_guard_predicate(&mut self, predicate: ConditionalGuard) {
+        if !self.guard_predicates.contains(&predicate) {
+            self.guard_predicates.push(predicate);
         }
     }
 
-    fn observe_source_use(&mut self, observation: &ContractPathObservation) {
-        let Some(source_null_tolerant) = observation.source_null_tolerant else {
-            return;
-        };
-
-        if let Some(provider_use) = observation.provider_schema_use.clone() {
+    fn record_source_use(
+        &mut self,
+        facts: ContractValuePathFacts,
+        source_null_tolerant: bool,
+        lowerable_guards: Option<Vec<ConditionalGuard>>,
+        provider_schema_use: Option<ProviderSchemaUse>,
+        metadata_field_kind: Option<MetadataFieldKind>,
+    ) {
+        if let Some(provider_use) = provider_schema_use.clone() {
             self.facts.record_provider_schema_use(provider_use);
         }
         self.referenced = true;
-        if observation.facts.has_render_use {
-            if observation.facts.has_unconditional_render_use {
+        if facts.has_render_use {
+            if facts.has_unconditional_render_use {
                 self.has_unconditional_overlay_peer = true;
-            } else if let Some(guards) = observation.source_lowerable_conditional_guards.clone() {
+            } else if let Some(guards) = lowerable_guards {
                 let branch = self.conditional_overlay_branches.entry(guards).or_default();
                 branch.facts.is_nullable = true;
                 branch.record_nullable_observation(source_null_tolerant);
-                branch.record_observation_facts(observation);
+                branch.record_metadata_field_kind(metadata_field_kind);
+                branch.record_facts(facts);
 
-                if let Some(provider_schema_use) = observation.provider_schema_use.clone() {
+                if let Some(provider_schema_use) = provider_schema_use {
                     branch.record_provider_schema_use(provider_schema_use);
                 }
             } else {
@@ -253,6 +398,252 @@ impl ContractPathAccumulator {
             conditional_overlays,
         }
     }
+}
+
+fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
+    if path.get(path.len().checked_sub(2)?)?.as_str() != "metadata" {
+        return None;
+    }
+
+    match path.last()?.as_str() {
+        "labels" | "annotations" => Some(MetadataFieldKind::StringMap),
+        "name" => Some(MetadataFieldKind::Name),
+        "namespace" => Some(MetadataFieldKind::Namespace),
+        _ => None,
+    }
+}
+
+fn conditional_guard_predicates(predicates: &[Predicate]) -> Vec<ConditionalGuard> {
+    let mut guards = predicates
+        .iter()
+        .filter_map(predicate_to_conditional_guard)
+        .collect::<Vec<_>>();
+    guards.sort();
+    guards.dedup();
+    guards
+}
+
+fn lowerable_conditional_guard_set(
+    contract_use: &ContractUse,
+    predicates: &[Predicate],
+) -> Option<Vec<ConditionalGuard>> {
+    if path_contains_wildcard(&contract_use.source_expr) {
+        return None;
+    }
+
+    let mut guards = Vec::new();
+    for predicate in predicates {
+        extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut guards)?;
+    }
+    guards.sort();
+    guards.dedup();
+    Some(guards)
+}
+
+fn provider_schema_use(
+    contract_use: &ContractUse,
+    self_range_guarded: bool,
+) -> Option<ProviderSchemaUse> {
+    if contract_use.source_expr.trim().is_empty()
+        || contract_use.kind == ValueKind::PartialScalar
+        || contract_use.path.0.is_empty()
+    {
+        return None;
+    }
+    let resource = contract_use.resource.clone()?;
+
+    Some(ProviderSchemaUse {
+        value_path: contract_use.source_expr.clone(),
+        path: contract_use.path.clone(),
+        kind: contract_use.kind,
+        resource,
+        is_self_range_collection: self_range_guarded
+            && contract_use
+                .path
+                .0
+                .last()
+                .is_none_or(|segment| !segment.ends_with("[*]")),
+    })
+}
+
+fn predicate_to_conditional_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
+    match predicate {
+        Predicate::True | Predicate::False => None,
+        Predicate::Guard(Guard::Truthy { path }) => {
+            Some(ConditionalGuard::Truthy { path: path.clone() })
+        }
+        Predicate::Guard(Guard::With { path }) => {
+            Some(ConditionalGuard::With { path: path.clone() })
+        }
+        Predicate::Guard(Guard::Eq { path, value }) => Some(ConditionalGuard::Eq {
+            path: path.clone(),
+            value: value.clone(),
+        }),
+        Predicate::Guard(Guard::NotEq { path, value }) => Some(ConditionalGuard::NotEq {
+            path: path.clone(),
+            value: value.clone(),
+        }),
+        Predicate::Guard(Guard::Absent { path }) => {
+            Some(ConditionalGuard::Absent { path: path.clone() })
+        }
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) => Some(ConditionalGuard::TypeIs {
+            path: path.clone(),
+            schema_type: schema_type.clone(),
+        }),
+        Predicate::Not(inner) => Some(ConditionalGuard::Not(Box::new(
+            predicate_to_conditional_guard(inner)?,
+        ))),
+        Predicate::And(predicates) => {
+            let mut guards = predicates
+                .iter()
+                .map(predicate_to_conditional_guard)
+                .collect::<Option<Vec<_>>>()?;
+            guards.sort();
+            guards.dedup();
+            match guards.as_slice() {
+                [] => None,
+                [guard] => Some(guard.clone()),
+                _ => Some(ConditionalGuard::AllOf(guards)),
+            }
+        }
+        Predicate::Or(predicates) => {
+            let mut guards = predicates
+                .iter()
+                .map(predicate_to_conditional_guard)
+                .collect::<Option<Vec<_>>>()?;
+            guards.sort();
+            guards.dedup();
+            (!guards.is_empty()).then_some(ConditionalGuard::AnyOf(guards))
+        }
+        Predicate::Guard(Guard::Range { .. } | Guard::Default { .. }) => None,
+        Predicate::Guard(Guard::Not { .. } | Guard::Or { .. } | Guard::AnyOf { .. }) => None,
+    }
+}
+
+fn extend_lowerable_predicate(
+    predicate: &Predicate,
+    target_value_path: &str,
+    out: &mut Vec<ConditionalGuard>,
+) -> Option<()> {
+    match predicate {
+        Predicate::True | Predicate::False => return None,
+        Predicate::Guard(Guard::With { .. }) => {}
+        Predicate::Guard(Guard::Truthy { path }) => {
+            out.push(ConditionalGuard::Truthy {
+                path: lowerable_guard_path(path, target_value_path)?,
+            });
+        }
+        Predicate::Guard(Guard::Eq { path, value }) => {
+            out.push(ConditionalGuard::Eq {
+                path: lowerable_guard_path(path, target_value_path)?,
+                value: value.clone(),
+            });
+        }
+        Predicate::Guard(Guard::NotEq { path, value }) => {
+            out.push(ConditionalGuard::NotEq {
+                path: lowerable_guard_path(path, target_value_path)?,
+                value: value.clone(),
+            });
+        }
+        Predicate::Guard(Guard::Absent { path }) => {
+            out.push(ConditionalGuard::Absent {
+                path: lowerable_guard_path(path, target_value_path)?,
+            });
+        }
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) => {
+            out.push(ConditionalGuard::TypeIs {
+                path: lowerable_guard_path(path, target_value_path)?,
+                schema_type: schema_type.clone(),
+            });
+        }
+        Predicate::Not(inner) => {
+            out.push(ConditionalGuard::Not(Box::new(lowerable_single_predicate(
+                inner,
+                target_value_path,
+            )?)));
+        }
+        Predicate::And(predicates) => {
+            for predicate in predicates {
+                extend_lowerable_predicate(predicate, target_value_path, out)?;
+            }
+        }
+        Predicate::Or(predicates) => {
+            let mut guards = predicates
+                .iter()
+                .map(|predicate| lowerable_single_predicate(predicate, target_value_path))
+                .collect::<Option<Vec<_>>>()?;
+            guards.sort();
+            guards.dedup();
+            out.push(ConditionalGuard::AnyOf(guards));
+        }
+        Predicate::Guard(Guard::Range { .. }) => return None,
+        Predicate::Guard(Guard::Default { path }) if path == target_value_path => {}
+        Predicate::Guard(Guard::Default { .. }) => return None,
+        Predicate::Guard(Guard::Not { .. } | Guard::Or { .. } | Guard::AnyOf { .. }) => {
+            return None;
+        }
+    }
+    Some(())
+}
+
+fn lowerable_single_predicate(
+    predicate: &Predicate,
+    target_value_path: &str,
+) -> Option<ConditionalGuard> {
+    match predicate {
+        Predicate::And(predicates) => {
+            let mut guards = predicates
+                .iter()
+                .map(|predicate| lowerable_single_predicate(predicate, target_value_path))
+                .collect::<Option<Vec<_>>>()?;
+            guards.sort();
+            guards.dedup();
+            match guards.as_slice() {
+                [] => None,
+                [guard] => Some(guard.clone()),
+                _ => Some(ConditionalGuard::AllOf(guards)),
+            }
+        }
+        other => {
+            let mut guards = Vec::new();
+            extend_lowerable_predicate(other, target_value_path, &mut guards)?;
+            match guards.as_slice() {
+                [] => None,
+                [guard] => Some(guard.clone()),
+                _ => Some(ConditionalGuard::AllOf(guards)),
+            }
+        }
+    }
+}
+
+fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool {
+    matches!(
+        predicate,
+        Predicate::Guard(
+            Guard::Truthy { path }
+                | Guard::Eq { path, .. }
+                | Guard::Range { path }
+                | Guard::With { path }
+                | Guard::Default { path }
+        ) if path == source_expr
+    )
+}
+
+fn predicate_is_positive_header(predicate: &Predicate, source_expr: &str) -> bool {
+    matches!(
+        predicate,
+        Predicate::Guard(Guard::Truthy { path }
+            | Guard::Eq { path, .. }
+            | Guard::TypeIs { path, .. }) if path == source_expr
+    )
+}
+
+fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {
+    (!path_contains_wildcard(path) && path != target_value_path).then(|| path.to_string())
+}
+
+fn path_contains_wildcard(path: &str) -> bool {
+    path.split('.').any(|segment| segment == "*")
 }
 
 fn conditional_overlays(

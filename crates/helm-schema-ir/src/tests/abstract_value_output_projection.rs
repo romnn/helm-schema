@@ -48,14 +48,14 @@ fn direct_and_fragment_values_share_structural_output_projection() {
             "name".to_string(),
             AbstractValue::ValuesPath("containers.name".to_string()),
         )])),
-        AbstractValue::PathSet(BTreeSet::from(["containers.image".to_string()])),
+        AbstractValue::ValuesPath("containers.image".to_string()),
     ]);
     let fragment_value = AbstractValue::List(vec![
         AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             AbstractValue::ValuesPath("containers.name".to_string()),
         )])),
-        AbstractValue::PathSet(BTreeSet::from(["containers.image".to_string()])),
+        AbstractValue::ValuesPath("containers.image".to_string()),
     ]);
     let relative_path = YamlPath(vec!["spec".to_string(), "containers".to_string()]);
     let predicates = BTreeSet::from([Predicate::truthy_path("containers.enabled".to_string())]);

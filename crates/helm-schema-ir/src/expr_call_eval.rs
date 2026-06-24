@@ -489,8 +489,8 @@ fn eval_printf(
     if let Some(rendered) = rendered {
         values.push(AbstractValue::StringSet(rendered));
     }
-    if !provenance_paths.is_empty() {
-        values.push(AbstractValue::PathSet(provenance_paths));
+    if let Some(paths) = AbstractValue::path_choices(provenance_paths) {
+        values.push(paths);
     }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
 }

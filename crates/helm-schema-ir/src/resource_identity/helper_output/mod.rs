@@ -16,32 +16,11 @@
 //! Output is typed so the common `if Capabilities.APIVersions.Has … else …`
 //! shape stays branch-aware for Kubernetes lookup.
 
-use crate::HelperBranch;
-
 mod evaluator;
 
 pub(super) use evaluator::HelperOutputEvaluator;
 
 const MAX_RECURSION_DEPTH: usize = 6;
-
-/// Typed output of helper evaluation.
-///
-/// Preserves branch structure (guard + literals) for if/elif/else
-/// chains so callers downstream — specifically the `Chain` lookup layer
-/// — can evaluate `Capabilities.APIVersions.Has` guards against the
-/// actual K8s version cache and pick the live branch instead of
-/// guessing between mutually-exclusive alternatives.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum HelperOutput {
-    /// Helper body is linear (no top-level branching). The vector
-    /// holds the deduplicated literal outputs in first-seen order.
-    /// Empty = could not be resolved statically.
-    Literals(Vec<String>),
-    /// Helper body has a single top-level if/elif/else chain. Each
-    /// branch carries its guard (when decodable) and the literals it
-    /// can produce.
-    Branched { branches: Vec<HelperBranch> },
-}
 
 #[cfg(test)]
 #[path = "../../tests/resource_identity/helper_output.rs"]

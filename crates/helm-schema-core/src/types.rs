@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::HelperBranch;
 
 /// YAML path in the rendered manifest, e.g. `["metadata", "name"]`.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct YamlPath(pub Vec<String>);
 
 /// Whether a value use produces a full scalar, part of a scalar, or a YAML fragment.

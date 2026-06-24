@@ -12,7 +12,6 @@ pub(crate) enum AbstractValue {
     RootContext,
     OutputSet(BTreeMap<String, HelperOutputMeta>),
     StringSet(BTreeSet<String>),
-    PathSet(BTreeSet<String>),
     Dict(BTreeMap<String, AbstractValue>),
     List(Vec<AbstractValue>),
     Overlay {
@@ -31,7 +30,6 @@ impl AbstractValue {
         match self {
             Self::ValuesPath(path) => [path.clone()].into_iter().collect(),
             Self::OutputSet(outputs) => outputs.keys().cloned().collect(),
-            Self::PathSet(paths) => paths.clone(),
             Self::Dict(map) => map.values().flat_map(Self::paths).collect(),
             Self::List(items) => items.iter().flat_map(Self::paths).collect(),
             Self::Overlay { entries, fallback } => entries
@@ -48,7 +46,6 @@ impl AbstractValue {
         match self {
             Self::ValuesPath(path) => [path.clone()].into_iter().collect(),
             Self::OutputSet(outputs) => outputs.keys().cloned().collect(),
-            Self::PathSet(paths) => paths.clone(),
             Self::Overlay { entries, fallback } => entries
                 .values()
                 .flat_map(Self::shallow_paths)
@@ -83,11 +80,6 @@ impl AbstractValue {
             Self::ValuesPath(path) => {
                 out.entry(path.clone()).or_default();
             }
-            Self::PathSet(paths) => {
-                for path in paths {
-                    out.entry(path.clone()).or_default();
-                }
-            }
             Self::OutputSet(meta_by_path) => {
                 for (path, meta) in meta_by_path {
                     out.entry(path.clone()).or_default().merge_ref(meta);
@@ -121,9 +113,6 @@ impl AbstractValue {
     pub(crate) fn helper_range_item(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
-            Self::PathSet(paths) => Some(Self::PathSet(
-                paths.iter().map(|path| item_path(path)).collect(),
-            )),
             Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
             Self::Dict(entries) => Self::choice(entries.values().cloned().collect()),
             Self::List(items) => Self::choice(items.clone()),
@@ -144,9 +133,6 @@ impl AbstractValue {
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
-            Self::PathSet(paths) => Some(Self::PathSet(
-                paths.iter().map(|path| item_path(path)).collect(),
-            )),
             Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
             Self::List(items) => Self::choice(items.clone()),
             Self::Choice(choices) => Self::choice(
@@ -176,6 +162,10 @@ impl AbstractValue {
 
     pub(crate) fn choice(values: Vec<Self>) -> Option<Self> {
         Self::join_all(values)
+    }
+
+    pub(crate) fn path_choices(paths: BTreeSet<String>) -> Option<Self> {
+        Self::choice(paths.into_iter().map(Self::ValuesPath).collect())
     }
 
     pub(crate) fn join_all(values: Vec<Self>) -> Option<Self> {
@@ -233,21 +223,6 @@ impl AbstractValue {
             Self::Unknown => None,
             Self::StringSet(_) => None,
             Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
-            Self::PathSet(paths) => {
-                let appended = paths
-                    .iter()
-                    .map(|path| {
-                        if rest.is_empty() {
-                            path.clone()
-                        } else if path.is_empty() {
-                            rest.join(".")
-                        } else {
-                            format!("{path}.{}", rest.join("."))
-                        }
-                    })
-                    .collect();
-                Some(Self::PathSet(appended))
-            }
             Self::Choice(choices) => {
                 let mut out = Vec::new();
                 for value in choices {
@@ -414,9 +389,6 @@ impl AbstractValue {
                 Self::ValuesPath(path) => {
                     non_dict_value_paths.insert(path);
                 }
-                Self::PathSet(paths) => {
-                    non_dict_value_paths.extend(paths);
-                }
                 Self::OutputSet(outputs) => {
                     for (path, meta) in outputs {
                         non_dict_output_meta.entry(path).or_default().merge(meta);
@@ -430,8 +402,8 @@ impl AbstractValue {
         }
 
         let mut fallback_choices = Vec::new();
-        if !non_dict_value_paths.is_empty() {
-            fallback_choices.push(Self::PathSet(non_dict_value_paths));
+        if let Some(paths) = Self::path_choices(non_dict_value_paths) {
+            fallback_choices.push(paths);
         }
         if !non_dict_output_meta.is_empty() {
             fallback_choices.push(Self::OutputSet(non_dict_output_meta));
@@ -471,14 +443,6 @@ impl AbstractValue {
                     None
                 } else {
                     Some(Self::OutputSet(outputs))
-                }
-            }
-            Self::PathSet(mut paths) => {
-                paths.retain(|path| !remove.contains(path));
-                if paths.is_empty() {
-                    None
-                } else {
-                    Some(Self::PathSet(paths))
                 }
             }
             Self::Dict(entries) => {
@@ -551,7 +515,6 @@ impl AbstractValue {
             | Self::List(_)
             | Self::Overlay { .. }
             | Self::StringSet(_)
-            | Self::PathSet(_)
             | Self::OutputSet(_)
             | Self::Choice(_) => None,
         }
@@ -571,7 +534,6 @@ impl AbstractValue {
             Self::Top => Self::Top,
             Self::OutputSet(outputs) => Self::OutputSet(outputs.clone()),
             Self::StringSet(strings) => Self::StringSet(strings.clone()),
-            Self::PathSet(paths) => Self::PathSet(paths.clone()),
             Self::Dict(map) => Self::Dict(
                 map.iter()
                     .map(|(key, value)| (key.clone(), value.for_fragment_output_projection()))
@@ -663,20 +625,6 @@ impl AbstractValue {
                     active_output_predicates,
                     defaulted_paths,
                 );
-            }
-            Self::PathSet(paths) => {
-                for path in paths {
-                    push_output_path(
-                        outputs,
-                        path,
-                        relative_path,
-                        kind,
-                        None,
-                        encoded_paths,
-                        active_output_predicates,
-                        defaulted_paths,
-                    );
-                }
             }
             Self::OutputSet(outputs_by_path) => {
                 for (path, meta) in outputs_by_path {
@@ -789,7 +737,6 @@ impl AbstractValue {
             | Self::RootContext
             | Self::OutputSet(_)
             | Self::StringSet(_)
-            | Self::PathSet(_)
             | Self::Choice(_) => ValueKind::Scalar,
         }
     }

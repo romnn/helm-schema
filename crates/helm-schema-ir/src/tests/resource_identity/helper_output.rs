@@ -2,28 +2,7 @@ use super::*;
 use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use indoc::indoc;
-use std::collections::HashSet;
 use test_util::prelude::sim_assert_eq;
-
-trait HelperOutputTestExt {
-    fn all_literals(&self) -> Vec<String>;
-}
-
-impl HelperOutputTestExt for HelperOutput {
-    fn all_literals(&self) -> Vec<String> {
-        match self {
-            HelperOutput::Literals(literals) => literals.clone(),
-            HelperOutput::Branched { branches } => {
-                let mut out = Vec::new();
-                let mut seen = HashSet::new();
-                for branch in branches {
-                    branch.body.append_all_literals(&mut out, &mut seen);
-                }
-                out
-            }
-        }
-    }
-}
 
 /// Test helper: extract literals from a Literals-bodied
 /// `HelperBranch`. Panics if the branch is unexpectedly Nested
@@ -43,7 +22,7 @@ fn index_with(src: &str) -> DefineIndex {
     idx
 }
 
-fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperOutput {
+fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperBranchBody {
     let body = helpers.get(name).unwrap_or(&[]);
     HelperOutputEvaluator::new().evaluate_body(body, helpers, 0)
 }
@@ -169,8 +148,8 @@ fn typed_output_preserves_guard_and_branch_literals() {
         {{- end -}}
     "#});
     let out = evaluate_helper("rbac.apiVersion", &helpers);
-    let HelperOutput::Branched { branches } = out else {
-        panic!("expected Branched; got {out:?}");
+    let HelperBranchBody::Nested { branches } = out else {
+        panic!("expected Nested; got {out:?}");
     };
     sim_assert_eq!(have: branches.len(), want: 2, "expected 2 branches; got {branches:?}");
     // First branch carries the CapabilityHas guard for the v1 API
@@ -212,7 +191,7 @@ fn typed_output_preserves_branches_through_wrapper_include() {
         {{- end -}}
     "#});
     let out = evaluate_helper("outer.apiVersion", &helpers);
-    let HelperOutput::Branched { branches } = out else {
+    let HelperBranchBody::Nested { branches } = out else {
         panic!(
             "wrapper helper must preserve branched typed output from delegated callee; got {out:?}"
         );
@@ -255,8 +234,8 @@ fn typed_output_preserves_branches_through_wrapper_template() {
     "#});
     let out = evaluate_helper("outer.apiVersion", &helpers);
     assert!(
-        matches!(out, HelperOutput::Branched { .. }),
-        "wrapper via template must preserve Branched output; got {out:?}"
+        matches!(out, HelperBranchBody::Nested { .. }),
+        "wrapper via template must preserve Nested output; got {out:?}"
     );
 }
 
@@ -281,7 +260,7 @@ fn typed_output_preserves_branches_through_multi_level_wrapper() {
         {{- end -}}
     "#});
     let out = evaluate_helper("outer", &helpers);
-    let HelperOutput::Branched { branches } = out else {
+    let HelperBranchBody::Nested { branches } = out else {
         panic!("multi-level wrapper must preserve branched output; got {out:?}");
     };
     sim_assert_eq!(have: branches.len(), want: 2);
@@ -306,9 +285,9 @@ fn typed_output_preserves_branches_through_multi_level_wrapper() {
 /// {{- end -}}
 /// ```
 ///
-/// must yield `HelperOutput::Branched` whose first branch carries
-/// a `Nested` body holding the inner helper's typed branches, NOT
-/// flatten the inner branches to a `Literals` body. This
+/// must yield nested output whose first branch carries a `Nested`
+/// body holding the inner helper's typed branches, NOT flatten the
+/// inner branches to a `Literals` body. This
 /// preserves the inner Has-B guard so the chain can recurse
 /// through both A and B at evaluation time.
 #[test]
@@ -330,8 +309,8 @@ fn typed_output_preserves_nested_branches_through_branch_body_delegation() {
         {{- end -}}
     "#});
     let out = evaluate_helper("outer", &helpers);
-    let HelperOutput::Branched { branches } = out else {
-        panic!("outer must be Branched; got {out:?}");
+    let HelperBranchBody::Nested { branches } = out else {
+        panic!("outer must be Nested; got {out:?}");
     };
     sim_assert_eq!(have: branches.len(), want: 2, "expected 2 outer branches");
 
@@ -383,8 +362,8 @@ fn typed_output_preserves_nested_branches_through_inline_nested_if() {
         {{- end -}}
     "#});
     let out = evaluate_helper("outer", &helpers);
-    let HelperOutput::Branched { branches } = out else {
-        panic!("outer must be Branched; got {out:?}");
+    let HelperBranchBody::Nested { branches } = out else {
+        panic!("outer must be Nested; got {out:?}");
     };
     sim_assert_eq!(have: branches.len(), want: 2);
     let HelperBranchBody::Nested { branches: nested } = &branches[0].body else {
@@ -423,9 +402,9 @@ fn wrapper_with_mixed_content_does_not_promote_branches() {
     "#});
     let out = evaluate_helper("outer", &helpers);
     // The mixed-content wrapper is NOT a pure delegation — the
-    // typed `Branched` form doesn't fit. Fall back to flat.
+    // typed nested form doesn't fit. Fall back to flat.
     assert!(
-        matches!(out, HelperOutput::Literals(_)),
+        matches!(out, HelperBranchBody::Literals { .. }),
         "mixed-content wrapper must fall through to flat literals; got {out:?}"
     );
 }
@@ -448,7 +427,7 @@ fn wrapper_cycle_falls_through_safely() {
     // Literals (which will also be empty per the existing
     // cycle guard in collect_literals).
     assert!(
-        matches!(out, HelperOutput::Literals(_)),
+        matches!(out, HelperBranchBody::Literals { .. }),
         "cyclic wrapper chain must fall through cleanly; got {out:?}"
     );
 }
@@ -469,8 +448,8 @@ fn typed_output_preserves_elif_chain() {
         {{- end }}
     "#});
     let out = evaluate_helper("grafana.pdb.apiVersion", &helpers);
-    let HelperOutput::Branched { branches } = out else {
-        panic!("expected Branched; got {out:?}");
+    let HelperBranchBody::Nested { branches } = out else {
+        panic!("expected Nested; got {out:?}");
     };
     // Values-guarded output is not a literal apiVersion candidate, but
     // later capability branches still keep their structural guards.
@@ -629,7 +608,7 @@ fn single_literal_helper_is_not_branched() {
     "#});
     let out = evaluate_helper("x.apiVersion", &helpers);
     assert!(
-        matches!(out, HelperOutput::Literals(_)),
-        "single-literal helper must not be Branched; got {out:?}"
+        matches!(out, HelperBranchBody::Literals { .. }),
+        "single-literal helper must not be Nested; got {out:?}"
     );
 }

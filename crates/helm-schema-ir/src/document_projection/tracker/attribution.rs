@@ -14,7 +14,7 @@ use super::{ControlSite, OutputSlot, OutputSlotKind};
 
 const PLACEHOLDER_PREFIX: &str = "__HS";
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub(super) struct ResolvedNodeContext {
     pub(super) current_path: YamlPath,
     pub(super) output_path: YamlPath,
@@ -24,21 +24,6 @@ pub(super) struct ResolvedNodeContext {
     pub(super) inside_block_scalar: bool,
     explicit_mapping_value_slot: bool,
     pub(super) sequence_item_slot: bool,
-}
-
-impl Default for ResolvedNodeContext {
-    fn default() -> Self {
-        Self {
-            current_path: YamlPath(Vec::new()),
-            output_path: YamlPath(Vec::new()),
-            mapping_entry_path: YamlPath(Vec::new()),
-            in_mapping_key: false,
-            entire_scalar_value: false,
-            inside_block_scalar: false,
-            explicit_mapping_value_slot: false,
-            sequence_item_slot: false,
-        }
-    }
 }
 
 #[derive(Default)]

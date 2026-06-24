@@ -1,6 +1,4 @@
-use crate::{HelperBranch, ResourceRef};
-
-use super::helper_output::HelperOutput;
+use crate::{HelperBranch, HelperBranchBody, ResourceRef};
 
 #[derive(Default)]
 pub(super) struct ResourceState {
@@ -17,17 +15,17 @@ impl ResourceState {
         }
     }
 
-    pub(super) fn record_api_version_output(&mut self, output: HelperOutput) {
+    pub(super) fn record_api_version_output(&mut self, output: HelperBranchBody) {
         match output {
-            HelperOutput::Literals(literals) => {
-                if literals.len() > 1 {
+            HelperBranchBody::Literals { values } => {
+                if values.len() > 1 {
                     self.multi_branch = true;
                 }
-                for literal in literals {
+                for literal in values {
                     self.insert_api_version(literal);
                 }
             }
-            HelperOutput::Branched { branches } => self.record_api_version_branches(branches),
+            HelperBranchBody::Nested { branches } => self.record_api_version_branches(branches),
         }
     }
 
