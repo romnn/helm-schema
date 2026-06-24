@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
-use crate::{Guard, ValueKind};
+use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 
 /// Apply semantic finalization to claims produced by the interpreter.
 ///
@@ -45,49 +45,29 @@ fn canonicalize_contract_use_inputs(uses: &mut [ContractUse]) {
 }
 
 fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
-    let mut merged = Vec::with_capacity(uses.len());
+    let mut merged: Vec<ContractUse> = Vec::with_capacity(uses.len());
     let mut pathless_index_by_identity: BTreeMap<(String, ValueKind, Vec<Guard>), usize> =
         BTreeMap::new();
 
-    for contract_use in std::mem::take(uses) {
+    for mut contract_use in std::mem::take(uses) {
         if contract_use.path.0.is_empty() {
             let key = (
                 contract_use.source_expr.clone(),
                 contract_use.kind,
                 contract_use.guards.clone(),
             );
-            if let Some(index) = pathless_index_by_identity.get(&key).copied() {
-                let existing_resource = merged
-                    .get(index)
-                    .and_then(|existing: &ContractUse| existing.resource.clone());
-                match (existing_resource, &contract_use.resource) {
-                    (None, Some(_)) => {
-                        if let Some(existing) = merged.get_mut(index) {
-                            existing.resource = contract_use.resource;
-                            merge_contract_use_provenance(existing, contract_use.provenance);
-                        }
-                        continue;
-                    }
-                    (None, None) => {
-                        if let Some(existing) = merged.get_mut(index) {
-                            merge_contract_use_provenance(existing, contract_use.provenance);
-                        }
-                        continue;
-                    }
-                    (Some(existing), Some(resource)) if existing == *resource => {
-                        if let Some(existing) = merged.get_mut(index) {
-                            merge_contract_use_provenance(existing, contract_use.provenance);
-                        }
-                        continue;
-                    }
-                    (Some(_), None) => {
-                        if let Some(existing) = merged.get_mut(index) {
-                            merge_contract_use_provenance(existing, contract_use.provenance);
-                        }
-                        continue;
-                    }
-                    (Some(_), Some(_)) => {}
+            if let Some(existing) = pathless_index_by_identity
+                .get(&key)
+                .and_then(|index| merged.get_mut(*index))
+                && (existing.resource.is_none()
+                    || contract_use.resource.is_none()
+                    || existing.resource == contract_use.resource)
+            {
+                if existing.resource.is_none() {
+                    existing.resource = contract_use.resource.take();
                 }
+                merge_contract_use_provenance(existing, contract_use.provenance);
+                continue;
             }
             pathless_index_by_identity.insert(key, merged.len());
         }
@@ -100,48 +80,20 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
 fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
     let defaulted_render_sites: BTreeSet<_> = uses
         .iter()
-        .filter(|contract_use| {
-            contract_use.guards.iter().any(
-                |guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr),
-            )
-        })
-        .map(|contract_use| {
-            (
-                contract_use.source_expr.clone(),
-                contract_use.path.clone(),
-                contract_use.kind,
-                contract_use.resource.clone(),
-            )
-        })
+        .filter(|contract_use| has_self_default_guard(contract_use))
+        .map(render_site)
         .collect();
 
     uses.retain(|contract_use| {
-        if contract_use.guards.iter().any(
-            |guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr),
-        ) {
+        if has_self_default_guard(contract_use) {
             return true;
         }
-        !defaulted_render_sites.contains(&(
-            contract_use.source_expr.clone(),
-            contract_use.path.clone(),
-            contract_use.kind,
-            contract_use.resource.clone(),
-        ))
+        !defaulted_render_sites.contains(&render_site(contract_use))
     });
 }
 
 fn drop_values_list_envelope_duplicates(uses: &mut Vec<ContractUse>) {
-    let render_sites: BTreeSet<_> = uses
-        .iter()
-        .map(|contract_use| {
-            (
-                contract_use.source_expr.clone(),
-                contract_use.path.clone(),
-                contract_use.kind,
-                contract_use.resource.clone(),
-            )
-        })
-        .collect();
+    let render_sites: BTreeSet<_> = uses.iter().map(render_site).collect();
 
     uses.retain(|contract_use| {
         let Some(index) = contract_use
@@ -152,15 +104,28 @@ fn drop_values_list_envelope_duplicates(uses: &mut Vec<ContractUse>) {
         else {
             return true;
         };
-        let mut collapsed_path = contract_use.path.clone();
-        collapsed_path.0.remove(index);
-        !render_sites.contains(&(
-            contract_use.source_expr.clone(),
-            collapsed_path,
-            contract_use.kind,
-            contract_use.resource.clone(),
-        ))
+        let mut site = render_site(contract_use);
+        site.1.0.remove(index);
+        !render_sites.contains(&site)
     });
+}
+
+type RenderSite = (String, YamlPath, ValueKind, Option<ResourceRef>);
+
+fn render_site(contract_use: &ContractUse) -> RenderSite {
+    (
+        contract_use.source_expr.clone(),
+        contract_use.path.clone(),
+        contract_use.kind,
+        contract_use.resource.clone(),
+    )
+}
+
+fn has_self_default_guard(contract_use: &ContractUse) -> bool {
+    contract_use
+        .guards
+        .iter()
+        .any(|guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr))
 }
 
 fn contract_use_semantic_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {

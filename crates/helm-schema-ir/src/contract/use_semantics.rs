@@ -1,35 +1,54 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::Guard;
 use crate::ProviderSchemaUse;
 use crate::ValueKind;
-use crate::contract_signals::ConditionalGuard;
+use crate::contract_signals::{ConditionalGuard, ContractRequirednessEvidence};
 use crate::predicate::Predicate;
 
 use super::ContractUse;
 
 pub(crate) struct ContractUseObservation {
-    pub(crate) has_source: bool,
-    pub(crate) has_render_path: bool,
-    pub(crate) range_guard_paths: BTreeSet<String>,
-    pub(crate) guard_value_paths: BTreeSet<String>,
-    pub(crate) conditional_guard_predicates: Vec<ConditionalGuard>,
-    pub(crate) lowerable_conditional_guards: Option<Vec<ConditionalGuard>>,
-    pub(crate) conditionally_optional_paths: BTreeSet<String>,
-    pub(crate) default_fallback_paths: BTreeSet<String>,
-    pub(crate) provider_schema_use: Option<ProviderSchemaUse>,
-    pub(crate) self_guarded: bool,
-    pub(crate) self_range_guarded: bool,
-    pub(crate) pathless_self_default_guarded: bool,
+    pub(crate) path_observations: BTreeMap<String, ContractPathObservation>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct ContractPathObservation {
+    pub(crate) referenced: bool,
+    pub(crate) ranged: bool,
+    pub(crate) guard_predicates: Vec<ConditionalGuard>,
+    pub(crate) requiredness: ContractRequirednessEvidence,
+    pub(crate) guard_render_use: Option<ContractPathRenderUse>,
+    pub(crate) nullable_render_use: bool,
+    pub(crate) source_use: Option<ContractSourceObservation>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct ContractPathRenderUse {
+    pub(crate) range_guarded: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ContractSourceObservation {
+    pub(crate) path: crate::YamlPath,
+    pub(crate) kind: ValueKind,
+    pub(crate) render_use: Option<ContractSourceRenderUse>,
+    pub(crate) guards_empty: bool,
     pub(crate) null_tolerant: bool,
-    pub(crate) positive_header: bool,
+    pub(crate) lowerable_conditional_guards: Option<Vec<ConditionalGuard>>,
+    pub(crate) provider_schema_use: Option<ProviderSchemaUse>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct ContractSourceRenderUse {
+    pub(crate) range_guarded: bool,
+    pub(crate) self_guarded: bool,
 }
 
 impl ContractUseObservation {
     pub(crate) fn new(contract_use: &ContractUse) -> Self {
         let predicates = predicate_stack(contract_use);
         let has_source = !contract_use.source_expr.trim().is_empty();
-        let has_render_path = !contract_use.path.0.is_empty();
         let path_is_empty = contract_use.path.0.is_empty();
         let self_range_guarded = predicates.iter().any(|predicate| {
             matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == &contract_use.source_expr)
@@ -41,58 +60,112 @@ impl ContractUseObservation {
             && predicates.iter().any(|predicate| {
                 matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
             });
-        let range_guard_paths = predicates
+        let range_guard_paths: BTreeSet<String> = predicates
             .iter()
             .filter_map(|predicate| match predicate {
                 Predicate::Guard(Guard::Range { path }) => Some(path.clone()),
                 _ => None,
             })
             .collect();
-        let guard_value_paths = predicates.iter().flat_map(Predicate::value_paths).collect();
         let mut conditional_guard_predicates = predicates
             .iter()
             .filter_map(predicate_to_conditional_guard)
             .collect::<Vec<_>>();
         conditional_guard_predicates.sort();
         conditional_guard_predicates.dedup();
-        let conditionally_optional_paths = predicates
-            .iter()
-            .flat_map(Predicate::conditionally_optional_paths)
-            .collect();
-        let default_fallback_paths = predicates
-            .iter()
-            .filter_map(|predicate| match predicate {
-                Predicate::Guard(Guard::Default { path }) => Some(path.clone()),
-                _ => None,
-            })
-            .collect();
         let positive_header = contract_use.kind == ValueKind::Scalar
             && path_is_empty
             && !predicates.is_empty()
             && predicates.iter().all(|predicate| {
                 predicate_is_positive_header(predicate, &contract_use.source_expr)
             });
+        let mut path_observations = BTreeMap::new();
 
-        Self {
-            has_source,
-            has_render_path,
-            range_guard_paths,
-            guard_value_paths,
-            conditional_guard_predicates,
-            lowerable_conditional_guards: lowerable_conditional_guard_set(
-                contract_use,
-                &predicates,
-            ),
-            conditionally_optional_paths,
-            default_fallback_paths,
-            provider_schema_use: provider_schema_use(contract_use, self_range_guarded),
-            self_guarded: has_source && (path_is_empty || has_matching_self_guard),
-            self_range_guarded,
-            pathless_self_default_guarded,
-            null_tolerant: !has_source || path_is_empty || has_matching_self_guard,
-            positive_header,
+        if has_source
+            && let Some(observation) =
+                path_observation(&mut path_observations, &contract_use.source_expr)
+        {
+            observation.source_use = Some(ContractSourceObservation {
+                path: contract_use.path.clone(),
+                kind: contract_use.kind,
+                render_use: (!path_is_empty).then_some(ContractSourceRenderUse {
+                    range_guarded: self_range_guarded,
+                    self_guarded: path_is_empty || has_matching_self_guard,
+                }),
+                guards_empty: contract_use.guards.is_empty(),
+                null_tolerant: path_is_empty || has_matching_self_guard,
+                lowerable_conditional_guards: lowerable_conditional_guard_set(
+                    contract_use,
+                    &predicates,
+                ),
+                provider_schema_use: provider_schema_use(contract_use, self_range_guarded),
+            });
+            observation.requiredness.is_positive_header = positive_header;
+            observation.nullable_render_use |= !path_is_empty
+                || self_range_guarded
+                || contract_use.kind == ValueKind::Fragment
+                || pathless_self_default_guarded;
         }
+
+        for path in predicates
+            .iter()
+            .flat_map(Predicate::conditionally_optional_paths)
+        {
+            if let Some(observation) = path_observation(&mut path_observations, &path) {
+                observation.requiredness.is_conditionally_optional = true;
+            }
+        }
+        for path in predicates.iter().filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::Default { path }) => Some(path),
+            _ => None,
+        }) {
+            if let Some(observation) = path_observation(&mut path_observations, path) {
+                observation.requiredness.has_default_fallback = true;
+            }
+        }
+        if has_source {
+            for predicate in conditional_guard_predicates {
+                for path in predicate.value_paths() {
+                    if let Some(observation) = path_observation(&mut path_observations, &path)
+                        && !observation.guard_predicates.contains(&predicate)
+                    {
+                        observation.guard_predicates.push(predicate.clone());
+                    }
+                }
+            }
+        }
+        for path in predicates.iter().flat_map(Predicate::value_paths) {
+            if has_source && path == contract_use.source_expr.as_str() {
+                continue;
+            }
+            let Some(observation) = path_observation(&mut path_observations, &path) else {
+                continue;
+            };
+            observation.referenced |= has_source;
+            if !path_is_empty {
+                observation.guard_render_use = Some(ContractPathRenderUse {
+                    range_guarded: range_guard_paths.contains(&path),
+                });
+            }
+        }
+        if has_source {
+            for path in range_guard_paths {
+                if let Some(observation) = path_observation(&mut path_observations, &path) {
+                    observation.ranged = true;
+                    observation.nullable_render_use = true;
+                }
+            }
+        }
+
+        Self { path_observations }
     }
+}
+
+fn path_observation<'a>(
+    observations: &'a mut BTreeMap<String, ContractPathObservation>,
+    path: &str,
+) -> Option<&'a mut ContractPathObservation> {
+    (!path.trim().is_empty()).then(|| observations.entry(path.to_string()).or_default())
 }
 
 fn predicate_stack(contract_use: &ContractUse) -> Vec<Predicate> {
