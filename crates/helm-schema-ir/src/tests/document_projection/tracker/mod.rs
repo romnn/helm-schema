@@ -1,10 +1,10 @@
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;
 
-use crate::ValueKind;
+use crate::{SourceSpan, ValueKind, YamlPath};
 
-use super::DocumentTracker;
 use super::attribution::{build_attribution_index, is_output_root_kind};
+use super::{DocumentTracker, ObservedOutputSite, OutputSlot};
 
 fn parse_template(source: &str) -> tree_sitter::Tree {
     let language =
@@ -75,6 +75,42 @@ fn nodes_with_text<'tree>(
     for child in node.children(&mut cursor) {
         nodes_with_text(child, source, kind, needle, out);
     }
+}
+
+#[test]
+fn output_slot_fragment_site_suppresses_mapping_keys() {
+    let slot = OutputSlot {
+        kind: ValueKind::Scalar,
+        path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        resource: None,
+        in_mapping_key: true,
+        in_yaml_comment: false,
+        entire_scalar_value: true,
+        source_span: SourceSpan::new(0, 0),
+    };
+
+    sim_assert_eq!(have: slot.fragment_output_site(), want: None);
+}
+
+#[test]
+fn output_slot_fragment_site_marks_partial_scalar_slots() {
+    let slot = OutputSlot {
+        kind: ValueKind::Scalar,
+        path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
+        resource: None,
+        in_mapping_key: false,
+        in_yaml_comment: false,
+        entire_scalar_value: false,
+        source_span: SourceSpan::new(0, 0),
+    };
+
+    sim_assert_eq!(
+        have: slot.fragment_output_site(),
+        want: Some(ObservedOutputSite {
+            kind: ValueKind::PartialScalar,
+            path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
+        })
+    );
 }
 
 #[test]

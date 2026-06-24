@@ -4,7 +4,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::SourceSpan;
 use crate::contract_sink::ContractUseContext;
-use crate::document_projection::{collect_document_site_context, document_output_contract};
+use crate::document_projection::document_output_contract;
 use crate::helper_summary::HelperOutputMeta;
 
 use super::SymbolicWalker;
@@ -38,14 +38,12 @@ impl SymbolicWalker<'_> {
     ) {
         self.inline_static_file_templates_from_helper_calls(exprs);
 
-        let site_context =
-            collect_document_site_context(self.source, &self.document_tracker, node, exprs);
-        if site_context.in_yaml_comment {
+        let output_slot = self.document_tracker.output_slot_for_action(node, exprs);
+        if output_slot.in_yaml_comment {
             return;
         }
-        let kind = site_context.kind;
 
-        if kind == crate::ValueKind::Scalar {
+        if output_slot.kind == crate::ValueKind::Scalar {
             self.inline_exact_helper_call(exprs);
         }
 
@@ -69,15 +67,14 @@ impl SymbolicWalker<'_> {
                 self.no_output_depth > 0,
                 self.source_path,
                 Some(SourceSpan::new(
-                    self.source_offset + site_context.source_span.start,
-                    self.source_offset + site_context.source_span.end,
+                    self.source_offset + output_slot.source_span.start,
+                    self.source_offset + output_slot.source_span.end,
                 )),
                 self.provenance_helper_chain(),
             );
             document_output_contract(
-                site_context,
+                output_slot,
                 exprs,
-                kind,
                 &value_path_context,
                 &self.scope.locals().range_domains,
                 &self.scope.locals().get_bindings,

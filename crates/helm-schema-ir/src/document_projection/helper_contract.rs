@@ -10,12 +10,11 @@ use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
 use crate::value_path_context::ValuePathContext;
 use crate::{Guard, YamlPath, output_path};
 
-use super::site_context::DocumentSiteContext;
+use super::tracker::OutputSlot;
 
 pub(crate) fn document_output_contract(
-    site: DocumentSiteContext,
+    site: OutputSlot,
     exprs: &[TemplateExpr],
-    kind: ValueKind,
     value_path_context: &ValuePathContext<'_>,
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
@@ -24,7 +23,7 @@ pub(crate) fn document_output_contract(
 ) -> ContractIr {
     let mut contract = ContractIr::default();
     let mut output_effects = value_path_context.expression_output_effects(exprs);
-    if kind == ValueKind::Scalar {
+    if site.kind == ValueKind::Scalar {
         let all_values = output_effects.output_paths.clone();
         output_effects
             .output_paths
@@ -50,12 +49,12 @@ pub(crate) fn document_output_contract(
                 .iter()
                 .any(|root| output_path::values_path_is_descendant(&value, root))
         {
-            contract.push(site.contract_use(
-                context,
+            contract.push(context.contract_use(
                 value,
                 YamlPath(Vec::new()),
                 ValueKind::Scalar,
-                Vec::new(),
+                &[],
+                site.resource.clone(),
             ));
             continue;
         }
@@ -79,23 +78,23 @@ pub(crate) fn document_output_contract(
             if output_effects.defaults.contains(&value) && !extra_guards.contains(&default_guard) {
                 extra_guards.push(default_guard.clone());
             }
-            contract.push(site.contract_use(
-                context,
+            contract.push(context.contract_use(
                 value.clone(),
                 emit_path.clone(),
                 emit_kind,
-                extra_guards.clone(),
+                extra_guards,
+                site.resource.clone(),
             ));
         }
     }
 
     for value in bound_values {
-        contract.push(site.contract_use(
-            context,
+        contract.push(context.contract_use(
             value,
             YamlPath(Vec::new()),
             ValueKind::Scalar,
-            Vec::new(),
+            &[],
+            site.resource.clone(),
         ));
     }
 
@@ -113,7 +112,7 @@ pub(crate) fn document_output_contract(
 fn append_document_helper_contract_uses(
     helper: &HelperSummary,
     encoded_output_values: &BTreeSet<String>,
-    site: &DocumentSiteContext,
+    site: &OutputSlot,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
@@ -127,12 +126,12 @@ fn append_document_helper_contract_uses(
                     && site.can_project_scalar_helper_to_caller_path()
                     && !helper.has_rendered_source_descendant(value)
                 {
-                    contract.push(site.contract_use_with_extra_provenance(
-                        context,
+                    contract.push(context.contract_use_with_extra_provenance(
                         value.clone(),
                         site.path.clone(),
                         emit_kind,
-                        extra_guards,
+                        &extra_guards,
+                        site.resource.clone(),
                         &meta.provenance,
                     ));
                 } else {
@@ -178,7 +177,7 @@ fn append_fragment_output_contract_use(
     output: &HelperFragmentOutputUse,
     helper: &HelperSummary,
     encoded_output_values: &BTreeSet<String>,
-    site: &DocumentSiteContext,
+    site: &OutputSlot,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
@@ -189,12 +188,12 @@ fn append_fragment_output_contract_use(
             && !helper.has_rendered_source_descendant(&output.source_expr)
         {
             let emit_path = output_path::append_relative_path(&site.path, &output.relative_path);
-            contract.push(site.contract_use_with_extra_provenance(
-                context,
+            contract.push(context.contract_use_with_extra_provenance(
                 output.source_expr.clone(),
                 emit_path,
                 emit_kind,
-                extra_guards,
+                &extra_guards,
+                site.resource.clone(),
                 &output.meta.provenance,
             ));
         } else {

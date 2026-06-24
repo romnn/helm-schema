@@ -4,7 +4,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::document_projection::{DocumentTracker, collect_document_site_context};
+use crate::document_projection::DocumentTracker;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr,
     helper_result_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
@@ -534,9 +534,8 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         if self.fragment_control.suppresses_output() {
             return;
         }
-        let site_context =
-            collect_document_site_context(self.source, &self.document_tracker, node, exprs);
-        let Some(site) = site_context.fragment_output_site() else {
+        let output_slot = self.document_tracker.output_slot_for_action(node, exprs);
+        let Some(site) = output_slot.fragment_output_site() else {
             return;
         };
         self.collect_fragment_expression(exprs, &site.path, site.kind);

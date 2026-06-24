@@ -1,7 +1,8 @@
 use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::resource_identity::ResourceIdentityIndex;
-use crate::{ResourceRef, ValueKind, YamlPath};
+use crate::template_expr_cache::parse_expr_text;
+use crate::{ResourceRef, SourceSpan, ValueKind, YamlPath};
 
 mod attribution;
 mod yaml_tree;
@@ -19,11 +20,76 @@ pub(crate) struct DocumentTracker<'a> {
     attribution: AttributionIndex,
 }
 
-pub(crate) struct DocumentOutputSlot {
+pub(crate) struct OutputSlot {
+    pub(crate) kind: ValueKind,
     pub(crate) path: YamlPath,
     pub(crate) resource: Option<ResourceRef>,
     pub(crate) in_mapping_key: bool,
+    pub(crate) in_yaml_comment: bool,
     pub(crate) entire_scalar_value: bool,
+    pub(crate) source_span: SourceSpan,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ObservedOutputSite {
+    pub(crate) kind: ValueKind,
+    pub(crate) path: YamlPath,
+}
+
+impl OutputSlot {
+    pub(crate) fn fragment_output_site(&self) -> Option<ObservedOutputSite> {
+        if self.in_mapping_key {
+            return None;
+        }
+
+        Some(ObservedOutputSite {
+            kind: self.direct_value_kind(),
+            path: self.path.clone(),
+        })
+    }
+
+    pub(crate) fn direct_value_kind(&self) -> ValueKind {
+        if self.kind == ValueKind::Scalar && !self.entire_scalar_value && !self.path.0.is_empty() {
+            ValueKind::PartialScalar
+        } else {
+            self.kind
+        }
+    }
+
+    pub(crate) fn direct_value_path(&self, source_expr: &str) -> YamlPath {
+        if source_expr.ends_with(".*") && !self.in_sequence_item() {
+            YamlPath(Vec::new())
+        } else {
+            self.path.clone()
+        }
+    }
+
+    pub(crate) fn can_project_scalar_helper_to_caller_path(&self) -> bool {
+        !self.in_mapping_key
+            && !self.path.0.is_empty()
+            && self.kind == ValueKind::Scalar
+            && self.entire_scalar_value
+    }
+
+    pub(crate) fn can_project_structured_helper_to_caller_path(&self) -> bool {
+        !self.in_mapping_key
+            && !self.path.0.is_empty()
+            && (self.kind == ValueKind::Fragment
+                || (self.kind == ValueKind::Scalar && self.entire_scalar_value))
+    }
+
+    fn in_sequence_item(&self) -> bool {
+        self.path
+            .0
+            .last()
+            .map(std::string::String::as_str)
+            .is_some_and(|segment| segment.ends_with("[*]"))
+    }
+}
+
+struct OutputActionAnalysis {
+    is_fragment: bool,
+    fragment_indent_width: Option<usize>,
 }
 
 impl<'a> DocumentTracker<'a> {
@@ -93,12 +159,27 @@ impl<'a> DocumentTracker<'a> {
         self.resource_identity.rebase_path_at(byte, path)
     }
 
+    pub(crate) fn output_slot_for_action(
+        &self,
+        node: tree_sitter::Node<'_>,
+        exprs: &[TemplateExpr],
+    ) -> OutputSlot {
+        let output_action = self.analyze_output_action(node, exprs);
+        let kind = if output_action.is_fragment {
+            ValueKind::Fragment
+        } else {
+            ValueKind::Scalar
+        };
+
+        self.output_slot_for_node(node, kind, output_action.fragment_indent_width)
+    }
+
     pub(crate) fn output_slot_for_node(
         &self,
         node: tree_sitter::Node<'_>,
         kind: ValueKind,
         fragment_indent_width: Option<usize>,
-    ) -> DocumentOutputSlot {
+    ) -> OutputSlot {
         let current_context = self.context_for_node(node);
         let path = if current_context.in_mapping_key {
             YamlPath(Vec::new())
@@ -106,7 +187,8 @@ impl<'a> DocumentTracker<'a> {
             self.output_site_path_from_context(node, kind, fragment_indent_width, &current_context)
         };
 
-        DocumentOutputSlot {
+        OutputSlot {
+            kind,
             path: self
                 .resource_identity
                 .rebase_path_at(node.start_byte(), path),
@@ -115,7 +197,9 @@ impl<'a> DocumentTracker<'a> {
                 .resource_at(node.start_byte())
                 .cloned(),
             in_mapping_key: current_context.in_mapping_key,
+            in_yaml_comment: self.document_site_is_yaml_comment_part(node),
             entire_scalar_value: current_context.entire_scalar_value,
+            source_span: SourceSpan::new(node.start_byte(), node.end_byte()),
         }
     }
 
@@ -153,6 +237,55 @@ impl<'a> DocumentTracker<'a> {
             .iter()
             .rev()
             .find_map(TemplateExpr::fragment_indent_width)
+    }
+
+    fn analyze_output_action(
+        &self,
+        node: tree_sitter::Node<'_>,
+        exprs: &[TemplateExpr],
+    ) -> OutputActionAnalysis {
+        if node.kind() == "template_action" {
+            return Self::output_action_shape_from_exprs(exprs);
+        }
+
+        if let Some(text) = self.enclosing_action_text(node) {
+            return Self::output_action_shape_from_exprs(&parse_expr_text(&text));
+        }
+
+        Self::output_action_shape_from_exprs(exprs)
+    }
+
+    fn output_action_shape_from_exprs(exprs: &[TemplateExpr]) -> OutputActionAnalysis {
+        OutputActionAnalysis {
+            is_fragment: exprs.iter().any(TemplateExpr::renders_yaml_fragment),
+            fragment_indent_width: Self::fragment_indent_width_for_exprs(exprs),
+        }
+    }
+
+    fn enclosing_action_text(&self, node: tree_sitter::Node<'_>) -> Option<String> {
+        let mut current = node;
+        loop {
+            match current.kind() {
+                "template_action" => {
+                    return current
+                        .utf8_text(self.source.as_bytes())
+                        .ok()
+                        .map(std::string::ToString::to_string);
+                }
+                "if_action" | "with_action" | "range_action" => return None,
+                _ => {
+                    current = current.parent()?;
+                }
+            }
+        }
+    }
+
+    fn document_site_is_yaml_comment_part(&self, node: tree_sitter::Node<'_>) -> bool {
+        let start = node.start_byte();
+        let line_start = self.source[..start]
+            .rfind('\n')
+            .map_or(0, |index| index + 1);
+        self.source[line_start..start].trim_start().starts_with('#')
     }
 }
 
