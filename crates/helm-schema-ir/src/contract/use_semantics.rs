@@ -16,11 +16,8 @@ pub(crate) struct ContractPathObservation {
     pub(crate) guard_predicates: Vec<ConditionalGuard>,
     pub(crate) requiredness: ContractRequirednessEvidence,
     pub(crate) facts: ContractValuePathFacts,
-    pub(crate) guard_render_use: Option<ContractRenderUse>,
-    pub(crate) source_render_use: Option<ContractRenderUse>,
     pub(crate) type_hints: BTreeSet<String>,
     pub(crate) metadata_field_kind: Option<MetadataFieldKind>,
-    pub(crate) source_guards_empty: bool,
     pub(crate) source_null_tolerant: Option<bool>,
     pub(crate) source_lowerable_conditional_guards: Option<Vec<ConditionalGuard>>,
     pub(crate) provider_schema_use: Option<ProviderSchemaUse>,
@@ -71,12 +68,6 @@ impl ContractPathObservation {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct ContractRenderUse {
-    pub(crate) range_guarded: bool,
-    pub(crate) self_guarded: Option<bool>,
-}
-
 pub(crate) fn contract_path_observations(
     contract_use: &ContractUse,
 ) -> BTreeMap<String, ContractPathObservation> {
@@ -124,11 +115,12 @@ pub(crate) fn contract_path_observations(
             contract_use.kind == ValueKind::Fragment && contract_use.path.0.is_empty();
         observation.facts.is_partial_scalar_value_path =
             contract_use.kind == ValueKind::PartialScalar && !contract_use.path.0.is_empty();
-        observation.source_render_use = (!path_is_empty).then_some(ContractRenderUse {
-            range_guarded: self_range_guarded,
-            self_guarded: Some(has_matching_self_guard),
-        });
-        observation.source_guards_empty = contract_use.guards.is_empty();
+        if !path_is_empty {
+            observation
+                .facts
+                .record_render_use(self_range_guarded, Some(has_matching_self_guard));
+            observation.facts.has_unconditional_render_use = contract_use.guards.is_empty();
+        }
         observation.source_null_tolerant = Some(path_is_empty || has_matching_self_guard);
         observation.source_lowerable_conditional_guards =
             lowerable_conditional_guard_set(contract_use, &predicates);
@@ -176,10 +168,9 @@ pub(crate) fn contract_path_observations(
         };
         observation.referenced |= has_source;
         if !path_is_empty {
-            observation.guard_render_use = Some(ContractRenderUse {
-                range_guarded: range_guard_paths.contains(&path),
-                self_guarded: None,
-            });
+            observation
+                .facts
+                .record_render_use(range_guard_paths.contains(&path), None);
         }
     }
     if has_source {

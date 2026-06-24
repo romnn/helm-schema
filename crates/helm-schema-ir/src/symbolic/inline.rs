@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr};
@@ -108,18 +108,9 @@ impl SymbolicWalker<'_> {
         let mut contract = nested.run_contract(&plan.body.tree);
         let helper_renders_output = helper_summary.has_document_value_facts();
         let suppress_roots = helper_summary.suppress_roots.clone();
-        let mut helper_type_hints = BTreeMap::new();
-        let mut inline_dependency_meta = BTreeMap::new();
-        for (path, facts) in helper_summary.path_facts() {
-            if !facts.type_hints.is_empty() {
-                helper_type_hints.insert(path.to_string(), facts.type_hints.clone());
-            }
-            if let Some(meta) = facts.dependency_meta.as_ref()
-                && !suppress_roots.contains(path)
-            {
-                inline_dependency_meta.insert(path.to_string(), meta.clone());
-            }
-        }
+        let helper_type_hints = helper_summary.type_hints();
+        let mut inline_dependency_meta = helper_summary.dependency_meta();
+        inline_dependency_meta.retain(|path, _meta| !suppress_roots.contains(path));
         if helper_renders_output {
             contract.extend_type_hints(helper_type_hints);
         }

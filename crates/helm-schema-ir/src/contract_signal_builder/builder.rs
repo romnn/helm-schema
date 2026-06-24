@@ -69,15 +69,6 @@ impl Default for PathSchemaFactsAccumulator {
 }
 
 impl PathSchemaFactsAccumulator {
-    fn record_render_use(&mut self, range_guarded: bool, self_guarded: Option<bool>) {
-        self.facts.has_render_use = true;
-        self.facts.has_self_range_guard_render_use |= range_guarded;
-        if let Some(self_guarded) = self_guarded {
-            self.facts.has_self_guarded_render_use |= self_guarded;
-            self.facts.all_render_uses_self_guarded &= self_guarded;
-        }
-    }
-
     fn record_nullable_observation(&mut self, nullable: bool) {
         self.all_uses_nullable &= nullable;
     }
@@ -94,6 +85,7 @@ impl PathSchemaFactsAccumulator {
         self.facts.is_ranged_source |= observation.facts.is_ranged_source;
         self.facts.is_partial_scalar_value_path |= observation.facts.is_partial_scalar_value_path;
         self.facts.is_nullable |= observation.facts.is_nullable;
+        self.facts.merge_render_use_facts(observation.facts);
     }
 
     fn record_provider_schema_use(&mut self, provider_schema_use: ProviderSchemaUse) {
@@ -192,10 +184,6 @@ impl ContractPathAccumulator {
                 self.guard_predicates.push(predicate.clone());
             }
         }
-        if let Some(render_use) = observation.guard_render_use {
-            self.facts
-                .record_render_use(render_use.range_guarded, render_use.self_guarded);
-        }
     }
 
     fn observe_source_use(&mut self, observation: &ContractPathObservation) {
@@ -207,15 +195,11 @@ impl ContractPathAccumulator {
             self.facts.record_provider_schema_use(provider_use);
         }
         self.referenced = true;
-        if let Some(render_use) = observation.source_render_use {
-            self.facts
-                .record_render_use(render_use.range_guarded, render_use.self_guarded);
-            if observation.source_guards_empty {
-                self.facts.facts.has_unconditional_render_use = true;
+        if observation.facts.has_render_use {
+            if observation.facts.has_unconditional_render_use {
                 self.has_unconditional_overlay_peer = true;
             } else if let Some(guards) = observation.source_lowerable_conditional_guards.clone() {
                 let branch = self.conditional_overlay_branches.entry(guards).or_default();
-                branch.record_render_use(render_use.range_guarded, render_use.self_guarded);
                 branch.facts.is_nullable = true;
                 branch.record_nullable_observation(source_null_tolerant);
                 branch.record_observation_facts(observation);

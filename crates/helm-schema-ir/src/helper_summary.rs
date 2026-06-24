@@ -325,6 +325,63 @@ impl HelperSummary {
             .map(|(path, facts)| (path.as_str(), facts))
     }
 
+    pub(crate) fn rendered_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = self.scalar_output_meta();
+        for output in self.fragment_output_uses() {
+            out.entry(output.source_expr)
+                .or_default()
+                .merge(output.meta);
+        }
+        out
+    }
+
+    pub(crate) fn scalar_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        self.path_facts()
+            .filter_map(|(path, facts)| {
+                Some((path.to_string(), facts.output_meta.as_ref()?.clone()))
+            })
+            .collect()
+    }
+
+    pub(crate) fn fragment_output_uses(&self) -> Vec<HelperFragmentOutputUse> {
+        self.path_facts()
+            .flat_map(|(_path, facts)| facts.fragment_output_uses.iter().cloned())
+            .collect()
+    }
+
+    pub(crate) fn dependency_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = self.rendered_output_meta();
+        for (path, facts) in self.path_facts() {
+            if let Some(meta) = facts.dependency_meta.as_ref() {
+                out.entry(path.to_string()).or_default().merge_ref(meta);
+            }
+        }
+        out
+    }
+
+    pub(crate) fn dependency_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        self.path_facts()
+            .filter_map(|(path, facts)| {
+                Some((path.to_string(), facts.dependency_meta.as_ref()?.clone()))
+            })
+            .collect()
+    }
+
+    pub(crate) fn guard_paths(&self) -> BTreeSet<String> {
+        self.path_facts()
+            .filter_map(|(path, facts)| facts.guard.then_some(path.to_string()))
+            .collect()
+    }
+
+    pub(crate) fn type_hints(&self) -> BTreeMap<String, BTreeSet<String>> {
+        self.path_facts()
+            .filter_map(|(path, facts)| {
+                (!facts.type_hints.is_empty())
+                    .then_some((path.to_string(), facts.type_hints.clone()))
+            })
+            .collect()
+    }
+
     pub(crate) fn has_structured_fragment_source(&self, path: &str) -> bool {
         self.path_facts
             .get(path)
@@ -336,11 +393,6 @@ impl HelperSummary {
             (facts.output_meta.is_some() || !facts.fragment_output_uses.is_empty())
                 && output_path::values_path_is_descendant(candidate, path)
         })
-    }
-
-    pub(crate) fn has_only_scalar_outputs(&self) -> bool {
-        self.path_facts()
-            .all(|(_path, facts)| facts.fragment_output_uses.is_empty())
     }
 
     pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {

@@ -186,6 +186,32 @@ pub struct ContractValuePathFacts {
 }
 
 impl ContractValuePathFacts {
+    pub(crate) fn record_render_use(&mut self, range_guarded: bool, self_guarded: Option<bool>) {
+        if !self.has_render_use {
+            self.all_render_uses_self_guarded = true;
+        }
+        self.has_render_use = true;
+        self.has_self_range_guard_render_use |= range_guarded;
+        if let Some(self_guarded) = self_guarded {
+            self.has_self_guarded_render_use |= self_guarded;
+            self.all_render_uses_self_guarded &= self_guarded;
+        }
+    }
+
+    pub(crate) fn merge_render_use_facts(&mut self, other: Self) {
+        if !other.has_render_use {
+            return;
+        }
+        if !self.has_render_use {
+            self.all_render_uses_self_guarded = true;
+        }
+        self.has_render_use = true;
+        self.has_unconditional_render_use |= other.has_unconditional_render_use;
+        self.has_self_guarded_render_use |= other.has_self_guarded_render_use;
+        self.has_self_range_guard_render_use |= other.has_self_range_guard_render_use;
+        self.all_render_uses_self_guarded &= other.all_render_uses_self_guarded;
+    }
+
     #[must_use]
     pub fn has_non_self_guarded_render_use(self) -> bool {
         self.has_render_use

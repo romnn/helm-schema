@@ -96,8 +96,8 @@ pub(crate) fn helper_if_condition_plan(
     seen: &mut HashSet<String>,
     semantics: HelperRuntimeSemantics,
 ) -> HelperConditionPlan {
-    let facts = helper_branch_condition_facts(
-        header,
+    let facts = branch_condition_facts_for_expr(
+        header.expr(),
         bindings,
         current_dot,
         local_bindings,
@@ -129,8 +129,8 @@ pub(crate) fn helper_with_condition_plan(
     seen: &mut HashSet<String>,
     semantics: HelperRuntimeSemantics,
 ) -> HelperConditionPlan {
-    let facts = helper_branch_condition_facts(
-        header,
+    let facts = branch_condition_facts_for_expr(
+        header.expr(),
         bindings,
         current_dot,
         local_bindings,
@@ -178,8 +178,14 @@ pub(crate) fn helper_range_runtime_plan(
         };
     };
 
-    let guard_paths =
-        helper_branch_guard_paths(header, bindings, current_dot, local_bindings, context, seen);
+    let guard_paths = branch_guard_paths_for_expr(
+        header.expr(),
+        bindings,
+        current_dot,
+        local_bindings,
+        context,
+        seen,
+    );
     let mut range_plan = plan_helper_range_binding(
         header,
         local_bindings,
@@ -208,46 +214,6 @@ pub(crate) fn helper_range_runtime_plan(
         non_exact_variable_binding,
         range_fragment_value,
     }
-}
-
-fn helper_branch_guard_paths(
-    header: &TemplateHeader,
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> BTreeSet<String> {
-    branch_guard_paths_for_expr(
-        header.expr(),
-        bindings,
-        current_dot,
-        local_bindings,
-        context,
-        seen,
-    )
-}
-
-fn helper_branch_condition_facts(
-    header: &TemplateHeader,
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> crate::helper_runtime_guards::BranchConditionFacts {
-    branch_condition_facts_for_expr(
-        header.expr(),
-        bindings,
-        current_dot,
-        local_bindings,
-        local_default_paths,
-        local_output_meta,
-        context,
-        seen,
-    )
 }
 
 #[cfg(test)]

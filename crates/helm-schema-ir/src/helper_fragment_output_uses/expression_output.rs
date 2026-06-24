@@ -119,14 +119,8 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             );
         }
     }
-    let mut nested_fragment_outputs = Vec::new();
-    let mut nested_scalar_outputs = Vec::new();
-    for (path, facts) in nested.path_facts() {
-        if let Some(meta) = facts.output_meta.as_ref() {
-            nested_scalar_outputs.push((path.to_string(), meta.clone()));
-        }
-        nested_fragment_outputs.extend(facts.fragment_output_uses.iter().cloned());
-    }
+    let nested_scalar_outputs = nested.scalar_output_meta().into_iter().collect::<Vec<_>>();
+    let nested_fragment_outputs = nested.fragment_output_uses();
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()
         .map(|output| output.source_expr.clone())

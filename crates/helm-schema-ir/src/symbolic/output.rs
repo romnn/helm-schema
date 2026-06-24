@@ -19,15 +19,8 @@ impl SymbolicWalker<'_> {
             .expression_output_effects(exprs)
             .local_output_meta;
         let analysis = self.summarize_bound_helper_calls_in_exprs(exprs);
-        for (path, facts) in analysis.path_facts() {
-            if let Some(meta) = facts.output_meta.as_ref() {
-                out.entry(path.to_string()).or_default().merge_ref(meta);
-            }
-            for output in facts.fragment_output_uses.iter().cloned() {
-                out.entry(output.source_expr)
-                    .or_default()
-                    .merge(output.meta);
-            }
+        for (path, meta) in analysis.rendered_output_meta() {
+            out.entry(path).or_default().merge(meta);
         }
         out
     }

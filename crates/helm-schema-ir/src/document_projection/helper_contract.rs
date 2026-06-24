@@ -115,33 +115,20 @@ fn append_document_helper_contract_uses(
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    let mut dependency_values = Vec::new();
-    let mut guard_values = Vec::new();
-    let mut type_hints = Vec::new();
-
-    for (value, facts) in helper.path_facts() {
-        if !facts.type_hints.is_empty() {
-            type_hints.push((value.to_string(), facts.type_hints.clone()));
-        }
-        if facts.guard {
-            guard_values.push(value.to_string());
-        }
-        if let Some(meta) = facts.dependency_meta.as_ref() {
-            dependency_values.push((value.to_string(), meta.clone()));
-        }
-
-        if let Some(meta) = facts.output_meta.as_ref()
-            && !helper.has_structured_fragment_source(value)
-        {
-            for extra_guards in meta.contract_guard_sets(value) {
-                let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(value));
-                if helper.has_only_scalar_outputs()
+    contract.extend_type_hints(helper.type_hints());
+    let fragment_output_uses = helper.fragment_output_uses();
+    let helper_has_only_scalar_outputs = fragment_output_uses.is_empty();
+    for (value, meta) in helper.scalar_output_meta() {
+        if !helper.has_structured_fragment_source(&value) {
+            for extra_guards in meta.contract_guard_sets(&value) {
+                let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(&value));
+                if helper_has_only_scalar_outputs
                     && site.can_project_scalar_helper_to_caller_path()
-                    && !helper.has_rendered_source_descendant(value)
+                    && !helper.has_rendered_source_descendant(&value)
                 {
                     contract.push(site.contract_use_with_extra_provenance(
                         context,
-                        value.to_string(),
+                        value.clone(),
                         site.path.clone(),
                         emit_kind,
                         extra_guards,
@@ -149,7 +136,7 @@ fn append_document_helper_contract_uses(
                     ));
                 } else {
                     contract.push(context.pathless_contract_use_with_extra_provenance(
-                        value.to_string(),
+                        value.clone(),
                         ValueKind::Scalar,
                         &extra_guards,
                         &meta.provenance,
@@ -157,20 +144,20 @@ fn append_document_helper_contract_uses(
                 }
             }
         }
-
-        for output in facts.fragment_output_uses.iter().cloned() {
-            append_fragment_output_contract_use(
-                output,
-                helper,
-                encoded_output_values,
-                site,
-                contract,
-                context,
-            );
-        }
     }
 
-    for (value, meta) in dependency_values {
+    for output in fragment_output_uses {
+        append_fragment_output_contract_use(
+            output,
+            helper,
+            encoded_output_values,
+            site,
+            contract,
+            context,
+        );
+    }
+
+    for (value, meta) in helper.dependency_meta() {
         for extra_guards in meta.contract_guard_sets(&value) {
             contract.push(context.pathless_contract_use_with_extra_provenance(
                 value.clone(),
@@ -181,11 +168,9 @@ fn append_document_helper_contract_uses(
         }
     }
 
-    for value in guard_values {
+    for value in helper.guard_paths() {
         contract.push(context.pathless_contract_use(value, ValueKind::Scalar, &[]));
     }
-
-    contract.extend_type_hints(type_hints);
 }
 
 fn append_fragment_output_contract_use(

@@ -182,33 +182,13 @@ fn collect_assignment_bound_helper_values(
         .analysis
         .chart_defaults
         .extend(result.effects.helper_summary.chart_defaults.iter().cloned());
-    for (path, facts) in result.effects.helper_summary.path_facts() {
-        if let Some(output_meta) = facts.output_meta.clone() {
-            if output_meta.defaulted {
-                nested_defaulted_output_paths.insert(path.to_string());
-            }
-            state
-                .analysis
-                .merge_dependency_meta(path.to_string(), output_meta);
+    let nested_summary = result.effects.helper_summary;
+    state.analysis.add_type_hints(nested_summary.type_hints());
+    for (path, meta) in nested_summary.dependency_output_meta() {
+        if meta.defaulted {
+            nested_defaulted_output_paths.insert(path.clone());
         }
-        if let Some(dependency_meta) = facts.dependency_meta.clone() {
-            state
-                .analysis
-                .merge_dependency_meta(path.to_string(), dependency_meta);
-        }
-        if !facts.type_hints.is_empty() {
-            state
-                .analysis
-                .merge_type_hints(path.to_string(), facts.type_hints.clone());
-        }
-        for output in facts.fragment_output_uses.iter().cloned() {
-            if output.meta.defaulted {
-                nested_defaulted_output_paths.insert(output.source_expr.clone());
-            }
-            state
-                .analysis
-                .merge_dependency_meta(output.source_expr, output.meta);
-        }
+        state.analysis.merge_dependency_meta(path, meta);
     }
 
     let rhs_output_meta = rhs_output_meta(
@@ -297,32 +277,28 @@ fn extend_nested_render(
     analysis
         .chart_defaults
         .extend(nested.chart_defaults.iter().cloned());
+    analysis.add_type_hints(nested.type_hints());
 
-    for (path, facts) in nested.path_facts() {
-        if let Some(mut meta) = facts.output_meta.clone() {
-            meta.add_predicates(active_output_predicates.iter().cloned());
-            analysis.merge_output_meta(path.to_string(), meta);
-        }
-        if let Some(meta) = facts.dependency_meta.clone() {
-            analysis.merge_dependency_meta(path.to_string(), meta);
-        }
-        if facts.guard {
-            analysis.add_guard_path(path.to_string());
-        }
-        if !facts.type_hints.is_empty() {
-            analysis.merge_type_hints(path.to_string(), facts.type_hints.clone());
-        }
-        for mut output in facts.fragment_output_uses.iter().cloned() {
-            output
-                .meta
-                .add_predicates(active_output_predicates.iter().cloned());
-            match mode {
-                NestedRenderMode::Scalar => {
-                    analysis.merge_output_meta(output.source_expr, output.meta);
-                }
-                NestedRenderMode::Fragment => {
-                    analysis.add_fragment_output_use(output);
-                }
+    for (path, mut meta) in nested.scalar_output_meta() {
+        meta.add_predicates(active_output_predicates.iter().cloned());
+        analysis.merge_output_meta(path, meta);
+    }
+    for (path, meta) in nested.dependency_meta() {
+        analysis.merge_dependency_meta(path, meta);
+    }
+    for path in nested.guard_paths() {
+        analysis.add_guard_path(path);
+    }
+    for mut output in nested.fragment_output_uses() {
+        output
+            .meta
+            .add_predicates(active_output_predicates.iter().cloned());
+        match mode {
+            NestedRenderMode::Scalar => {
+                analysis.merge_output_meta(output.source_expr, output.meta);
+            }
+            NestedRenderMode::Fragment => {
+                analysis.add_fragment_output_use(output);
             }
         }
     }
