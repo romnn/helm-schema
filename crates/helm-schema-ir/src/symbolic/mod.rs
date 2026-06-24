@@ -14,7 +14,7 @@ use crate::contract::ContractIr;
 use crate::document_projection::DocumentTracker;
 use crate::expr_eval::expr_literal_helper_call_callee;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, helper_result_from_expr_with_fragment_locals,
+    FragmentEvalContext, FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperSummary;
 use crate::node_eval::eval_node;
@@ -255,7 +255,7 @@ impl<'a> SymbolicWalker<'a> {
             summary.extend(
                 helper_result_from_expr_with_fragment_locals(
                     expr,
-                    fragment_locals,
+                    FragmentLocalFacts::bindings_only(fragment_locals),
                     Some(&self.root_bindings),
                     current_dot.as_ref(),
                     context,

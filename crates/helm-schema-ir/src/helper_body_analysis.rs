@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::condition_action_plan::ConditionActionPlan;
 use crate::document_projection::{ControlSite, DocumentTracker};
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, context_value_from_outer_expr,
+    FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
     helper_result_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
 };
 use crate::fragment_range_scope::{
@@ -80,7 +80,7 @@ pub(crate) fn resolve_bound_helper_call(
         .and_then(|expr| {
             helper_result_from_expr_with_fragment_locals(
                 expr,
-                params.fragment_locals,
+                FragmentLocalFacts::bindings_only(params.fragment_locals),
                 params.outer_bindings,
                 params.current_dot,
                 params.context,

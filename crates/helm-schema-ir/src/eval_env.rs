@@ -42,12 +42,20 @@ impl EvalEnv {
         bindings: Option<&HashMap<String, AbstractValue>>,
         current_dot: Option<&AbstractValue>,
         fragment_locals: &HashMap<String, AbstractValue>,
+        local_default_paths: Option<&HashMap<String, BTreeSet<String>>>,
+        local_output_meta: Option<&HashMap<String, BTreeMap<String, HelperOutputMeta>>>,
     ) -> Self {
         let mut env = Self::from_helper_context(bindings, current_dot);
         env.locals = fragment_locals
             .iter()
             .map(|(name, binding)| (name.clone(), binding.clone()))
             .collect();
+        if let Some(local_default_paths) = local_default_paths {
+            env.local_default_paths = local_default_paths.clone();
+        }
+        if let Some(local_output_meta) = local_output_meta {
+            env.local_output_meta = local_output_meta.clone();
+        }
         env
     }
 
@@ -110,29 +118,6 @@ impl EvalEnv {
             allow_field_root_lookup: false,
             skip_helper_call_args: false,
         }
-    }
-
-    pub(crate) fn from_local_facts(
-        locals: &HashMap<String, AbstractValue>,
-        local_default_paths: &HashMap<String, BTreeSet<String>>,
-        local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    ) -> Self {
-        Self {
-            locals: locals.clone(),
-            skip_helper_call_args: true,
-            ..Self::default()
-        }
-        .with_local_facts(local_default_paths, local_output_meta)
-    }
-
-    pub(crate) fn with_local_facts(
-        mut self,
-        local_default_paths: &HashMap<String, BTreeSet<String>>,
-        local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    ) -> Self {
-        self.local_default_paths = local_default_paths.clone();
-        self.local_output_meta = local_output_meta.clone();
-        self
     }
 
     pub(crate) fn without_helper_call_args(mut self) -> Self {

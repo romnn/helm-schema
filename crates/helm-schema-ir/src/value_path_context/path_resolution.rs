@@ -66,7 +66,8 @@ impl ValuePathContext<'_> {
         let mut env = EvalEnv::from_helper_context(Some(self.root_bindings), current_dot.as_ref())
             .without_helper_call_args();
         env.locals = locals_with_roots(self.template_bindings, self.root_bindings);
-        env = env.with_local_facts(self.template_default_paths, self.template_output_meta);
+        env.local_default_paths = self.template_default_paths.clone();
+        env.local_output_meta = self.template_output_meta.clone();
         env
     }
 

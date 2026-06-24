@@ -2,14 +2,12 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::expr_eval::{
-    eval_helper_exprs_direct_effects, eval_helper_exprs_effects, eval_local_exprs_effects,
-};
+use crate::expr_eval::{eval_helper_exprs_direct_effects, eval_helper_exprs_effects};
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::{
-    helper_result_from_expr_with_fragment_locals, helper_result_from_exprs_with_fragment_locals,
+    FragmentLocalFacts, helper_result_from_exprs_with_fragment_locals,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_walk_state::HelperValuesWalkState;
@@ -60,26 +58,25 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
 
     let direct_effects = eval_helper_exprs_direct_effects(exprs, bindings, current_dot);
     let direct_outputs = direct_effects.reads.clone();
-    let fallback_paths = eval_helper_exprs_effects(exprs, bindings, current_dot).defaults;
-    let local_effects = eval_local_exprs_effects(
-        exprs,
-        &state.locals.bindings,
-        &state.locals.default_paths,
-        state.local_output_meta,
-    );
-    let expression_kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
-        ValueKind::Fragment
-    } else {
-        ValueKind::Scalar
-    };
     let result = helper_result_from_exprs_with_fragment_locals(
         exprs,
-        &state.locals.bindings,
+        FragmentLocalFacts::with_output_meta(
+            &state.locals.bindings,
+            &state.locals.default_paths,
+            state.local_output_meta,
+        ),
         Some(bindings),
         current_dot,
         state.context,
         state.seen,
     );
+    let fallback_paths = eval_helper_exprs_effects(exprs, bindings, current_dot).defaults;
+    let local_effects = &result.effects;
+    let expression_kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
+        ValueKind::Fragment
+    } else {
+        ValueKind::Scalar
+    };
     state
         .analysis
         .add_type_hints(result.effects.schema_type_hints());
@@ -159,21 +156,28 @@ fn collect_assignment_bound_helper_values(
         return;
     }
 
-    let fallback_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
-    let local_effects = eval_local_exprs_effects(
-        rhs_exprs,
-        &state.locals.bindings,
-        &state.locals.default_paths,
-        state.local_output_meta,
-    );
     let result = helper_result_from_exprs_with_fragment_locals(
         rhs_exprs,
-        &state.locals.bindings,
+        FragmentLocalFacts::with_output_meta(
+            &state.locals.bindings,
+            &state.locals.default_paths,
+            state.local_output_meta,
+        ),
         Some(bindings),
         current_dot,
         state.context,
         state.seen,
     );
+    let fallback_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
+    let local_source_paths = result.effects.local_source_paths.clone();
+    let local_default_paths = result.effects.local_default_paths.clone();
+    let local_output_meta = result.effects.local_output_meta.clone();
+    let result_output_meta = result
+        .value
+        .as_ref()
+        .map(AbstractValue::output_meta)
+        .unwrap_or_default();
+    let binding = result.value.clone();
     state
         .analysis
         .add_type_hints(result.effects.schema_type_hints());
@@ -210,33 +214,19 @@ fn collect_assignment_bound_helper_values(
     }
 
     let rhs_output_meta = rhs_output_meta(
-        &local_effects.local_source_paths,
+        &local_source_paths,
         &fallback_paths,
-        &local_effects.local_default_paths,
-        &local_effects.local_output_meta,
-        &result
-            .value
-            .as_ref()
-            .map(AbstractValue::output_meta)
-            .unwrap_or_default(),
+        &local_default_paths,
+        &local_output_meta,
+        &result_output_meta,
         active_output_predicates,
     );
 
-    let mut seen_rhs = state.seen.clone();
-    if let Some(binding) = helper_result_from_expr_with_fragment_locals(
-        rhs_expr,
-        &state.locals.bindings,
-        Some(bindings),
-        current_dot,
-        state.context,
-        &mut seen_rhs,
-    )
-    .value
-    {
+    if let Some(binding) = binding {
         state.locals.bindings.insert(var.to_string(), binding);
     }
     let mut defaulted_paths = fallback_paths;
-    defaulted_paths.extend(local_effects.local_default_paths);
+    defaulted_paths.extend(local_default_paths);
     defaulted_paths.extend(nested_defaulted_output_paths);
     state.locals.set_default_paths(var, defaulted_paths);
     if rhs_output_meta.is_empty() {

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
@@ -8,7 +8,6 @@ use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::eval_call_with_helper_calls;
 use crate::expr_function_catalog::is_merge_function;
 use crate::expr_pipeline_eval::eval_pipeline_with_helper_calls;
-use crate::helper_summary::HelperOutputMeta;
 
 pub(crate) trait HelperCallValueResolver {
     fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
@@ -182,24 +181,6 @@ pub(crate) fn eval_helper_exprs_effects(
 ) -> Effects {
     let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
     eval_exprs_effects(exprs, &env)
-}
-
-pub(crate) fn eval_local_exprs_effects(
-    exprs: &[TemplateExpr],
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-) -> Effects {
-    let env = EvalEnv::from_local_facts(local_bindings, local_default_paths, local_output_meta);
-    eval_exprs_effects(exprs, &env)
-}
-
-pub(crate) fn eval_local_exprs_effects_without_meta(
-    exprs: &[TemplateExpr],
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-) -> Effects {
-    eval_local_exprs_effects(exprs, local_bindings, local_default_paths, &HashMap::new())
 }
 
 pub(crate) fn bindings_for_helper_arg_with(

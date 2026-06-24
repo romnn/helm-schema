@@ -5,8 +5,8 @@ use helm_schema_ast::{DefineIndex, TemplateExpr, TreeSitterParser, parse_action_
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, context_value_from_outer_expr, fragment_value_from_expr,
-    helper_result_from_expr_with_fragment_locals,
+    FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
+    fragment_value_from_expr, helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperOutputMeta;
 use test_util::prelude::sim_assert_eq;
@@ -35,7 +35,7 @@ fn helper_value_from_fragment_locals(
     let mut seen = HashSet::new();
     helper_result_from_expr_with_fragment_locals(
         &expr,
-        fragment_locals,
+        FragmentLocalFacts::bindings_only(fragment_locals),
         None,
         None,
         context,
@@ -163,7 +163,7 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
 
     let Some(AbstractValue::OutputSet(output_set)) = helper_result_from_expr_with_fragment_locals(
         &expr,
-        &HashMap::new(),
+        FragmentLocalFacts::bindings_only(&HashMap::new()),
         None,
         None,
         context,

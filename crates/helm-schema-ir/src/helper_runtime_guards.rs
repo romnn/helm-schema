@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, helper_result_from_expr_with_fragment_locals,
+    FragmentEvalContext, FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperOutputMeta;
 use crate::predicate::Predicate;
@@ -70,7 +70,7 @@ pub(crate) fn branch_guard_paths_for_expr(
     branch_guard_paths.extend(
         helper_result_from_expr_with_fragment_locals(
             expr,
-            local_bindings,
+            FragmentLocalFacts::bindings_only(local_bindings),
             Some(bindings),
             current_dot,
             context,

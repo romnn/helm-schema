@@ -5,13 +5,15 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
 use crate::expr_eval::{
-    eval_helper_exprs_effects, eval_local_exprs_effects_without_meta,
-    eval_non_helper_output_exprs_effects, expr_contains_helper_call, expr_starts_with_helper_call,
+    eval_helper_exprs_effects, eval_non_helper_output_exprs_effects, expr_starts_with_helper_call,
 };
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
-use crate::fragment_expr_eval::helper_result_from_expr_with_fragment_locals;
+use crate::fragment_expr_eval::{
+    FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
+    helper_result_from_exprs_with_fragment_locals,
+};
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::output_path;
@@ -64,11 +66,18 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
     let fallback_paths = eval_helper_exprs_effects(exprs, bindings, current_dot).defaults;
-    let local_effects = eval_local_exprs_effects_without_meta(
+    let result = helper_result_from_exprs_with_fragment_locals(
         exprs,
-        &state.locals.bindings,
-        &state.locals.default_paths,
+        FragmentLocalFacts::without_output_meta(
+            &state.locals.bindings,
+            &state.locals.default_paths,
+        ),
+        Some(bindings),
+        current_dot,
+        state.context,
+        state.seen,
     );
+    let local_effects = &result.effects;
 
     let direct_output_effects = eval_non_helper_output_exprs_effects(exprs, bindings, current_dot);
     let direct_output_uses = output_uses_from_rendered_effects(
@@ -93,32 +102,17 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         &local_effects.local_default_paths,
     );
 
-    let mut nested = crate::helper_summary::HelperSummary::default();
     let mut expression_output_uses = Vec::new();
-    let mut expression_seen = state.seen.clone();
-    for expr in exprs {
-        if !expr_contains_helper_call(expr) {
-            continue;
-        }
-        let result = helper_result_from_expr_with_fragment_locals(
-            expr,
-            &state.locals.bindings,
-            Some(bindings),
-            current_dot,
-            state.context,
-            &mut expression_seen,
+    if let Some(binding) = &result.value {
+        binding.collect_output_uses(
+            &mut expression_output_uses,
+            &output_path,
+            kind,
+            active_output_predicates,
+            &fallback_paths,
         );
-        nested.extend(result.effects.helper_summary);
-        if let Some(binding) = result.value {
-            binding.collect_output_uses(
-                &mut expression_output_uses,
-                &output_path,
-                kind,
-                active_output_predicates,
-                &fallback_paths,
-            );
-        }
     }
+    let nested = result.effects.helper_summary;
     let nested_scalar_outputs = nested.scalar_output_meta.into_iter().collect::<Vec<_>>();
     let nested_fragment_outputs = nested.fragment_output_uses;
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
@@ -206,13 +200,17 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut seen_rhs = state.seen.clone();
     let result = helper_result_from_expr_with_fragment_locals(
         rhs_expr,
-        &state.locals.bindings,
+        FragmentLocalFacts::without_output_meta(
+            &state.locals.bindings,
+            &state.locals.default_paths,
+        ),
         Some(bindings),
         current_dot,
         state.context,
         &mut seen_rhs,
     );
     let mut binding = result.value;
+    let local_default_paths = result.effects.local_default_paths.clone();
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let nested = result.effects.helper_summary;
@@ -250,12 +248,7 @@ fn collect_bound_fragment_output_assignment_uses(
         state.locals.bindings.insert(var.to_string(), binding);
     }
     let mut defaulted_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
-    let local_effects = eval_local_exprs_effects_without_meta(
-        rhs_exprs,
-        &state.locals.bindings,
-        &state.locals.default_paths,
-    );
-    defaulted_paths.extend(local_effects.local_default_paths);
+    defaulted_paths.extend(local_default_paths);
     state.locals.set_default_paths(var, defaulted_paths);
 }
 
