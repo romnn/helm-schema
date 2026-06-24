@@ -3,27 +3,23 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::Guard;
 use crate::ProviderSchemaUse;
 use crate::ValueKind;
-use crate::contract_signals::{ConditionalGuard, ContractRequirednessEvidence, MetadataFieldKind};
+use crate::contract_signals::{
+    ConditionalGuard, ContractRequirednessEvidence, ContractValuePathFacts, MetadataFieldKind,
+};
 use crate::predicate::Predicate;
 
-use super::{ContractTypeHint, ContractUse};
+use super::ContractUse;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct ContractPathObservation {
     pub(crate) referenced: bool,
-    pub(crate) ranged: bool,
     pub(crate) guard_predicates: Vec<ConditionalGuard>,
     pub(crate) requiredness: ContractRequirednessEvidence,
+    pub(crate) facts: ContractValuePathFacts,
     pub(crate) guard_render_use: Option<ContractRenderUse>,
     pub(crate) source_render_use: Option<ContractRenderUse>,
-    pub(crate) nullable_render_use: bool,
     pub(crate) type_hints: BTreeSet<String>,
     pub(crate) metadata_field_kind: Option<MetadataFieldKind>,
-    pub(crate) used_as_fragment: bool,
-    pub(crate) used_as_pathless_fragment: bool,
-    pub(crate) accepted_values_root_fragment: bool,
-    pub(crate) accepted_dependency_values_root_fragment: bool,
-    pub(crate) is_partial_scalar_value_path: bool,
     pub(crate) source_guards_empty: bool,
     pub(crate) source_null_tolerant: Option<bool>,
     pub(crate) source_lowerable_conditional_guards: Option<Vec<ConditionalGuard>>,
@@ -31,8 +27,19 @@ pub(crate) struct ContractPathObservation {
 }
 
 impl ContractPathObservation {
-    pub(crate) fn from_type_hint(type_hint: &ContractTypeHint) -> Option<(String, Self)> {
-        if type_hint.value_path.trim().is_empty() {
+    pub(crate) fn type_hint(
+        value_path: &str,
+        schema_types: &BTreeSet<String>,
+    ) -> Option<(String, Self)> {
+        if value_path.trim().is_empty() {
+            return None;
+        }
+        let schema_types = schema_types
+            .iter()
+            .filter(|schema_type| !schema_type.trim().is_empty())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        if schema_types.is_empty() {
             return None;
         }
 
@@ -40,10 +47,8 @@ impl ContractPathObservation {
             referenced: true,
             ..Self::default()
         };
-        observation
-            .type_hints
-            .extend(type_hint.schema_types.iter().cloned());
-        Some((type_hint.value_path.clone(), observation))
+        observation.type_hints = schema_types;
+        Some((value_path.to_string(), observation))
     }
 
     pub(crate) fn dependency_values_root_fragment(value_path: &str) -> Option<(String, Self)> {
@@ -55,8 +60,11 @@ impl ContractPathObservation {
             value_path.to_string(),
             Self {
                 referenced: true,
-                accepted_values_root_fragment: true,
-                accepted_dependency_values_root_fragment: true,
+                facts: ContractValuePathFacts {
+                    accepted_values_root_fragment: true,
+                    accepted_dependency_values_root_fragment: true,
+                    ..ContractValuePathFacts::default()
+                },
                 ..Self::default()
             },
         ))
@@ -111,10 +119,10 @@ pub(crate) fn contract_path_observations(
             path_observation(&mut path_observations, &contract_use.source_expr)
     {
         observation.metadata_field_kind = metadata_field_kind_from_yaml_path(&contract_use.path.0);
-        observation.used_as_fragment = contract_use.kind == ValueKind::Fragment;
-        observation.used_as_pathless_fragment =
+        observation.facts.used_as_fragment = contract_use.kind == ValueKind::Fragment;
+        observation.facts.used_as_pathless_fragment =
             contract_use.kind == ValueKind::Fragment && contract_use.path.0.is_empty();
-        observation.is_partial_scalar_value_path =
+        observation.facts.is_partial_scalar_value_path =
             contract_use.kind == ValueKind::PartialScalar && !contract_use.path.0.is_empty();
         observation.source_render_use = (!path_is_empty).then_some(ContractRenderUse {
             range_guarded: self_range_guarded,
@@ -126,7 +134,7 @@ pub(crate) fn contract_path_observations(
             lowerable_conditional_guard_set(contract_use, &predicates);
         observation.provider_schema_use = provider_schema_use(contract_use, self_range_guarded);
         observation.requiredness.is_positive_header = positive_header;
-        observation.nullable_render_use |= !path_is_empty
+        observation.facts.is_nullable |= !path_is_empty
             || self_range_guarded
             || contract_use.kind == ValueKind::Fragment
             || pathless_self_default_guarded;
@@ -177,8 +185,8 @@ pub(crate) fn contract_path_observations(
     if has_source {
         for path in range_guard_paths {
             if let Some(observation) = path_observation(&mut path_observations, &path) {
-                observation.ranged = true;
-                observation.nullable_render_use = true;
+                observation.facts.is_ranged_source = true;
+                observation.facts.is_nullable = true;
             }
         }
     }

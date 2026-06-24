@@ -1,7 +1,6 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
-use crate::contract::fact::ContractFact;
-use crate::contract::{ContractDocument, ContractTypeHint, FinalizedContract};
+use crate::contract::{ContractDocument, FinalizedContract};
 use crate::contract_normalization::normalize_contract_uses;
 use crate::contract_signals::ContractSchemaSignals;
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
@@ -12,7 +11,9 @@ use crate::{ContractUse, Guard, ValueKind, YamlPath};
 /// contract-layer artifact instead of a raw vector owned by callers.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractIr {
-    facts: Vec<ContractFact>,
+    uses: Vec<ContractUse>,
+    type_hints: BTreeMap<String, BTreeSet<String>>,
+    dependency_values_root_fragments: BTreeSet<String>,
 }
 
 impl ContractIr {
@@ -25,12 +26,13 @@ impl ContractIr {
     #[must_use]
     pub fn from_contract_uses(uses: Vec<ContractUse>) -> Self {
         Self {
-            facts: uses.into_iter().map(ContractFact::Use).collect(),
+            uses,
+            ..Self::default()
         }
     }
 
     pub(crate) fn push(&mut self, contract_use: ContractUse) {
-        self.facts.push(ContractFact::Use(contract_use));
+        self.uses.push(contract_use);
     }
 
     /// Add a pathless scalar claim for a value path.
@@ -48,14 +50,21 @@ impl ContractIr {
     }
 
     pub fn push_pathless_dependency_fragment(&mut self, source_expr: impl Into<String>) {
-        self.facts.push(ContractFact::DependencyValuesRootFragment(
-            source_expr.into(),
-        ));
+        self.dependency_values_root_fragments
+            .insert(source_expr.into());
     }
 
     /// Move all claims from another contract graph into this graph.
     pub fn append(&mut self, mut other: Self) {
-        self.facts.append(&mut other.facts);
+        self.uses.append(&mut other.uses);
+        self.dependency_values_root_fragments
+            .append(&mut other.dependency_values_root_fragments);
+        for (path, schema_types) in other.type_hints {
+            self.type_hints
+                .entry(path)
+                .or_default()
+                .extend(schema_types);
+        }
     }
 
     /// Append guards to every claim in the graph without rewriting any paths.
@@ -68,12 +77,10 @@ impl ContractIr {
             return;
         }
 
-        for fact in &mut self.facts {
-            if let ContractFact::Use(contract_use) = fact {
-                for guard in guards {
-                    if !contract_use.guards.contains(guard) {
-                        contract_use.guards.push(guard.clone());
-                    }
+        for contract_use in &mut self.uses {
+            for guard in guards {
+                if !contract_use.guards.contains(guard) {
+                    contract_use.guards.push(guard.clone());
                 }
             }
         }
@@ -88,9 +95,21 @@ impl ContractIr {
     where
         F: FnMut(&str) -> String,
     {
-        for fact in &mut self.facts {
-            fact.map_value_paths(&mut map);
+        for contract_use in &mut self.uses {
+            contract_use.map_value_paths(&mut map);
         }
+        self.dependency_values_root_fragments =
+            std::mem::take(&mut self.dependency_values_root_fragments)
+                .into_iter()
+                .map(|path| map(&path))
+                .collect();
+        self.type_hints = std::mem::take(&mut self.type_hints)
+            .into_iter()
+            .map(|(path, schema_types)| (map(&path), schema_types))
+            .fold(BTreeMap::new(), |mut type_hints, (path, schema_types)| {
+                type_hints.entry(path).or_default().extend(schema_types);
+                type_hints
+            });
     }
 
     /// Add declared input-type hints for values paths without projecting them
@@ -101,17 +120,7 @@ impl ContractIr {
         if path.trim().is_empty() || schema_type.trim().is_empty() {
             return;
         }
-        if let Some(existing) = self.facts.iter_mut().find_map(|fact| match fact {
-            ContractFact::TypeHint(type_hint) if type_hint.value_path == path => Some(type_hint),
-            _ => None,
-        }) {
-            existing.schema_types.insert(schema_type);
-            return;
-        }
-
-        if let Some(type_hint) = ContractTypeHint::new(path, [schema_type]) {
-            self.facts.push(ContractFact::TypeHint(type_hint));
-        }
+        self.type_hints.entry(path).or_default().insert(schema_type);
     }
 
     /// Extend the graph with already-grouped path type hints.
@@ -120,17 +129,20 @@ impl ContractIr {
         type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
     ) {
         for (path, schema_types) in type_hints {
-            let Some(type_hint) = ContractTypeHint::new(path.clone(), schema_types) else {
+            if path.trim().is_empty() {
                 continue;
-            };
-            if let Some(existing) = self.facts.iter_mut().find_map(|fact| match fact {
-                ContractFact::TypeHint(existing) if existing.value_path == path => Some(existing),
-                _ => None,
-            }) {
-                existing.schema_types.extend(type_hint.schema_types);
-            } else {
-                self.facts.push(ContractFact::TypeHint(type_hint));
             }
+            let schema_types = schema_types
+                .into_iter()
+                .filter(|schema_type| !schema_type.trim().is_empty())
+                .collect::<BTreeSet<_>>();
+            if schema_types.is_empty() {
+                continue;
+            }
+            self.type_hints
+                .entry(path)
+                .or_default()
+                .extend(schema_types);
         }
     }
 
@@ -153,33 +165,21 @@ impl ContractIr {
     /// one normalized contract representation.
     #[must_use]
     pub fn finalize(self) -> FinalizedContract {
-        let (mut uses, type_hints, dependency_values_root_fragments) = self.into_contract_parts();
+        let Self {
+            mut uses,
+            type_hints,
+            dependency_values_root_fragments,
+        } = self;
+        for source_expr in &dependency_values_root_fragments {
+            uses.push(ContractUse::new(
+                source_expr.clone(),
+                YamlPath(Vec::new()),
+                ValueKind::Fragment,
+                Vec::new(),
+                None,
+            ));
+        }
         normalize_contract_uses(&mut uses);
         FinalizedContract::new(uses, type_hints, dependency_values_root_fragments)
-    }
-
-    fn into_contract_parts(self) -> (Vec<ContractUse>, Vec<ContractTypeHint>, BTreeSet<String>) {
-        let mut uses = Vec::new();
-        let mut type_hints = Vec::new();
-        let mut dependency_values_root_fragments = BTreeSet::new();
-
-        for fact in self.facts {
-            match fact {
-                ContractFact::Use(contract_use) => uses.push(contract_use),
-                ContractFact::DependencyValuesRootFragment(source_expr) => {
-                    dependency_values_root_fragments.insert(source_expr.clone());
-                    uses.push(ContractUse::new(
-                        source_expr,
-                        YamlPath(Vec::new()),
-                        ValueKind::Fragment,
-                        Vec::new(),
-                        None,
-                    ));
-                }
-                ContractFact::TypeHint(type_hint) => type_hints.push(type_hint),
-            }
-        }
-
-        (uses, type_hints, dependency_values_root_fragments)
     }
 }

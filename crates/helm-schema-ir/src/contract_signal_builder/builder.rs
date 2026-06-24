@@ -1,9 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ProviderSchemaUse;
-use crate::contract::{
-    ContractPathObservation, ContractTypeHint, ContractUse, contract_path_observations,
-};
+use crate::contract::{ContractPathObservation, ContractUse, contract_path_observations};
 use crate::contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
@@ -12,7 +10,7 @@ use crate::contract_signals::{
 
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
-    type_hints: &[ContractTypeHint],
+    type_hints: &BTreeMap<String, BTreeSet<String>>,
     dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
@@ -26,8 +24,10 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             path_accumulator(&mut paths, &path).observe_path_observation(&observation);
         }
     }
-    for type_hint in type_hints {
-        if let Some((path, observation)) = ContractPathObservation::from_type_hint(type_hint) {
+    for (value_path, schema_types) in type_hints {
+        if let Some((path, observation)) =
+            ContractPathObservation::type_hint(value_path, schema_types)
+        {
             path_accumulator(&mut paths, &path).observe_path_observation(&observation);
         }
     }
@@ -86,12 +86,14 @@ impl PathSchemaFactsAccumulator {
         if let Some(field_kind) = observation.metadata_field_kind {
             self.metadata_field_kinds.insert(field_kind);
         }
-        self.facts.used_as_fragment |= observation.used_as_fragment;
-        self.facts.used_as_pathless_fragment |= observation.used_as_pathless_fragment;
-        self.facts.accepted_values_root_fragment |= observation.accepted_values_root_fragment;
+        self.facts.used_as_fragment |= observation.facts.used_as_fragment;
+        self.facts.used_as_pathless_fragment |= observation.facts.used_as_pathless_fragment;
+        self.facts.accepted_values_root_fragment |= observation.facts.accepted_values_root_fragment;
         self.facts.accepted_dependency_values_root_fragment |=
-            observation.accepted_dependency_values_root_fragment;
-        self.facts.is_partial_scalar_value_path |= observation.is_partial_scalar_value_path;
+            observation.facts.accepted_dependency_values_root_fragment;
+        self.facts.is_ranged_source |= observation.facts.is_ranged_source;
+        self.facts.is_partial_scalar_value_path |= observation.facts.is_partial_scalar_value_path;
+        self.facts.is_nullable |= observation.facts.is_nullable;
     }
 
     fn record_provider_schema_use(&mut self, provider_schema_use: ProviderSchemaUse) {
@@ -178,7 +180,6 @@ impl ContractPathAccumulator {
     fn observe_path_observation(&mut self, observation: &ContractPathObservation) {
         self.observe_source_use(observation);
         self.referenced |= observation.referenced;
-        self.facts.facts.is_ranged_source |= observation.ranged;
         self.type_hints
             .extend(observation.type_hints.iter().cloned());
         self.facts.record_observation_facts(observation);
@@ -194,9 +195,6 @@ impl ContractPathAccumulator {
         if let Some(render_use) = observation.guard_render_use {
             self.facts
                 .record_render_use(render_use.range_guarded, render_use.self_guarded);
-        }
-        if observation.nullable_render_use {
-            self.facts.facts.is_nullable = true;
         }
     }
 
