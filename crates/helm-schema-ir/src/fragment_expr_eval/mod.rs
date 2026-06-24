@@ -13,7 +13,6 @@ use crate::expr_eval::eval_expr;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use bound_helper_resolver::{
     BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_result_with_bound_helpers,
-    eval_expr_with_bound_helpers,
 };
 
 pub(crate) fn context_value_from_outer_expr(
@@ -37,25 +36,6 @@ pub(crate) fn context_value_from_outer_expr(
     eval_expr(expr, &env)
         .value
         .map(|value| value.to_context_value())
-}
-
-pub(crate) fn helper_value_from_expr_with_fragment_locals(
-    expr: &TemplateExpr,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    outer: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> Option<AbstractValue> {
-    helper_result_from_expr_with_fragment_locals(
-        expr,
-        fragment_locals,
-        outer,
-        current_dot,
-        context,
-        seen,
-    )
-    .value
 }
 
 pub(crate) fn helper_result_from_expr_with_fragment_locals(
@@ -93,7 +73,7 @@ pub(crate) fn values_for_helper_arg_with_fragment_locals(
     seen: &mut HashSet<String>,
 ) -> HashMap<String, AbstractValue> {
     bindings_for_helper_arg_with(arg, outer, |expr| {
-        helper_value_from_expr_with_fragment_locals(
+        helper_result_from_expr_with_fragment_locals(
             expr,
             fragment_locals,
             outer,
@@ -101,6 +81,7 @@ pub(crate) fn values_for_helper_arg_with_fragment_locals(
             context,
             seen,
         )
+        .value
     })
 }
 
@@ -113,7 +94,7 @@ pub(crate) fn fragment_value_from_expr(
 ) -> Option<AbstractValue> {
     let env = EvalEnv::from_fragment_context(locals, current_dot);
     let current_dot_helper = current_dot.map(AbstractValue::to_context_value);
-    eval_expr_with_bound_helpers(
+    eval_expr_result_with_bound_helpers(
         expr,
         &env,
         BoundHelperValueResolverParams {
@@ -125,5 +106,6 @@ pub(crate) fn fragment_value_from_expr(
             projection: HelperAnalysisProjection::FragmentValue,
         },
     )
+    .value
     .map(|value| value.to_context_value())
 }

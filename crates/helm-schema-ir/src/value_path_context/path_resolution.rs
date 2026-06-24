@@ -5,9 +5,8 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{eval_expr, eval_exprs_effects};
+use crate::expr_eval::{direct_values_path, eval_expr, eval_exprs_effects};
 use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
-use crate::value_path_extraction::values_path_from_expr;
 
 use super::ValuePathContext;
 
@@ -91,8 +90,7 @@ impl ValuePathContext<'_> {
     }
 
     pub(super) fn expr_needs_context_value_resolution(&self, expr: &TemplateExpr) -> bool {
-        values_path_from_expr(expr).is_none()
-            && !self.resolved_values_paths_from_expr(expr).is_empty()
+        direct_values_path(expr).is_none() && !self.resolved_values_paths_from_expr(expr).is_empty()
     }
 
     pub(crate) fn with_body_fragment_value_expr(
@@ -165,7 +163,7 @@ fn resolve_expr_to_values_path(
     bindings: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
 ) -> Option<String> {
-    if let Some(path) = values_path_from_expr(expr) {
+    if let Some(path) = direct_values_path(expr) {
         return Some(path);
     }
 

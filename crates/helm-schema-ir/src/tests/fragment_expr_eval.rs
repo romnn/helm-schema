@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::define_body_cache::DefineBodyCache;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, fragment_value_from_expr,
-    helper_value_from_expr_with_fragment_locals,
+    helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummaryCache};
 use test_util::prelude::sim_assert_eq;
@@ -35,7 +35,7 @@ fn helper_value_from_fragment_locals(
     let helper_summaries = HelperSummaryCache::new();
     let context = empty_context(&defines, &define_bodies, &helper_summaries);
     let mut seen = HashSet::new();
-    helper_value_from_expr_with_fragment_locals(
+    helper_result_from_expr_with_fragment_locals(
         &expr,
         fragment_locals,
         None,
@@ -43,6 +43,7 @@ fn helper_value_from_fragment_locals(
         context,
         &mut seen,
     )
+    .value
 }
 
 fn context_local() -> HashMap<String, AbstractValue> {
@@ -164,14 +165,16 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
-    let Some(AbstractValue::OutputSet(output_set)) = helper_value_from_expr_with_fragment_locals(
+    let Some(AbstractValue::OutputSet(output_set)) = helper_result_from_expr_with_fragment_locals(
         &expr,
         &HashMap::new(),
         None,
         None,
         context,
         &mut seen,
-    ) else {
+    )
+    .value
+    else {
         panic!("expected helper projection to resolve to an output-set binding");
     };
 

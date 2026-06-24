@@ -1,6 +1,8 @@
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{apply_local_set_mutations_expr, eval_expr, eval_exprs_effects};
+use crate::expr_eval::{
+    apply_local_set_mutations_expr, direct_values_path, eval_expr, eval_exprs_effects,
+};
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::printf_eval::render_printf_string_sets;
 use crate::template_expr_cache::parse_expr_text;
@@ -18,6 +20,10 @@ fn single_expr(action: &str) -> TemplateExpr {
     let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
     sim_assert_eq!(have: exprs.len(), want: 1, "expected exactly one parsed expression");
     exprs.into_iter().next().expect("expression exists")
+}
+
+fn direct_values_path_expr(action: &str) -> Option<String> {
+    direct_values_path(&single_expr(action))
 }
 
 fn dict(entries: &[(&str, AbstractValue)]) -> AbstractValue {
@@ -107,6 +113,39 @@ fn bound_path_resolution_uses_shared_expression_eval() {
         .and_then(AbstractValue::unique_path);
 
     sim_assert_eq!(have: path, want: Some("serviceAccount.name".to_string()));
+}
+
+#[test]
+fn direct_root_values_path_is_an_expression_eval_projection() {
+    sim_assert_eq!(
+        have: direct_values_path_expr(".Values.foo.bar"),
+        want: Some("foo.bar".to_string())
+    );
+    sim_assert_eq!(
+        have: direct_values_path_expr("$.Values.X"),
+        want: Some("X".to_string())
+    );
+    sim_assert_eq!(
+        have: direct_values_path_expr("$root.Values.Y"),
+        want: Some("Y".to_string())
+    );
+    sim_assert_eq!(
+        have: direct_values_path_expr("((.Values.appVersions).airtype).global"),
+        want: Some("appVersions.airtype.global".to_string())
+    );
+}
+
+#[test]
+fn direct_values_path_projection_rejects_computed_and_contextual_paths() {
+    sim_assert_eq!(have: direct_values_path_expr(".context.Values.X"), want: None);
+    sim_assert_eq!(
+        have: direct_values_path_expr(r#"eq .Values.X ".Values.fake""#),
+        want: None
+    );
+    sim_assert_eq!(
+        have: direct_values_path_expr(r#"" .Values.fake ""#),
+        want: None
+    );
 }
 
 #[test]

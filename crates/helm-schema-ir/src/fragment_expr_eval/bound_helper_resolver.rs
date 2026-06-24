@@ -9,14 +9,6 @@ use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
 use super::FragmentEvalContext;
 
-pub(super) fn eval_expr_with_bound_helpers(
-    expr: &TemplateExpr,
-    env: &EvalEnv,
-    params: BoundHelperValueResolverParams<'_, '_, '_>,
-) -> Option<AbstractValue> {
-    eval_expr_result_with_bound_helpers(expr, env, params).value
-}
-
 pub(super) fn eval_expr_result_with_bound_helpers(
     expr: &TemplateExpr,
     env: &EvalEnv,

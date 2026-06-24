@@ -30,6 +30,25 @@ pub(crate) fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult {
     eval_expr_with_helper_calls(expr, env, &mut resolver)
 }
 
+pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
+    match expr.deparen() {
+        TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
+            eval_expr(expr, &EvalEnv::default())
+                .value
+                .as_ref()
+                .and_then(AbstractValue::unique_path)
+        }
+        TemplateExpr::Literal(_)
+        | TemplateExpr::Variable(_)
+        | TemplateExpr::Call { .. }
+        | TemplateExpr::Pipeline(_)
+        | TemplateExpr::Parenthesized(_)
+        | TemplateExpr::VariableDefinition { .. }
+        | TemplateExpr::Assignment { .. }
+        | TemplateExpr::Unknown(_) => None,
+    }
+}
+
 pub(crate) fn eval_expr_with_helper_calls(
     expr: &TemplateExpr,
     env: &EvalEnv,

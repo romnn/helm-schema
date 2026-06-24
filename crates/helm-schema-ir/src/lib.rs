@@ -46,7 +46,6 @@ mod symbolic_scope_state;
 mod template_expr_cache;
 mod tree_sitter_utils;
 mod value_path_context;
-mod value_path_extraction;
 mod yaml_syntax;
 
 pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};

@@ -2,8 +2,8 @@ use std::collections::{BTreeSet, HashMap};
 
 use helm_schema_ast::TemplateExpr;
 
+use crate::expr_eval::direct_values_path;
 use crate::fragment_assignment::AssignmentKind;
-use crate::value_path_extraction::values_path_from_expr;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct GetBinding {
@@ -57,7 +57,7 @@ fn get_binding_plan_from_expr(
         return None;
     }
 
-    let base = values_path_from_expr(args[0].deparen())?;
+    let base = direct_values_path(args[0].deparen())?;
     let TemplateExpr::Variable(key_var) = args[1].deparen() else {
         return None;
     };

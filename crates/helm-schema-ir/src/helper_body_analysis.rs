@@ -7,7 +7,7 @@ use crate::condition_action_plan::ConditionActionPlan;
 use crate::document_projection::{DocumentTracker, collect_document_site_context};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr,
-    helper_value_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
+    helper_result_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
 };
 use crate::fragment_range_scope::{
     range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
@@ -78,7 +78,7 @@ pub(crate) fn resolve_bound_helper_call(
     let mut helper_body_dot = params
         .arg
         .and_then(|expr| {
-            helper_value_from_expr_with_fragment_locals(
+            helper_result_from_expr_with_fragment_locals(
                 expr,
                 params.fragment_locals,
                 params.outer_bindings,
@@ -86,6 +86,7 @@ pub(crate) fn resolve_bound_helper_call(
                 params.context,
                 &mut dot_seen,
             )
+            .value
         })
         .or_else(|| params.current_dot.cloned());
 
