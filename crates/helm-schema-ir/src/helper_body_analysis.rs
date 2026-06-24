@@ -534,7 +534,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         if self.fragment_control.suppresses_output() {
             return;
         }
-        let output_slot = self.document_tracker.output_slot_for_action(node, exprs);
+        let output_slot = self.document_tracker.output_slot_for_action(node);
         let Some(site) = output_slot.fragment_output_site() else {
             return;
         };

@@ -127,10 +127,10 @@ fn attribution_uses_mapping_key_for_flow_sequence_scalar() {
 
     for node in nodes {
         let context = attribution
-            .output_context_for_node(node)
+            .output_slot_for_node(node)
             .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
         sim_assert_eq!(
-            have: context.output_path.0,
+            have: context.path.0,
             want: vec!["livenessProbe", "exec", "command"],
             "node kind {}",
             node.kind()
@@ -158,9 +158,7 @@ fn tracker_keeps_outer_prefix_for_fragment_inside_with_body() {
             })
         })
         .expect("fragment action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(8))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "template", "spec", "volumes"],
@@ -190,9 +188,7 @@ fn tracker_attributes_cert_manager_extra_env_to_container_env() {
         .filter(|node| node.start_byte() > range_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("extraEnv render action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(10))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "template", "spec", "containers[*]", "env"],
@@ -288,12 +284,7 @@ spec:
         .filter(|node| node.start_byte() > security_context_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("security context render");
-    let rendered_context = tracker
-        .attribution
-        .virtual_indent_context_for_node(action, 12);
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(12))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec![
@@ -303,11 +294,10 @@ spec:
             "containers[*]",
             "securityContext",
         ],
-        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        "current={:?} mapping={:?} context={:?}",
         tracker.path_for_node(action).0,
         tracker.path_at_mapping_entry_indent(action, 12).0,
-        tracker.context_for_node(action),
-        rendered_context
+        tracker.context_for_node(action)
     );
 }
 
@@ -330,9 +320,7 @@ fn tracker_attributes_cert_manager_inline_host_aliases_fragment_to_host_aliases(
         .filter(|node| node.start_byte() > host_aliases_start)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("host aliases render action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(8))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "template", "spec", "hostAliases"],
@@ -361,9 +349,7 @@ fn tracker_attributes_cert_manager_inline_ip_families_fragment_to_field() {
                 .is_ok_and(|text| text.contains("nindent 2"))
         })
         .expect("serviceIPFamilies render action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(2))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "ipFamilies"],
@@ -393,9 +379,7 @@ fn tracker_attributes_signoz_service_common_labels_to_metadata_labels() {
                 .is_ok_and(|text| text.contains("common.tplvalues.render"))
         })
         .expect("commonLabels render action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(4))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["metadata", "labels"],
@@ -425,9 +409,7 @@ fn tracker_attributes_signoz_service_extra_ports_to_service_ports() {
                 .is_ok_and(|text| text.contains("common.tplvalues.render"))
         })
         .expect("extraPorts render action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(4))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "ports"],
@@ -455,7 +437,7 @@ fn tracker_attributes_cert_manager_liveness_probe_scalar_to_probe_field() {
         .expect("liveness probe failureThreshold action");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec![
@@ -473,11 +455,7 @@ fn tracker_attributes_cert_manager_liveness_probe_scalar_to_probe_field() {
         tracker.path_at_mapping_entry_indent(action, 12).0,
         tracker.context_for_node(action)
     );
-    assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -500,7 +478,7 @@ fn tracker_attributes_cert_manager_proxy_value_to_env_value() {
         .expect("HTTP proxy value action");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec![
@@ -518,11 +496,7 @@ fn tracker_attributes_cert_manager_proxy_value_to_env_value() {
         tracker.path_at_mapping_entry_indent(action, 12).0,
         tracker.context_for_node(action)
     );
-    assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -539,10 +513,10 @@ fn attribution_marks_mapping_value_action_as_entire_scalar() {
 
     for node in nodes {
         let context = attribution
-            .output_context_for_node(node)
+            .output_slot_for_node(node)
             .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
         sim_assert_eq!(
-            have: context.output_path.0,
+            have: context.path.0,
             want: vec!["env[*]", "value"],
             "node kind {}",
             node.kind()
@@ -568,10 +542,10 @@ fn attribution_marks_inline_sequence_mapping_value_action_as_entire_scalar() {
 
     for node in nodes {
         let context = attribution
-            .output_context_for_node(node)
+            .output_slot_for_node(node)
             .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
         sim_assert_eq!(
-            have: context.output_path.0,
+            have: context.path.0,
             want: vec!["ports[*]", "port"],
             "node kind {}",
             node.kind()
@@ -599,16 +573,12 @@ fn tracker_preserves_entire_scalar_for_inline_sequence_mapping_action() {
     let action = actions.into_iter().next().expect("output action");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec!["ports[*]", "port"]
     );
-    assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -633,16 +603,12 @@ ports:
     let action = actions.into_iter().next().expect("output action");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec!["ports[*]", "port"]
     );
-    assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -668,16 +634,12 @@ fn tracker_attributes_required_call_to_mapping_scalar_value() {
     let action = actions.into_iter().next().expect("required output action");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec!["env[*]", "valueFrom", "secretKeyRef", "name",]
     );
-    assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -700,7 +662,7 @@ fn tracker_attributes_signoz_smtp_required_name_to_secret_ref_name() {
     let action = actions.into_iter().next().expect("required output action");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec![
@@ -718,11 +680,7 @@ fn tracker_attributes_signoz_smtp_required_name_to_secret_ref_name() {
         tracker.path_at_mapping_entry_indent(action, 18).0,
         tracker.context_for_node(action)
     );
-    assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -749,20 +707,14 @@ fn tracker_attributes_networkpolicy_extra_ingress_to_ingress_rules() {
                 .is_ok_and(|text| text.contains("common.tplvalues.render"))
         })
         .expect("extra ingress render action");
-    let rendered_context = tracker
-        .attribution
-        .virtual_indent_context_for_node(action, 4);
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(4))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "ingress"],
-        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        "current={:?} mapping={:?} context={:?}",
         tracker.path_for_node(action).0,
         tracker.path_at_mapping_entry_indent(action, 4).0,
-        tracker.context_for_node(action),
-        rendered_context
+        tracker.context_for_node(action)
     );
 }
 
@@ -790,20 +742,14 @@ fn tracker_attributes_servicemonitor_metric_relabelings_to_endpoint_field() {
         .filter(|node| node.start_byte() > marker)
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("metricRelabelings render action");
-    let rendered_context = tracker
-        .attribution
-        .virtual_indent_context_for_node(action, 4);
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(4))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "endpoints[*]", "metricRelabelings"],
-        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        "current={:?} mapping={:?} context={:?}",
         tracker.path_for_node(action).0,
         tracker.path_at_mapping_entry_indent(action, 4).0,
-        tracker.context_for_node(action),
-        rendered_context
+        tracker.context_for_node(action)
     );
 }
 
@@ -825,9 +771,7 @@ fn tracker_attributes_networkpolicy_standard_labels_to_metadata_labels() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("standard labels action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(4))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["metadata", "labels"],
@@ -856,9 +800,7 @@ fn tracker_attributes_networkpolicy_match_labels_to_selector_matchlabels() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("match labels action");
-    let path = tracker
-        .output_slot_for_node(action, ValueKind::Fragment, Some(6))
-        .path;
+    let path = tracker.output_slot_for_action(action).path;
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "podSelector", "matchLabels"],
@@ -890,7 +832,7 @@ fn tracker_attributes_networkpolicy_range_labels_to_matchlabels_map() {
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("range value action");
     sim_assert_eq!(
-        have: tracker.path_for_node(action).0,
+        have: tracker.output_slot_for_action(action).path.0,
         want: vec![
             "spec",
             "ingress[*]",
@@ -925,7 +867,7 @@ fn tracker_attributes_networkpolicy_metrics_range_labels_to_matchlabels_map() {
         .min_by_key(tree_sitter::Node::start_byte)
         .expect("metrics range value action");
     sim_assert_eq!(
-        have: tracker.path_for_node(action).0,
+        have: tracker.output_slot_for_action(action).path.0,
         want: vec![
             "spec",
             "ingress[*]",
@@ -998,7 +940,7 @@ metadata:
         .expect("serviceAccount.name output");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec!["metadata", "name"],
@@ -1006,11 +948,7 @@ metadata:
         tracker.path_for_node(action).0,
         tracker.context_for_node(action)
     );
-    assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -1033,7 +971,7 @@ fn tracker_attributes_signoz_storage_class_scalar_include_to_pvc_spec_container(
     let action = actions.into_iter().next().expect("storage class include");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec!["spec", "volumeClaimTemplates[*]", "spec"],
@@ -1064,15 +1002,14 @@ fn tracker_attributes_signoz_storage_class_fragment_include_to_pvc_spec_containe
     let action = actions.into_iter().next().expect("storage class include");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Fragment, Some(8))
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec!["spec", "volumeClaimTemplates[*]", "spec"],
-        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        "current={:?} mapping={:?} context={:?}",
         tracker.path_for_node(action).0,
         tracker.path_at_mapping_entry_indent(action, 8).0,
-        tracker.context_for_node(action),
-        tracker.attribution.virtual_indent_context_for_node(action, 8)
+        tracker.context_for_node(action)
     );
 }
 
@@ -1097,7 +1034,7 @@ fn tracker_attributes_signoz_extra_volume_mounts_to_volume_mounts() {
         .expect("extraVolumeMounts include");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Fragment, Some(12))
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec![
@@ -1107,11 +1044,10 @@ fn tracker_attributes_signoz_extra_volume_mounts_to_volume_mounts() {
             "containers[*]",
             "volumeMounts",
         ],
-        "current={:?} mapping={:?} context={:?} rendered={:?}",
+        "current={:?} mapping={:?} context={:?}",
         tracker.path_for_node(action).0,
         tracker.path_at_mapping_entry_indent(action, 12).0,
-        tracker.context_for_node(action),
-        tracker.attribution.virtual_indent_context_for_node(action, 12)
+        tracker.context_for_node(action)
     );
 }
 
@@ -1138,15 +1074,13 @@ fn tracker_preserves_entire_scalar_for_bitnami_metrics_port_after_nested_blocks(
         .expect("metrics port output action");
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: vec!["spec", "ingress[*]", "ports[*]", "port"]
     );
     assert!(
-        tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value,
+        tracker.output_slot_for_action(action).entire_scalar_value,
         "current={:?} context={:?}",
         tracker.path_for_node(action).0,
         tracker.context_for_node(action).output_path.0
@@ -1176,19 +1110,14 @@ fn tracker_keeps_script_block_scalar_outputs_pathless() {
         &mut actions,
     );
     let action = actions.into_iter().next().expect("script output action");
-    assert!(tracker.context_for_node(action).inside_block_scalar);
     sim_assert_eq!(
         have: tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
+            .output_slot_for_action(action)
             .path
             .0,
         want: Vec::<String>::new()
     );
-    assert!(
-        !tracker
-            .output_slot_for_node(action, ValueKind::Scalar, None)
-            .entire_scalar_value
-    );
+    assert!(!tracker.output_slot_for_action(action).entire_scalar_value);
 }
 
 #[test]
@@ -1207,10 +1136,10 @@ fn attribution_marks_with_bound_dot_action_as_entire_scalar() {
 
     for node in nodes {
         let context = attribution
-            .output_context_for_node(node)
+            .output_slot_for_node(node)
             .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
         sim_assert_eq!(
-            have: context.output_path.0,
+            have: context.path.0,
             want: vec!["env[*]", "value"],
             "node kind {}",
             node.kind()
@@ -1241,10 +1170,10 @@ fn attribution_marks_embedded_sequence_value_action_as_partial_scalar() {
 
     for node in nodes {
         let context = attribution
-            .output_context_for_node(node)
+            .output_slot_for_node(node)
             .unwrap_or_else(|| panic!("missing context for node kind {}", node.kind()));
         sim_assert_eq!(
-            have: context.output_path.0,
+            have: context.path.0,
             want: vec!["args[*]"],
             "node kind {}",
             node.kind()

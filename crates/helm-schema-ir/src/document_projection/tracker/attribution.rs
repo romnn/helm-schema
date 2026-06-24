@@ -2,11 +2,12 @@ use std::collections::HashMap;
 
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
-use crate::YamlPath;
 use crate::fragment_range_scope::range_body_mapping_entry_indent_from_source;
 use crate::tree_sitter_utils::parse_go_template;
 use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
+use crate::{SourceSpan, ValueKind, YamlPath};
 
+use super::OutputSlot;
 use super::yaml_tree::{
     is_scalar_like, parse_yaml_tree, scalar_text, strip_scalar_quotes, unwrap_yaml_node,
 };
@@ -43,18 +44,14 @@ impl Default for ResolvedNodeContext {
 
 #[derive(Default)]
 pub(super) struct AttributionIndex {
-    output_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
+    output_slots: HashMap<(usize, usize), OutputSlot>,
     control_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
-    rendered_output_nodes: HashMap<(usize, usize, usize), ResolvedNodeContext>,
     mapping_entry_nodes: HashMap<(usize, usize, usize), ResolvedNodeContext>,
 }
 
 impl AttributionIndex {
-    pub(super) fn output_context_for_node(
-        &self,
-        node: tree_sitter::Node<'_>,
-    ) -> Option<ResolvedNodeContext> {
-        self.context_for_node_or_ancestor(&self.output_nodes, node)
+    pub(super) fn output_slot_for_node(&self, node: tree_sitter::Node<'_>) -> Option<OutputSlot> {
+        self.output_slot_for_node_or_ancestor(node)
     }
 
     pub(super) fn control_context_for_node(
@@ -62,14 +59,6 @@ impl AttributionIndex {
         node: tree_sitter::Node<'_>,
     ) -> Option<ResolvedNodeContext> {
         self.context_for_node_or_ancestor(&self.control_nodes, node)
-    }
-
-    pub(super) fn virtual_indent_context_for_node(
-        &self,
-        node: tree_sitter::Node<'_>,
-        indent: usize,
-    ) -> Option<ResolvedNodeContext> {
-        self.context_for_node_or_ancestor_at_indent(&self.rendered_output_nodes, node, indent)
     }
 
     pub(super) fn mapping_entry_context_in_span_at_indent(
@@ -94,15 +83,13 @@ impl AttributionIndex {
         }
     }
 
-    fn context_for_node_or_ancestor_at_indent(
+    fn output_slot_for_node_or_ancestor(
         &self,
-        contexts: &HashMap<(usize, usize, usize), ResolvedNodeContext>,
         mut node: tree_sitter::Node<'_>,
-        indent: usize,
-    ) -> Option<ResolvedNodeContext> {
+    ) -> Option<OutputSlot> {
         loop {
-            if let Some(context) = contexts.get(&(node.start_byte(), node.end_byte(), indent)) {
-                return Some(context.clone());
+            if let Some(slot) = self.output_slots.get(&(node.start_byte(), node.end_byte())) {
+                return Some(slot.clone());
             }
             node = node.parent()?;
         }
@@ -117,6 +104,15 @@ struct OutputSpan {
     action_end: usize,
     placeholder: String,
     structural_indent: Option<usize>,
+    kind: ValueKind,
+}
+
+#[derive(Clone, Copy)]
+struct OutputActionShape {
+    kind: ValueKind,
+    structural_indent: Option<usize>,
+    may_inject_yaml_structure: bool,
+    uses_structural_indent_filter: bool,
 }
 
 struct ControlSpan {
@@ -181,15 +177,6 @@ pub(super) fn build_attribution_index(
                 output.action_start,
                 indent,
             );
-            if let Some(context) = rendered.clone() {
-                attribution.rendered_output_nodes.insert(
-                    (output.action_start, output.action_end, indent),
-                    context.clone(),
-                );
-                attribution
-                    .rendered_output_nodes
-                    .insert((output.node_start, output.node_end, indent), context);
-            }
             if let Some(context) = mapping.clone() {
                 attribution.mapping_entry_nodes.insert(
                     (output.action_start, output.action_end, indent),
@@ -225,12 +212,28 @@ pub(super) fn build_attribution_index(
             if !context.output_path.0.is_empty() {
                 previous_output_paths.push(context.output_path.clone());
             }
+            let action_slot = output_slot_from_context(
+                &output,
+                output.action_start,
+                output.action_end,
+                &context,
+                rendered_context.as_ref(),
+                source,
+            );
+            let node_slot = output_slot_from_context(
+                &output,
+                output.node_start,
+                output.node_end,
+                &context,
+                rendered_context.as_ref(),
+                source,
+            );
             attribution
-                .output_nodes
-                .insert((output.action_start, output.action_end), context.clone());
+                .output_slots
+                .insert((output.action_start, output.action_end), action_slot);
             attribution
-                .output_nodes
-                .insert((output.node_start, output.node_end), context);
+                .output_slots
+                .insert((output.node_start, output.node_end), node_slot);
         }
     }
 
@@ -264,6 +267,81 @@ pub(super) fn build_attribution_index(
     }
 
     attribution
+}
+
+fn output_slot_from_context(
+    output: &OutputSpan,
+    start: usize,
+    end: usize,
+    context: &ResolvedNodeContext,
+    rendered_context: Option<&ResolvedNodeContext>,
+    source: &str,
+) -> OutputSlot {
+    let mut path = if context.in_mapping_key || context.inside_block_scalar {
+        YamlPath(Vec::new())
+    } else if output.kind == ValueKind::Fragment {
+        prefer_fragment_output_path(context, rendered_context)
+    } else {
+        context.output_path.clone()
+    };
+    if output.kind == ValueKind::Fragment
+        && let Some(last) = path.0.last_mut()
+        && let Some(stripped) = last.strip_suffix("[*]")
+    {
+        *last = stripped.to_string();
+    }
+
+    OutputSlot {
+        kind: output.kind,
+        path,
+        resource: None,
+        in_mapping_key: context.in_mapping_key,
+        in_yaml_comment: document_site_is_yaml_comment_part(source, start),
+        entire_scalar_value: context.entire_scalar_value,
+        source_span: SourceSpan::new(start, end),
+    }
+}
+
+fn prefer_fragment_output_path(
+    current: &ResolvedNodeContext,
+    rendered: Option<&ResolvedNodeContext>,
+) -> YamlPath {
+    let current_path = &current.output_path;
+    let Some(rendered) = rendered else {
+        return current_path.clone();
+    };
+    let rendered_path = &rendered.output_path;
+    if current_path.0.is_empty() {
+        return rendered_path.clone();
+    }
+    if rendered_path.0.is_empty() {
+        return current_path.clone();
+    }
+    if path_has_equivalent_prefix(&current_path.0, &rendered_path.0) {
+        if rendered.sequence_item_slot {
+            return rendered_path.clone();
+        }
+        return current_path.clone();
+    }
+    if path_has_equivalent_prefix(&rendered_path.0, &current_path.0) {
+        return preserve_specific_prefix(current_path, rendered_path);
+    }
+    rendered_path.clone()
+}
+
+fn preserve_specific_prefix(prefix: &YamlPath, path: &YamlPath) -> YamlPath {
+    if prefix.0.is_empty() || prefix.0.len() > path.0.len() {
+        return path.clone();
+    }
+
+    let mut merged = prefix.0.clone();
+    merged.extend(path.0.iter().skip(prefix.0.len()).cloned());
+    YamlPath(merged)
+}
+
+fn document_site_is_yaml_comment_part(source: &str, start: usize) -> bool {
+    let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
+    source[line_start..start].trim_start().starts_with('#')
 }
 
 fn rendered_context_is_better_base(
@@ -1155,11 +1233,18 @@ fn enclosing_template_action_span(mut node: tree_sitter::Node<'_>) -> (usize, us
     }
 }
 
-fn sanitize_output_action(sanitized: &mut [u8], start: usize, end: usize, token: &str) {
+fn sanitize_output_action(
+    sanitized: &mut [u8],
+    start: usize,
+    end: usize,
+    token: &str,
+    shape: OutputActionShape,
+) {
     if action_is_root_standalone_line(sanitized, start, end)
-        || (action_is_standalone_line(sanitized, start, end)
-            && action_may_inject_yaml_structure(sanitized, start, end))
-        || action_uses_structural_indent_filter(sanitized, start, end)
+        || (action_is_standalone_line(sanitized, start, end) && shape.may_inject_yaml_structure)
+        || (shape.uses_structural_indent_filter
+            && (action_is_standalone_line(sanitized, start, end)
+                || action_is_inline_mapping_value(sanitized, start)))
     {
         blank_range(sanitized, start, end);
     } else {
@@ -1167,39 +1252,31 @@ fn sanitize_output_action(sanitized: &mut [u8], start: usize, end: usize, token:
     }
 }
 
-fn action_uses_structural_indent_filter(sanitized: &[u8], start: usize, end: usize) -> bool {
+fn output_action_shape(sanitized: &[u8], start: usize, end: usize) -> OutputActionShape {
     let Ok(text) =
         std::str::from_utf8(&sanitized[start.min(sanitized.len())..end.min(sanitized.len())])
     else {
-        return false;
+        return OutputActionShape {
+            kind: ValueKind::Scalar,
+            structural_indent: None,
+            may_inject_yaml_structure: false,
+            uses_structural_indent_filter: false,
+        };
     };
-    parse_action_expressions(text)
-        .iter()
-        .any(expr_uses_indent_filter)
-        && (action_is_standalone_line(sanitized, start, end)
-            || action_is_inline_mapping_value(sanitized, start))
-}
-
-fn action_may_inject_yaml_structure(sanitized: &[u8], start: usize, end: usize) -> bool {
-    let Ok(text) =
-        std::str::from_utf8(&sanitized[start.min(sanitized.len())..end.min(sanitized.len())])
-    else {
-        return false;
-    };
-    parse_action_expressions(text)
-        .iter()
-        .any(TemplateExpr::may_inject_yaml_structure)
-}
-
-fn action_structural_indent_width(sanitized: &[u8], start: usize, end: usize) -> Option<usize> {
-    let text =
-        std::str::from_utf8(&sanitized[start.min(sanitized.len())..end.min(sanitized.len())])
-            .ok()?;
     let exprs = parse_action_expressions(text);
-    exprs
-        .iter()
-        .rev()
-        .find_map(TemplateExpr::fragment_indent_width)
+    OutputActionShape {
+        kind: if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
+            ValueKind::Fragment
+        } else {
+            ValueKind::Scalar
+        },
+        structural_indent: exprs
+            .iter()
+            .rev()
+            .find_map(TemplateExpr::fragment_indent_width),
+        may_inject_yaml_structure: exprs.iter().any(TemplateExpr::may_inject_yaml_structure),
+        uses_structural_indent_filter: exprs.iter().any(expr_uses_indent_filter),
+    }
 }
 
 fn action_is_standalone_line(sanitized: &[u8], start: usize, end: usize) -> bool {
@@ -1299,17 +1376,17 @@ fn sanitize_stream(
 
         if node.is_named() && is_output_root_kind(node.kind()) {
             let (action_start, action_end) = enclosing_template_action_span(node);
-            let structural_indent =
-                action_structural_indent_width(sanitized, action_start, action_end);
+            let shape = output_action_shape(sanitized, action_start, action_end);
             let token = placeholder_token(outputs.len(), action_end.saturating_sub(action_start));
-            sanitize_output_action(sanitized, action_start, action_end, &token);
+            sanitize_output_action(sanitized, action_start, action_end, &token, shape);
             outputs.push(OutputSpan {
                 node_start: node.start_byte(),
                 node_end: node.end_byte(),
                 action_start,
                 action_end,
                 placeholder: token,
-                structural_indent,
+                structural_indent: shape.structural_indent,
+                kind: shape.kind,
             });
             index += 1;
             continue;
@@ -1335,16 +1412,17 @@ fn sanitize_stream(
                     })
                     .map(|child| child.node);
                 if let Some(output_root) = named_inner {
-                    let structural_indent = action_structural_indent_width(sanitized, start, end);
+                    let shape = output_action_shape(sanitized, start, end);
                     let token = placeholder_token(outputs.len(), end.saturating_sub(start));
-                    sanitize_output_action(sanitized, start, end, &token);
+                    sanitize_output_action(sanitized, start, end, &token, shape);
                     outputs.push(OutputSpan {
                         node_start: output_root.start_byte(),
                         node_end: output_root.end_byte(),
                         action_start: start,
                         action_end: end,
                         placeholder: token,
-                        structural_indent,
+                        structural_indent: shape.structural_indent,
+                        kind: shape.kind,
                     });
                 } else {
                     blank_range(sanitized, start, end);

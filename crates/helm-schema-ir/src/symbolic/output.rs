@@ -38,7 +38,7 @@ impl SymbolicWalker<'_> {
     ) {
         self.inline_static_file_templates_from_helper_calls(exprs);
 
-        let output_slot = self.document_tracker.output_slot_for_action(node, exprs);
+        let output_slot = self.document_tracker.output_slot_for_action(node);
         if output_slot.in_yaml_comment {
             return;
         }
