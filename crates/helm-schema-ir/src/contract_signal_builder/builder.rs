@@ -2,8 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ProviderSchemaUse;
 use crate::contract::{
-    ContractPathObservation, ContractSourceObservation, ContractTypeHint, ContractUse,
-    ContractUseObservation,
+    ContractPathObservation, ContractTypeHint, ContractUse, contract_path_observations,
 };
 use crate::contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
@@ -16,28 +15,28 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     type_hints: &[ContractTypeHint],
     dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
-    let mut builder = ContractSchemaSignalBuilder::default();
+    let mut paths = BTreeMap::new();
     for contract_use in uses {
-        builder.record(contract_use);
+        record_contract_use(&mut paths, contract_use);
     }
     for value_path in dependency_values_root_fragments {
-        builder.record_dependency_values_root_fragment(value_path);
+        if let Some((path, observation)) =
+            ContractPathObservation::dependency_values_root_fragment(value_path)
+        {
+            path_accumulator(&mut paths, &path).observe_path_observation(&observation);
+        }
     }
     for type_hint in type_hints {
-        builder.record_declared_type_hint(type_hint);
+        if let Some((path, observation)) = ContractPathObservation::from_type_hint(type_hint) {
+            path_accumulator(&mut paths, &path).observe_path_observation(&observation);
+        }
     }
-    builder.finish()
-}
-
-#[derive(Default)]
-struct ContractSchemaSignalBuilder {
-    paths: BTreeMap<String, ContractPathAccumulator>,
+    finish_schema_signals(paths)
 }
 
 #[derive(Default)]
 struct ContractPathAccumulator {
     referenced: bool,
-    ranged: bool,
     guard_predicates: Vec<ConditionalGuard>,
     facts: PathSchemaFactsAccumulator,
     requiredness: ContractRequirednessEvidence,
@@ -51,18 +50,8 @@ struct ContractPathAccumulator {
 struct PathSchemaFactsAccumulator {
     metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     provider_schema_uses: Vec<ProviderSchemaUse>,
-    has_render_use: bool,
-    has_unconditional_render_use: bool,
-    has_self_guarded_render_use: bool,
-    all_render_uses_self_guarded: bool,
-    has_self_range_guard_render_use: bool,
-    has_nullable_render_use: bool,
+    facts: ContractValuePathFacts,
     all_uses_nullable: bool,
-    used_as_fragment: bool,
-    used_as_pathless_fragment: bool,
-    accepted_values_root_fragment: bool,
-    accepted_dependency_values_root_fragment: bool,
-    is_partial_scalar_value_path: bool,
 }
 
 impl Default for PathSchemaFactsAccumulator {
@@ -70,56 +59,39 @@ impl Default for PathSchemaFactsAccumulator {
         Self {
             metadata_field_kinds: BTreeSet::new(),
             provider_schema_uses: Vec::new(),
-            has_render_use: false,
-            has_unconditional_render_use: false,
-            has_self_guarded_render_use: false,
-            all_render_uses_self_guarded: true,
-            has_self_range_guard_render_use: false,
-            has_nullable_render_use: false,
+            facts: ContractValuePathFacts {
+                all_render_uses_self_guarded: true,
+                ..ContractValuePathFacts::default()
+            },
             all_uses_nullable: true,
-            used_as_fragment: false,
-            used_as_pathless_fragment: false,
-            accepted_values_root_fragment: false,
-            accepted_dependency_values_root_fragment: false,
-            is_partial_scalar_value_path: false,
         }
     }
 }
 
 impl PathSchemaFactsAccumulator {
     fn record_render_use(&mut self, range_guarded: bool, self_guarded: Option<bool>) {
-        self.has_render_use = true;
-        self.has_self_range_guard_render_use |= range_guarded;
+        self.facts.has_render_use = true;
+        self.facts.has_self_range_guard_render_use |= range_guarded;
         if let Some(self_guarded) = self_guarded {
-            self.has_self_guarded_render_use |= self_guarded;
-            self.all_render_uses_self_guarded &= self_guarded;
+            self.facts.has_self_guarded_render_use |= self_guarded;
+            self.facts.all_render_uses_self_guarded &= self_guarded;
         }
-    }
-
-    fn mark_unconditional_render_use(&mut self) {
-        self.has_unconditional_render_use = true;
     }
 
     fn record_nullable_observation(&mut self, nullable: bool) {
         self.all_uses_nullable &= nullable;
     }
 
-    fn mark_nullable_render_use(&mut self) {
-        self.has_nullable_render_use = true;
-    }
-
-    fn record_source_facts(&mut self, source: &ContractSourceObservation) {
-        if let Some(field_kind) = source.metadata_field_kind {
+    fn record_observation_facts(&mut self, observation: &ContractPathObservation) {
+        if let Some(field_kind) = observation.metadata_field_kind {
             self.metadata_field_kinds.insert(field_kind);
         }
-        self.used_as_fragment |= source.used_as_fragment;
-        self.used_as_pathless_fragment |= source.used_as_pathless_fragment;
-        self.is_partial_scalar_value_path |= source.is_partial_scalar_value_path;
-    }
-
-    fn mark_dependency_values_root_fragment(&mut self) {
-        self.accepted_values_root_fragment = true;
-        self.accepted_dependency_values_root_fragment = true;
+        self.facts.used_as_fragment |= observation.used_as_fragment;
+        self.facts.used_as_pathless_fragment |= observation.used_as_pathless_fragment;
+        self.facts.accepted_values_root_fragment |= observation.accepted_values_root_fragment;
+        self.facts.accepted_dependency_values_root_fragment |=
+            observation.accepted_dependency_values_root_fragment;
+        self.facts.is_partial_scalar_value_path |= observation.is_partial_scalar_value_path;
     }
 
     fn record_provider_schema_use(&mut self, provider_schema_use: ProviderSchemaUse) {
@@ -128,26 +100,11 @@ impl PathSchemaFactsAccumulator {
         }
     }
 
-    fn facts(
-        &self,
-        is_ranged_source: bool,
-        has_referenced_descendants: bool,
-    ) -> ContractValuePathFacts {
-        ContractValuePathFacts {
-            has_referenced_descendants,
-            used_as_fragment: self.used_as_fragment,
-            used_as_pathless_fragment: self.used_as_pathless_fragment,
-            accepted_values_root_fragment: self.accepted_values_root_fragment,
-            accepted_dependency_values_root_fragment: self.accepted_dependency_values_root_fragment,
-            is_ranged_source,
-            is_partial_scalar_value_path: self.is_partial_scalar_value_path,
-            has_render_use: self.has_render_use,
-            has_unconditional_render_use: self.has_unconditional_render_use,
-            has_self_guarded_render_use: self.has_self_guarded_render_use,
-            all_render_uses_self_guarded: self.all_render_uses_self_guarded,
-            has_self_range_guard_render_use: self.has_self_range_guard_render_use,
-            is_nullable: self.has_nullable_render_use && self.all_uses_nullable,
-        }
+    fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
+        let mut facts = self.facts;
+        facts.has_referenced_descendants = has_referenced_descendants;
+        facts.is_nullable &= self.all_uses_nullable;
+        facts
     }
 
     fn conditional_overlay_evidence(
@@ -155,7 +112,7 @@ impl PathSchemaFactsAccumulator {
         global_facts: ContractValuePathFacts,
         type_hints: BTreeSet<String>,
     ) -> ConditionalOverlayEvidence {
-        let facts = self.facts(false, global_facts.has_referenced_descendants);
+        let facts = self.facts(global_facts.has_referenced_descendants);
         ConditionalOverlayEvidence {
             facts,
             metadata_field_kinds: self.metadata_field_kinds,
@@ -165,82 +122,66 @@ impl PathSchemaFactsAccumulator {
     }
 }
 
-impl ContractSchemaSignalBuilder {
-    fn record(&mut self, contract_use: &ContractUse) {
-        let observation = ContractUseObservation::new(contract_use);
+fn record_contract_use(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    contract_use: &ContractUse,
+) {
+    for (path, observation) in contract_path_observations(contract_use) {
+        path_accumulator(paths, &path).observe_path_observation(&observation);
+    }
+}
 
-        for (path, path_observation) in &observation.path_observations {
-            self.path(path).observe_path_observation(path_observation);
-        }
+fn finish_schema_signals(
+    mut paths: BTreeMap<String, ContractPathAccumulator>,
+) -> ContractSchemaSignals {
+    let referenced_paths = paths
+        .iter()
+        .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))
+        .collect();
+    let paths_with_referenced_descendants = collect_paths_with_descendants(&referenced_paths);
+    for path in &paths_with_referenced_descendants {
+        path_accumulator(&mut paths, path);
     }
 
-    fn finish(mut self) -> ContractSchemaSignals {
-        let referenced_paths = self
-            .paths
-            .iter()
-            .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))
-            .collect();
-        let paths_with_referenced_descendants = collect_paths_with_descendants(&referenced_paths);
-        for path in &paths_with_referenced_descendants {
-            self.path(path);
-        }
+    let value_path_facts = paths
+        .iter()
+        .map(|(path, acc)| {
+            (
+                path.clone(),
+                acc.facts(paths_with_referenced_descendants.contains(path)),
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
 
-        let value_path_facts = self
-            .paths
-            .iter()
-            .map(|(path, acc)| {
-                (
-                    path.clone(),
-                    acc.facts(paths_with_referenced_descendants.contains(path)),
-                )
-            })
-            .collect::<BTreeMap<_, _>>();
+    let schema_evidence_by_value_path = paths
+        .into_iter()
+        .map(|(value_path, acc)| {
+            let facts = value_path_facts
+                .get(&value_path)
+                .copied()
+                .unwrap_or_default();
+            let evidence = acc.into_schema_evidence(value_path.clone(), facts);
+            (value_path, evidence)
+        })
+        .collect();
+    ContractSchemaSignals::new(schema_evidence_by_value_path)
+}
 
-        let schema_evidence_by_value_path = self
-            .paths
-            .into_iter()
-            .map(|(value_path, acc)| {
-                let facts = value_path_facts
-                    .get(&value_path)
-                    .copied()
-                    .unwrap_or_default();
-                let evidence = acc.into_schema_evidence(value_path.clone(), facts);
-                (value_path, evidence)
-            })
-            .collect();
-        ContractSchemaSignals::new(schema_evidence_by_value_path)
-    }
-
-    fn record_declared_type_hint(&mut self, type_hint: &ContractTypeHint) {
-        let acc = self.path(&type_hint.value_path);
-        acc.type_hints
-            .extend(type_hint.schema_types.iter().cloned());
-        if !type_hint.value_path.trim().is_empty() {
-            acc.referenced = true;
-        }
-    }
-
-    fn record_dependency_values_root_fragment(&mut self, value_path: &str) {
-        if value_path.trim().is_empty() {
-            return;
-        }
-        let acc = self.path(value_path);
-        acc.referenced = true;
-        acc.facts.mark_dependency_values_root_fragment();
-    }
-
-    fn path(&mut self, path: &str) -> &mut ContractPathAccumulator {
-        self.paths.entry(path.to_string()).or_default()
-    }
+fn path_accumulator<'a>(
+    paths: &'a mut BTreeMap<String, ContractPathAccumulator>,
+    path: &str,
+) -> &'a mut ContractPathAccumulator {
+    paths.entry(path.to_string()).or_default()
 }
 
 impl ContractPathAccumulator {
     fn observe_path_observation(&mut self, observation: &ContractPathObservation) {
-        if let Some(source) = observation.source_use.as_ref() {
-            self.observe_source_use(source);
-        }
+        self.observe_source_use(observation);
         self.referenced |= observation.referenced;
-        self.ranged |= observation.ranged;
+        self.facts.facts.is_ranged_source |= observation.ranged;
+        self.type_hints
+            .extend(observation.type_hints.iter().cloned());
+        self.facts.record_observation_facts(observation);
         self.requiredness.is_positive_header |= observation.requiredness.is_positive_header;
         self.requiredness.is_conditionally_optional |=
             observation.requiredness.is_conditionally_optional;
@@ -255,41 +196,44 @@ impl ContractPathAccumulator {
                 .record_render_use(render_use.range_guarded, render_use.self_guarded);
         }
         if observation.nullable_render_use {
-            self.facts.mark_nullable_render_use();
+            self.facts.facts.is_nullable = true;
         }
     }
 
-    fn observe_source_use(&mut self, source: &ContractSourceObservation) {
-        if let Some(provider_use) = source.provider_schema_use.clone() {
+    fn observe_source_use(&mut self, observation: &ContractPathObservation) {
+        let Some(source_null_tolerant) = observation.source_null_tolerant else {
+            return;
+        };
+
+        if let Some(provider_use) = observation.provider_schema_use.clone() {
             self.facts.record_provider_schema_use(provider_use);
         }
         self.referenced = true;
-        self.facts.record_source_facts(source);
-        if let Some(render_use) = source.render_use {
+        if let Some(render_use) = observation.source_render_use {
             self.facts
                 .record_render_use(render_use.range_guarded, render_use.self_guarded);
-            if source.guards_empty {
-                self.facts.mark_unconditional_render_use();
+            if observation.source_guards_empty {
+                self.facts.facts.has_unconditional_render_use = true;
                 self.has_unconditional_overlay_peer = true;
-            } else if let Some(guards) = source.lowerable_conditional_guards.clone() {
+            } else if let Some(guards) = observation.source_lowerable_conditional_guards.clone() {
                 let branch = self.conditional_overlay_branches.entry(guards).or_default();
                 branch.record_render_use(render_use.range_guarded, render_use.self_guarded);
-                branch.mark_nullable_render_use();
-                branch.record_nullable_observation(source.null_tolerant);
-                branch.record_source_facts(source);
+                branch.facts.is_nullable = true;
+                branch.record_nullable_observation(source_null_tolerant);
+                branch.record_observation_facts(observation);
 
-                if let Some(provider_schema_use) = source.provider_schema_use.clone() {
+                if let Some(provider_schema_use) = observation.provider_schema_use.clone() {
                     branch.record_provider_schema_use(provider_schema_use);
                 }
             } else {
                 self.saw_unsupported_overlay = true;
             }
         }
-        self.facts.record_nullable_observation(source.null_tolerant);
+        self.facts.record_nullable_observation(source_null_tolerant);
     }
 
     fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
-        self.facts.facts(self.ranged, has_referenced_descendants)
+        self.facts.facts(has_referenced_descendants)
     }
 
     fn into_schema_evidence(
