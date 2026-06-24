@@ -4,6 +4,7 @@ use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
+use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
@@ -14,13 +15,17 @@ impl HelperCallValueResolver for StaticResolver {
         &mut self,
         name: &str,
         _arg: Option<&TemplateExpr>,
-    ) -> Option<AbstractValue> {
+    ) -> Option<EvalResult> {
         match name {
-            "common.name" => Some(AbstractValue::ValuesPath("nameOverride".to_string())),
-            "common.labels" => Some(AbstractValue::Dict(BTreeMap::from([(
-                "app".to_string(),
-                AbstractValue::ValuesPath("labels.app".to_string()),
-            )]))),
+            "common.name" => Some(EvalResult::from_value(AbstractValue::ValuesPath(
+                "nameOverride".to_string(),
+            ))),
+            "common.labels" => Some(EvalResult::from_value(AbstractValue::Dict(BTreeMap::from(
+                [(
+                    "app".to_string(),
+                    AbstractValue::ValuesPath("labels.app".to_string()),
+                )],
+            )))),
             _ => None,
         }
     }

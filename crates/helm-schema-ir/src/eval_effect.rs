@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
-use crate::helper_summary::{HelperOutputMeta, insert_type_hint};
+use crate::helper_summary::{HelperOutputMeta, HelperSummary, insert_type_hint};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
@@ -19,6 +19,7 @@ pub(crate) struct Effects {
     pub(crate) local_output_values: Vec<AbstractValue>,
     pub(crate) rendered_output_values: Vec<AbstractValue>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
+    pub(crate) helper_summary: HelperSummary,
 }
 
 impl Effects {
@@ -52,6 +53,7 @@ impl Effects {
                 .or_default()
                 .extend(entries);
         }
+        self.helper_summary.extend(other.helper_summary);
         for (path, hints) in other.type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.type_hints, path.clone(), &hint);

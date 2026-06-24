@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
@@ -9,10 +9,7 @@ use crate::expr_eval::{eval_exprs_effects, eval_output_expr_effects};
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
-use crate::fragment_expr_eval::{
-    helper_call_summary_from_exprs_with_fragment_locals,
-    helper_value_from_expr_with_fragment_locals,
-};
+use crate::fragment_expr_eval::helper_result_from_expr_with_fragment_locals;
 use crate::helper_summary::HelperFragmentOutputUse;
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::output_path;
@@ -31,7 +28,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     active_output_predicates: &BTreeSet<Predicate>,
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
-    let mut seen_set = HashSet::new();
+    let mut seen_set = state.seen.clone();
     if apply_local_set_mutations_from_exprs(
         exprs,
         &mut state.locals.bindings,
@@ -91,14 +88,32 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         &local_effects.local_default_paths,
     );
 
-    let nested = helper_call_summary_from_exprs_with_fragment_locals(
-        exprs,
-        Some(bindings),
-        current_dot,
-        &state.locals.bindings,
-        state.context,
-        state.seen,
-    );
+    let mut nested = crate::helper_summary::HelperSummary::default();
+    let mut expression_output_uses = Vec::new();
+    let mut expression_seen = state.seen.clone();
+    for expr in exprs {
+        if !expr_contains_helper_call(expr) {
+            continue;
+        }
+        let result = helper_result_from_expr_with_fragment_locals(
+            expr,
+            &state.locals.bindings,
+            Some(bindings),
+            current_dot,
+            state.context,
+            &mut expression_seen,
+        );
+        nested.extend(result.effects.helper_summary);
+        if let Some(binding) = result.value {
+            binding.collect_output_uses(
+                &mut expression_output_uses,
+                &output_path,
+                kind,
+                active_output_predicates,
+                &fallback_paths,
+            );
+        }
+    }
     let mut nested_fragment_outputs = Vec::new();
     let mut nested_scalar_outputs = Vec::new();
     for (path, facts) in nested.path_facts() {
@@ -123,29 +138,6 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .collect();
     let nested_has_fragment_outputs = !nested_fragment_outputs.is_empty();
 
-    let mut expression_output_uses = Vec::new();
-    let mut expression_seen = state.seen.clone();
-    for expr in exprs {
-        if !expr_contains_helper_call(expr) {
-            continue;
-        }
-        if let Some(binding) = helper_value_from_expr_with_fragment_locals(
-            expr,
-            &state.locals.bindings,
-            Some(bindings),
-            current_dot,
-            state.context,
-            &mut expression_seen,
-        ) {
-            binding.collect_output_uses(
-                &mut expression_output_uses,
-                &output_path,
-                kind,
-                active_output_predicates,
-                &fallback_paths,
-            );
-        }
-    }
     expression_output_uses
         .retain(|output| expression_output_use_is_keyed_map_projection(output, &output_path));
     let expression_descendant_sources: BTreeSet<String> = expression_output_uses
@@ -212,8 +204,8 @@ fn collect_bound_fragment_output_assignment_uses(
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
     let rhs_exprs = std::slice::from_ref(rhs_expr);
-    let mut seen_rhs = HashSet::new();
-    let mut binding = helper_value_from_expr_with_fragment_locals(
+    let mut seen_rhs = state.seen.clone();
+    let result = helper_result_from_expr_with_fragment_locals(
         rhs_expr,
         &state.locals.bindings,
         Some(bindings),
@@ -221,17 +213,10 @@ fn collect_bound_fragment_output_assignment_uses(
         state.context,
         &mut seen_rhs,
     );
+    let mut binding = result.value;
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
-        let mut rhs_seen = state.seen.clone();
-        let nested = helper_call_summary_from_exprs_with_fragment_locals(
-            rhs_exprs,
-            Some(bindings),
-            current_dot,
-            &state.locals.bindings,
-            state.context,
-            &mut rhs_seen,
-        );
+        let nested = result.effects.helper_summary;
         let nested_binding = nested.clone().project_fragment_value();
         top_level_helper_dependency_paths = nested.dependency_relevant_paths();
         if let Some(nested_binding) = nested_binding {

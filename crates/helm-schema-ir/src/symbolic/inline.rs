@@ -74,7 +74,6 @@ impl SymbolicWalker<'_> {
     }
 
     pub(super) fn inline_exact_helper_call(&mut self, exprs: &[TemplateExpr]) -> bool {
-        let helper_summary = self.summarize_bound_helper_calls_in_exprs(exprs);
         let Some(plan) = plan_exact_helper_inline_from_exprs(
             exprs,
             self.defines,
@@ -83,6 +82,7 @@ impl SymbolicWalker<'_> {
         ) else {
             return false;
         };
+        let helper_summary = self.summarize_bound_helper_calls_in_exprs(exprs);
 
         let current_dot = self.current_dot_binding();
         let env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref());

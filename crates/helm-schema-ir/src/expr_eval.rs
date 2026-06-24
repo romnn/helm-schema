@@ -9,11 +9,8 @@ use crate::expr_call_eval::eval_call_with_helper_calls;
 use crate::expr_pipeline_eval::eval_pipeline_with_helper_calls;
 
 pub(crate) trait HelperCallValueResolver {
-    fn resolve_helper_call(
-        &mut self,
-        name: &str,
-        arg: Option<&TemplateExpr>,
-    ) -> Option<AbstractValue>;
+    fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
+    -> Option<EvalResult>;
 }
 
 struct NoHelperCallResolver;
@@ -23,7 +20,7 @@ impl HelperCallValueResolver for NoHelperCallResolver {
         &mut self,
         _name: &str,
         _arg: Option<&TemplateExpr>,
-    ) -> Option<AbstractValue> {
+    ) -> Option<EvalResult> {
         None
     }
 }

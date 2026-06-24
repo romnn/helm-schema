@@ -3,7 +3,7 @@ mod context;
 
 use std::collections::{HashMap, HashSet};
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_ast::TemplateExpr;
 
 pub(crate) use context::FragmentEvalContext;
 
@@ -13,7 +13,8 @@ use crate::expr_eval::eval_expr;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::helper_summary::HelperSummary;
 use bound_helper_resolver::{
-    BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_with_bound_helpers,
+    BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_result_with_bound_helpers,
+    eval_expr_with_bound_helpers,
 };
 
 pub(crate) fn context_value_from_outer_expr(
@@ -47,9 +48,28 @@ pub(crate) fn helper_value_from_expr_with_fragment_locals(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> Option<AbstractValue> {
+    helper_result_from_expr_with_fragment_locals(
+        expr,
+        fragment_locals,
+        outer,
+        current_dot,
+        context,
+        seen,
+    )
+    .value
+}
+
+pub(crate) fn helper_result_from_expr_with_fragment_locals(
+    expr: &TemplateExpr,
+    fragment_locals: &HashMap<String, AbstractValue>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> crate::eval_effect::EvalResult {
     let env =
         EvalEnv::from_helper_context_with_fragment_locals(outer, current_dot, fragment_locals);
-    eval_expr_with_bound_helpers(
+    let mut result = eval_expr_result_with_bound_helpers(
         expr,
         &env,
         BoundHelperValueResolverParams {
@@ -60,8 +80,9 @@ pub(crate) fn helper_value_from_expr_with_fragment_locals(
             seen,
             projection: HelperAnalysisProjection::HelperValue,
         },
-    )
-    .map(|value| value.to_context_value())
+    );
+    result.value = result.value.map(|value| value.to_context_value());
+    result
 }
 
 pub(crate) fn values_for_helper_arg_with_fragment_locals(
@@ -116,92 +137,25 @@ pub(crate) fn helper_call_summary_from_exprs_with_fragment_locals(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperSummary {
-    let mut analysis = HelperSummary::default();
+    let env =
+        EvalEnv::from_helper_context_with_fragment_locals(bindings, current_dot, fragment_locals);
+    let mut effects = crate::eval_effect::Effects::default();
     for expr in exprs {
-        collect_bound_helper_calls(
-            expr,
-            bindings,
-            current_dot,
-            fragment_locals,
-            context,
-            seen,
-            &mut analysis,
+        effects.merge(
+            eval_expr_result_with_bound_helpers(
+                expr,
+                &env,
+                BoundHelperValueResolverParams {
+                    fragment_locals,
+                    outer: bindings,
+                    current_dot,
+                    context,
+                    seen,
+                    projection: HelperAnalysisProjection::HelperValue,
+                },
+            )
+            .effects,
         );
     }
-    analysis
-}
-
-fn collect_bound_helper_calls(
-    expr: &TemplateExpr,
-    bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-    analysis: &mut HelperSummary,
-) {
-    match expr.deparen() {
-        TemplateExpr::Call { function, args }
-            if matches!(function.as_str(), "include" | "template") =>
-        {
-            let Some(TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name))) =
-                args.first().map(TemplateExpr::deparen)
-            else {
-                return;
-            };
-            analysis.extend(context.helper_summaries().summarize_bound_helper_call(
-                name,
-                args.get(1),
-                bindings,
-                current_dot,
-                fragment_locals,
-                context,
-                seen,
-            ));
-        }
-        TemplateExpr::Call { args, .. } => {
-            for arg in args {
-                collect_bound_helper_calls(
-                    arg,
-                    bindings,
-                    current_dot,
-                    fragment_locals,
-                    context,
-                    seen,
-                    analysis,
-                );
-            }
-        }
-        TemplateExpr::Selector { operand, .. }
-        | TemplateExpr::VariableDefinition { value: operand, .. }
-        | TemplateExpr::Assignment { value: operand, .. } => {
-            collect_bound_helper_calls(
-                operand,
-                bindings,
-                current_dot,
-                fragment_locals,
-                context,
-                seen,
-                analysis,
-            );
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for stage in stages {
-                collect_bound_helper_calls(
-                    stage,
-                    bindings,
-                    current_dot,
-                    fragment_locals,
-                    context,
-                    seen,
-                    analysis,
-                );
-            }
-        }
-        TemplateExpr::Parenthesized(_)
-        | TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
+    effects.helper_summary
 }

@@ -5,7 +5,7 @@ mod runtime;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::DefineIndex;
+use helm_schema_ast::{DefineIndex, Literal, TemplateExpr};
 
 use crate::Guard;
 use crate::abstract_value::AbstractValue;
@@ -248,10 +248,10 @@ impl<'a> SymbolicWalker<'a> {
         self.scope.current_dot_fragment()
     }
 
-    fn summarize_bound_helper_calls_in_exprs(
-        &self,
-        exprs: &[helm_schema_ast::TemplateExpr],
-    ) -> HelperSummary {
+    fn summarize_bound_helper_calls_in_exprs(&self, exprs: &[TemplateExpr]) -> HelperSummary {
+        if self.exprs_call_inlined_helper(exprs) {
+            return HelperSummary::default();
+        }
         helper_call_summary_from_exprs_with_fragment_locals(
             exprs,
             Some(&self.root_bindings),
@@ -260,5 +260,21 @@ impl<'a> SymbolicWalker<'a> {
             self.fragment_eval_context(),
             &mut HashSet::new(),
         )
+    }
+
+    fn exprs_call_inlined_helper(&self, exprs: &[TemplateExpr]) -> bool {
+        let [TemplateExpr::Call { function, args }] = exprs else {
+            return false;
+        };
+        if !matches!(function.as_str(), "include" | "template") {
+            return false;
+        }
+        let Some(TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name))) =
+            args.first().map(TemplateExpr::deparen)
+        else {
+            return false;
+        };
+        let token = format!("define:{name}");
+        self.inline_stack.iter().any(|entry| entry == &token)
     }
 }

@@ -5,7 +5,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{HelperCallValueResolver, eval_expr, eval_expr_with_helper_calls};
+use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::expr_function_catalog::{
     is_merge_function, is_provenance_preserving_function, is_string_transform_function,
     type_is_schema_type,
@@ -61,9 +61,9 @@ fn eval_helper_call(
 ) -> EvalResult {
     if let Some(TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name))) =
         args.first().map(TemplateExpr::deparen)
-        && let Some(value) = resolver.resolve_helper_call(name, args.get(1))
+        && let Some(result) = resolver.resolve_helper_call(name, args.get(1))
     {
-        return EvalResult::with_effects(Some(value), Effects::default());
+        return result;
     }
 
     if env.skip_helper_call_args {
@@ -585,11 +585,11 @@ fn eval_all_args(
 fn eval_unknown_call(
     args: &[TemplateExpr],
     env: &EvalEnv,
-    _resolver: &mut impl HelperCallValueResolver,
+    resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = Effects::default();
     for arg in args {
-        effects.merge(eval_expr(arg, env).effects);
+        effects.merge(eval_expr_with_helper_calls(arg, env, resolver).effects);
     }
     EvalResult::with_effects(None, effects)
 }

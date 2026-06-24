@@ -9,7 +9,7 @@ use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, helper_call_summary_from_exprs_with_fragment_locals,
+    FragmentEvalContext, helper_result_from_expr_with_fragment_locals,
     helper_value_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
@@ -26,6 +26,7 @@ enum NestedRenderMode {
 struct HelperValueResultFacts {
     output_meta: BTreeMap<String, HelperOutputMeta>,
     string_outputs: BTreeSet<String>,
+    nested_summary: HelperSummary,
 }
 
 pub(crate) fn collect_helper_value_expression_from_exprs(
@@ -49,7 +50,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     }
 
     let current_dot_fragment = current_dot.map(AbstractValue::to_context_value);
-    let mut seen_set = HashSet::new();
+    let mut seen_set = state.seen.clone();
     if apply_local_set_mutations_from_exprs(
         exprs,
         &mut state.locals.bindings,
@@ -84,15 +85,15 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     } else {
         ValueKind::Scalar
     };
+    let result_facts = value_result_facts_from_exprs(
+        exprs,
+        bindings,
+        current_dot,
+        &state.locals.bindings,
+        state.context,
+        state.seen,
+    );
     if expression_kind == ValueKind::Scalar {
-        let result_facts = value_result_facts_from_exprs(
-            exprs,
-            bindings,
-            current_dot,
-            &state.locals.bindings,
-            state.context,
-            state.seen,
-        );
         for output in direct_outputs {
             let meta = HelperOutputMeta::with_predicates(
                 active_output_predicates,
@@ -115,31 +116,19 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         state
             .analysis
             .string_output
-            .extend(result_facts.string_outputs);
+            .extend(result_facts.string_outputs.iter().cloned());
     }
-    let nested = helper_call_summary_from_exprs_with_fragment_locals(
-        exprs,
-        Some(bindings),
-        current_dot,
-        &state.locals.bindings,
-        state.context,
-        state.seen,
-    );
-    if expression_kind == ValueKind::Fragment {
-        extend_nested_render(
-            state.analysis,
-            nested,
-            active_output_predicates,
-            NestedRenderMode::Fragment,
-        );
+    let nested_render_mode = if expression_kind == ValueKind::Fragment {
+        NestedRenderMode::Fragment
     } else {
-        extend_nested_render(
-            state.analysis,
-            nested,
-            active_output_predicates,
-            NestedRenderMode::Scalar,
-        );
-    }
+        NestedRenderMode::Scalar
+    };
+    extend_nested_render(
+        state.analysis,
+        result_facts.nested_summary,
+        active_output_predicates,
+        nested_render_mode,
+    );
     state
         .analysis
         .chart_defaults
@@ -163,7 +152,7 @@ fn collect_assignment_bound_helper_values(
         .extend(full_effects.chart_default_paths);
 
     let current_dot_fragment = current_dot.map(AbstractValue::to_context_value);
-    let mut seen_set = HashSet::new();
+    let mut seen_set = state.seen.clone();
     if apply_local_set_mutations_from_exprs(
         full_exprs,
         &mut state.locals.bindings,
@@ -204,20 +193,12 @@ fn collect_assignment_bound_helper_values(
         state.context,
         state.seen,
     );
-    let nested = helper_call_summary_from_exprs_with_fragment_locals(
-        rhs_exprs,
-        Some(bindings),
-        current_dot,
-        &state.locals.bindings,
-        state.context,
-        state.seen,
-    );
     let mut nested_defaulted_output_paths = BTreeSet::new();
     state
         .analysis
         .chart_defaults
-        .extend(nested.chart_defaults.iter().cloned());
-    for (path, facts) in nested.path_facts() {
+        .extend(result_facts.nested_summary.chart_defaults.iter().cloned());
+    for (path, facts) in result_facts.nested_summary.path_facts() {
         if let Some(output_meta) = facts.output_meta.clone() {
             if output_meta.defaulted {
                 nested_defaulted_output_paths.insert(path.to_string());
@@ -255,7 +236,7 @@ fn collect_assignment_bound_helper_values(
         active_output_predicates,
     );
 
-    let mut seen_rhs = HashSet::new();
+    let mut seen_rhs = state.seen.clone();
     if let Some(binding) = helper_value_from_expr_with_fragment_locals(
         rhs_expr,
         &state.locals.bindings,
@@ -330,14 +311,16 @@ fn value_result_facts_from_exprs(
     let mut facts = HelperValueResultFacts::default();
     let mut seen = seen_seed.clone();
     for expr in exprs {
-        if let Some(binding) = helper_value_from_expr_with_fragment_locals(
+        let result = helper_result_from_expr_with_fragment_locals(
             expr,
             local_bindings,
             Some(bindings),
             current_dot,
             context,
             &mut seen,
-        ) {
+        );
+        facts.nested_summary.extend(result.effects.helper_summary);
+        if let Some(binding) = result.value {
             facts.string_outputs.extend(binding.strings());
             for (path, meta) in binding.output_meta() {
                 facts.output_meta.entry(path).or_default().merge(meta);

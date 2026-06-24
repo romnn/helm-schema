@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
+use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
@@ -13,8 +14,16 @@ pub(super) fn eval_expr_with_bound_helpers(
     env: &EvalEnv,
     params: BoundHelperValueResolverParams<'_, '_, '_>,
 ) -> Option<AbstractValue> {
+    eval_expr_result_with_bound_helpers(expr, env, params).value
+}
+
+pub(super) fn eval_expr_result_with_bound_helpers(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+    params: BoundHelperValueResolverParams<'_, '_, '_>,
+) -> EvalResult {
     let mut resolver = BoundHelperValueResolver { params };
-    eval_expr_with_helper_calls(expr, env, &mut resolver).value
+    eval_expr_with_helper_calls(expr, env, &mut resolver)
 }
 
 pub(super) struct BoundHelperValueResolverParams<'a, 'context, 'seen> {
@@ -41,7 +50,11 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         &mut self,
         name: &str,
         arg: Option<&TemplateExpr>,
-    ) -> Option<AbstractValue> {
+    ) -> Option<EvalResult> {
+        self.params.context.define_bodies.source(name)?;
+        if self.params.seen.contains(name) {
+            return Some(EvalResult::none());
+        }
         let analysis = self
             .params
             .context
@@ -55,9 +68,12 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
                 self.params.context,
                 self.params.seen,
             );
-        match self.params.projection {
-            HelperAnalysisProjection::HelperValue => analysis.project_helper_value(),
-            HelperAnalysisProjection::FragmentValue => analysis.project_fragment_value(),
-        }
+        let value = match self.params.projection {
+            HelperAnalysisProjection::HelperValue => analysis.clone().project_helper_value(),
+            HelperAnalysisProjection::FragmentValue => analysis.clone().project_fragment_value(),
+        };
+        let mut effects = Effects::default();
+        effects.helper_summary = analysis;
+        Some(EvalResult::with_effects(value, effects))
     }
 }
