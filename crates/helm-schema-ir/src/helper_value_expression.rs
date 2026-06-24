@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::Effects;
+use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_exprs_effects;
 use crate::fragment_assignment::{
@@ -19,13 +19,6 @@ use helm_schema_ast::TemplateExpr;
 enum NestedRenderMode {
     Scalar,
     Fragment,
-}
-
-#[derive(Default)]
-struct HelperValueResultFacts {
-    output_meta: BTreeMap<String, HelperOutputMeta>,
-    string_outputs: BTreeSet<String>,
-    effects: Effects,
 }
 
 pub(crate) fn collect_helper_value_expression_from_exprs(
@@ -79,7 +72,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     } else {
         ValueKind::Scalar
     };
-    let result_facts = value_result_facts_from_exprs(
+    let result = helper_value_result_from_exprs(
         exprs,
         bindings,
         current_dot,
@@ -89,7 +82,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     );
     state
         .analysis
-        .add_type_hints(result_facts.effects.schema_type_hints());
+        .add_type_hints(result.effects.schema_type_hints());
     if expression_kind == ValueKind::Scalar {
         for output in direct_outputs {
             let meta = HelperOutputMeta::with_predicates(
@@ -98,9 +91,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
             );
             state.analysis.merge_output_meta(output, meta);
         }
-        let mut local_output_sources = local_effects.local_rendered_paths;
-        local_output_sources.extend(local_effects.local_output_meta.keys().cloned());
-        for output in local_output_sources {
+        for output in local_effects.local_output_sources() {
             let mut meta = local_effects
                 .local_output_meta
                 .get(&output)
@@ -113,7 +104,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         state
             .analysis
             .string_output
-            .extend(result_facts.string_outputs.iter().cloned());
+            .extend(result.value.iter().flat_map(AbstractValue::strings));
     }
     let nested_render_mode = if expression_kind == ValueKind::Fragment {
         NestedRenderMode::Fragment
@@ -122,7 +113,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     };
     extend_nested_render(
         state.analysis,
-        result_facts.effects.helper_summary,
+        result.effects.helper_summary,
         active_output_predicates,
         nested_render_mode,
     );
@@ -176,7 +167,7 @@ fn collect_assignment_bound_helper_values(
         &state.locals.default_paths,
         state.local_output_meta,
     );
-    let result_facts = value_result_facts_from_exprs(
+    let result = helper_value_result_from_exprs(
         rhs_exprs,
         bindings,
         current_dot,
@@ -186,17 +177,13 @@ fn collect_assignment_bound_helper_values(
     );
     state
         .analysis
-        .add_type_hints(result_facts.effects.schema_type_hints());
+        .add_type_hints(result.effects.schema_type_hints());
     let mut nested_defaulted_output_paths = BTreeSet::new();
-    state.analysis.chart_defaults.extend(
-        result_facts
-            .effects
-            .helper_summary
-            .chart_defaults
-            .iter()
-            .cloned(),
-    );
-    for (path, facts) in result_facts.effects.helper_summary.path_facts() {
+    state
+        .analysis
+        .chart_defaults
+        .extend(result.effects.helper_summary.chart_defaults.iter().cloned());
+    for (path, facts) in result.effects.helper_summary.path_facts() {
         if let Some(output_meta) = facts.output_meta.clone() {
             if output_meta.defaulted {
                 nested_defaulted_output_paths.insert(path.to_string());
@@ -230,7 +217,11 @@ fn collect_assignment_bound_helper_values(
         &fallback_paths,
         &local_effects.local_default_paths,
         &local_effects.local_output_meta,
-        &result_facts.output_meta,
+        &result
+            .value
+            .as_ref()
+            .map(AbstractValue::output_meta)
+            .unwrap_or_default(),
         active_output_predicates,
     );
 
@@ -295,16 +286,17 @@ fn local_expression_effects(
     eval_exprs_effects(exprs, &env)
 }
 
-fn value_result_facts_from_exprs(
+fn helper_value_result_from_exprs(
     exprs: &[TemplateExpr],
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
     local_bindings: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen_seed: &HashSet<String>,
-) -> HelperValueResultFacts {
-    let mut facts = HelperValueResultFacts::default();
+) -> EvalResult {
     let mut seen = seen_seed.clone();
+    let mut values = Vec::new();
+    let mut effects = Effects::default();
     for expr in exprs {
         let result = helper_result_from_expr_with_fragment_locals(
             expr,
@@ -314,16 +306,10 @@ fn value_result_facts_from_exprs(
             context,
             &mut seen,
         );
-        let crate::eval_effect::EvalResult { value, effects } = result;
-        facts.effects.merge(effects);
-        if let Some(binding) = value {
-            facts.string_outputs.extend(binding.strings());
-            for (path, meta) in binding.output_meta() {
-                facts.output_meta.entry(path).or_default().merge(meta);
-            }
-        }
+        values.extend(result.value);
+        effects.merge(result.effects);
     }
-    facts
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
 fn rhs_output_meta(

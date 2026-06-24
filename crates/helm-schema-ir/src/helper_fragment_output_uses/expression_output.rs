@@ -217,7 +217,7 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let nested = result.effects.helper_summary;
-        let nested_binding = nested.clone().project_fragment_value();
+        let nested_binding = nested.project_fragment_value();
         top_level_helper_dependency_paths = nested.dependency_relevant_paths();
         if let Some(nested_binding) = nested_binding {
             binding = match binding {

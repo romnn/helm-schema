@@ -97,6 +97,28 @@ impl Effects {
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
+    pub(crate) fn output_value_paths(&self) -> BTreeSet<String> {
+        let mut paths = self.output_paths.clone();
+        paths.extend(self.local_source_paths.iter().cloned());
+        paths.extend(self.local_output_meta.keys().cloned());
+        paths.retain(|path| !path.trim().is_empty());
+        paths
+    }
+
+    pub(crate) fn default_paths_with_local(&self) -> BTreeSet<String> {
+        let mut paths = self.defaults.clone();
+        paths.extend(self.local_default_paths.iter().cloned());
+        paths.retain(|path| !path.trim().is_empty());
+        paths
+    }
+
+    pub(crate) fn local_output_sources(&self) -> BTreeSet<String> {
+        let mut paths = self.local_rendered_paths.clone();
+        paths.extend(self.local_output_meta.keys().cloned());
+        paths.retain(|path| !path.trim().is_empty());
+        paths
+    }
+
     pub(crate) fn merge_local_output_meta<'a>(
         &mut self,
         meta: impl IntoIterator<Item = (&'a String, &'a HelperOutputMeta)>,

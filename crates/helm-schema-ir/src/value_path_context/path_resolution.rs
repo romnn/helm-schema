@@ -39,9 +39,8 @@ pub(crate) fn computed_with_body_fragment_value_expr(
 impl ValuePathContext<'_> {
     pub(crate) fn expression_output_effects(&self, exprs: &[TemplateExpr]) -> Effects {
         let effects = self.expression_effects(exprs);
-        let mut values = output_value_paths(effects.clone());
-        let mut defaults = effects.defaults.clone();
-        defaults.extend(effects.local_default_paths.iter().cloned());
+        let mut values = effects.output_value_paths();
+        let defaults = effects.default_paths_with_local();
         values.extend(defaults.iter().cloned());
         Effects {
             output_paths: values,
@@ -72,17 +71,16 @@ impl ValuePathContext<'_> {
     }
 
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        output_value_paths(eval_expr(expr, &self.expression_eval_env()).effects)
+        eval_expr(expr, &self.expression_eval_env())
+            .effects
+            .output_value_paths()
     }
 
     pub(crate) fn resolved_default_fallback_paths_in_exprs(
         &self,
         exprs: &[TemplateExpr],
     ) -> BTreeSet<String> {
-        let effects = self.expression_effects(exprs);
-        let mut paths = effects.defaults.clone();
-        paths.extend(effects.local_default_paths.iter().cloned());
-        paths
+        self.expression_effects(exprs).default_paths_with_local()
     }
 
     pub(super) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
@@ -119,21 +117,14 @@ impl ValuePathContext<'_> {
         &self,
         expr: &TemplateExpr,
     ) -> Option<String> {
-        if !is_direct_path_expr(expr, self.root_bindings) {
+        if !matches!(
+            expr.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
             return None;
         }
         self.single_resolved_values_path_expr(expr)
     }
-}
-
-fn output_value_paths(effects: Effects) -> BTreeSet<String> {
-    effects
-        .output_paths
-        .into_iter()
-        .chain(effects.local_source_paths)
-        .chain(effects.local_output_meta.into_keys())
-        .filter(|path| !path.trim().is_empty())
-        .collect()
 }
 
 fn locals_with_roots(
@@ -145,31 +136,4 @@ fn locals_with_roots(
         locals.insert(key.clone(), value.to_context_value());
     }
     locals
-}
-
-fn is_direct_path_expr(expr: &TemplateExpr, bindings: &HashMap<String, AbstractValue>) -> bool {
-    match expr {
-        TemplateExpr::Parenthesized(inner) => is_direct_path_expr(inner, bindings),
-        TemplateExpr::Field(_) => true,
-        TemplateExpr::Selector { .. } => {
-            resolve_expr_to_values_path(expr, Some(bindings), None).is_some()
-        }
-        _ => false,
-    }
-}
-
-fn resolve_expr_to_values_path(
-    expr: &TemplateExpr,
-    bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-) -> Option<String> {
-    if let Some(path) = direct_values_path(expr) {
-        return Some(path);
-    }
-
-    let env = EvalEnv::from_helper_context(bindings, current_dot);
-    eval_expr(expr, &env)
-        .value
-        .as_ref()
-        .and_then(AbstractValue::unique_path)
 }

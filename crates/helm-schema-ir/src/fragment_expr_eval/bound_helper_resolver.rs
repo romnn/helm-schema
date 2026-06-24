@@ -61,11 +61,13 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
                 self.params.seen,
             );
         let value = match self.params.projection {
-            HelperAnalysisProjection::HelperValue => analysis.clone().project_helper_value(),
-            HelperAnalysisProjection::FragmentValue => analysis.clone().project_fragment_value(),
+            HelperAnalysisProjection::HelperValue => analysis.project_helper_value(),
+            HelperAnalysisProjection::FragmentValue => analysis.project_fragment_value(),
         };
-        let mut effects = Effects::default();
-        effects.helper_summary = analysis;
+        let effects = Effects {
+            helper_summary: analysis,
+            ..Effects::default()
+        };
         Some(EvalResult::with_effects(value, effects))
     }
 }

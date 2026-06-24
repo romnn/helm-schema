@@ -406,18 +406,18 @@ impl HelperSummary {
         }
     }
 
-    pub(crate) fn project_helper_value(self) -> Option<AbstractValue> {
+    pub(crate) fn project_helper_value(&self) -> Option<AbstractValue> {
         project_summary_value(self).map(|value| value.to_context_value())
     }
 
-    pub(crate) fn project_fragment_value(self) -> Option<AbstractValue> {
+    pub(crate) fn project_fragment_value(&self) -> Option<AbstractValue> {
         project_summary_value(self)
             .map(|value| value.to_context_value())
             .and_then(|value| AbstractValue::merge_context_values(vec![value]))
     }
 }
 
-fn project_summary_value(analysis: HelperSummary) -> Option<AbstractValue> {
+fn project_summary_value(analysis: &HelperSummary) -> Option<AbstractValue> {
     let mut values = Vec::new();
     if !analysis.string_output.is_empty() {
         values.push(AbstractValue::StringSet(analysis.string_output.clone()));
