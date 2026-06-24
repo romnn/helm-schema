@@ -20,7 +20,6 @@ mod expr_pipeline_eval;
 mod fragment_assignment;
 mod fragment_expr_eval;
 mod fragment_range_scope;
-mod helper_arg_projection;
 mod helper_body_analysis;
 mod helper_fragment_output_uses;
 mod helper_inline;

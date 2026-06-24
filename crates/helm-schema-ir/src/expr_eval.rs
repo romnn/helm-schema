@@ -6,6 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::eval_call_with_helper_calls;
+use crate::expr_function_catalog::is_merge_function;
 use crate::expr_pipeline_eval::eval_pipeline_with_helper_calls;
 use crate::helper_summary::HelperOutputMeta;
 
@@ -199,6 +200,48 @@ pub(crate) fn eval_local_exprs_effects_without_meta(
     local_default_paths: &HashMap<String, BTreeSet<String>>,
 ) -> Effects {
     eval_local_exprs_effects(exprs, local_bindings, local_default_paths, &HashMap::new())
+}
+
+pub(crate) fn bindings_for_helper_arg_with(
+    arg: Option<&TemplateExpr>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+    mut eval_binding: impl FnMut(&TemplateExpr) -> Option<AbstractValue>,
+) -> HashMap<String, AbstractValue> {
+    let Some(arg) = arg else {
+        return HashMap::new();
+    };
+
+    match arg.deparen() {
+        TemplateExpr::Parenthesized(inner) => {
+            bindings_for_helper_arg_with(Some(inner), outer, eval_binding)
+        }
+        TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
+        TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
+        TemplateExpr::Call { function, args } if is_merge_function(function) => {
+            let mut merged = HashMap::new();
+            for arg in args {
+                merged.extend(bindings_from_helper_arg_value(eval_binding(arg), outer));
+            }
+            merged
+        }
+        _ => bindings_from_helper_arg_value(eval_binding(arg), outer),
+    }
+}
+
+fn bindings_from_helper_arg_value(
+    value: Option<AbstractValue>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+) -> HashMap<String, AbstractValue> {
+    match value {
+        Some(AbstractValue::Dict(map)) => map.into_iter().collect(),
+        Some(AbstractValue::RootContext) => outer.cloned().unwrap_or_default(),
+        Some(AbstractValue::Overlay { entries, fallback }) => {
+            let mut bindings = bindings_from_helper_arg_value(Some(*fallback), outer);
+            bindings.extend(entries);
+            bindings
+        }
+        _ => HashMap::new(),
+    }
 }
 
 pub(crate) fn eval_non_helper_output_exprs_effects(

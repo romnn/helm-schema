@@ -1,9 +1,9 @@
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{
-    apply_local_set_mutations_expr, direct_values_path, eval_expr, eval_exprs_effects,
+    apply_local_set_mutations_expr, bindings_for_helper_arg_with, direct_values_path, eval_expr,
+    eval_exprs_effects,
 };
-use crate::helper_arg_projection::bindings_for_helper_arg_with;
 use crate::printf_eval::render_printf_string_sets;
 use crate::template_expr_cache::parse_expr_text;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
@@ -495,5 +495,87 @@ fn helper_argument_fields_resolve_from_dot_root() {
     assert!(
         result.effects.defaults.contains("serviceAccount.name"),
         "default should attach to the values path reached through .config.name"
+    );
+}
+
+fn project_helper_arg(
+    action: &str,
+    outer: Option<&HashMap<String, AbstractValue>>,
+) -> HashMap<String, AbstractValue> {
+    let expr = single_expr(action);
+    project_helper_arg_expr(&expr, outer)
+}
+
+fn project_helper_arg_expr(
+    expr: &TemplateExpr,
+    outer: Option<&HashMap<String, AbstractValue>>,
+) -> HashMap<String, AbstractValue> {
+    bindings_for_helper_arg_with(Some(expr), outer, |expr| match expr {
+        TemplateExpr::Call { function, .. } if function == "fallback" => {
+            Some(AbstractValue::Dict(BTreeMap::from([(
+                "fallback".to_string(),
+                AbstractValue::ValuesPath("fallback.value".to_string()),
+            )])))
+        }
+        TemplateExpr::Call { function, .. } if function == "overrideMap" => {
+            Some(AbstractValue::Dict(BTreeMap::from([(
+                "fallback".to_string(),
+                AbstractValue::ValuesPath("override".to_string()),
+            )])))
+        }
+        _ => eval_expr(expr, &EvalEnv::default()).value,
+    })
+}
+
+#[test]
+fn helper_argument_dict_projects_string_and_raw_string_keys() {
+    sim_assert_eq!(
+        have: project_helper_arg(r#"dict "name" .Values.serviceAccount.name `raw` .Values.raw"#, None),
+        want: HashMap::from([
+            (
+                "name".to_string(),
+                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            ),
+            (
+                "raw".to_string(),
+                AbstractValue::ValuesPath("raw".to_string()),
+            ),
+        ])
+    );
+}
+
+#[test]
+fn helper_argument_merge_preserves_ordered_overwrite_and_root_context_expansion() {
+    let outer = HashMap::from([(
+        "root".to_string(),
+        AbstractValue::ValuesPath("root.value".to_string()),
+    )]);
+    let expr = TemplateExpr::Call {
+        function: "merge".to_string(),
+        args: vec![
+            TemplateExpr::Call {
+                function: "fallback".to_string(),
+                args: Vec::new(),
+            },
+            TemplateExpr::Variable(String::new()),
+            TemplateExpr::Call {
+                function: "overrideMap".to_string(),
+                args: Vec::new(),
+            },
+        ],
+    };
+
+    sim_assert_eq!(
+        have: project_helper_arg_expr(&expr, Some(&outer)),
+        want: HashMap::from([
+            (
+                "fallback".to_string(),
+                AbstractValue::ValuesPath("override".to_string()),
+            ),
+            (
+                "root".to_string(),
+                AbstractValue::ValuesPath("root.value".to_string()),
+            ),
+        ])
     );
 }

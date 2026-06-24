@@ -8,9 +8,9 @@ use helm_schema_ast::TemplateExpr;
 pub(crate) use context::FragmentEvalContext;
 
 use crate::abstract_value::AbstractValue;
+use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::eval_expr;
-use crate::helper_arg_projection::bindings_for_helper_arg_with;
+use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr};
 use bound_helper_resolver::{
     BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_result_with_bound_helpers,
 };
@@ -62,6 +62,32 @@ pub(crate) fn helper_result_from_expr_with_fragment_locals(
     );
     result.value = result.value.map(|value| value.to_context_value());
     result
+}
+
+pub(crate) fn helper_result_from_exprs_with_fragment_locals(
+    exprs: &[TemplateExpr],
+    fragment_locals: &HashMap<String, AbstractValue>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen_seed: &HashSet<String>,
+) -> EvalResult {
+    let mut seen = seen_seed.clone();
+    let mut values = Vec::new();
+    let mut effects = Effects::default();
+    for expr in exprs {
+        let result = helper_result_from_expr_with_fragment_locals(
+            expr,
+            fragment_locals,
+            outer,
+            current_dot,
+            context,
+            &mut seen,
+        );
+        values.extend(result.value);
+        effects.merge(result.effects);
+    }
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
 pub(crate) fn values_for_helper_arg_with_fragment_locals(

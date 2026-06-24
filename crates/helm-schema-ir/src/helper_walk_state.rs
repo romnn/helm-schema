@@ -20,6 +20,14 @@ impl HelperRuntimeLocals {
         self.default_paths = merge_default_paths(self.default_paths, other.default_paths);
         self
     }
+
+    pub(crate) fn set_default_paths(&mut self, variable: &str, paths: BTreeSet<String>) {
+        if paths.is_empty() {
+            self.default_paths.remove(variable);
+        } else {
+            self.default_paths.insert(variable.to_string(), paths);
+        }
+    }
 }
 
 #[derive(Clone)]

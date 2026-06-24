@@ -1,8 +1,7 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult};
 use crate::expr_eval::{
     eval_helper_exprs_direct_effects, eval_helper_exprs_effects, eval_local_exprs_effects,
 };
@@ -10,7 +9,7 @@ use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, helper_result_from_expr_with_fragment_locals,
+    helper_result_from_expr_with_fragment_locals, helper_result_from_exprs_with_fragment_locals,
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_walk_state::HelperValuesWalkState;
@@ -73,11 +72,11 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
     } else {
         ValueKind::Scalar
     };
-    let result = helper_value_result_from_exprs(
+    let result = helper_result_from_exprs_with_fragment_locals(
         exprs,
-        bindings,
-        current_dot,
         &state.locals.bindings,
+        Some(bindings),
+        current_dot,
         state.context,
         state.seen,
     );
@@ -167,11 +166,11 @@ fn collect_assignment_bound_helper_values(
         &state.locals.default_paths,
         state.local_output_meta,
     );
-    let result = helper_value_result_from_exprs(
+    let result = helper_result_from_exprs_with_fragment_locals(
         rhs_exprs,
-        bindings,
-        current_dot,
         &state.locals.bindings,
+        Some(bindings),
+        current_dot,
         state.context,
         state.seen,
     );
@@ -241,14 +240,7 @@ fn collect_assignment_bound_helper_values(
     let mut defaulted_paths = fallback_paths;
     defaulted_paths.extend(local_effects.local_default_paths);
     defaulted_paths.extend(nested_defaulted_output_paths);
-    if defaulted_paths.is_empty() {
-        state.locals.default_paths.remove(var);
-    } else {
-        state
-            .locals
-            .default_paths
-            .insert(var.to_string(), defaulted_paths);
-    }
+    state.locals.set_default_paths(var, defaulted_paths);
     if rhs_output_meta.is_empty() {
         state.local_output_meta.remove(var);
     } else {
@@ -256,32 +248,6 @@ fn collect_assignment_bound_helper_values(
             .local_output_meta
             .insert(var.to_string(), rhs_output_meta);
     }
-}
-
-fn helper_value_result_from_exprs(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen_seed: &HashSet<String>,
-) -> EvalResult {
-    let mut seen = seen_seed.clone();
-    let mut values = Vec::new();
-    let mut effects = Effects::default();
-    for expr in exprs {
-        let result = helper_result_from_expr_with_fragment_locals(
-            expr,
-            local_bindings,
-            Some(bindings),
-            current_dot,
-            context,
-            &mut seen,
-        );
-        values.extend(result.value);
-        effects.merge(result.effects);
-    }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
 fn rhs_output_meta(

@@ -262,14 +262,7 @@ fn collect_bound_fragment_output_assignment_uses(
         &state.locals.default_paths,
     );
     defaulted_paths.extend(local_effects.local_default_paths);
-    if defaulted_paths.is_empty() {
-        state.locals.default_paths.remove(var);
-    } else {
-        state
-            .locals
-            .default_paths
-            .insert(var.to_string(), defaulted_paths);
-    }
+    state.locals.set_default_paths(var, defaulted_paths);
 }
 
 fn local_output_uses_from_effects(

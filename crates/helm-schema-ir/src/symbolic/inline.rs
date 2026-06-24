@@ -1,8 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::eval_expr;
-use crate::helper_arg_projection::bindings_for_helper_arg_with;
+use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr};
 use crate::helper_inline::plan_exact_helper_inline_from_exprs;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
