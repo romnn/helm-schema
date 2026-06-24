@@ -6,7 +6,7 @@ use crate::{ResourceRef, SourceSpan, ValueKind, YamlPath};
 mod attribution;
 mod yaml_tree;
 
-use attribution::{AttributionIndex, ResolvedNodeContext, build_attribution_index};
+use attribution::{AttributionIndex, build_attribution_index};
 
 /// Tracks document-local path and resource attribution while the symbolic
 /// interpreter walks mixed YAML and Helm actions.
@@ -35,6 +35,21 @@ pub(crate) enum OutputSlotKind {
     FragmentInsertion,
     BlockScalarSuppressed,
     Opaque,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ControlSite {
+    pub(crate) path: YamlPath,
+    pub(crate) range_mapping_entry_path: Option<YamlPath>,
+}
+
+impl Default for ControlSite {
+    fn default() -> Self {
+        Self {
+            path: YamlPath(Vec::new()),
+            range_mapping_entry_path: None,
+        }
+    }
 }
 
 impl OutputSlot {
@@ -101,32 +116,10 @@ impl<'a> DocumentTracker<'a> {
         self.attribution = build_attribution_index(self.source, tree.root_node());
     }
 
-    fn context_for_node(&self, node: tree_sitter::Node<'_>) -> ResolvedNodeContext {
-        if matches!(node.kind(), "if_action" | "with_action" | "range_action") {
-            self.attribution
-                .control_context_for_node(node)
-                .unwrap_or_default()
-        } else {
-            ResolvedNodeContext::default()
-        }
-    }
-
-    pub(crate) fn path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath {
-        let context = self.context_for_node(node);
-        if context.inside_block_scalar {
-            return YamlPath(Vec::new());
-        }
-
-        context.current_path
-    }
-
-    pub(crate) fn range_mapping_entry_path_for_node(
-        &self,
-        node: tree_sitter::Node<'_>,
-    ) -> Option<YamlPath> {
+    pub(crate) fn control_site_for_node(&self, node: tree_sitter::Node<'_>) -> ControlSite {
         self.attribution
-            .range_mapping_entry_context_for_node(node)
-            .map(|context| context.mapping_entry_path)
+            .control_site_for_node(node)
+            .unwrap_or_default()
     }
 
     pub(crate) fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {

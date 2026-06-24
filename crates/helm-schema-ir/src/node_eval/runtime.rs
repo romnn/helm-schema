@@ -3,6 +3,7 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader};
 use super::effects::NodeActionEffectSink;
 use crate::YamlPath;
 use crate::assignment_action_plan::AssignmentActionPlan;
+use crate::document_projection::ControlSite;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum AssignmentObservation {
@@ -20,13 +21,8 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn enter_node(&mut self, _node: tree_sitter::Node<'_>) {}
 
-    fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath;
-
-    fn document_mapping_entry_path_for_range_node(
-        &self,
-        _node: tree_sitter::Node<'_>,
-    ) -> Option<YamlPath> {
-        None
+    fn document_control_site_for_node(&self, _node: tree_sitter::Node<'_>) -> ControlSite {
+        ControlSite::default()
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot;

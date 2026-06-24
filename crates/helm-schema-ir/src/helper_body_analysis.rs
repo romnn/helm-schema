@@ -4,7 +4,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::document_projection::DocumentTracker;
+use crate::document_projection::{ControlSite, DocumentTracker};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr,
     helper_result_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
@@ -422,16 +422,8 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         self.source
     }
 
-    fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath {
-        self.document_tracker.path_for_node(node)
-    }
-
-    fn document_mapping_entry_path_for_range_node(
-        &self,
-        node: tree_sitter::Node<'_>,
-    ) -> Option<YamlPath> {
-        self.document_tracker
-            .range_mapping_entry_path_for_node(node)
+    fn document_control_site_for_node(&self, node: tree_sitter::Node<'_>) -> ControlSite {
+        self.document_tracker.control_site_for_node(node)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {

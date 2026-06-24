@@ -5,6 +5,7 @@ use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action
 use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::contract_sink::ContractUseContext;
+use crate::document_projection::ControlSite;
 use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, activate_condition_alternative_guards,
     activate_if_condition_plan, activate_range_action_plan, activate_with_condition_plan,
@@ -70,16 +71,8 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         ));
     }
 
-    fn document_path_for_node(&self, node: tree_sitter::Node<'_>) -> YamlPath {
-        self.document_tracker.path_for_node(node)
-    }
-
-    fn document_mapping_entry_path_for_range_node(
-        &self,
-        node: tree_sitter::Node<'_>,
-    ) -> Option<YamlPath> {
-        self.document_tracker
-            .range_mapping_entry_path_for_node(node)
+    fn document_control_site_for_node(&self, node: tree_sitter::Node<'_>) -> ControlSite {
+        self.document_tracker.control_site_for_node(node)
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {

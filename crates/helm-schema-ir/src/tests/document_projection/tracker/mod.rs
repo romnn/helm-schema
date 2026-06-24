@@ -153,9 +153,8 @@ fn tracker_keeps_outer_prefix_for_fragment_inside_with_body() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "template", "spec", "volumes"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action).output_path.0,
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0,
     );
 }
 
@@ -182,9 +181,8 @@ fn tracker_attributes_cert_manager_extra_env_to_container_env() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "template", "spec", "containers[*]", "env"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -283,9 +281,8 @@ spec:
             "containers[*]",
             "securityContext",
         ],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -312,9 +309,8 @@ fn tracker_attributes_cert_manager_inline_host_aliases_fragment_to_host_aliases(
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "template", "spec", "hostAliases"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -340,9 +336,8 @@ fn tracker_attributes_cert_manager_inline_ip_families_fragment_to_field() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "ipFamilies"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -369,9 +364,8 @@ fn tracker_attributes_signoz_service_common_labels_to_metadata_labels() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["metadata", "labels"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -398,9 +392,8 @@ fn tracker_attributes_signoz_service_extra_ports_to_service_ports() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "ports"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -432,11 +425,10 @@ fn tracker_attributes_cert_manager_liveness_probe_scalar_to_probe_field() {
             "livenessProbe",
             "failureThreshold",
         ],
-        "node_kind={} node_text={:?} current={:?} context={:?}",
+        "node_kind={} node_text={:?} current={:?}",
         action.kind(),
         action.utf8_text(source.as_bytes()).unwrap_or(""),
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        tracker.control_site_for_node(action).path.0
     );
     sim_assert_eq!(
         have: tracker.output_slot_for_action(action).slot,
@@ -475,11 +467,10 @@ fn tracker_attributes_cert_manager_proxy_value_to_env_value() {
             "env[*]",
             "value",
         ],
-        "node_kind={} node_text={:?} current={:?} context={:?}",
+        "node_kind={} node_text={:?} current={:?}",
         action.kind(),
         action.utf8_text(source.as_bytes()).unwrap_or(""),
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        tracker.control_site_for_node(action).path.0
     );
     sim_assert_eq!(
         have: tracker.output_slot_for_action(action).slot,
@@ -674,9 +665,8 @@ fn tracker_attributes_signoz_smtp_required_name_to_secret_ref_name() {
             "secretKeyRef",
             "name",
         ],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
     sim_assert_eq!(
         have: tracker.output_slot_for_action(action).slot,
@@ -712,9 +702,8 @@ fn tracker_attributes_networkpolicy_extra_ingress_to_ingress_rules() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "ingress"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -746,9 +735,8 @@ fn tracker_attributes_servicemonitor_metric_relabelings_to_endpoint_field() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "endpoints[*]", "metricRelabelings"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -774,9 +762,8 @@ fn tracker_attributes_networkpolicy_standard_labels_to_metadata_labels() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["metadata", "labels"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -802,9 +789,8 @@ fn tracker_attributes_networkpolicy_match_labels_to_selector_matchlabels() {
     sim_assert_eq!(
         have: path.0,
         want: vec!["spec", "podSelector", "matchLabels"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -837,8 +823,8 @@ fn tracker_attributes_networkpolicy_range_labels_to_matchlabels_map() {
             "namespaceSelector",
             "matchLabels",
         ],
-        "context={:?}",
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -871,8 +857,8 @@ fn tracker_attributes_networkpolicy_metrics_range_labels_to_matchlabels_map() {
             "namespaceSelector",
             "matchLabels",
         ],
-        "context={:?}",
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -896,8 +882,7 @@ fn tracker_attributes_networkpolicy_range_mapping_entry_path() {
     );
     let range = ranges.into_iter().next().expect("range action");
     sim_assert_eq!(
-        have: tracker
-            .range_mapping_entry_path_for_node(range)
+        have: tracker.control_site_for_node(range).range_mapping_entry_path
             .map(|path| path.0),
         want: Some(vec![
             "spec".to_string(),
@@ -906,8 +891,8 @@ fn tracker_attributes_networkpolicy_range_mapping_entry_path() {
             "namespaceSelector".to_string(),
             "matchLabels".to_string(),
         ]),
-        "context={:?}",
-        tracker.context_for_node(range)
+        "current={:?}",
+        tracker.control_site_for_node(range).path.0
     );
 }
 
@@ -941,9 +926,8 @@ metadata:
             .path
             .0,
         want: vec!["metadata", "name"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
     sim_assert_eq!(
         have: tracker.output_slot_for_action(action).slot,
@@ -975,9 +959,8 @@ fn tracker_attributes_signoz_storage_class_scalar_include_to_pvc_spec_container(
             .path
             .0,
         want: vec!["spec", "volumeClaimTemplates[*]", "spec"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -1005,9 +988,8 @@ fn tracker_attributes_signoz_storage_class_fragment_include_to_pvc_spec_containe
             .path
             .0,
         want: vec!["spec", "volumeClaimTemplates[*]", "spec"],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -1042,9 +1024,8 @@ fn tracker_attributes_signoz_extra_volume_mounts_to_volume_mounts() {
             "containers[*]",
             "volumeMounts",
         ],
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action)
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 
@@ -1079,9 +1060,8 @@ fn tracker_preserves_entire_scalar_for_bitnami_metrics_port_after_nested_blocks(
     sim_assert_eq!(
         have: tracker.output_slot_for_action(action).slot,
         want: OutputSlotKind::WholeScalar,
-        "current={:?} context={:?}",
-        tracker.path_for_node(action).0,
-        tracker.context_for_node(action).output_path.0
+        "current={:?}",
+        tracker.control_site_for_node(action).path.0
     );
 }
 

@@ -10,7 +10,7 @@ use crate::{SourceSpan, ValueKind, YamlPath};
 use super::yaml_tree::{
     is_scalar_like, parse_yaml_tree, scalar_text, strip_scalar_quotes, unwrap_yaml_node,
 };
-use super::{OutputSlot, OutputSlotKind};
+use super::{ControlSite, OutputSlot, OutputSlotKind};
 
 const PLACEHOLDER_PREFIX: &str = "__HS";
 
@@ -44,8 +44,7 @@ impl Default for ResolvedNodeContext {
 #[derive(Default)]
 pub(super) struct AttributionIndex {
     output_slots: HashMap<(usize, usize), OutputSlot>,
-    control_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
-    range_mapping_entry_nodes: HashMap<(usize, usize), ResolvedNodeContext>,
+    control_sites: HashMap<(usize, usize), ControlSite>,
 }
 
 impl AttributionIndex {
@@ -53,28 +52,16 @@ impl AttributionIndex {
         self.output_slot_for_node_or_ancestor(node)
     }
 
-    pub(super) fn control_context_for_node(
+    pub(super) fn control_site_for_node(
         &self,
-        node: tree_sitter::Node<'_>,
-    ) -> Option<ResolvedNodeContext> {
-        self.context_for_node_or_ancestor(&self.control_nodes, node)
-    }
-
-    pub(super) fn range_mapping_entry_context_for_node(
-        &self,
-        node: tree_sitter::Node<'_>,
-    ) -> Option<ResolvedNodeContext> {
-        self.context_for_node_or_ancestor(&self.range_mapping_entry_nodes, node)
-    }
-
-    fn context_for_node_or_ancestor(
-        &self,
-        contexts: &HashMap<(usize, usize), ResolvedNodeContext>,
         mut node: tree_sitter::Node<'_>,
-    ) -> Option<ResolvedNodeContext> {
+    ) -> Option<ControlSite> {
         loop {
-            if let Some(context) = contexts.get(&(node.start_byte(), node.end_byte())) {
-                return Some(context.clone());
+            if let Some(site) = self
+                .control_sites
+                .get(&(node.start_byte(), node.end_byte()))
+            {
+                return Some(site.clone());
             }
             node = node.parent()?;
         }
@@ -231,23 +218,34 @@ pub(super) fn build_attribution_index(
                 ContextMode::Control,
                 &YamlPath(Vec::new()),
             );
-            if let Some(context) = control_context.clone() {
-                attribution
-                    .control_nodes
-                    .insert((control.span_start, control.span_end), context);
-            }
-            if let Some(indent) = control.mapping_entry_indent
-                && let Some(context) = resolve_full_document_mapping_entry_context(
+
+            let range_mapping_entry_path = control.mapping_entry_indent.and_then(|indent| {
+                resolve_full_document_mapping_entry_context(
                     root,
                     &sanitized,
                     control.context_byte,
                     indent,
                 )
-                .or(control_context)
-            {
-                attribution
-                    .range_mapping_entry_nodes
-                    .insert((control.span_start, control.span_end), context);
+                .or_else(|| control_context.clone())
+                .map(|context| context.mapping_entry_path)
+            });
+
+            let control_path = control_context.map(|context| {
+                if context.inside_block_scalar {
+                    YamlPath(Vec::new())
+                } else {
+                    context.current_path
+                }
+            });
+
+            if control_path.is_some() || range_mapping_entry_path.is_some() {
+                attribution.control_sites.insert(
+                    (control.span_start, control.span_end),
+                    ControlSite {
+                        path: control_path.unwrap_or_else(|| YamlPath(Vec::new())),
+                        range_mapping_entry_path,
+                    },
+                );
             }
         }
     }
