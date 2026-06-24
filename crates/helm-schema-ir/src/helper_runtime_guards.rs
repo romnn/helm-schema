@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, helper_call_summary_from_exprs_with_fragment_locals,
+    FragmentEvalContext, helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperOutputMeta;
 use crate::predicate::Predicate;
@@ -67,15 +67,19 @@ pub(crate) fn branch_guard_paths_for_expr(
     };
     branch_guard_paths.extend(eval_expr(expr, &local_env).effects.local_source_paths);
 
-    let nested = helper_call_summary_from_exprs_with_fragment_locals(
-        std::slice::from_ref(expr),
-        Some(bindings),
-        current_dot,
-        local_bindings,
-        context,
-        seen,
+    branch_guard_paths.extend(
+        helper_result_from_expr_with_fragment_locals(
+            expr,
+            local_bindings,
+            Some(bindings),
+            current_dot,
+            context,
+            seen,
+        )
+        .effects
+        .helper_summary
+        .dependency_relevant_paths(),
     );
-    branch_guard_paths.extend(nested.dependency_relevant_paths());
     branch_guard_paths
 }
 

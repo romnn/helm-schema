@@ -40,32 +40,23 @@ pub(crate) fn computed_with_body_fragment_value_expr(
 impl ValuePathContext<'_> {
     pub(crate) fn expression_output_effects(&self, exprs: &[TemplateExpr]) -> Effects {
         let effects = self.expression_effects(exprs);
-        let local_effects = self.local_expression_effects(exprs);
         let mut values = output_value_paths(effects.clone());
         let mut defaults = effects.defaults.clone();
-        defaults.extend(local_effects.local_default_paths.iter().cloned());
+        defaults.extend(effects.local_default_paths.iter().cloned());
         values.extend(defaults.iter().cloned());
-        let mut type_hints = effects.schema_type_hints();
-        for (path, hints) in local_effects.schema_type_hints() {
-            type_hints.entry(path).or_default().extend(hints);
-        }
         Effects {
             output_paths: values,
             defaults,
-            type_hints,
+            type_hints: effects.schema_type_hints(),
             encoded_paths: effects.encoded_paths,
-            local_output_meta: local_effects.local_output_meta,
+            local_output_meta: effects.local_output_meta,
             ..Effects::default()
         }
     }
 
     fn expression_effects(&self, exprs: &[TemplateExpr]) -> Effects {
-        let mut effects = Effects::default();
         let env = self.expression_eval_env();
-        for expr in exprs {
-            effects.merge(eval_expr(expr, &env).effects);
-        }
-        effects
+        eval_exprs_effects(exprs, &env)
     }
 
     fn expression_eval_env(&self) -> EvalEnv {
@@ -90,19 +81,9 @@ impl ValuePathContext<'_> {
         exprs: &[TemplateExpr],
     ) -> BTreeSet<String> {
         let effects = self.expression_effects(exprs);
-        let local_effects = self.local_expression_effects(exprs);
         let mut paths = effects.defaults.clone();
-        paths.extend(local_effects.local_default_paths.iter().cloned());
+        paths.extend(effects.local_default_paths.iter().cloned());
         paths
-    }
-
-    fn local_expression_effects(&self, exprs: &[TemplateExpr]) -> Effects {
-        let env = EvalEnv::from_local_facts(
-            self.template_bindings,
-            self.template_default_paths,
-            self.template_output_meta,
-        );
-        eval_exprs_effects(exprs, &env)
     }
 
     pub(super) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {

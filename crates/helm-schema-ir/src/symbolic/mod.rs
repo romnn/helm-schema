@@ -13,7 +13,7 @@ use crate::contract::ContractIr;
 use crate::define_body_cache::DefineBodyCache;
 use crate::document_projection::DocumentTracker;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, helper_call_summary_from_exprs_with_fragment_locals,
+    FragmentEvalContext, helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary::HelperSummaryCache;
@@ -252,14 +252,26 @@ impl<'a> SymbolicWalker<'a> {
         if self.exprs_call_inlined_helper(exprs) {
             return HelperSummary::default();
         }
-        helper_call_summary_from_exprs_with_fragment_locals(
-            exprs,
-            Some(&self.root_bindings),
-            self.current_dot_binding().as_ref(),
-            &self.scope.locals().fragment_values,
-            self.fragment_eval_context(),
-            &mut HashSet::new(),
-        )
+        let current_dot = self.current_dot_binding();
+        let fragment_locals = &self.scope.locals().fragment_values;
+        let context = self.fragment_eval_context();
+        let mut seen = HashSet::new();
+        let mut summary = HelperSummary::default();
+        for expr in exprs {
+            summary.extend(
+                helper_result_from_expr_with_fragment_locals(
+                    expr,
+                    fragment_locals,
+                    Some(&self.root_bindings),
+                    current_dot.as_ref(),
+                    context,
+                    &mut seen,
+                )
+                .effects
+                .helper_summary,
+            );
+        }
+        summary
     }
 
     fn exprs_call_inlined_helper(&self, exprs: &[TemplateExpr]) -> bool {

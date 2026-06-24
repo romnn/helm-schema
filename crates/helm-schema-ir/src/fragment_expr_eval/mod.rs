@@ -11,7 +11,6 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::helper_arg_projection::bindings_for_helper_arg_with;
-use crate::helper_summary::HelperSummary;
 use bound_helper_resolver::{
     BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_result_with_bound_helpers,
     eval_expr_with_bound_helpers,
@@ -127,35 +126,4 @@ pub(crate) fn fragment_value_from_expr(
         },
     )
     .map(|value| value.to_context_value())
-}
-
-pub(crate) fn helper_call_summary_from_exprs_with_fragment_locals(
-    exprs: &[TemplateExpr],
-    bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> HelperSummary {
-    let env =
-        EvalEnv::from_helper_context_with_fragment_locals(bindings, current_dot, fragment_locals);
-    let mut effects = crate::eval_effect::Effects::default();
-    for expr in exprs {
-        effects.merge(
-            eval_expr_result_with_bound_helpers(
-                expr,
-                &env,
-                BoundHelperValueResolverParams {
-                    fragment_locals,
-                    outer: bindings,
-                    current_dot,
-                    context,
-                    seen,
-                    projection: HelperAnalysisProjection::HelperValue,
-                },
-            )
-            .effects,
-        );
-    }
-    effects.helper_summary
 }
