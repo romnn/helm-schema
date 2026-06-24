@@ -94,13 +94,13 @@ fn helper_summary_merges_fragment_output_uses() {
         HelperOutputMeta::default(),
     ));
 
-    let outputs = summary.fragment_output_uses();
+    let outputs = &summary.fragment_output_uses;
 
     sim_assert_eq!(have: outputs.len(), want: 1);
 }
 
 #[test]
-fn helper_summary_helper_projection_preserves_structured_output_metadata() {
+fn helper_summary_projection_preserves_structured_output_metadata() {
     let meta = HelperOutputMeta {
         predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
             "enabled".to_string(),
@@ -117,7 +117,7 @@ fn helper_summary_helper_projection_preserves_structured_output_metadata() {
     ));
 
     sim_assert_eq!(
-        have: summary.project_helper_value(),
+        have: summary.project_value(),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "app".to_string(),
             AbstractValue::OutputSet(BTreeMap::from([("podLabels".to_string(), meta)])),
@@ -126,7 +126,7 @@ fn helper_summary_helper_projection_preserves_structured_output_metadata() {
 }
 
 #[test]
-fn helper_summary_fragment_projection_preserves_structured_output_path() {
+fn helper_summary_projection_preserves_structured_output_path() {
     let mut summary = HelperSummary::default();
     summary.add_fragment_output_use(HelperFragmentOutputUse::new(
         "podLabels".to_string(),
@@ -136,7 +136,7 @@ fn helper_summary_fragment_projection_preserves_structured_output_path() {
     ));
 
     sim_assert_eq!(
-        have: summary.project_fragment_value(),
+        have: summary.project_value(),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "app".to_string(),
             output_paths(["podLabels".to_string()]),
@@ -145,13 +145,13 @@ fn helper_summary_fragment_projection_preserves_structured_output_path() {
 }
 
 #[test]
-fn helper_summary_fragment_projection_merges_scalar_outputs_into_one_output_set() {
+fn helper_summary_projection_merges_scalar_outputs_into_one_output_set() {
     let mut summary = HelperSummary::default();
     summary.merge_output_meta("image.repository".to_string(), HelperOutputMeta::default());
     summary.merge_output_meta("image.tag".to_string(), HelperOutputMeta::default());
 
     sim_assert_eq!(
-        have: summary.project_fragment_value(),
+        have: summary.project_value(),
         want: Some(output_paths([
             "image.repository".to_string(),
             "image.tag".to_string(),

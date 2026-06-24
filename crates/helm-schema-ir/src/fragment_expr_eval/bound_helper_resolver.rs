@@ -24,13 +24,6 @@ pub(super) struct BoundHelperValueResolverParams<'a, 'context, 'seen> {
     pub(super) current_dot: Option<&'a AbstractValue>,
     pub(super) context: FragmentEvalContext<'context>,
     pub(super) seen: &'seen mut HashSet<String>,
-    pub(super) projection: HelperAnalysisProjection,
-}
-
-#[derive(Clone, Copy)]
-pub(super) enum HelperAnalysisProjection {
-    HelperValue,
-    FragmentValue,
 }
 
 struct BoundHelperValueResolver<'a, 'context, 'seen> {
@@ -58,10 +51,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             self.params.context,
             self.params.seen,
         );
-        let value = match self.params.projection {
-            HelperAnalysisProjection::HelperValue => analysis.project_helper_value(),
-            HelperAnalysisProjection::FragmentValue => analysis.project_fragment_value(),
-        };
+        let value = analysis.project_value();
         let effects = Effects {
             helper_summary: analysis,
             ..Effects::default()

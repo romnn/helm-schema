@@ -6,7 +6,7 @@ use crate::ValueKind;
 use crate::bound_value_analysis::{GetBinding, extract_bound_values_from_exprs};
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::helper_summary::HelperSummary;
+use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
 use crate::value_path_context::ValuePathContext;
 use crate::{Guard, YamlPath, output_path};
 
@@ -117,16 +117,15 @@ fn append_document_helper_contract_uses(
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    contract.extend_type_hints(helper.type_hints());
-    let fragment_output_uses = helper.fragment_output_uses();
-    let helper_has_only_scalar_outputs = fragment_output_uses.is_empty();
-    for (value, meta) in helper.scalar_output_meta() {
-        if !helper.has_structured_fragment_source(&value) {
-            for extra_guards in meta.contract_guard_sets(&value) {
-                let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(&value));
+    contract.extend_type_hints(helper.type_hints.clone());
+    let helper_has_only_scalar_outputs = helper.fragment_output_uses.is_empty();
+    for (value, meta) in &helper.scalar_output_meta {
+        if !helper.has_structured_fragment_source(value) {
+            for extra_guards in meta.contract_guard_sets(value) {
+                let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(value));
                 if helper_has_only_scalar_outputs
                     && site.can_project_scalar_helper_to_caller_path()
-                    && !helper.has_rendered_source_descendant(&value)
+                    && !helper.has_rendered_source_descendant(value)
                 {
                     contract.push(site.contract_use_with_extra_provenance(
                         context,
@@ -148,7 +147,7 @@ fn append_document_helper_contract_uses(
         }
     }
 
-    for output in fragment_output_uses {
+    for output in &helper.fragment_output_uses {
         append_fragment_output_contract_use(
             output,
             helper,
@@ -159,8 +158,8 @@ fn append_document_helper_contract_uses(
         );
     }
 
-    for (value, meta) in helper.dependency_meta() {
-        for extra_guards in meta.contract_guard_sets(&value) {
+    for (value, meta) in &helper.dependency_meta {
+        for extra_guards in meta.contract_guard_sets(value) {
             contract.push(context.pathless_contract_use_with_extra_provenance(
                 value.clone(),
                 ValueKind::Scalar,
@@ -170,13 +169,13 @@ fn append_document_helper_contract_uses(
         }
     }
 
-    for value in helper.guard_paths() {
-        contract.push(context.pathless_contract_use(value, ValueKind::Scalar, &[]));
+    for value in &helper.guard_paths {
+        contract.push(context.pathless_contract_use(value.clone(), ValueKind::Scalar, &[]));
     }
 }
 
 fn append_fragment_output_contract_use(
-    output: crate::helper_summary::HelperFragmentOutputUse,
+    output: &HelperFragmentOutputUse,
     helper: &HelperSummary,
     encoded_output_values: &BTreeSet<String>,
     site: &DocumentSiteContext,

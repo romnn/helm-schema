@@ -107,16 +107,18 @@ impl SymbolicWalker<'_> {
         .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let mut contract = nested.run_contract(&plan.body.tree);
         let helper_renders_output = helper_summary.has_document_value_facts();
-        let suppress_roots = helper_summary.suppress_roots.clone();
-        let helper_type_hints = helper_summary.type_hints();
-        let mut inline_dependency_meta = helper_summary.dependency_meta();
-        inline_dependency_meta.retain(|path, _meta| !suppress_roots.contains(path));
+        let suppress_roots = helper_summary.suppress_roots;
+        let helper_type_hints = helper_summary.type_hints;
+        let inline_dependency_meta = helper_summary.dependency_meta;
         if helper_renders_output {
             contract.extend_type_hints(helper_type_hints);
         }
         self.contract.append(contract);
         let outer_guards = self.contract_guards();
         for (value, meta) in inline_dependency_meta {
+            if suppress_roots.contains(&value) {
+                continue;
+            }
             for extra_guards in meta.contract_guard_sets(&value) {
                 let mut guards = outer_guards.clone();
                 for guard in extra_guards {

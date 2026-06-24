@@ -119,8 +119,8 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             );
         }
     }
-    let nested_scalar_outputs = nested.scalar_output_meta().into_iter().collect::<Vec<_>>();
-    let nested_fragment_outputs = nested.fragment_output_uses();
+    let nested_scalar_outputs = nested.scalar_output_meta.into_iter().collect::<Vec<_>>();
+    let nested_fragment_outputs = nested.fragment_output_uses;
     let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
         .iter()
         .map(|output| output.source_expr.clone())
@@ -216,7 +216,7 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let nested = result.effects.helper_summary;
-        let nested_binding = nested.project_fragment_value();
+        let nested_binding = nested.project_value();
         top_level_helper_dependency_paths = nested.dependency_relevant_paths();
         if let Some(nested_binding) = nested_binding {
             binding = match binding {

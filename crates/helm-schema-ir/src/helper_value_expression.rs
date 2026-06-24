@@ -178,13 +178,31 @@ fn collect_assignment_bound_helper_values(
         .analysis
         .add_type_hints(result.effects.schema_type_hints());
     let mut nested_defaulted_output_paths = BTreeSet::new();
-    state
-        .analysis
-        .chart_defaults
-        .extend(result.effects.helper_summary.chart_defaults.iter().cloned());
-    let nested_summary = result.effects.helper_summary;
-    state.analysis.add_type_hints(nested_summary.type_hints());
-    for (path, meta) in nested_summary.dependency_output_meta() {
+    let HelperSummary {
+        scalar_output_meta,
+        dependency_meta,
+        type_hints,
+        fragment_output_uses,
+        chart_defaults,
+        ..
+    } = result.effects.helper_summary;
+    state.analysis.chart_defaults.extend(chart_defaults);
+    state.analysis.add_type_hints(type_hints);
+    for (path, meta) in scalar_output_meta {
+        if meta.defaulted {
+            nested_defaulted_output_paths.insert(path.clone());
+        }
+        state.analysis.merge_dependency_meta(path, meta);
+    }
+    for output in fragment_output_uses {
+        if output.meta.defaulted {
+            nested_defaulted_output_paths.insert(output.source_expr.clone());
+        }
+        state
+            .analysis
+            .merge_dependency_meta(output.source_expr, output.meta);
+    }
+    for (path, meta) in dependency_meta {
         if meta.defaulted {
             nested_defaulted_output_paths.insert(path.clone());
         }
@@ -267,29 +285,23 @@ fn extend_nested_render(
     mode: NestedRenderMode,
 ) {
     if matches!(mode, NestedRenderMode::Scalar) {
-        analysis
-            .string_output
-            .extend(nested.string_output.iter().cloned());
+        analysis.string_output.extend(nested.string_output);
     }
-    analysis
-        .suppress_roots
-        .extend(nested.suppress_roots.iter().cloned());
-    analysis
-        .chart_defaults
-        .extend(nested.chart_defaults.iter().cloned());
-    analysis.add_type_hints(nested.type_hints());
+    analysis.suppress_roots.extend(nested.suppress_roots);
+    analysis.chart_defaults.extend(nested.chart_defaults);
+    analysis.add_type_hints(nested.type_hints);
 
-    for (path, mut meta) in nested.scalar_output_meta() {
+    for (path, mut meta) in nested.scalar_output_meta {
         meta.add_predicates(active_output_predicates.iter().cloned());
         analysis.merge_output_meta(path, meta);
     }
-    for (path, meta) in nested.dependency_meta() {
+    for (path, meta) in nested.dependency_meta {
         analysis.merge_dependency_meta(path, meta);
     }
-    for path in nested.guard_paths() {
+    for path in nested.guard_paths {
         analysis.add_guard_path(path);
     }
-    for mut output in nested.fragment_output_uses() {
+    for mut output in nested.fragment_output_uses {
         output
             .meta
             .add_predicates(active_output_predicates.iter().cloned());

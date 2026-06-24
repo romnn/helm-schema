@@ -157,11 +157,11 @@ impl HelperFragmentOutputUse {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct HelperSummary {
     pub(crate) string_output: BTreeSet<String>,
-    scalar_output_meta: BTreeMap<String, HelperOutputMeta>,
-    dependency_meta: BTreeMap<String, HelperOutputMeta>,
-    guard_paths: BTreeSet<String>,
-    type_hints: BTreeMap<String, BTreeSet<String>>,
-    fragment_output_uses: Vec<HelperFragmentOutputUse>,
+    pub(crate) scalar_output_meta: BTreeMap<String, HelperOutputMeta>,
+    pub(crate) dependency_meta: BTreeMap<String, HelperOutputMeta>,
+    pub(crate) guard_paths: BTreeSet<String>,
+    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
+    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
     pub(crate) suppress_roots: BTreeSet<String>,
     /// Values-rooted paths that a helper body structurally declares as
     /// null-tolerant via a `set OPERAND "KEY" (OPERAND.KEY | default V)`
@@ -275,44 +275,6 @@ impl HelperSummary {
         self.scalar_output_meta.remove(path);
     }
 
-    pub(crate) fn rendered_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = self.scalar_output_meta();
-        for output in self.fragment_output_uses() {
-            out.entry(output.source_expr)
-                .or_default()
-                .merge(output.meta);
-        }
-        out
-    }
-
-    pub(crate) fn scalar_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        self.scalar_output_meta.clone()
-    }
-
-    pub(crate) fn fragment_output_uses(&self) -> Vec<HelperFragmentOutputUse> {
-        self.fragment_output_uses.clone()
-    }
-
-    pub(crate) fn dependency_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = self.rendered_output_meta();
-        for (path, meta) in &self.dependency_meta {
-            out.entry(path.clone()).or_default().merge_ref(meta);
-        }
-        out
-    }
-
-    pub(crate) fn dependency_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        self.dependency_meta.clone()
-    }
-
-    pub(crate) fn guard_paths(&self) -> BTreeSet<String> {
-        self.guard_paths.clone()
-    }
-
-    pub(crate) fn type_hints(&self) -> BTreeMap<String, BTreeSet<String>> {
-        self.type_hints.clone()
-    }
-
     pub(crate) fn has_structured_fragment_source(&self, path: &str) -> bool {
         self.fragment_output_uses
             .iter()
@@ -368,11 +330,7 @@ impl HelperSummary {
         }
     }
 
-    pub(crate) fn project_helper_value(&self) -> Option<AbstractValue> {
-        project_summary_value(self).map(|value| value.to_context_value())
-    }
-
-    pub(crate) fn project_fragment_value(&self) -> Option<AbstractValue> {
+    pub(crate) fn project_value(&self) -> Option<AbstractValue> {
         project_summary_value(self)
             .map(|value| value.to_context_value())
             .and_then(|value| AbstractValue::merge_context_values(vec![value]))

@@ -35,11 +35,11 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
 
     let summary =
         interpret_bound_helper_body("serviceAccountName", &resolution, context, &mut seen);
-    let output_meta = summary.scalar_output_meta();
+    let output_meta = &summary.scalar_output_meta;
     let meta = output_meta
         .get("signoz.serviceAccount.name")
         .expect("service account name output metadata");
-    let type_hints = summary.type_hints();
+    let type_hints = &summary.type_hints;
     let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
 
     assert!(
@@ -70,7 +70,7 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
         want: Some(&string_type_hint),
         "defaulted scalar output should retain string type hint"
     );
-    assert!(summary.fragment_output_uses().is_empty());
+    assert!(summary.fragment_output_uses.is_empty());
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn helper_body_summary_resolves_string_hints_through_local_aliases() {
     let mut seen = HashSet::new();
 
     let summary = interpret_bound_helper_body("image", &resolution, context, &mut seen);
-    let type_hints = summary.type_hints();
+    let type_hints = &summary.type_hints;
 
     sim_assert_eq!(
         have: type_hints.get("image.repository"),
@@ -153,7 +153,7 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
 
     let summary =
         interpret_bound_helper_body("common.storage.class", &resolution, context, &mut seen);
-    let outputs = summary.fragment_output_uses();
+    let outputs = &summary.fragment_output_uses;
 
     assert!(
         outputs.iter().any(|output| {

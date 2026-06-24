@@ -11,9 +11,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr};
-use bound_helper_resolver::{
-    BoundHelperValueResolverParams, HelperAnalysisProjection, eval_expr_result_with_bound_helpers,
-};
+use bound_helper_resolver::{BoundHelperValueResolverParams, eval_expr_result_with_bound_helpers};
 
 pub(crate) fn context_value_from_outer_expr(
     expr: &TemplateExpr,
@@ -57,7 +55,6 @@ pub(crate) fn helper_result_from_expr_with_fragment_locals(
             current_dot,
             context,
             seen,
-            projection: HelperAnalysisProjection::HelperValue,
         },
     );
     result.value = result.value.map(|value| value.to_context_value());
@@ -129,7 +126,6 @@ pub(crate) fn fragment_value_from_expr(
             current_dot: current_dot_helper.as_ref(),
             context,
             seen,
-            projection: HelperAnalysisProjection::FragmentValue,
         },
     )
     .value
