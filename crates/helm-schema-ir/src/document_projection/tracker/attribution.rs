@@ -12,7 +12,7 @@ use super::yaml_tree::{
 };
 
 const PLACEHOLDER_PREFIX: &str = "__HS";
-const VIRTUAL_MAPPING_VALUE: &str = "__HS_MAPPING_VALUE__";
+const INLINE_PLACEHOLDER: &str = "__HSINLINE__";
 
 #[derive(Clone, Debug)]
 pub(super) struct ResolvedNodeContext {
@@ -178,11 +178,13 @@ pub(super) fn build_attribution_index(
             .insert((output.node_start, output.node_end));
 
         let base_context = tree.as_ref().and_then(|tree| {
-            resolve_output_context(
+            resolve_yaml_context(
                 tree.root_node(),
                 &sanitized,
                 output.node_start,
-                &output.placeholder,
+                ContextMode::Output {
+                    placeholder: &output.placeholder,
+                },
                 &YamlPath(Vec::new()),
             )
         });
@@ -233,7 +235,7 @@ pub(super) fn build_attribution_index(
                 base_context.or(rendered_context.clone())
             }
         } else {
-            merge_output_context_candidates(base_context, inline_context, None)
+            merge_resolved_contexts(base_context, inline_context)
         };
 
         if let Some(context) = context {
@@ -260,10 +262,11 @@ pub(super) fn build_attribution_index(
     if let Some(tree) = tree.as_ref() {
         let root = tree.root_node();
         for control in controls {
-            if let Some(context) = resolve_control_context(
+            if let Some(context) = resolve_yaml_context(
                 root,
                 &sanitized,
                 control.context_byte,
+                ContextMode::Control,
                 &YamlPath(Vec::new()),
             ) {
                 attribution
@@ -359,20 +362,6 @@ fn prefer_context_path(left: YamlPath, right: YamlPath) -> YamlPath {
     }
 }
 
-fn merge_output_context_candidates(
-    base: Option<ResolvedNodeContext>,
-    inline: Option<ResolvedNodeContext>,
-    rendered: Option<ResolvedNodeContext>,
-) -> Option<ResolvedNodeContext> {
-    let merged = merge_resolved_contexts(base, inline);
-    match (merged, rendered) {
-        (Some(merged), Some(rendered)) => Some(rebase_virtual_context(merged, rendered)),
-        (Some(merged), None) => Some(merged),
-        (None, Some(rendered)) => Some(rendered),
-        (None, None) => None,
-    }
-}
-
 fn resolve_inline_output_probe_context(
     sanitized: &str,
     action_start: usize,
@@ -383,11 +372,11 @@ fn resolve_inline_output_probe_context(
     fill_placeholder(&mut probe, action_start, action_end, placeholder);
     let probe = String::from_utf8(probe).ok()?;
     let tree = parse_yaml_tree(&probe)?;
-    resolve_output_context(
+    resolve_yaml_context(
         tree.root_node(),
         &probe,
         action_start.min(probe.len()),
-        placeholder,
+        ContextMode::Output { placeholder },
         &YamlPath(Vec::new()),
     )
 }
@@ -453,13 +442,15 @@ fn resolve_full_document_mapping_value_context(
     insertion_byte: usize,
     indent: usize,
 ) -> Option<ResolvedNodeContext> {
+    if line_has_inline_prefix(sanitized, insertion_byte) {
+        return None;
+    }
     let key = previous_open_mapping_key(sanitized, insertion_byte, indent)?;
-    let mut context = resolve_root_probe_output_context(
+    let mut context = resolve_structural_gap_context(
         sanitized,
         insertion_byte,
-        indent + 2,
-        VIRTUAL_MAPPING_VALUE,
-        VIRTUAL_MAPPING_VALUE,
+        indent + 1,
+        ProbeContextKind::Mapping,
     )?;
     let last = context.output_path.0.last()?;
     if !path_segments_equivalent(last, &key) {
@@ -509,67 +500,6 @@ fn resolve_full_document_sequence_item_context(
         indent,
         ProbeContextKind::Sequence,
     )
-}
-
-fn resolve_root_probe_output_context(
-    sanitized: &str,
-    insertion_byte: usize,
-    indent: usize,
-    probe: &str,
-    placeholder: &str,
-) -> Option<ResolvedNodeContext> {
-    let (probe_document, probe_byte) =
-        build_probe_document(sanitized, insertion_byte, indent, probe, placeholder)?;
-    let probe_tree = parse_yaml_tree(&probe_document)?;
-    resolve_output_context(
-        probe_tree.root_node(),
-        &probe_document,
-        probe_byte,
-        placeholder,
-        &YamlPath(Vec::new()),
-    )
-}
-
-fn build_probe_document(
-    sanitized: &str,
-    insertion_byte: usize,
-    indent: usize,
-    probe: &str,
-    placeholder: &str,
-) -> Option<(String, usize)> {
-    let insertion_byte = insertion_byte.min(sanitized.len());
-    let line_start = sanitized[..insertion_byte]
-        .rfind('\n')
-        .map_or(0, |index| index + 1);
-    let line_end = sanitized[insertion_byte..]
-        .find('\n')
-        .map_or(sanitized.len(), |index| insertion_byte + index);
-    let line_after = if line_end < sanitized.len() {
-        line_end + 1
-    } else {
-        line_end
-    };
-    let has_inline_prefix = !sanitized[line_start..insertion_byte].trim().is_empty();
-    let prefix_end = if has_inline_prefix {
-        insertion_byte
-    } else {
-        line_start
-    };
-    let suffix_start = line_after;
-
-    let mut document = String::with_capacity(sanitized.len() + indent + probe.len() + 2);
-    document.push_str(&sanitized[..prefix_end]);
-    if has_inline_prefix {
-        document.push('\n');
-    }
-    let probe_line_start = document.len();
-    document.push_str(&" ".repeat(indent));
-    document.push_str(probe);
-    document.push('\n');
-    document.push_str(&sanitized[suffix_start..]);
-
-    let probe_offset = probe.find(placeholder)?;
-    Some((document, probe_line_start + indent + probe_offset))
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -1031,7 +961,7 @@ fn resolve_trailing_structural_gap_from_child(
             if kind == ProbeContextKind::Sequence {
                 sequence_container_gap_context(node, indent, path, kind)
             } else {
-                None
+                resolve_structural_gap_in_sequence(node, source, byte, indent, path, kind)
             }
         }
         "block_sequence_item" => {
@@ -1329,15 +1259,17 @@ fn action_is_inline_mapping_value(sanitized: &[u8], start: usize) -> bool {
     let Ok(prefix) = std::str::from_utf8(prefix) else {
         return false;
     };
-    let snippet = format!("{prefix}{PLACEHOLDER_PREFIX}INLINE__\n");
+    let snippet = format!("{prefix}{INLINE_PLACEHOLDER}\n");
     let Some(tree) = parse_yaml_tree(&snippet) else {
         return false;
     };
-    resolve_output_context(
+    resolve_yaml_context(
         tree.root_node(),
         &snippet,
         prefix.len(),
-        &format!("{PLACEHOLDER_PREFIX}INLINE__"),
+        ContextMode::Output {
+            placeholder: INLINE_PLACEHOLDER,
+        },
         &YamlPath(Vec::new()),
     )
     .is_some_and(|context| context.entire_scalar_value && !context.output_path.0.is_empty())
@@ -1630,11 +1562,17 @@ fn embedded_placeholder_token(offset: usize, len: usize) -> String {
     }
 }
 
-fn resolve_output_context(
+#[derive(Clone, Copy)]
+enum ContextMode<'a> {
+    Output { placeholder: &'a str },
+    Control,
+}
+
+fn resolve_yaml_context(
     node: tree_sitter::Node<'_>,
     source: &str,
     byte: usize,
-    placeholder: &str,
+    mode: ContextMode<'_>,
     path: &YamlPath,
 ) -> Option<ResolvedNodeContext> {
     if !contains_byte(node, byte) {
@@ -1643,287 +1581,163 @@ fn resolve_output_context(
 
     match node.kind() {
         "stream" | "document" | "block_node" | "flow_node" => {
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if !child.is_named() {
-                    continue;
-                }
-                if let Some(context) =
-                    resolve_output_context(child, source, byte, placeholder, path)
-                {
-                    return Some(context);
-                }
-            }
-            Some(default_context(path))
+            resolve_yaml_context_in_children(node, source, byte, mode, path)
         }
         "block_mapping" | "flow_mapping" => {
-            let pair_kind = if node.kind() == "block_mapping" {
-                "block_mapping_pair"
-            } else {
-                "flow_pair"
-            };
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if child.is_named()
-                    && child.kind() == pair_kind
-                    && let Some(context) =
-                        resolve_output_context(child, source, byte, placeholder, path)
-                {
-                    return Some(context);
-                }
-            }
-            Some(default_context(path))
+            resolve_yaml_context_in_mapping(node, source, byte, mode, path)
         }
         "block_mapping_pair" | "flow_pair" => {
-            let key = node.child_by_field_name("key");
-            let value = node.child_by_field_name("value");
-            let key_text = key.and_then(|node| scalar_text(node, source));
-            let child_path = if key_text
-                .as_deref()
-                .is_some_and(|text| text.contains(PLACEHOLDER_PREFIX))
-            {
-                path.clone()
-            } else if let Some(key_text) = key_text.as_deref() {
-                append_mapping_segment(path, key_text)
-            } else {
-                path.clone()
-            };
-
-            if let Some(key) = key
-                && contains_byte(key, byte)
-            {
-                if key_text.as_deref() == Some(placeholder) {
-                    return Some(ResolvedNodeContext {
-                        current_path: path.clone(),
-                        output_path: path.clone(),
-                        mapping_entry_path: path.clone(),
-                        in_mapping_key: false,
-                        entire_scalar_value: true,
-                        inside_block_scalar: false,
-                        explicit_mapping_value_slot: false,
-                        sequence_item_slot: false,
-                    });
-                }
-                return Some(ResolvedNodeContext {
-                    current_path: path.clone(),
-                    output_path: YamlPath(Vec::new()),
-                    mapping_entry_path: path.clone(),
-                    in_mapping_key: true,
-                    entire_scalar_value: false,
-                    inside_block_scalar: false,
-                    explicit_mapping_value_slot: false,
-                    sequence_item_slot: false,
-                });
-            }
-
-            if let Some(value) = value
-                && contains_byte(value, byte)
-            {
-                if is_scalar_like(value.kind()) {
-                    return Some(resolve_scalar_context(
-                        value,
-                        source,
-                        placeholder,
-                        &child_path,
-                    ));
-                }
-                if let Some(context) =
-                    resolve_output_context(value, source, byte, placeholder, &child_path)
-                {
-                    return Some(context);
-                }
-            }
-
-            Some(ResolvedNodeContext {
-                current_path: child_path.clone(),
-                output_path: child_path.clone(),
-                mapping_entry_path: child_path,
-                in_mapping_key: false,
-                entire_scalar_value: false,
-                inside_block_scalar: false,
-                explicit_mapping_value_slot: false,
-                sequence_item_slot: false,
-            })
+            resolve_yaml_context_in_mapping_pair(node, source, byte, mode, path)
         }
         "block_sequence" | "flow_sequence" => {
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if !child.is_named() {
-                    continue;
-                }
-                if matches!(
-                    child.kind(),
-                    "block_sequence_item" | "flow_node" | "flow_pair"
-                ) && let Some(context) =
-                    resolve_output_sequence_child(child, source, byte, placeholder, path)
-                {
-                    return Some(context);
-                }
-            }
-            Some(default_context(path))
+            resolve_yaml_context_in_sequence(node, source, byte, mode, path)
         }
         "block_sequence_item" => {
-            resolve_output_sequence_child(node, source, byte, placeholder, path)
+            resolve_yaml_context_in_sequence_item(node, source, byte, mode, path)
                 .or_else(|| Some(default_context(path)))
         }
-        "block_scalar" => Some(ResolvedNodeContext {
-            current_path: path.clone(),
-            output_path: YamlPath(Vec::new()),
-            mapping_entry_path: path.clone(),
-            in_mapping_key: false,
-            entire_scalar_value: false,
-            inside_block_scalar: true,
-            explicit_mapping_value_slot: false,
-            sequence_item_slot: false,
-        }),
-        kind if is_scalar_like(kind) => {
-            Some(resolve_scalar_context(node, source, placeholder, path))
-        }
-        _ => {
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if !child.is_named() {
-                    continue;
-                }
-                if let Some(context) =
-                    resolve_output_context(child, source, byte, placeholder, path)
-                {
-                    return Some(context);
-                }
+        "block_scalar" => Some(block_scalar_context(path)),
+        kind if is_scalar_like(kind) => Some(match mode {
+            ContextMode::Output { placeholder } => {
+                resolve_scalar_context(node, source, placeholder, path)
             }
-            Some(default_context(path))
-        }
+            ContextMode::Control => default_context(path),
+        }),
+        _ => match mode {
+            ContextMode::Output { .. } => {
+                resolve_yaml_context_in_children(node, source, byte, mode, path)
+            }
+            ContextMode::Control => Some(default_context(path)),
+        },
     }
 }
 
-fn resolve_control_context(
+fn resolve_yaml_context_in_children(
     node: tree_sitter::Node<'_>,
     source: &str,
     byte: usize,
+    mode: ContextMode<'_>,
     path: &YamlPath,
 ) -> Option<ResolvedNodeContext> {
-    if !contains_byte(node, byte) {
-        return None;
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if !child.is_named() {
+            continue;
+        }
+        if let Some(context) = resolve_yaml_context(child, source, byte, mode, path) {
+            return Some(context);
+        }
     }
-
-    match node.kind() {
-        "stream" | "document" | "block_node" | "flow_node" => {
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if !child.is_named() {
-                    continue;
-                }
-                if let Some(context) = resolve_control_context(child, source, byte, path) {
-                    return Some(context);
-                }
-            }
-            Some(default_context(path))
-        }
-        "block_mapping" | "flow_mapping" => {
-            let pair_kind = if node.kind() == "block_mapping" {
-                "block_mapping_pair"
-            } else {
-                "flow_pair"
-            };
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if child.is_named()
-                    && child.kind() == pair_kind
-                    && let Some(context) = resolve_control_context(child, source, byte, path)
-                {
-                    return Some(context);
-                }
-            }
-            Some(default_context(path))
-        }
-        "block_mapping_pair" | "flow_pair" => {
-            let key = node.child_by_field_name("key");
-            let value = node.child_by_field_name("value");
-            let key_text = key.and_then(|node| scalar_text(node, source));
-            let child_path = if key_text
-                .as_deref()
-                .is_some_and(|text| text.contains(PLACEHOLDER_PREFIX))
-            {
-                path.clone()
-            } else if let Some(key_text) = key_text {
-                append_mapping_segment(path, &key_text)
-            } else {
-                path.clone()
-            };
-
-            if let Some(value) = value
-                && contains_byte(value, byte)
-            {
-                if is_scalar_like(value.kind()) {
-                    return Some(default_context(&child_path));
-                }
-                if let Some(context) = resolve_control_context(value, source, byte, &child_path) {
-                    return Some(context);
-                }
-            }
-
-            Some(default_context(&child_path))
-        }
-        "block_sequence" | "flow_sequence" => {
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                if !child.is_named() {
-                    continue;
-                }
-                if matches!(
-                    child.kind(),
-                    "block_sequence_item" | "flow_node" | "flow_pair"
-                ) && let Some(context) = resolve_control_context(child, source, byte, path)
-                {
-                    return Some(context);
-                }
-            }
-            Some(default_context(path))
-        }
-        "block_sequence_item" => {
-            if let Some(child) = node.named_child(0) {
-                let child = unwrap_yaml_node(child);
-                if is_scalar_like(child.kind()) && contains_byte(child, byte) {
-                    return Some(default_context(path));
-                }
-                if child.kind() == "block_scalar" {
-                    return Some(ResolvedNodeContext {
-                        current_path: path.clone(),
-                        output_path: YamlPath(Vec::new()),
-                        mapping_entry_path: path.clone(),
-                        in_mapping_key: false,
-                        entire_scalar_value: false,
-                        inside_block_scalar: true,
-                        explicit_mapping_value_slot: false,
-                        sequence_item_slot: false,
-                    });
-                }
-                let seq_path = append_sequence_segment(path);
-                if let Some(context) = resolve_control_context(child, source, byte, &seq_path) {
-                    return Some(context);
-                }
-            }
-            Some(default_context(path))
-        }
-        "block_scalar" => Some(ResolvedNodeContext {
-            current_path: path.clone(),
-            output_path: YamlPath(Vec::new()),
-            mapping_entry_path: path.clone(),
-            in_mapping_key: false,
-            entire_scalar_value: false,
-            inside_block_scalar: true,
-            explicit_mapping_value_slot: false,
-            sequence_item_slot: false,
-        }),
-        _ => Some(default_context(path)),
-    }
+    Some(default_context(path))
 }
 
-fn resolve_output_sequence_child(
+fn resolve_yaml_context_in_mapping(
     node: tree_sitter::Node<'_>,
     source: &str,
     byte: usize,
-    placeholder: &str,
+    mode: ContextMode<'_>,
+    path: &YamlPath,
+) -> Option<ResolvedNodeContext> {
+    let pair_kind = if node.kind() == "block_mapping" {
+        "block_mapping_pair"
+    } else {
+        "flow_pair"
+    };
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.is_named()
+            && child.kind() == pair_kind
+            && let Some(context) = resolve_yaml_context(child, source, byte, mode, path)
+        {
+            return Some(context);
+        }
+    }
+    Some(default_context(path))
+}
+
+fn resolve_yaml_context_in_mapping_pair(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    byte: usize,
+    mode: ContextMode<'_>,
+    path: &YamlPath,
+) -> Option<ResolvedNodeContext> {
+    let key = node.child_by_field_name("key");
+    let value = node.child_by_field_name("value");
+    let key_text = key.and_then(|node| scalar_text(node, source));
+    let child_path = if key_text
+        .as_deref()
+        .is_some_and(|text| text.contains(PLACEHOLDER_PREFIX))
+    {
+        path.clone()
+    } else if let Some(key_text) = key_text.as_deref() {
+        append_mapping_segment(path, key_text)
+    } else {
+        path.clone()
+    };
+
+    if let ContextMode::Output { placeholder } = mode
+        && let Some(key) = key
+        && contains_byte(key, byte)
+    {
+        return Some(output_mapping_key_context(
+            path,
+            key_text.as_deref(),
+            placeholder,
+        ));
+    }
+
+    if let Some(value) = value
+        && contains_byte(value, byte)
+    {
+        if is_scalar_like(value.kind()) {
+            return Some(match mode {
+                ContextMode::Output { placeholder } => {
+                    resolve_scalar_context(value, source, placeholder, &child_path)
+                }
+                ContextMode::Control => default_context(&child_path),
+            });
+        }
+        if let Some(context) = resolve_yaml_context(value, source, byte, mode, &child_path) {
+            return Some(context);
+        }
+    }
+
+    Some(default_context(&child_path))
+}
+
+fn resolve_yaml_context_in_sequence(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    byte: usize,
+    mode: ContextMode<'_>,
+    path: &YamlPath,
+) -> Option<ResolvedNodeContext> {
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if !child.is_named() {
+            continue;
+        }
+        if matches!(
+            child.kind(),
+            "block_sequence_item" | "flow_node" | "flow_pair"
+        ) && let Some(context) = match mode {
+            ContextMode::Output { .. } => {
+                resolve_yaml_context_in_sequence_item(child, source, byte, mode, path)
+            }
+            ContextMode::Control => resolve_yaml_context(child, source, byte, mode, path),
+        } {
+            return Some(context);
+        }
+    }
+    Some(default_context(path))
+}
+
+fn resolve_yaml_context_in_sequence_item(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    byte: usize,
+    mode: ContextMode<'_>,
     path: &YamlPath,
 ) -> Option<ResolvedNodeContext> {
     if !contains_byte(node, byte) {
@@ -1938,31 +1752,70 @@ fn resolve_output_sequence_child(
     };
 
     if is_scalar_like(child.kind()) && contains_byte(child, byte) {
-        let mut context = resolve_scalar_context(child, source, placeholder, path);
-        if is_block_sequence_item || context.entire_scalar_value {
-            let item_path = append_sequence_segment(path);
-            context.current_path = item_path.clone();
-            context.output_path = item_path.clone();
-            context.mapping_entry_path = item_path;
-        }
-        return Some(context);
-    }
-
-    if child.kind() == "block_scalar" {
-        return Some(ResolvedNodeContext {
-            current_path: path.clone(),
-            output_path: YamlPath(Vec::new()),
-            mapping_entry_path: path.clone(),
-            in_mapping_key: false,
-            entire_scalar_value: false,
-            inside_block_scalar: true,
-            explicit_mapping_value_slot: false,
-            sequence_item_slot: false,
+        return Some(match mode {
+            ContextMode::Output { placeholder } => {
+                let mut context = resolve_scalar_context(child, source, placeholder, path);
+                if is_block_sequence_item || context.entire_scalar_value {
+                    let item_path = append_sequence_segment(path);
+                    context.current_path = item_path.clone();
+                    context.output_path = item_path.clone();
+                    context.mapping_entry_path = item_path;
+                }
+                context
+            }
+            ContextMode::Control => default_context(path),
         });
     }
 
+    if child.kind() == "block_scalar" {
+        return Some(block_scalar_context(path));
+    }
+
     let seq_path = append_sequence_segment(path);
-    resolve_output_context(child, source, byte, placeholder, &seq_path)
+    resolve_yaml_context(child, source, byte, mode, &seq_path)
+}
+
+fn output_mapping_key_context(
+    path: &YamlPath,
+    key_text: Option<&str>,
+    placeholder: &str,
+) -> ResolvedNodeContext {
+    if key_text == Some(placeholder) {
+        return ResolvedNodeContext {
+            current_path: path.clone(),
+            output_path: path.clone(),
+            mapping_entry_path: path.clone(),
+            in_mapping_key: false,
+            entire_scalar_value: true,
+            inside_block_scalar: false,
+            explicit_mapping_value_slot: false,
+            sequence_item_slot: false,
+        };
+    }
+
+    ResolvedNodeContext {
+        current_path: path.clone(),
+        output_path: YamlPath(Vec::new()),
+        mapping_entry_path: path.clone(),
+        in_mapping_key: true,
+        entire_scalar_value: false,
+        inside_block_scalar: false,
+        explicit_mapping_value_slot: false,
+        sequence_item_slot: false,
+    }
+}
+
+fn block_scalar_context(path: &YamlPath) -> ResolvedNodeContext {
+    ResolvedNodeContext {
+        current_path: path.clone(),
+        output_path: YamlPath(Vec::new()),
+        mapping_entry_path: path.clone(),
+        in_mapping_key: false,
+        entire_scalar_value: false,
+        inside_block_scalar: true,
+        explicit_mapping_value_slot: false,
+        sequence_item_slot: false,
+    }
 }
 
 fn resolve_scalar_context(
