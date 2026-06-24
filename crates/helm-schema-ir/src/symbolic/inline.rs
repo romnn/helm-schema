@@ -94,9 +94,9 @@ impl SymbolicWalker<'_> {
         let mut stack = self.inline_stack.clone();
         stack.push(plan.token);
         let mut nested = SymbolicWalker::new_with_context(
-            plan.source,
-            plan.source_path,
-            plan.source_offset,
+            plan.body.source,
+            Some(plan.body.source_path),
+            plan.body.body_offset,
             self.defines,
             self.ir_context.clone(),
         )
@@ -105,7 +105,7 @@ impl SymbolicWalker<'_> {
         .with_inline_helpers_in_fragments(true)
         .with_helper_values(bindings)
         .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
-        let mut contract = nested.run_contract(&plan.tree);
+        let mut contract = nested.run_contract(&plan.body.tree);
         let helper_renders_output = helper_summary.has_document_value_facts();
         let suppress_roots = helper_summary.suppress_roots.clone();
         let mut helper_type_hints = BTreeMap::new();

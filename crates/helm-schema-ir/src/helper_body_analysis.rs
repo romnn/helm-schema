@@ -31,7 +31,7 @@ use crate::node_eval::{
 };
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
-use crate::{ContractProvenance, Guard, SourceSpan, ValueKind, YamlPath};
+use crate::{Guard, ValueKind, YamlPath};
 
 const VALUE_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
     apply_alternative_predicate: true,
@@ -139,42 +139,6 @@ fn abstract_config_entry_in_binding(binding: AbstractValue) -> AbstractValue {
     }
 }
 
-struct ResolvedHelperBody<'a> {
-    source: &'a str,
-    tree: tree_sitter::Tree,
-    provenance: Option<ContractProvenance>,
-}
-
-impl<'a> ResolvedHelperBody<'a> {
-    fn resolve(name: &str, context: FragmentEvalContext<'a>) -> Option<Self> {
-        let source = context.analysis_db.define_source(name)?;
-        let tree = context.analysis_db.define_tree(name)?;
-        let provenance = context
-            .analysis_db
-            .define_source_path(name)
-            .zip(context.analysis_db.define_body_offset(name))
-            .map(|(source_path, body_offset)| {
-                ContractProvenance::new(
-                    source_path,
-                    SourceSpan::new(body_offset, body_offset + source.len()),
-                    vec![name.to_string()],
-                )
-            });
-        Some(Self {
-            source,
-            tree,
-            provenance,
-        })
-    }
-
-    fn attach_provenance(&self, analysis: &mut HelperSummary) {
-        let Some(provenance) = self.provenance.clone() else {
-            return;
-        };
-        analysis.add_provenance(provenance);
-    }
-}
-
 #[tracing::instrument(skip_all, fields(helper = name))]
 pub(crate) fn interpret_bound_helper_body(
     name: &str,
@@ -182,18 +146,18 @@ pub(crate) fn interpret_bound_helper_body(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperSummary {
-    let Some(body) = ResolvedHelperBody::resolve(name, context) else {
+    let Some(body) = context.analysis_db.parsed_helper_body(name) else {
         return HelperSummary::default();
     };
     let mut analysis = HelperSummary::default();
     collect_helper_summary(&body, resolution, context, seen, &mut analysis);
-    body.attach_provenance(&mut analysis);
+    analysis.add_provenance(body.provenance(name));
 
     analysis
 }
 
 fn collect_helper_summary(
-    body: &ResolvedHelperBody<'_>,
+    body: &crate::analysis_db::ParsedHelperBody<'_>,
     resolution: &BoundHelperCallResolution,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,

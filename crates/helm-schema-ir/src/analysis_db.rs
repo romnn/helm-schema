@@ -10,6 +10,24 @@ use crate::helper_body_analysis::{
 };
 use crate::helper_summary::HelperSummary;
 use crate::tree_sitter_utils::parse_go_template;
+use crate::{ContractProvenance, SourceSpan};
+
+pub(crate) struct ParsedHelperBody<'a> {
+    pub(crate) source: &'a str,
+    pub(crate) source_path: &'a str,
+    pub(crate) body_offset: usize,
+    pub(crate) tree: tree_sitter::Tree,
+}
+
+impl ParsedHelperBody<'_> {
+    pub(crate) fn provenance(&self, helper_name: &str) -> ContractProvenance {
+        ContractProvenance::new(
+            self.source_path,
+            SourceSpan::new(self.body_offset, self.body_offset + self.source.len()),
+            vec![helper_name.to_string()],
+        )
+    }
+}
 
 pub(crate) struct IrAnalysisDb {
     define_bodies: HashMap<String, CachedDefineBody>,
@@ -40,24 +58,18 @@ impl IrAnalysisDb {
         }
     }
 
-    pub(crate) fn define_source(&self, name: &str) -> Option<&str> {
+    pub(crate) fn has_helper(&self, name: &str) -> bool {
+        self.define_bodies.contains_key(name)
+    }
+
+    fn define_source(&self, name: &str) -> Option<&str> {
         self.define_bodies
             .get(name)
             .map(|body| body.source.as_str())
     }
 
-    pub(crate) fn define_source_path(&self, name: &str) -> Option<&str> {
-        self.define_bodies
-            .get(name)
-            .map(|body| body.source_path.as_str())
-    }
-
-    pub(crate) fn define_body_offset(&self, name: &str) -> Option<usize> {
-        self.define_bodies.get(name).map(|body| body.body_offset)
-    }
-
     #[tracing::instrument(skip_all)]
-    pub(crate) fn define_tree(&self, name: &str) -> Option<tree_sitter::Tree> {
+    fn define_tree(&self, name: &str) -> Option<tree_sitter::Tree> {
         if let Some(tree) = self.define_trees.borrow().get(name) {
             return Some(tree.clone());
         }
@@ -68,6 +80,16 @@ impl IrAnalysisDb {
             .borrow_mut()
             .insert(name.to_string(), tree.clone());
         Some(tree)
+    }
+
+    pub(crate) fn parsed_helper_body(&self, name: &str) -> Option<ParsedHelperBody<'_>> {
+        let body = self.define_bodies.get(name)?;
+        Some(ParsedHelperBody {
+            source: body.source.as_str(),
+            source_path: body.source_path.as_str(),
+            body_offset: body.body_offset,
+            tree: self.define_tree(name)?,
+        })
     }
 
     #[tracing::instrument(skip_all, fields(helper = name))]

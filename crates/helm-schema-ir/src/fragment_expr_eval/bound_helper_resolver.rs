@@ -43,7 +43,9 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         name: &str,
         arg: Option<&TemplateExpr>,
     ) -> Option<EvalResult> {
-        self.params.context.analysis_db.define_source(name)?;
+        if !self.params.context.analysis_db.has_helper(name) {
+            return None;
+        }
         if self.params.seen.contains(name) {
             return Some(EvalResult::none());
         }
