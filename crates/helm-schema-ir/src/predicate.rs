@@ -222,13 +222,23 @@ fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
 }
 
 fn or_contract_guards(predicates: &[Predicate]) -> Vec<Guard> {
-    let alternatives = predicates
+    let mut alternatives = predicates
         .iter()
         .map(Predicate::contract_guards)
         .collect::<Vec<_>>();
 
     if alternatives.iter().any(Vec::is_empty) {
         return Vec::new();
+    }
+    for alternative in &mut alternatives {
+        alternative.sort();
+        alternative.dedup();
+    }
+    alternatives.sort();
+    alternatives.dedup();
+
+    if alternatives.len() == 1 {
+        return alternatives.pop().unwrap_or_default();
     }
 
     if let Some(paths) = truthy_or_paths(&alternatives) {

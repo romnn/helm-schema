@@ -11,22 +11,22 @@ fn contract_document_serializes_stable_guard_shape() {
         path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
         kind: ValueKind::Scalar,
         guards: vec![
-            Guard::Or {
-                paths: vec![
-                    "global.kidEnabled".to_string(),
-                    "kid.enabled".to_string(),
-                    "tags.observability".to_string(),
-                ],
-            },
             Guard::AnyOf {
                 alternatives: vec![
-                    vec![Guard::Truthy {
-                        path: "kid.enabled".to_string(),
-                    }],
                     vec![Guard::Eq {
                         path: "kid.mode".to_string(),
                         value: crate::GuardValue::string("prod"),
                     }],
+                    vec![Guard::Truthy {
+                        path: "kid.enabled".to_string(),
+                    }],
+                ],
+            },
+            Guard::Or {
+                paths: vec![
+                    "tags.observability".to_string(),
+                    "kid.enabled".to_string(),
+                    "global.kidEnabled".to_string(),
                 ],
             },
         ],
@@ -38,18 +38,29 @@ fn contract_document_serializes_stable_guard_shape() {
         }),
         provenance: Vec::new(),
     };
+    let earlier_use = ContractUse {
+        source_expr: "alpha.enabled".to_string(),
+        path: YamlPath(Vec::new()),
+        kind: ValueKind::Scalar,
+        guards: Vec::new(),
+        resource: None,
+        provenance: Vec::new(),
+    };
+    let document = ContractDocument::from_contract_uses(vec![value_use, earlier_use]);
 
-    let actual = serde_json::to_value(ContractDocument {
-        version: ContractDocument::VERSION,
-        uses: vec![value_use.clone()],
-    })
-    .expect("serialize contract document");
+    let actual = serde_json::to_value(document.clone()).expect("serialize contract document");
 
     sim_assert_eq!(
         have: actual,
         want: json!({
             "version": 2,
             "uses": [{
+                "source_expr": "alpha.enabled",
+                "path": [],
+                "kind": "Scalar",
+                "guards": [],
+                "resource": null
+            }, {
                 "source_expr": "kid.enabled",
                 "path": ["data", "enabled"],
                 "kind": "Scalar",
@@ -77,5 +88,5 @@ fn contract_document_serializes_stable_guard_shape() {
 
     let decoded: ContractDocument =
         serde_json::from_value(actual).expect("deserialize contract document");
-    sim_assert_eq!(have: decoded.uses, want: vec![value_use]);
+    sim_assert_eq!(have: decoded, want: document);
 }

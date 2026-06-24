@@ -3,7 +3,6 @@ mod assignment_action_plan;
 mod bound_value_analysis;
 mod capability_branch;
 mod condition_action_plan;
-mod condition_guards;
 mod contract;
 mod contract_normalization;
 mod contract_signal_builder;

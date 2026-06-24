@@ -570,6 +570,22 @@ pub const NATS_SERVICE_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCas
     ],
 };
 
+pub const SIGNOZ_POSTGRESQL_SECRETS_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
+    schema_case: SIGNOZ_POSTGRESQL_SECRETS,
+    expectations: &[
+        SchemaExpectation {
+            instance: r#"{"serviceBindings":{"enabled":true},"architecture":"replication","primary":{"name":7}}"#,
+            accepted: false,
+            message: "primary.name must stay string-like when service-binding host rendering uses it",
+        },
+        SchemaExpectation {
+            instance: r#"{"serviceBindings":{"enabled":false},"architecture":"replication","primary":{"name":7}}"#,
+            accepted: true,
+            message: "primary.name should remain unconstrained when service bindings are disabled",
+        },
+    ],
+};
+
 pub const SIGNOZ_ZOOKEEPER_STATEFULSET_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
     schema_case: SIGNOZ_ZOOKEEPER_STATEFULSET,
     expectations: &[SchemaExpectation {

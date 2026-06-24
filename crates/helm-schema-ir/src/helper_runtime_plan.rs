@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::TemplateHeader;
 
@@ -9,8 +9,8 @@ use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
 };
-use crate::helper_runtime_guards::{branch_guard_paths_for_expr, truthy_predicate_for_paths};
-use crate::helper_summary::HelperSummary;
+use crate::helper_runtime_guards::{branch_condition_facts_for_expr, branch_guard_paths_for_expr};
+use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_walk_state::{HelperRuntimeControlState, HelperRuntimeLocals};
 use crate::range_action_plan::RangeActionPlan;
 use crate::value_path_context::computed_with_body_fragment_value_expr;
@@ -90,20 +90,30 @@ pub(crate) fn helper_if_condition_plan(
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
     local_bindings: &HashMap<String, AbstractValue>,
+    local_default_paths: &HashMap<String, BTreeSet<String>>,
+    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
     semantics: HelperRuntimeSemantics,
 ) -> HelperConditionPlan {
-    let guard_paths =
-        helper_branch_guard_paths(header, bindings, current_dot, local_bindings, context, seen);
+    let facts = helper_branch_condition_facts(
+        header,
+        bindings,
+        current_dot,
+        local_bindings,
+        local_default_paths,
+        local_output_meta,
+        context,
+        seen,
+    );
     HelperConditionPlan {
         action: ConditionActionPlan {
-            predicate: truthy_predicate_for_paths(&guard_paths),
+            predicate: facts.predicate,
             bound_values: Vec::new(),
             dot_binding: None,
             apply_alternative_predicate: semantics.apply_alternative_predicate,
         },
-        guard_paths,
+        guard_paths: facts.guard_paths,
     }
 }
 
@@ -113,12 +123,22 @@ pub(crate) fn helper_with_condition_plan(
     current_dot: Option<&AbstractValue>,
     current_dot_fragment: Option<&AbstractValue>,
     local_bindings: &HashMap<String, AbstractValue>,
+    local_default_paths: &HashMap<String, BTreeSet<String>>,
+    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
     semantics: HelperRuntimeSemantics,
 ) -> HelperConditionPlan {
-    let guard_paths =
-        helper_branch_guard_paths(header, bindings, current_dot, local_bindings, context, seen);
+    let facts = helper_branch_condition_facts(
+        header,
+        bindings,
+        current_dot,
+        local_bindings,
+        local_default_paths,
+        local_output_meta,
+        context,
+        seen,
+    );
     let body_dot = computed_with_body_fragment_value_expr(
         header.expr(),
         bindings,
@@ -129,12 +149,12 @@ pub(crate) fn helper_with_condition_plan(
     );
     HelperConditionPlan {
         action: ConditionActionPlan {
-            predicate: truthy_predicate_for_paths(&guard_paths),
+            predicate: facts.predicate,
             bound_values: Vec::new(),
             dot_binding: body_dot,
             apply_alternative_predicate: semantics.apply_alternative_predicate,
         },
-        guard_paths,
+        guard_paths: facts.guard_paths,
     }
 }
 
@@ -203,6 +223,28 @@ fn helper_branch_guard_paths(
         bindings,
         current_dot,
         local_bindings,
+        context,
+        seen,
+    )
+}
+
+fn helper_branch_condition_facts(
+    header: &TemplateHeader,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    local_default_paths: &HashMap<String, BTreeSet<String>>,
+    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> crate::helper_runtime_guards::BranchConditionFacts {
+    branch_condition_facts_for_expr(
+        header.expr(),
+        bindings,
+        current_dot,
+        local_bindings,
+        local_default_paths,
+        local_output_meta,
         context,
         seen,
     )

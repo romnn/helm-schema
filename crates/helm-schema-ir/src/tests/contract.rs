@@ -123,8 +123,8 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
             },
             Guard::Or {
                 paths: vec![
+                    "global.enabled".to_string(),
                     "subchart.pod.enabled".to_string(),
-                    "global.enabled".to_string()
                 ],
             },
             Guard::AnyOf {

@@ -136,6 +136,39 @@ pub enum Guard {
 }
 
 impl Guard {
+    pub(crate) fn canonicalize_all(guards: &mut Vec<Self>) {
+        for guard in guards.iter_mut() {
+            guard.canonicalize();
+        }
+        guards.sort();
+        guards.dedup();
+    }
+
+    fn canonicalize(&mut self) {
+        match self {
+            Self::Or { paths } => {
+                paths.sort();
+                paths.dedup();
+            }
+            Self::AnyOf { alternatives } => {
+                for guards in alternatives.iter_mut() {
+                    Self::canonicalize_all(guards);
+                }
+                alternatives.sort();
+                alternatives.dedup();
+            }
+            Self::Truthy { .. }
+            | Self::Not { .. }
+            | Self::Eq { .. }
+            | Self::NotEq { .. }
+            | Self::Absent { .. }
+            | Self::Range { .. }
+            | Self::With { .. }
+            | Self::Default { .. }
+            | Self::TypeIs { .. } => {}
+        }
+    }
+
     /// Return all `.Values.*` paths referenced by this guard.
     #[must_use]
     pub fn value_paths(&self) -> Vec<&str> {

@@ -620,11 +620,11 @@ data:
             .iter()
             .any(|use_| use_.guards.as_slice()
                 == [
-                    Guard::Absent {
-                        path: "kid.enabled".to_string()
-                    },
                     Guard::Truthy {
                         path: "global.kidEnabled".to_string()
+                    },
+                    Guard::Absent {
+                        path: "kid.enabled".to_string()
                     },
                 ]
                 .as_slice()),

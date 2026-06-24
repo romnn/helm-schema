@@ -54,6 +54,12 @@ impl ContractUse {
         }
     }
 
+    pub(crate) fn canonicalize(&mut self) {
+        Guard::canonicalize_all(&mut self.guards);
+        self.provenance.sort();
+        self.provenance.dedup();
+    }
+
     pub(super) fn map_value_paths<F>(&mut self, map: &mut F)
     where
         F: FnMut(&str) -> String,

@@ -114,10 +114,6 @@ impl ValuePathContext<'_> {
             && !self.resolved_values_paths_from_expr(expr).is_empty()
     }
 
-    pub(super) fn truthy_paths_for_condition_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        self.resolved_values_paths_from_expr(expr)
-    }
-
     pub(crate) fn with_body_fragment_value_expr(
         &self,
         expr: &TemplateExpr,
@@ -156,6 +152,7 @@ fn output_value_paths(effects: Effects) -> BTreeSet<String> {
         .output_paths
         .into_iter()
         .chain(effects.local_source_paths)
+        .chain(effects.local_output_meta.into_keys())
         .filter(|path| !path.trim().is_empty())
         .collect()
 }

@@ -708,11 +708,11 @@ data:
     assert!(
         uses.iter().any(|use_| use_.guards.as_slice()
             == [
-                Guard::Absent {
-                    path: "kid.enabled".to_string()
-                },
                 Guard::Truthy {
                     path: "global.kidEnabled".to_string()
+                },
+                Guard::Absent {
+                    path: "kid.enabled".to_string()
                 },
             ]
             .as_slice()),
@@ -721,14 +721,14 @@ data:
     assert!(
         uses.iter().any(|use_| use_.guards.as_slice()
             == [
-                Guard::Absent {
-                    path: "kid.enabled".to_string()
+                Guard::Truthy {
+                    path: "tags.observability".to_string()
                 },
                 Guard::Absent {
                     path: "global.kidEnabled".to_string()
                 },
-                Guard::Truthy {
-                    path: "tags.observability".to_string()
+                Guard::Absent {
+                    path: "kid.enabled".to_string()
                 },
             ]
             .as_slice()),
@@ -738,10 +738,10 @@ data:
         uses.iter().any(|use_| use_.guards.as_slice()
             == [
                 Guard::Absent {
-                    path: "kid.enabled".to_string()
+                    path: "global.kidEnabled".to_string()
                 },
                 Guard::Absent {
-                    path: "global.kidEnabled".to_string()
+                    path: "kid.enabled".to_string()
                 },
                 Guard::Absent {
                     path: "tags.observability".to_string()

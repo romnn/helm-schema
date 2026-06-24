@@ -3,6 +3,10 @@
     {
       "guards": [
         {
+          "path": "commonAnnotations",
+          "type": "truthy"
+        },
+        {
           "paths": [
             "commonAnnotations",
             "service.annotations"
@@ -26,10 +30,6 @@
             "service.annotations"
           ],
           "type": "or"
-        },
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -43,6 +43,47 @@
     {
       "guards": [
         {
+          "path": "commonAnnotations",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "annotations"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 379,
+            "start": 229
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "commonAnnotations"
+    },
+    {
+      "guards": [
+        {
+          "path": "commonAnnotations",
+          "type": "truthy"
+        },
+        {
           "paths": [
             "commonAnnotations",
             "service.annotations"
@@ -51,7 +92,8 @@
         },
         {
           "path": "commonAnnotations",
-          "type": "truthy"
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Fragment",
@@ -97,6 +139,41 @@
         {
           "path": "commonLabels",
           "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "labels"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 379,
+            "start": 229
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "commonLabels"
+    },
+    {
+      "guards": [
+        {
+          "path": "commonLabels",
+          "type": "truthy"
+        },
+        {
+          "path": "commonLabels",
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Fragment",
@@ -326,6 +403,10 @@
     {
       "guards": [
         {
+          "path": "service.annotations",
+          "type": "truthy"
+        },
+        {
           "paths": [
             "commonAnnotations",
             "service.annotations"
@@ -349,10 +430,6 @@
             "service.annotations"
           ],
           "type": "or"
-        },
-        {
-          "path": "service.annotations",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -366,6 +443,47 @@
     {
       "guards": [
         {
+          "path": "service.annotations",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "annotations"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 379,
+            "start": 229
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.annotations"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.annotations",
+          "type": "truthy"
+        },
+        {
           "paths": [
             "commonAnnotations",
             "service.annotations"
@@ -374,7 +492,8 @@
         },
         {
           "path": "service.annotations",
-          "type": "truthy"
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Fragment",
@@ -534,13 +653,48 @@
     {
       "guards": [
         {
-          "path": "service.type",
-          "type": "eq",
-          "value": "LoadBalancer"
+          "path": "service.extraPorts",
+          "type": "truthy"
         },
+        {
+          "path": "service.extraPorts",
+          "schema_type": "string",
+          "type": "type_is"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "ports"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 379,
+            "start": 229
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.extraPorts"
+    },
+    {
+      "guards": [
         {
           "path": "service.loadBalancerIP",
           "type": "truthy"
+        },
+        {
+          "path": "service.type",
+          "type": "eq",
+          "value": "LoadBalancer"
         }
       ],
       "kind": "Scalar",
@@ -554,13 +708,13 @@
     {
       "guards": [
         {
+          "path": "service.loadBalancerIP",
+          "type": "truthy"
+        },
+        {
           "path": "service.type",
           "type": "eq",
           "value": "LoadBalancer"
-        },
-        {
-          "path": "service.loadBalancerIP",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -577,13 +731,13 @@
     {
       "guards": [
         {
+          "path": "service.loadBalancerSourceRanges",
+          "type": "truthy"
+        },
+        {
           "path": "service.type",
           "type": "eq",
           "value": "LoadBalancer"
-        },
-        {
-          "path": "service.loadBalancerSourceRanges",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -597,13 +751,13 @@
     {
       "guards": [
         {
+          "path": "service.loadBalancerSourceRanges",
+          "type": "truthy"
+        },
+        {
           "path": "service.type",
           "type": "eq",
           "value": "LoadBalancer"
-        },
-        {
-          "path": "service.loadBalancerSourceRanges",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -620,6 +774,10 @@
     {
       "guards": [
         {
+          "path": "service.nodePorts.client",
+          "type": "truthy"
+        },
+        {
           "path": "service.disableBaseClientPort",
           "type": "not"
         },
@@ -641,10 +799,6 @@
             ]
           ],
           "type": "any_of"
-        },
-        {
-          "path": "service.nodePorts.client",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -658,6 +812,10 @@
     {
       "guards": [
         {
+          "path": "service.nodePorts.client",
+          "type": "truthy"
+        },
+        {
           "path": "service.disableBaseClientPort",
           "type": "not"
         },
@@ -679,10 +837,6 @@
             ]
           ],
           "type": "any_of"
-        },
-        {
-          "path": "service.nodePorts.client",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -700,6 +854,10 @@
     {
       "guards": [
         {
+          "path": "service.nodePorts.tls",
+          "type": "truthy"
+        },
+        {
           "path": "tls.client.enabled",
           "type": "truthy"
         },
@@ -721,10 +879,6 @@
             ]
           ],
           "type": "any_of"
-        },
-        {
-          "path": "service.nodePorts.tls",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -738,6 +892,10 @@
     {
       "guards": [
         {
+          "path": "service.nodePorts.tls",
+          "type": "truthy"
+        },
+        {
           "path": "tls.client.enabled",
           "type": "truthy"
         },
@@ -759,10 +917,6 @@
             ]
           ],
           "type": "any_of"
-        },
-        {
-          "path": "service.nodePorts.tls",
-          "type": "truthy"
         }
       ],
       "kind": "Scalar",
@@ -896,6 +1050,41 @@
         {
           "path": "service.sessionAffinityConfig",
           "type": "truthy"
+        }
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "sessionAffinityConfig"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 379,
+            "start": 229
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.sessionAffinityConfig"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.sessionAffinityConfig",
+          "type": "truthy"
+        },
+        {
+          "path": "service.sessionAffinityConfig",
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Fragment",

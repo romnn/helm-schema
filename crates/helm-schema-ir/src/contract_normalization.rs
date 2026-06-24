@@ -9,6 +9,7 @@ use crate::{Guard, ValueKind};
 /// collapses transparent `kind: List` envelope projections, prefers resource
 /// evidence for pathless duplicate roots, and then canonicalizes ordering.
 pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
+    canonicalize_contract_use_inputs(uses);
     drop_default_guard_subsumed_duplicates(uses);
     drop_values_list_envelope_duplicates(uses);
     merge_pathless_resource_variants(uses);
@@ -21,6 +22,7 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
 /// claims and need deterministic ordering without losing raw evidence such as
 /// one nullable and one non-nullable render site.
 pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
+    canonicalize_contract_use_inputs(uses);
     uses.sort_by(contract_use_semantic_cmp);
 
     let mut merged = Vec::with_capacity(uses.len());
@@ -34,6 +36,12 @@ pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
         merged.push(contract_use);
     }
     *uses = merged;
+}
+
+fn canonicalize_contract_use_inputs(uses: &mut [ContractUse]) {
+    for contract_use in uses {
+        contract_use.canonicalize();
+    }
 }
 
 fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
@@ -173,6 +181,8 @@ fn merge_contract_use_provenance(
             target.provenance.push(provenance);
         }
     }
+    target.provenance.sort();
+    target.provenance.dedup();
 }
 
 #[cfg(test)]

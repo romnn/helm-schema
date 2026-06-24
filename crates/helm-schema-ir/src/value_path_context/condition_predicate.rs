@@ -1,48 +1,22 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ast::TemplateExpr;
+use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::Guard;
-use crate::condition_guards::{guard_value_literal, parse_condition_expr};
 use crate::expr_function_catalog::type_is_schema_type;
 use crate::predicate::Predicate;
+use crate::{Guard, GuardValue};
 
 use super::ValuePathContext;
 
 impl ValuePathContext<'_> {
     pub(crate) fn condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
-        let mut predicates: Vec<Predicate> = parse_condition_expr(expr)
-            .into_iter()
-            .map(Predicate::from)
-            .collect();
-        let structural_paths = predicates
-            .iter()
-            .flat_map(Predicate::value_paths)
-            .collect::<BTreeSet<_>>();
-        let mut alias_predicates = self.condition_predicates_from_expr(expr);
-        alias_predicates.retain(|predicate| {
-            !truthy_predicate_is_covered_by_structural_paths(predicate, &structural_paths)
-        });
-        predicates.retain(|predicate| {
-            !predicate_is_subsumed_by_alias_or_predicate(predicate, &alias_predicates)
-        });
-        for predicate in alias_predicates {
-            if !predicates.contains(&predicate) {
-                predicates.push(predicate);
-            }
-        }
-        if !predicates.is_empty() {
-            return Predicate::all(predicates);
+        if let Some(predicate) = self.condition_predicate(expr) {
+            return predicate;
         }
         if self.condition_has_unrepresentable_values_comparison_expr(expr) {
             return Predicate::True;
         }
-        Predicate::all(
-            self.truthy_paths_for_condition_expr(expr)
-                .into_iter()
-                .map(Predicate::truthy_path)
-                .collect(),
-        )
+        self.truthy_predicate(expr).unwrap_or(Predicate::True)
     }
 
     pub(crate) fn with_condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
@@ -52,75 +26,129 @@ impl ValuePathContext<'_> {
         )
     }
 
-    fn condition_predicates_from_expr(&self, expr: &TemplateExpr) -> Vec<Predicate> {
-        let mut out = Vec::new();
+    fn condition_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
-            return out;
+            return self.truthy_predicate(expr);
         };
         match function.as_str() {
-            "not" => {
-                let [arg] = args.as_slice() else {
-                    return out;
-                };
-                if !self.expr_needs_context_value_resolution(arg) {
-                    return out;
-                }
-                let paths = self.paths_for_expr(arg);
-                out.extend(
-                    paths
-                        .into_iter()
-                        .map(|path| Predicate::truthy_path(path).negated()),
-                );
-            }
-            "or" => {
-                if !args
-                    .iter()
-                    .any(|arg| self.expr_needs_context_value_resolution(arg))
-                {
-                    return out;
-                }
-                let paths: BTreeSet<String> = args
-                    .iter()
-                    .flat_map(|arg| self.paths_for_expr(arg))
-                    .collect();
-                if !paths.is_empty() {
-                    out.push(Predicate::Or(
-                        paths.into_iter().map(Predicate::truthy_path).collect(),
-                    ));
-                }
-            }
-            "eq" => {
-                out.extend(self.value_comparison_predicates(args, false));
-            }
-            "ne" => {
-                out.extend(self.value_comparison_predicates(args, true));
-            }
-            "typeIs" => {
-                let Some(schema_type) = type_is_schema_type(args.first()) else {
-                    return out;
-                };
-                if !args
-                    .iter()
-                    .skip(1)
-                    .any(|arg| self.expr_needs_context_value_resolution(arg))
-                {
-                    return out;
-                }
-                let paths: BTreeSet<String> = args
-                    .iter()
-                    .skip(1)
-                    .flat_map(|arg| self.paths_for_expr(arg))
-                    .collect();
-                out.extend(paths.into_iter().map(|path| {
-                    Predicate::from(Guard::TypeIs {
-                        path,
-                        schema_type: schema_type.clone(),
-                    })
-                }));
-            }
-            _ => {}
+            "and" => self.and_predicate(args),
+            "not" => self.not_predicate(args),
+            "empty" => self.empty_predicate(args),
+            "or" => self.or_predicate(args),
+            "eq" => self.value_comparison_predicate(args, false),
+            "ne" => self.value_comparison_predicate(args, true),
+            "typeIs" => self.type_is_predicate(args),
+            _ => self.truthy_predicate(expr),
+        }
+    }
+
+    fn and_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let predicates = args
+            .iter()
+            .filter_map(|arg| self.condition_predicate(arg))
+            .collect::<Vec<_>>();
+        (!predicates.is_empty()).then(|| Predicate::all(predicates))
+    }
+
+    fn not_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [arg] = args else {
+            return None;
         };
-        out
+
+        match arg.deparen() {
+            TemplateExpr::Call { function, args } if function == "empty" => self
+                .empty_predicate(args)
+                .map(|predicate| predicate.negated()),
+            TemplateExpr::Call { function, args } if function == "or" => {
+                self.negated_or_predicate(args)
+            }
+            TemplateExpr::Call { function, args } if function == "eq" => {
+                self.value_comparison_predicate(args, true)
+            }
+            TemplateExpr::Call { function, args } if function == "ne" => {
+                self.value_comparison_predicate(args, false)
+            }
+            _ => {
+                let paths = self.paths_for_expr(arg);
+                if paths.len() == 1 {
+                    return paths
+                        .into_iter()
+                        .next()
+                        .map(|path| Predicate::truthy_path(path).negated());
+                }
+                None
+            }
+        }
+    }
+
+    fn negated_or_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let predicates = args
+            .iter()
+            .map(|arg| {
+                self.single_truthy_predicate(arg)
+                    .map(|predicate| predicate.negated())
+            })
+            .collect::<Option<Vec<_>>>()?;
+        (!predicates.is_empty()).then(|| Predicate::all(predicates))
+    }
+
+    fn empty_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [arg] = args else {
+            return None;
+        };
+        self.single_truthy_predicate(arg)
+            .map(|predicate| predicate.negated())
+    }
+
+    fn or_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let mut truthy_paths = BTreeSet::new();
+        let mut alternatives = Vec::new();
+        for arg in args {
+            let paths = self.paths_for_expr(arg);
+            if !paths.is_empty() && !matches!(arg.deparen(), TemplateExpr::Call { .. }) {
+                truthy_paths.extend(paths);
+                continue;
+            }
+            alternatives.push(self.condition_predicate(arg)?);
+        }
+        if !truthy_paths.is_empty() {
+            let predicate = Predicate::Or(
+                truthy_paths
+                    .into_iter()
+                    .map(Predicate::truthy_path)
+                    .collect(),
+            );
+            alternatives.push(predicate);
+        }
+        (!alternatives.is_empty()).then_some(Predicate::Or(alternatives))
+    }
+
+    fn type_is_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let schema_type = type_is_schema_type(args.first())?;
+        let predicates = args
+            .iter()
+            .skip(1)
+            .flat_map(|arg| self.paths_for_expr(arg))
+            .map(|path| {
+                Predicate::from(Guard::TypeIs {
+                    path,
+                    schema_type: schema_type.clone(),
+                })
+            })
+            .collect::<Vec<_>>();
+        (!predicates.is_empty()).then(|| Predicate::all(predicates))
+    }
+
+    fn truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        let paths = self.paths_for_expr(expr);
+        (!paths.is_empty())
+            .then(|| Predicate::all(paths.into_iter().map(Predicate::truthy_path).collect()))
+    }
+
+    fn single_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        let mut paths = self.paths_for_expr(expr).into_iter();
+        let path = paths.next()?;
+        paths.next().is_none().then(|| Predicate::truthy_path(path))
     }
 
     fn condition_has_unrepresentable_values_comparison_expr(&self, expr: &TemplateExpr) -> bool {
@@ -129,29 +157,31 @@ impl ValuePathContext<'_> {
         };
         match function.as_str() {
             "eq" | "ne" => self.comparison_has_unrepresentable_values(args),
-            "typeIs" => args
-                .iter()
-                .any(|arg| self.expr_needs_context_value_resolution(arg)),
+            "typeIs" => {
+                args.iter()
+                    .any(|arg| self.expr_needs_context_value_resolution(arg))
+                    && self.type_is_predicate(args).is_none()
+            }
             _ => false,
         }
     }
 
-    fn value_comparison_predicates(&self, args: &[TemplateExpr], negated: bool) -> Vec<Predicate> {
+    fn value_comparison_predicate(
+        &self,
+        args: &[TemplateExpr],
+        negated: bool,
+    ) -> Option<Predicate> {
         let [left, right] = args else {
-            return Vec::new();
+            return None;
         };
-        if !self.expr_needs_context_value_resolution(left)
-            && !self.expr_needs_context_value_resolution(right)
-        {
-            return Vec::new();
-        }
         let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
             (Some(value), None) => (value, self.paths_for_expr(right)),
             (None, Some(value)) => (value, self.paths_for_expr(left)),
-            _ => return Vec::new(),
+            _ => return None,
         };
-        paths
-            .into_iter()
+        let predicates = paths
+            .iter()
+            .cloned()
             .map(|path| {
                 if negated {
                     Predicate::from(Guard::NotEq {
@@ -165,7 +195,8 @@ impl ValuePathContext<'_> {
                     })
                 }
             })
-            .collect()
+            .collect::<Vec<_>>();
+        (!predicates.is_empty()).then(|| Predicate::all(predicates))
     }
 
     fn comparison_has_unrepresentable_values(&self, args: &[TemplateExpr]) -> bool {
@@ -185,32 +216,17 @@ impl ValuePathContext<'_> {
     }
 }
 
-fn truthy_predicate_is_covered_by_structural_paths(
-    predicate: &Predicate,
-    structural_paths: &BTreeSet<String>,
-) -> bool {
-    let Some(paths) = predicate.truthy_disjunction_paths() else {
-        return false;
-    };
-    paths.iter().all(|path| structural_paths.contains(path))
-}
-
-fn predicate_is_subsumed_by_alias_or_predicate(
-    predicate: &Predicate,
-    alias_predicates: &[Predicate],
-) -> bool {
-    let Some(paths) = predicate.truthy_disjunction_paths() else {
-        return false;
-    };
-
-    alias_predicates.iter().any(|alias_predicate| {
-        let Some(alias_paths) = alias_predicate.truthy_disjunction_paths() else {
-            return false;
-        };
-        paths
-            .iter()
-            .all(|path| alias_paths.iter().any(|alias_path| alias_path == path))
-    })
+fn guard_value_literal(expr: &TemplateExpr) -> Option<GuardValue> {
+    match expr.deparen() {
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+            Some(GuardValue::string(value))
+        }
+        TemplateExpr::Literal(Literal::Bool(value)) => Some(GuardValue::Bool(*value)),
+        TemplateExpr::Literal(Literal::Int(value)) => Some(GuardValue::Int(*value)),
+        TemplateExpr::Literal(Literal::Float(value)) => GuardValue::float(*value),
+        TemplateExpr::Literal(Literal::Nil) => Some(GuardValue::Null),
+        _ => None,
+    }
 }
 
 #[cfg(test)]

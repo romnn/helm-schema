@@ -41,39 +41,20 @@
     {
       "guards": [
         {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "config.jetstream.accounts",
-          "type": "range"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "config.jetstream.accounts.*.name"
-    },
-    {
-      "guards": [
-        {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "config.jetstream.accounts",
-          "type": "range"
-        },
-        {
           "path": "config.jetstream.accounts.*.tls",
           "type": "truthy"
         },
         {
           "path": "config.jetstream.accounts.*.tls.ca",
           "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.accounts",
+          "type": "range"
         }
       ],
       "kind": "Scalar",
@@ -86,14 +67,6 @@
     },
     {
       "guards": [
-        {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "config.jetstream.accounts",
-          "type": "range"
-        },
         {
           "path": "config.jetstream.accounts.*.tls",
           "type": "truthy"
@@ -101,6 +74,14 @@
         {
           "path": "config.jetstream.accounts.*.tls.cert",
           "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.accounts",
+          "type": "range"
         }
       ],
       "kind": "Scalar",
@@ -113,14 +94,6 @@
     },
     {
       "guards": [
-        {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "config.jetstream.accounts",
-          "type": "range"
-        },
         {
           "path": "config.jetstream.accounts.*.tls",
           "type": "truthy"
@@ -128,6 +101,14 @@
         {
           "path": "config.jetstream.accounts.*.tls.key",
           "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.accounts",
+          "type": "range"
         }
       ],
       "kind": "Scalar",
@@ -147,10 +128,29 @@
         {
           "path": "config.jetstream.accounts",
           "type": "range"
-        },
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "ConfigMap"
+      },
+      "source_expr": "config.jetstream.accounts.*.name"
+    },
+    {
+      "guards": [
         {
           "path": "config.jetstream.accounts.*.tls",
           "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.accounts",
+          "type": "range"
         }
       ],
       "kind": "Scalar",
@@ -164,20 +164,20 @@
     {
       "guards": [
         {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "config.jetstream.accounts",
-          "type": "range"
-        },
-        {
           "path": "config.jetstream.accounts.*.tls",
           "type": "truthy"
         },
         {
           "path": "config.jetstream.accounts.*.tls.ca",
           "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.accounts",
+          "type": "range"
         }
       ],
       "kind": "Scalar",
@@ -191,20 +191,20 @@
     {
       "guards": [
         {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "config.jetstream.accounts",
-          "type": "range"
-        },
-        {
           "path": "config.jetstream.accounts.*.tls",
           "type": "truthy"
         },
         {
           "path": "config.jetstream.accounts.*.tls.cert",
           "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.accounts",
+          "type": "range"
         }
       ],
       "kind": "Scalar",
@@ -218,20 +218,20 @@
     {
       "guards": [
         {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "config.jetstream.accounts",
-          "type": "range"
-        },
-        {
           "path": "config.jetstream.accounts.*.tls",
           "type": "truthy"
         },
         {
           "path": "config.jetstream.accounts.*.tls.key",
           "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "config.jetstream.accounts",
+          "type": "range"
         }
       ],
       "kind": "Scalar",
@@ -406,21 +406,21 @@
         },
         {
           "helper_chain": [
-            "surveyor.selectorLabels"
-          ],
-          "span": {
-            "end": 1541,
-            "start": 1436
-          },
-          "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
             "surveyor.labels"
           ],
           "span": {
             "end": 1358,
             "start": 1052
+          },
+          "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "surveyor.selectorLabels"
+          ],
+          "span": {
+            "end": 1541,
+            "start": 1436
           },
           "template_path": "<inline:0>"
         }

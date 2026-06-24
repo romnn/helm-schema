@@ -53,6 +53,10 @@ schema_behavior_test!(
 );
 schema_behavior_test!(nats_service_behavior, cases::NATS_SERVICE_BEHAVIOR);
 schema_behavior_test!(
+    signoz_postgresql_secrets_behavior,
+    cases::SIGNOZ_POSTGRESQL_SECRETS_BEHAVIOR
+);
+schema_behavior_test!(
     signoz_zookeeper_statefulset_behavior,
     cases::SIGNOZ_ZOOKEEPER_STATEFULSET_BEHAVIOR
 );
