@@ -35,14 +35,11 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
 
     let summary =
         interpret_bound_helper_body("serviceAccountName", &resolution, context, &mut seen);
-    let (_path, facts) = summary
-        .path_facts()
-        .find(|(path, _facts)| *path == "signoz.serviceAccount.name")
+    let output_meta = summary.scalar_output_meta();
+    let meta = output_meta
+        .get("signoz.serviceAccount.name")
         .expect("service account name output metadata");
-    let meta = facts
-        .output_meta
-        .as_ref()
-        .expect("service account name output metadata");
+    let type_hints = summary.type_hints();
     let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
 
     assert!(
@@ -67,16 +64,13 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
         ]),
         "expected create=false output branch; guard_sets={guard_sets:#?}"
     );
+    let string_type_hint = BTreeSet::from(["string".to_string()]);
     sim_assert_eq!(
-        have: &facts.type_hints,
-        want: &["string".to_string()].into_iter().collect(),
+        have: type_hints.get("signoz.serviceAccount.name"),
+        want: Some(&string_type_hint),
         "defaulted scalar output should retain string type hint"
     );
-    assert!(
-        summary
-            .path_facts()
-            .all(|(_path, facts)| facts.fragment_output_uses.is_empty())
-    );
+    assert!(summary.fragment_output_uses().is_empty());
 }
 
 #[test]
@@ -105,22 +99,15 @@ fn helper_body_summary_resolves_string_hints_through_local_aliases() {
     let mut seen = HashSet::new();
 
     let summary = interpret_bound_helper_body("image", &resolution, context, &mut seen);
-    let (_repository_path, repository_facts) = summary
-        .path_facts()
-        .find(|(path, _facts)| *path == "image.repository")
-        .expect("repository type hint");
-    let (_tag_path, tag_facts) = summary
-        .path_facts()
-        .find(|(path, _facts)| *path == "image.tag")
-        .expect("tag type hint");
+    let type_hints = summary.type_hints();
 
     sim_assert_eq!(
-        have: &repository_facts.type_hints,
-        want: &BTreeSet::from(["string".to_string()])
+        have: type_hints.get("image.repository"),
+        want: Some(&BTreeSet::from(["string".to_string()]))
     );
     sim_assert_eq!(
-        have: &tag_facts.type_hints,
-        want: &BTreeSet::from(["string".to_string()])
+        have: type_hints.get("image.tag"),
+        want: Some(&BTreeSet::from(["string".to_string()]))
     );
 }
 
@@ -166,10 +153,7 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
 
     let summary =
         interpret_bound_helper_body("common.storage.class", &resolution, context, &mut seen);
-    let outputs = summary
-        .path_facts()
-        .flat_map(|(_path, facts)| facts.fragment_output_uses.iter().cloned())
-        .collect::<Vec<_>>();
+    let outputs = summary.fragment_output_uses();
 
     assert!(
         outputs.iter().any(|output| {

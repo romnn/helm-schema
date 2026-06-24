@@ -40,13 +40,15 @@ pub(crate) fn document_output_contract(
         return contract;
     }
 
-    let suppress_roots = helper.suppress_roots.clone();
-    let suppress_direct_values = suppress_direct_values_for_helper(&helper, suppress_roots);
+    let mut suppress_direct_values = helper.dependency_relevant_paths();
+    suppress_direct_values.extend(helper.suppress_roots.iter().cloned());
 
     let output_values = std::mem::take(&mut output_effects.output_paths);
     for value in output_values {
         if suppress_direct_values.contains(&value)
-            || suppresses_direct_descendant(&suppress_direct_values, &value)
+            || suppress_direct_values
+                .iter()
+                .any(|root| output_path::values_path_is_descendant(&value, root))
         {
             contract.push(site.contract_use(
                 context,
@@ -207,38 +209,12 @@ fn append_fragment_output_contract_use(
     }
 }
 
-fn suppress_direct_values_for_helper(
-    helper: &HelperSummary,
-    suppress_roots: BTreeSet<String>,
-) -> BTreeSet<String> {
-    let mut suppress_direct_values = BTreeSet::new();
-    for (path, facts) in helper.path_facts() {
-        if facts.is_dependency_relevant() {
-            suppress_direct_values.insert(path.to_string());
-        }
-    }
-
-    let all_dependency_values = suppress_direct_values.clone();
-    suppress_direct_values
-        .retain(|path| !output_path::values_path_has_descendant(path, &all_dependency_values));
-    suppress_direct_values.extend(suppress_roots);
-    suppress_direct_values
-}
-
 fn encoded_kind(kind: ValueKind, encoded: bool) -> ValueKind {
     if encoded {
         ValueKind::PartialScalar
     } else {
         kind
     }
-}
-
-fn suppresses_direct_descendant(suppressed_roots: &BTreeSet<String>, value_path: &str) -> bool {
-    suppressed_roots.iter().any(|root| {
-        value_path
-            .strip_prefix(root)
-            .is_some_and(|suffix| suffix.starts_with('.'))
-    })
 }
 
 #[cfg(test)]

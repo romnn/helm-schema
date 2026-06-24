@@ -157,7 +157,11 @@ impl HelperFragmentOutputUse {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct HelperSummary {
     pub(crate) string_output: BTreeSet<String>,
-    path_facts: BTreeMap<String, HelperPathFacts>,
+    scalar_output_meta: BTreeMap<String, HelperOutputMeta>,
+    dependency_meta: BTreeMap<String, HelperOutputMeta>,
+    guard_paths: BTreeSet<String>,
+    type_hints: BTreeMap<String, BTreeSet<String>>,
+    fragment_output_uses: Vec<HelperFragmentOutputUse>,
     pub(crate) suppress_roots: BTreeSet<String>,
     /// Values-rooted paths that a helper body structurally declares as
     /// null-tolerant via a `set OPERAND "KEY" (OPERAND.KEY | default V)`
@@ -170,54 +174,19 @@ pub(crate) struct HelperSummary {
     pub(crate) chart_defaults: BTreeSet<String>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct HelperPathFacts {
-    pub(crate) output_meta: Option<HelperOutputMeta>,
-    pub(crate) dependency_meta: Option<HelperOutputMeta>,
-    pub(crate) guard: bool,
-    pub(crate) type_hints: BTreeSet<String>,
-    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
-}
-
-impl HelperPathFacts {
-    fn merge(&mut self, other: Self) {
-        merge_optional_meta(&mut self.output_meta, other.output_meta);
-        merge_optional_meta(&mut self.dependency_meta, other.dependency_meta);
-        self.guard |= other.guard;
-        self.type_hints.extend(other.type_hints);
-        self.fragment_output_uses.extend(other.fragment_output_uses);
-    }
-
-    pub(crate) fn is_dependency_relevant(&self) -> bool {
-        self.output_meta.is_some()
-            || self.dependency_meta.is_some()
-            || self.guard
-            || !self.type_hints.is_empty()
-            || !self.fragment_output_uses.is_empty()
-    }
-
-    fn merge_output_meta(&mut self, meta: HelperOutputMeta) {
-        merge_optional_meta(&mut self.output_meta, Some(meta));
-    }
-
-    fn merge_dependency_meta(&mut self, meta: HelperOutputMeta) {
-        merge_optional_meta(&mut self.dependency_meta, Some(meta));
-    }
-}
-
-fn merge_optional_meta(target: &mut Option<HelperOutputMeta>, incoming: Option<HelperOutputMeta>) {
-    let Some(incoming) = incoming else {
-        return;
-    };
-    match target {
-        Some(target) => target.merge(incoming),
-        None => *target = Some(incoming),
-    }
-}
-
 impl HelperSummary {
     pub(crate) fn extend(&mut self, other: Self) {
-        self.merge_path_facts(other.path_facts);
+        for (path, meta) in other.scalar_output_meta {
+            self.merge_output_meta(path, meta);
+        }
+        for (path, meta) in other.dependency_meta {
+            self.merge_dependency_meta(path, meta);
+        }
+        self.guard_paths.extend(other.guard_paths);
+        for (path, hints) in other.type_hints {
+            self.merge_type_hints(path, hints);
+        }
+        self.fragment_output_uses.extend(other.fragment_output_uses);
         self.string_output.extend(other.string_output);
         self.suppress_roots.extend(other.suppress_roots);
         self.chart_defaults.extend(other.chart_defaults);
@@ -227,25 +196,19 @@ impl HelperSummary {
         if path.trim().is_empty() {
             return;
         }
-        self.path_facts
-            .entry(path)
-            .or_default()
-            .merge_output_meta(meta);
+        self.scalar_output_meta.entry(path).or_default().merge(meta);
     }
 
     pub(crate) fn merge_dependency_meta(&mut self, path: String, meta: HelperOutputMeta) {
         if path.trim().is_empty() {
             return;
         }
-        self.path_facts
-            .entry(path)
-            .or_default()
-            .merge_dependency_meta(meta);
+        self.dependency_meta.entry(path).or_default().merge(meta);
     }
 
     pub(crate) fn add_guard_path(&mut self, path: String) {
         if !path.trim().is_empty() {
-            self.path_facts.entry(path).or_default().guard = true;
+            self.guard_paths.insert(path);
         }
     }
 
@@ -253,11 +216,7 @@ impl HelperSummary {
         if output.source_expr.trim().is_empty() {
             return;
         }
-        self.path_facts
-            .entry(output.source_expr.clone())
-            .or_default()
-            .fragment_output_uses
-            .push(output);
+        self.fragment_output_uses.push(output);
     }
 
     pub(crate) fn add_fragment_output_uses(&mut self, mut outputs: Vec<HelperFragmentOutputUse>) {
@@ -286,43 +245,34 @@ impl HelperSummary {
         if path.trim().is_empty() {
             return;
         }
-        self.path_facts
+        self.type_hints
             .entry(path)
             .or_default()
-            .type_hints
             .extend(schema_types);
     }
 
     pub(crate) fn has_document_value_facts(&self) -> bool {
-        self.path_facts
-            .values()
-            .any(HelperPathFacts::is_dependency_relevant)
+        !self.scalar_output_meta.is_empty()
+            || !self.dependency_meta.is_empty()
+            || !self.guard_paths.is_empty()
+            || !self.type_hints.is_empty()
+            || !self.fragment_output_uses.is_empty()
     }
 
     pub(crate) fn add_provenance(&mut self, provenance: ContractProvenance) {
-        for facts in self.path_facts.values_mut() {
-            if let Some(meta) = facts.output_meta.as_mut() {
-                meta.add_provenance_site(provenance.clone());
-            }
-            if let Some(meta) = facts.dependency_meta.as_mut() {
-                meta.add_provenance_site(provenance.clone());
-            }
-            for output in &mut facts.fragment_output_uses {
-                output.meta.add_provenance_site(provenance.clone());
-            }
+        for meta in self.scalar_output_meta.values_mut() {
+            meta.add_provenance_site(provenance.clone());
+        }
+        for meta in self.dependency_meta.values_mut() {
+            meta.add_provenance_site(provenance.clone());
+        }
+        for output in &mut self.fragment_output_uses {
+            output.meta.add_provenance_site(provenance.clone());
         }
     }
 
     pub(crate) fn remove_output_path(&mut self, path: &str) {
-        if let Some(facts) = self.path_facts.get_mut(path) {
-            facts.output_meta = None;
-        }
-    }
-
-    pub(crate) fn path_facts(&self) -> impl Iterator<Item = (&str, &HelperPathFacts)> {
-        self.path_facts
-            .iter()
-            .map(|(path, facts)| (path.as_str(), facts))
+        self.scalar_output_meta.remove(path);
     }
 
     pub(crate) fn rendered_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
@@ -336,72 +286,60 @@ impl HelperSummary {
     }
 
     pub(crate) fn scalar_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        self.path_facts()
-            .filter_map(|(path, facts)| {
-                Some((path.to_string(), facts.output_meta.as_ref()?.clone()))
-            })
-            .collect()
+        self.scalar_output_meta.clone()
     }
 
     pub(crate) fn fragment_output_uses(&self) -> Vec<HelperFragmentOutputUse> {
-        self.path_facts()
-            .flat_map(|(_path, facts)| facts.fragment_output_uses.iter().cloned())
-            .collect()
+        self.fragment_output_uses.clone()
     }
 
     pub(crate) fn dependency_output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
         let mut out = self.rendered_output_meta();
-        for (path, facts) in self.path_facts() {
-            if let Some(meta) = facts.dependency_meta.as_ref() {
-                out.entry(path.to_string()).or_default().merge_ref(meta);
-            }
+        for (path, meta) in &self.dependency_meta {
+            out.entry(path.clone()).or_default().merge_ref(meta);
         }
         out
     }
 
     pub(crate) fn dependency_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        self.path_facts()
-            .filter_map(|(path, facts)| {
-                Some((path.to_string(), facts.dependency_meta.as_ref()?.clone()))
-            })
-            .collect()
+        self.dependency_meta.clone()
     }
 
     pub(crate) fn guard_paths(&self) -> BTreeSet<String> {
-        self.path_facts()
-            .filter_map(|(path, facts)| facts.guard.then_some(path.to_string()))
-            .collect()
+        self.guard_paths.clone()
     }
 
     pub(crate) fn type_hints(&self) -> BTreeMap<String, BTreeSet<String>> {
-        self.path_facts()
-            .filter_map(|(path, facts)| {
-                (!facts.type_hints.is_empty())
-                    .then_some((path.to_string(), facts.type_hints.clone()))
-            })
-            .collect()
+        self.type_hints.clone()
     }
 
     pub(crate) fn has_structured_fragment_source(&self, path: &str) -> bool {
-        self.path_facts
-            .get(path)
-            .is_some_and(|facts| !facts.fragment_output_uses.is_empty())
+        self.fragment_output_uses
+            .iter()
+            .any(|output| output.source_expr == path)
     }
 
     pub(crate) fn has_rendered_source_descendant(&self, path: &str) -> bool {
-        self.path_facts().any(|(candidate, facts)| {
-            (facts.output_meta.is_some() || !facts.fragment_output_uses.is_empty())
-                && output_path::values_path_is_descendant(candidate, path)
-        })
+        self.scalar_output_meta
+            .keys()
+            .any(|candidate| output_path::values_path_is_descendant(candidate, path))
+            || self
+                .fragment_output_uses
+                .iter()
+                .any(|output| output_path::values_path_is_descendant(&output.source_expr, path))
     }
 
     pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {
-        let paths = self
-            .path_facts()
-            .filter(|(_path, facts)| facts.is_dependency_relevant())
-            .map(|(path, _facts)| path.to_string())
-            .filter(|path| !path.trim().is_empty())
-            .collect::<BTreeSet<_>>();
+        let mut paths = BTreeSet::new();
+        paths.extend(self.scalar_output_meta.keys().cloned());
+        paths.extend(self.dependency_meta.keys().cloned());
+        paths.extend(self.guard_paths.iter().cloned());
+        paths.extend(self.type_hints.keys().cloned());
+        paths.extend(
+            self.fragment_output_uses
+                .iter()
+                .map(|output| output.source_expr.clone()),
+        );
         paths
             .iter()
             .filter(|path| !output_path::values_path_has_descendant(path, &paths))
@@ -417,13 +355,9 @@ impl HelperSummary {
         &mut self,
         bindings: &HashMap<String, AbstractValue>,
     ) {
-        let rendered_sources: BTreeSet<String> = self
-            .path_facts
-            .iter()
-            .filter_map(|(path, facts)| {
-                (facts.output_meta.is_some() || facts.guard).then_some(path.clone())
-            })
-            .collect();
+        let mut rendered_sources: BTreeSet<String> =
+            self.scalar_output_meta.keys().cloned().collect();
+        rendered_sources.extend(self.guard_paths.iter().cloned());
         for binding in bindings.values() {
             let AbstractValue::ValuesPath(root) = binding else {
                 continue;
@@ -431,15 +365,6 @@ impl HelperSummary {
             if output_path::values_path_has_descendant(root, &rendered_sources) {
                 self.suppress_roots.insert(root.clone());
             }
-        }
-    }
-
-    fn merge_path_facts(&mut self, path_facts: BTreeMap<String, HelperPathFacts>) {
-        for (path, facts) in path_facts {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.path_facts.entry(path).or_default().merge(facts);
         }
     }
 
@@ -459,20 +384,19 @@ fn project_summary_value(analysis: &HelperSummary) -> Option<AbstractValue> {
     if !analysis.string_output.is_empty() {
         values.push(AbstractValue::StringSet(analysis.string_output.clone()));
     }
-    for (path, facts) in analysis.path_facts() {
-        for output in facts.fragment_output_uses.iter().cloned() {
-            values.push(AbstractValue::for_output_path(
-                output.source_expr,
-                &output.relative_path,
-                output.meta,
-            ));
-        }
-        if let Some(meta) = facts.output_meta.as_ref()
-            && !analysis.has_structured_fragment_source(path)
+    for output in analysis.fragment_output_uses.iter().cloned() {
+        values.push(AbstractValue::for_output_path(
+            output.source_expr,
+            &output.relative_path,
+            output.meta,
+        ));
+    }
+    for (path, meta) in &analysis.scalar_output_meta {
+        if !analysis.has_structured_fragment_source(path)
             && !analysis.has_rendered_source_descendant(path)
         {
             values.push(AbstractValue::OutputSet(
-                [(path.to_string(), meta.clone())].into_iter().collect(),
+                [(path.clone(), meta.clone())].into_iter().collect(),
             ));
         }
     }
