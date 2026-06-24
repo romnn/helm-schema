@@ -1,36 +1,52 @@
-use std::collections::{BTreeSet, HashMap};
-
-use helm_schema_ast::TemplateExpr;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ValueKind;
-use crate::bound_value_analysis::{GetBinding, extract_bound_values_from_exprs};
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
-use crate::value_path_context::ValuePathContext;
+use crate::eval_effect::Effects;
+use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
 use crate::{Guard, YamlPath, output_path};
 
 use super::tracker::OutputSlot;
 
+pub(crate) struct DocumentOutputFacts {
+    pub(crate) output_effects: Effects,
+    pub(crate) bound_values: Vec<String>,
+    pub(crate) helper: HelperSummary,
+}
+
+impl DocumentOutputFacts {
+    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = self.output_effects.local_output_meta.clone();
+        for (path, meta) in &self.helper.scalar_output_meta {
+            out.entry(path.clone()).or_default().merge_ref(meta);
+        }
+        for output in &self.helper.fragment_output_uses {
+            out.entry(output.source_expr.clone())
+                .or_default()
+                .merge_ref(&output.meta);
+        }
+        out
+    }
+}
+
 pub(crate) fn document_output_contract(
     site: OutputSlot,
-    exprs: &[TemplateExpr],
-    value_path_context: &ValuePathContext<'_>,
-    range_domains: &HashMap<String, Vec<String>>,
-    get_bindings: &HashMap<String, GetBinding>,
-    helper: HelperSummary,
+    facts: DocumentOutputFacts,
     context: &ContractUseContext<'_>,
 ) -> ContractIr {
+    let DocumentOutputFacts {
+        mut output_effects,
+        bound_values,
+        helper,
+    } = facts;
     let mut contract = ContractIr::default();
-    let mut output_effects = value_path_context.expression_output_effects(exprs);
     if site.kind == ValueKind::Scalar {
         let all_values = output_effects.output_paths.clone();
         output_effects
             .output_paths
             .retain(|path| !output_path::values_path_has_descendant(path, &all_values));
     }
-
-    let bound_values = extract_bound_values_from_exprs(exprs, range_domains, get_bindings);
 
     if output_effects.output_paths.is_empty()
         && bound_values.is_empty()

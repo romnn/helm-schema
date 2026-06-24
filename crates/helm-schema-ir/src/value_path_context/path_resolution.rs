@@ -77,13 +77,6 @@ impl ValuePathContext<'_> {
             .output_value_paths()
     }
 
-    pub(crate) fn resolved_default_fallback_paths_in_exprs(
-        &self,
-        exprs: &[TemplateExpr],
-    ) -> BTreeSet<String> {
-        self.expression_effects(exprs).default_paths_with_local()
-    }
-
     pub(super) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
         self.resolved_values_paths_from_expr(expr)
     }

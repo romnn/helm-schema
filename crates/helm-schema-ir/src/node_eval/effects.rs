@@ -16,9 +16,7 @@ pub(crate) trait NodeActionEffectSink {
 
     fn assign_fragment_value(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
 
-    fn refresh_default_paths(&mut self, _variable: &str, _rhs_expr: &TemplateExpr) {}
-
-    fn refresh_helper_output_meta(&mut self, _variable: String, _rhs_expr: &TemplateExpr) {}
+    fn refresh_assignment_facts(&mut self, _variable: String, _rhs_expr: &TemplateExpr) {}
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
@@ -54,16 +52,16 @@ pub(super) fn apply_assignment_action_plan(
 }
 
 fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: LocalAssignmentPlan) {
+    let variable = plan.variable;
     match plan.kind {
         AssignmentKind::Declaration => {
-            sink.declare_fragment_value(plan.variable.clone(), plan.fragment_value);
+            sink.declare_fragment_value(variable.clone(), plan.fragment_value);
         }
         AssignmentKind::Assignment => {
-            sink.assign_fragment_value(plan.variable.clone(), plan.fragment_value);
+            sink.assign_fragment_value(variable.clone(), plan.fragment_value);
         }
     }
-    sink.refresh_default_paths(&plan.variable, &plan.rhs_expr);
-    sink.refresh_helper_output_meta(plan.variable, &plan.rhs_expr);
+    sink.refresh_assignment_facts(variable, &plan.rhs_expr);
 }
 
 pub(crate) fn activate_if_condition_plan(

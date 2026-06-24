@@ -1,33 +1,27 @@
-use std::collections::BTreeMap;
-
 use helm_schema_ast::TemplateExpr;
 
 use crate::SourceSpan;
+use crate::bound_value_analysis::extract_bound_values_from_exprs;
 use crate::contract_sink::ContractUseContext;
-use crate::document_projection::document_output_contract;
-use crate::helper_summary::HelperOutputMeta;
+use crate::document_projection::{DocumentOutputFacts, document_output_contract};
 
 use super::SymbolicWalker;
 
 impl SymbolicWalker<'_> {
-    pub(super) fn helper_output_meta_for_exprs(
+    pub(super) fn document_output_facts_for_exprs(
         &self,
         exprs: &[TemplateExpr],
-    ) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = self
-            .value_path_context()
-            .expression_output_effects(exprs)
-            .local_output_meta;
-        let analysis = self.summarize_bound_helper_calls_in_exprs(exprs);
-        for (path, meta) in analysis.scalar_output_meta {
-            out.entry(path).or_default().merge(meta);
+    ) -> DocumentOutputFacts {
+        let value_path_context = self.value_path_context();
+        DocumentOutputFacts {
+            output_effects: value_path_context.expression_output_effects(exprs),
+            bound_values: extract_bound_values_from_exprs(
+                exprs,
+                &self.scope.locals().range_domains,
+                &self.scope.locals().get_bindings,
+            ),
+            helper: self.summarize_bound_helper_calls_in_exprs(exprs),
         }
-        for output in analysis.fragment_output_uses {
-            out.entry(output.source_expr)
-                .or_default()
-                .merge(output.meta);
-        }
-        out
     }
 
     #[tracing::instrument(skip_all)]
@@ -47,19 +41,18 @@ impl SymbolicWalker<'_> {
             self.inline_exact_helper_call(exprs);
         }
 
-        let mut helper_summary = self.summarize_bound_helper_calls_in_exprs(exprs);
+        let mut output_facts = self.document_output_facts_for_exprs(exprs);
         // Stash chart-level `set X "K" (X.K | default V)` mutations discovered
         // in any helper called from this text. Subsequent contract emissions
         // in this walker attach `Guard::Default { path }` for matching reads,
         // which models that the helper's `set` has already run by the time
         // those reads are evaluated.
-        let mut chart_value_defaults = helper_summary.take_chart_value_defaults();
+        let mut chart_value_defaults = output_facts.helper.take_chart_value_defaults();
         self.scope
             .locals_mut()
             .append_chart_value_defaults(&mut chart_value_defaults);
 
         let document_contract = {
-            let value_path_context = self.value_path_context();
             let guards = self.contract_guards();
             let projection_context = ContractUseContext::new(
                 &guards,
@@ -72,15 +65,7 @@ impl SymbolicWalker<'_> {
                 )),
                 self.provenance_helper_chain(),
             );
-            document_output_contract(
-                output_slot,
-                exprs,
-                &value_path_context,
-                &self.scope.locals().range_domains,
-                &self.scope.locals().get_bindings,
-                helper_summary,
-                &projection_context,
-            )
+            document_output_contract(output_slot, output_facts, &projection_context)
         };
         self.contract.append(document_contract);
     }
