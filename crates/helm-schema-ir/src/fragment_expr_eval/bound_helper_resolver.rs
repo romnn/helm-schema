@@ -43,23 +43,19 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         name: &str,
         arg: Option<&TemplateExpr>,
     ) -> Option<EvalResult> {
-        self.params.context.define_bodies.source(name)?;
+        self.params.context.analysis_db.define_source(name)?;
         if self.params.seen.contains(name) {
             return Some(EvalResult::none());
         }
-        let analysis = self
-            .params
-            .context
-            .helper_summaries()
-            .summarize_bound_helper_call(
-                name,
-                arg,
-                self.params.outer,
-                self.params.current_dot,
-                self.params.fragment_locals,
-                self.params.context,
-                self.params.seen,
-            );
+        let analysis = self.params.context.analysis_db.summarize_bound_helper_call(
+            name,
+            arg,
+            self.params.outer,
+            self.params.current_dot,
+            self.params.fragment_locals,
+            self.params.context,
+            self.params.seen,
+        );
         let value = match self.params.projection {
             HelperAnalysisProjection::HelperValue => analysis.project_helper_value(),
             HelperAnalysisProjection::FragmentValue => analysis.project_fragment_value(),

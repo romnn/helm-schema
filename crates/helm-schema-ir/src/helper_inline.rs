@@ -1,6 +1,7 @@
-use helm_schema_ast::{DefineIndex, HelmAst, Literal, TemplateExpr};
+use helm_schema_ast::{DefineIndex, HelmAst, TemplateExpr};
 
-use crate::define_body_cache::DefineBodyCache;
+use crate::analysis_db::IrAnalysisDb;
+use crate::expr_eval::expr_literal_helper_call_callee;
 use crate::resource_identity::ResourceIdentityDetector;
 
 pub(crate) struct ExactHelperInlinePlan<'a> {
@@ -15,32 +16,27 @@ pub(crate) struct ExactHelperInlinePlan<'a> {
 pub(crate) fn plan_exact_helper_inline_from_exprs<'a>(
     exprs: &[TemplateExpr],
     defines: &'a DefineIndex,
-    define_bodies: &'a DefineBodyCache,
+    analysis_db: &'a IrAnalysisDb,
     inline_stack: &[String],
 ) -> Option<ExactHelperInlinePlan<'a>> {
     if exprs.len() != 1 {
         return None;
     }
 
-    let TemplateExpr::Call { function, args } = &exprs[0] else {
+    let TemplateExpr::Call { args, .. } = &exprs[0] else {
         return None;
     };
-    if !matches!(function.as_str(), "include" | "template") {
-        return None;
-    }
-    let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
-        return None;
-    };
+    let name = expr_literal_helper_call_callee(&exprs[0])?;
     define_body_resource(defines, name)?;
 
-    let source = define_bodies.source(name)?;
-    let source_path = define_bodies.source_path(name);
-    let source_offset = define_bodies.body_offset(name).unwrap_or(0);
+    let source = analysis_db.define_source(name)?;
+    let source_path = analysis_db.define_source_path(name);
+    let source_offset = analysis_db.define_body_offset(name).unwrap_or(0);
     let token = format!("define:{name}");
     if inline_stack.iter().any(|entry| entry == &token) {
         return None;
     }
-    let tree = define_bodies.tree(name)?;
+    let tree = analysis_db.define_tree(name)?;
 
     Some(ExactHelperInlinePlan {
         source,

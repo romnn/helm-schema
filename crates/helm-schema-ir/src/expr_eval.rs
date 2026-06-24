@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
@@ -7,6 +7,7 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::eval_call_with_helper_calls;
 use crate::expr_pipeline_eval::eval_pipeline_with_helper_calls;
+use crate::helper_summary::HelperOutputMeta;
 
 pub(crate) trait HelperCallValueResolver {
     fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
@@ -164,6 +165,58 @@ pub(crate) fn eval_exprs_effects(exprs: &[TemplateExpr], env: &EvalEnv) -> Effec
     effects
 }
 
+pub(crate) fn eval_helper_exprs_direct_effects(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+) -> Effects {
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot).without_helper_call_args();
+    eval_exprs_effects(exprs, &env)
+}
+
+pub(crate) fn eval_helper_exprs_effects(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+) -> Effects {
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
+    eval_exprs_effects(exprs, &env)
+}
+
+pub(crate) fn eval_local_exprs_effects(
+    exprs: &[TemplateExpr],
+    local_bindings: &HashMap<String, AbstractValue>,
+    local_default_paths: &HashMap<String, BTreeSet<String>>,
+    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+) -> Effects {
+    let env = EvalEnv::from_local_facts(local_bindings, local_default_paths, local_output_meta);
+    eval_exprs_effects(exprs, &env)
+}
+
+pub(crate) fn eval_local_exprs_effects_without_meta(
+    exprs: &[TemplateExpr],
+    local_bindings: &HashMap<String, AbstractValue>,
+    local_default_paths: &HashMap<String, BTreeSet<String>>,
+) -> Effects {
+    eval_local_exprs_effects(exprs, local_bindings, local_default_paths, &HashMap::new())
+}
+
+pub(crate) fn eval_non_helper_output_exprs_effects(
+    exprs: &[TemplateExpr],
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+) -> Effects {
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
+    let mut effects = Effects::default();
+    for expr in exprs {
+        if expr_contains_helper_call(expr) {
+            continue;
+        }
+        effects.merge(eval_output_expr_effects(expr, &env));
+    }
+    effects
+}
+
 pub(crate) fn eval_output_expr_effects(expr: &TemplateExpr, env: &EvalEnv) -> Effects {
     let result = eval_expr(expr, env);
     if let Some(value) = result.value {
@@ -199,6 +252,50 @@ pub(crate) fn eval_output_expr_effects(expr: &TemplateExpr, env: &EvalEnv) -> Ef
         | TemplateExpr::Unknown(_) => {}
     }
     effects
+}
+
+pub(crate) fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
+    let mut found = false;
+    expr.walk(|node| {
+        if let TemplateExpr::Call { function, .. } = node
+            && is_helper_call_function(function)
+        {
+            found = true;
+        }
+    });
+    found
+}
+
+pub(crate) fn expr_starts_with_helper_call(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Call { function, .. } => is_helper_call_function(function),
+        TemplateExpr::Pipeline(stages) => stages.first().is_some_and(expr_starts_with_helper_call),
+        _ => false,
+    }
+}
+
+pub(crate) fn literal_helper_call_callee<'a>(
+    function: &str,
+    args: &'a [TemplateExpr],
+) -> Option<&'a str> {
+    if !is_helper_call_function(function) {
+        return None;
+    }
+    let Some(TemplateExpr::Literal(lit)) = args.first().map(TemplateExpr::deparen) else {
+        return None;
+    };
+    lit.as_string()
+}
+
+pub(crate) fn expr_literal_helper_call_callee(expr: &TemplateExpr) -> Option<&str> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    literal_helper_call_callee(function, args)
+}
+
+fn is_helper_call_function(function: &str) -> bool {
+    matches!(function, "include" | "template")
 }
 
 fn local_value_result(

@@ -147,12 +147,12 @@ struct ResolvedHelperBody<'a> {
 
 impl<'a> ResolvedHelperBody<'a> {
     fn resolve(name: &str, context: FragmentEvalContext<'a>) -> Option<Self> {
-        let source = context.define_bodies.source(name)?;
-        let tree = context.define_bodies.tree(name)?;
+        let source = context.analysis_db.define_source(name)?;
+        let tree = context.analysis_db.define_tree(name)?;
         let provenance = context
-            .define_bodies
-            .source_path(name)
-            .zip(context.define_bodies.body_offset(name))
+            .analysis_db
+            .define_source_path(name)
+            .zip(context.analysis_db.define_body_offset(name))
             .map(|(source_path, body_offset)| {
                 ContractProvenance::new(
                     source_path,
@@ -171,9 +171,7 @@ impl<'a> ResolvedHelperBody<'a> {
         let Some(provenance) = self.provenance.clone() else {
             return;
         };
-        analysis.add_provenance_to_outputs(provenance.clone());
-        analysis.add_provenance_to_fragment_outputs(provenance.clone());
-        analysis.add_provenance_to_dependencies(provenance);
+        analysis.add_provenance(provenance);
     }
 }
 

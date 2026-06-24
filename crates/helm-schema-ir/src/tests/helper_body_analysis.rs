@@ -4,9 +4,8 @@ use test_util::prelude::sim_assert_eq;
 use helm_schema_ast::{DefineIndex, TreeSitterParser};
 
 use crate::Guard;
-use crate::define_body_cache::DefineBodyCache;
+use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::HelperSummaryCache;
 
 use super::{BoundHelperCallResolution, interpret_bound_helper_body};
 
@@ -25,9 +24,8 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
     defines
         .add_source(&TreeSitterParser, source)
         .expect("define source");
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
-    let context = FragmentEvalContext::new(&defines, &define_bodies, &helper_summaries);
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = FragmentEvalContext::new(&defines, &analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::new(),
         helper_body_dot: None,
@@ -94,9 +92,8 @@ fn helper_body_summary_resolves_string_hints_through_local_aliases() {
     defines
         .add_source(&TreeSitterParser, source)
         .expect("define source");
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
-    let context = FragmentEvalContext::new(&defines, &define_bodies, &helper_summaries);
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = FragmentEvalContext::new(&defines, &analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::from([(
             "imageRoot".to_string(),
@@ -136,9 +133,8 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
     defines
         .add_source(&TreeSitterParser, source)
         .expect("define source");
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
-    let context = FragmentEvalContext::new(&defines, &define_bodies, &helper_summaries);
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = FragmentEvalContext::new(&defines, &analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::from([
             (

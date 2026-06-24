@@ -3,14 +3,13 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::define_body_cache::DefineBodyCache;
+use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_assignment::{
     AssignmentKind, ParsedHelperAssignment, apply_local_set_mutations_from_exprs,
     parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::range_body_renders_mapping_entries_from_ast;
-use crate::helper_summary::HelperSummaryCache;
 use crate::template_expr_cache::parse_expr_text;
 use test_util::prelude::sim_assert_eq;
 
@@ -79,10 +78,9 @@ fn apply_local_set_mutations(
 
 fn empty_context<'a>(
     defines: &'a DefineIndex,
-    define_bodies: &'a DefineBodyCache,
-    helper_summaries: &'a HelperSummaryCache,
+    analysis_db: &'a IrAnalysisDb,
 ) -> FragmentEvalContext<'a> {
-    FragmentEvalContext::new(defines, define_bodies, helper_summaries)
+    FragmentEvalContext::new(defines, analysis_db)
 }
 
 #[test]
@@ -141,9 +139,8 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
         ])),
     )]);
     let defines = DefineIndex::new();
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
-    let context = empty_context(&defines, &define_bodies, &helper_summaries);
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = empty_context(&defines, &analysis_db);
     let mut seen = HashSet::new();
 
     assert!(apply_local_set_mutations(

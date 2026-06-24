@@ -3,8 +3,9 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
-use crate::eval_env::EvalEnv;
-use crate::expr_eval::eval_exprs_effects;
+use crate::expr_eval::{
+    eval_helper_exprs_direct_effects, eval_helper_exprs_effects, eval_local_exprs_effects,
+};
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
@@ -50,7 +51,7 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         state.context,
         &mut seen_set,
     ) {
-        let effects = direct_expression_effects(exprs, bindings, current_dot);
+        let effects = eval_helper_exprs_direct_effects(exprs, bindings, current_dot);
         state
             .analysis
             .chart_defaults
@@ -58,10 +59,10 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         return;
     }
 
-    let direct_effects = direct_expression_effects(exprs, bindings, current_dot);
+    let direct_effects = eval_helper_exprs_direct_effects(exprs, bindings, current_dot);
     let direct_outputs = direct_effects.reads.clone();
-    let fallback_paths = helper_context_expression_effects(exprs, bindings, current_dot).defaults;
-    let local_effects = local_expression_effects(
+    let fallback_paths = eval_helper_exprs_effects(exprs, bindings, current_dot).defaults;
+    let local_effects = eval_local_exprs_effects(
         exprs,
         &state.locals.bindings,
         &state.locals.default_paths,
@@ -133,7 +134,7 @@ fn collect_assignment_bound_helper_values(
     state: &mut HelperValuesWalkState<'_, '_>,
 ) {
     let rhs_exprs = std::slice::from_ref(rhs_expr);
-    let full_effects = direct_expression_effects(full_exprs, bindings, current_dot);
+    let full_effects = eval_helper_exprs_direct_effects(full_exprs, bindings, current_dot);
     state
         .analysis
         .chart_defaults
@@ -149,7 +150,7 @@ fn collect_assignment_bound_helper_values(
         &mut seen_set,
     ) {
         let defaulted_dependencies =
-            helper_context_expression_effects(rhs_exprs, bindings, current_dot).defaults;
+            eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
         for path in defaulted_dependencies {
             state.analysis.merge_dependency_meta(
                 path,
@@ -159,9 +160,8 @@ fn collect_assignment_bound_helper_values(
         return;
     }
 
-    let fallback_paths =
-        helper_context_expression_effects(rhs_exprs, bindings, current_dot).defaults;
-    let local_effects = local_expression_effects(
+    let fallback_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
+    let local_effects = eval_local_exprs_effects(
         rhs_exprs,
         &state.locals.bindings,
         &state.locals.default_paths,
@@ -256,34 +256,6 @@ fn collect_assignment_bound_helper_values(
             .local_output_meta
             .insert(var.to_string(), rhs_output_meta);
     }
-}
-
-fn direct_expression_effects(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-) -> Effects {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot).without_helper_call_args();
-    eval_exprs_effects(exprs, &env)
-}
-
-fn helper_context_expression_effects(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-) -> Effects {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    eval_exprs_effects(exprs, &env)
-}
-
-fn local_expression_effects(
-    exprs: &[TemplateExpr],
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-) -> Effects {
-    let env = EvalEnv::from_local_facts(local_bindings, local_default_paths, local_output_meta);
-    eval_exprs_effects(exprs, &env)
 }
 
 fn helper_value_result_from_exprs(

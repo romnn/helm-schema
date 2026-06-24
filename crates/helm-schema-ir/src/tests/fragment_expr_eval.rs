@@ -3,12 +3,12 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::{DefineIndex, TemplateExpr, TreeSitterParser, parse_action_expressions};
 
 use crate::abstract_value::AbstractValue;
-use crate::define_body_cache::DefineBodyCache;
+use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, fragment_value_from_expr,
     helper_result_from_expr_with_fragment_locals,
 };
-use crate::helper_summary::{HelperOutputMeta, HelperSummaryCache};
+use crate::helper_summary::HelperOutputMeta;
 use test_util::prelude::sim_assert_eq;
 
 fn single_expr(action: &str) -> TemplateExpr {
@@ -19,10 +19,9 @@ fn single_expr(action: &str) -> TemplateExpr {
 
 fn empty_context<'a>(
     defines: &'a DefineIndex,
-    define_bodies: &'a DefineBodyCache,
-    helper_summaries: &'a HelperSummaryCache,
+    analysis_db: &'a IrAnalysisDb,
 ) -> FragmentEvalContext<'a> {
-    FragmentEvalContext::new(defines, define_bodies, helper_summaries)
+    FragmentEvalContext::new(defines, analysis_db)
 }
 
 fn helper_value_from_fragment_locals(
@@ -31,9 +30,8 @@ fn helper_value_from_fragment_locals(
 ) -> Option<AbstractValue> {
     let expr = single_expr(action);
     let defines = DefineIndex::new();
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
-    let context = empty_context(&defines, &define_bodies, &helper_summaries);
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = empty_context(&defines, &analysis_db);
     let mut seen = HashSet::new();
     helper_result_from_expr_with_fragment_locals(
         &expr,
@@ -58,10 +56,9 @@ fn context_local() -> HashMap<String, AbstractValue> {
 
 fn helper_context<'a>(
     defines: &'a DefineIndex,
-    define_bodies: &'a DefineBodyCache,
-    helper_summaries: &'a HelperSummaryCache,
+    analysis_db: &'a IrAnalysisDb,
 ) -> FragmentEvalContext<'a> {
-    empty_context(defines, define_bodies, helper_summaries)
+    empty_context(defines, analysis_db)
 }
 
 #[test]
@@ -159,9 +156,8 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
             r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
         )
         .expect("parse helper source");
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
-    let context = helper_context(&defines, &define_bodies, &helper_summaries);
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&defines, &analysis_db);
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
@@ -202,9 +198,8 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
             r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
         )
         .expect("parse helper source");
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
-    let context = helper_context(&defines, &define_bodies, &helper_summaries);
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&defines, &analysis_db);
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 

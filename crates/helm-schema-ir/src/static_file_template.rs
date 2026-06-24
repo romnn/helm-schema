@@ -1,8 +1,9 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
+use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_expr_eval::FragmentEvalContext;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -24,14 +25,11 @@ pub(crate) fn literal_helper_calls_from_exprs(exprs: &[TemplateExpr]) -> Vec<Lit
             let TemplateExpr::Call { function, args } = node else {
                 return;
             };
-            if !matches!(function.as_str(), "include" | "template") {
-                return;
-            }
-            let Some(TemplateExpr::Literal(Literal::String(name))) = args.first() else {
+            let Some(name) = literal_helper_call_callee(function, args) else {
                 return;
             };
             out.push(LiteralHelperCall {
-                name: name.clone(),
+                name: name.to_string(),
                 arg: args.get(1).cloned(),
             });
         });

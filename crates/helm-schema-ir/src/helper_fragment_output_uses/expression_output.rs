@@ -4,8 +4,10 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
-use crate::eval_env::EvalEnv;
-use crate::expr_eval::{eval_exprs_effects, eval_output_expr_effects};
+use crate::expr_eval::{
+    eval_helper_exprs_effects, eval_local_exprs_effects_without_meta,
+    eval_non_helper_output_exprs_effects, expr_contains_helper_call, expr_starts_with_helper_call,
+};
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
@@ -61,11 +63,14 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let output_path = static_yaml_fragment_output_path_from_exprs(exprs)
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
-    let fallback_paths = helper_context_expression_effects(exprs, bindings, current_dot).defaults;
-    let local_effects =
-        local_expression_effects(exprs, &state.locals.bindings, &state.locals.default_paths);
+    let fallback_paths = eval_helper_exprs_effects(exprs, bindings, current_dot).defaults;
+    let local_effects = eval_local_exprs_effects_without_meta(
+        exprs,
+        &state.locals.bindings,
+        &state.locals.default_paths,
+    );
 
-    let direct_output_effects = direct_output_effects_from_exprs(exprs, bindings, current_dot);
+    let direct_output_effects = eval_non_helper_output_exprs_effects(exprs, bindings, current_dot);
     let direct_output_uses = output_uses_from_rendered_effects(
         &direct_output_effects,
         &output_path,
@@ -250,9 +255,8 @@ fn collect_bound_fragment_output_assignment_uses(
     if let Some(binding) = binding {
         state.locals.bindings.insert(var.to_string(), binding);
     }
-    let mut defaulted_paths =
-        helper_context_expression_effects(rhs_exprs, bindings, current_dot).defaults;
-    let local_effects = local_expression_effects(
+    let mut defaulted_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
+    let local_effects = eval_local_exprs_effects_without_meta(
         rhs_exprs,
         &state.locals.bindings,
         &state.locals.default_paths,
@@ -266,24 +270,6 @@ fn collect_bound_fragment_output_assignment_uses(
             .default_paths
             .insert(var.to_string(), defaulted_paths);
     }
-}
-
-fn local_expression_effects(
-    exprs: &[TemplateExpr],
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-) -> Effects {
-    let env = EvalEnv::from_local_facts(local_bindings, local_default_paths, &HashMap::new());
-    eval_exprs_effects(exprs, &env)
-}
-
-fn helper_context_expression_effects(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-) -> Effects {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    eval_exprs_effects(exprs, &env)
 }
 
 fn local_output_uses_from_effects(
@@ -304,22 +290,6 @@ fn local_output_uses_from_effects(
         );
     }
     local_output_uses
-}
-
-fn direct_output_effects_from_exprs(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-) -> Effects {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    let mut effects = Effects::default();
-    for expr in exprs {
-        if expr_contains_helper_call(expr) {
-            continue;
-        }
-        effects.merge(eval_output_expr_effects(expr, &env));
-    }
-    effects
 }
 
 fn output_uses_from_rendered_effects(
@@ -380,32 +350,7 @@ fn static_yaml_fragment_output_path_from_exprs(exprs: &[TemplateExpr]) -> Option
     Some(YamlPath(vec![key]))
 }
 
-fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
-    let mut found = false;
-    expr.walk(|node| {
-        if let TemplateExpr::Call { function, .. } = node
-            && matches!(function.as_str(), "include" | "template")
-        {
-            found = true;
-        }
-    });
-    found
-}
-
 fn exprs_start_with_helper_call(exprs: &[TemplateExpr]) -> bool {
-    fn expr_starts_with_helper_call(expr: &TemplateExpr) -> bool {
-        match expr {
-            TemplateExpr::Parenthesized(inner) => expr_starts_with_helper_call(inner),
-            TemplateExpr::Call { function, .. } => {
-                matches!(function.as_str(), "include" | "template")
-            }
-            TemplateExpr::Pipeline(stages) => {
-                stages.first().is_some_and(expr_starts_with_helper_call)
-            }
-            _ => false,
-        }
-    }
-
     matches!(exprs, [expr] if expr_starts_with_helper_call(expr))
 }
 

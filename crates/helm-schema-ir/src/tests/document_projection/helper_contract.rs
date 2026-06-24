@@ -5,17 +5,15 @@ use helm_schema_ast::parse_action_expressions;
 use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
-use crate::define_body_cache::DefineBodyCache;
+use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::HelperSummaryCache;
 use crate::value_path_context::ValuePathContext;
 
 fn empty_fragment_context<'a>(
     defines: &'a DefineIndex,
-    define_bodies: &'a DefineBodyCache,
-    helper_summaries: &'a HelperSummaryCache,
+    analysis_db: &'a IrAnalysisDb,
 ) -> FragmentEvalContext<'a> {
-    FragmentEvalContext::new(defines, define_bodies, helper_summaries)
+    FragmentEvalContext::new(defines, analysis_db)
 }
 
 #[test]
@@ -33,14 +31,13 @@ fn document_type_hints_resolve_template_local_aliases() {
     let template_default_paths = HashMap::new();
     let template_output_meta = HashMap::new();
     let defines = DefineIndex::new();
-    let define_bodies = DefineBodyCache::new(&defines);
-    let helper_summaries = HelperSummaryCache::new();
+    let analysis_db = IrAnalysisDb::new(&defines);
     let context = ValuePathContext {
         root_bindings: &root_bindings,
         template_bindings: &template_bindings,
         template_default_paths: &template_default_paths,
         template_output_meta: &template_output_meta,
-        fragment_context: empty_fragment_context(&defines, &define_bodies, &helper_summaries),
+        fragment_context: empty_fragment_context(&defines, &analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,
     };

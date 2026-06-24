@@ -4,7 +4,7 @@ use helm_schema_ast::{DefineIndex, HelmAst, TemplateAction, TemplateExpr, Templa
 
 use crate::capability_branch::{decode_guard, decode_guard_expr};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::eval_expr;
+use crate::expr_eval::{eval_expr, literal_helper_call_callee};
 use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
 
 use super::{HelperOutput, MAX_RECURSION_DEPTH};
@@ -489,10 +489,7 @@ fn helper_call_names(action: &TemplateAction) -> Vec<String> {
             let TemplateExpr::Call { function, args } = node else {
                 return;
             };
-            if !matches!(function.as_str(), "include" | "template") {
-                return;
-            }
-            let Some(name) = helper_call_callee(function, args) else {
+            let Some(name) = literal_helper_call_callee(function, args) else {
                 return;
             };
             if !name.is_empty() && !out.iter().any(|existing| existing == name) {
@@ -538,7 +535,7 @@ fn lone_helper_call_callee(action: &TemplateAction) -> Option<String> {
     }
     match &action.exprs()[0] {
         TemplateExpr::Call { function, args } => {
-            helper_call_callee(function, args).map(str::to_string)
+            literal_helper_call_callee(function, args).map(str::to_string)
         }
         _ => None,
     }
@@ -581,16 +578,6 @@ fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
         }
     }
     out
-}
-
-fn helper_call_callee<'a>(function: &str, args: &'a [TemplateExpr]) -> Option<&'a str> {
-    if !matches!(function, "include" | "template") {
-        return None;
-    }
-    let Some(TemplateExpr::Literal(lit)) = args.first() else {
-        return None;
-    };
-    lit.as_string()
 }
 
 fn static_literal_outputs(expr: &TemplateExpr) -> Vec<String> {

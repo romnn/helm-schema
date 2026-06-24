@@ -1,4 +1,5 @@
 mod abstract_value;
+mod analysis_db;
 mod assignment_action_plan;
 mod bound_value_analysis;
 mod capability_branch;
@@ -9,7 +10,6 @@ mod contract_signal_builder;
 mod contract_signals;
 mod contract_sink;
 mod contract_types;
-mod define_body_cache;
 mod document_projection;
 mod eval_effect;
 mod eval_env;

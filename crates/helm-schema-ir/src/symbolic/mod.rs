@@ -5,18 +5,18 @@ mod runtime;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{DefineIndex, Literal, TemplateExpr};
+use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::Guard;
 use crate::abstract_value::AbstractValue;
+use crate::analysis_db::IrAnalysisDb;
 use crate::contract::ContractIr;
-use crate::define_body_cache::DefineBodyCache;
 use crate::document_projection::DocumentTracker;
+use crate::expr_eval::expr_literal_helper_call_callee;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperSummary;
-use crate::helper_summary::HelperSummaryCache;
 use crate::node_eval::eval_node;
 use crate::predicate::Predicate;
 use crate::symbolic_scope_state::SymbolicScopeState;
@@ -36,8 +36,7 @@ pub struct SymbolicIrContext {
 }
 
 struct SymbolicIrContextInner {
-    define_bodies: DefineBodyCache,
-    helper_summaries: HelperSummaryCache,
+    analysis_db: IrAnalysisDb,
 }
 
 impl SymbolicIrContext {
@@ -46,8 +45,7 @@ impl SymbolicIrContext {
         clear_template_expr_cache();
         Self {
             inner: Rc::new(SymbolicIrContextInner {
-                define_bodies: DefineBodyCache::new(defines),
-                helper_summaries: HelperSummaryCache::new(),
+                analysis_db: IrAnalysisDb::new(defines),
             }),
         }
     }
@@ -198,11 +196,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn fragment_eval_context(&self) -> FragmentEvalContext<'_> {
-        FragmentEvalContext::new(
-            self.defines,
-            &self.ir_context.inner.define_bodies,
-            &self.ir_context.inner.helper_summaries,
-        )
+        FragmentEvalContext::new(self.defines, &self.ir_context.inner.analysis_db)
     }
 
     fn value_path_context(&self) -> ValuePathContext<'_> {
@@ -275,15 +269,10 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn exprs_call_inlined_helper(&self, exprs: &[TemplateExpr]) -> bool {
-        let [TemplateExpr::Call { function, args }] = exprs else {
+        let [expr] = exprs else {
             return false;
         };
-        if !matches!(function.as_str(), "include" | "template") {
-            return false;
-        }
-        let Some(TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name))) =
-            args.first().map(TemplateExpr::deparen)
-        else {
+        let Some(name) = expr_literal_helper_call_callee(expr) else {
             return false;
         };
         let token = format!("define:{name}");

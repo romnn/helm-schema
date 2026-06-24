@@ -77,7 +77,7 @@ impl SymbolicWalker<'_> {
         let Some(plan) = plan_exact_helper_inline_from_exprs(
             exprs,
             self.defines,
-            &self.ir_context.inner.define_bodies,
+            &self.ir_context.inner.analysis_db,
             &self.inline_stack,
         ) else {
             return false;

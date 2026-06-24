@@ -4,9 +4,9 @@ use helm_schema_ast::{DefineIndex, parse_action_expressions};
 use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
-use crate::define_body_cache::DefineBodyCache;
+use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::{HelperOutputMeta, HelperSummaryCache};
+use crate::helper_summary::HelperOutputMeta;
 use crate::{Guard, GuardValue};
 
 use super::*;
@@ -58,15 +58,14 @@ fn condition_context_with_output_meta(
     let template_output_meta: &'static HashMap<String, BTreeMap<String, HelperOutputMeta>> =
         Box::leak(Box::new(template_output_meta));
     let defines = Box::leak(Box::new(DefineIndex::new()));
-    let define_bodies = Box::leak(Box::new(DefineBodyCache::new(defines)));
-    let helper_summaries = Box::leak(Box::new(HelperSummaryCache::new()));
+    let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
 
     ValuePathContext {
         root_bindings,
         template_bindings,
         template_default_paths,
         template_output_meta,
-        fragment_context: FragmentEvalContext::new(defines, define_bodies, helper_summaries),
+        fragment_context: FragmentEvalContext::new(defines, analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,
     }

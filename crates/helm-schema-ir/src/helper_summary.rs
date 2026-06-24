@@ -1,11 +1,6 @@
-use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
-use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_body_analysis::{
-    ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
-};
 use crate::output_path;
 use crate::predicate::Predicate;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
@@ -304,24 +299,14 @@ impl HelperSummary {
             .any(HelperPathFacts::is_dependency_relevant)
     }
 
-    pub(crate) fn add_provenance_to_outputs(&mut self, provenance: ContractProvenance) {
+    pub(crate) fn add_provenance(&mut self, provenance: ContractProvenance) {
         for facts in self.path_facts.values_mut() {
             if let Some(meta) = facts.output_meta.as_mut() {
                 meta.add_provenance_site(provenance.clone());
             }
-        }
-    }
-
-    pub(crate) fn add_provenance_to_dependencies(&mut self, provenance: ContractProvenance) {
-        for facts in self.path_facts.values_mut() {
             if let Some(meta) = facts.dependency_meta.as_mut() {
                 meta.add_provenance_site(provenance.clone());
             }
-        }
-    }
-
-    pub(crate) fn add_provenance_to_fragment_outputs(&mut self, provenance: ContractProvenance) {
-        for facts in self.path_facts.values_mut() {
             for output in &mut facts.fragment_output_uses {
                 output.meta.add_provenance_site(provenance.clone());
             }
@@ -440,107 +425,6 @@ fn project_summary_value(analysis: &HelperSummary) -> Option<AbstractValue> {
         }
     }
     AbstractValue::merge_all(values)
-}
-
-pub(crate) struct HelperSummaryCache {
-    bound_helper_call: RefCell<BTreeMap<BoundHelperCallCacheKey, HelperSummary>>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct BoundHelperCallCacheKey {
-    name: String,
-    arg: String,
-    current_dot: Option<AbstractValue>,
-    outer_bindings: BTreeMap<String, AbstractValue>,
-    fragment_locals: BTreeMap<String, AbstractValue>,
-    seen: BTreeSet<String>,
-}
-
-#[tracing::instrument(skip_all, fields(helper = name))]
-fn analyze_bound_helper_call_with_fragment_locals(
-    name: &str,
-    arg: Option<&helm_schema_ast::TemplateExpr>,
-    outer_bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> HelperSummary {
-    if !seen.insert(name.to_string()) {
-        return HelperSummary::default();
-    }
-
-    let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
-        helper_name: name,
-        arg,
-        outer_bindings,
-        current_dot,
-        fragment_locals,
-        context,
-        seen,
-    });
-    let mut analysis = interpret_bound_helper_body(name, &resolution, context, seen);
-    analysis.mark_suppressed_roots_for_bound_outputs(&resolution.bindings);
-
-    seen.remove(name);
-    analysis
-}
-
-impl HelperSummaryCache {
-    pub(crate) fn new() -> Self {
-        Self {
-            bound_helper_call: RefCell::new(BTreeMap::new()),
-        }
-    }
-
-    #[tracing::instrument(skip_all, fields(helper = name))]
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn summarize_bound_helper_call(
-        &self,
-        name: &str,
-        arg: Option<&helm_schema_ast::TemplateExpr>,
-        outer_bindings: Option<&HashMap<String, AbstractValue>>,
-        current_dot: Option<&AbstractValue>,
-        fragment_locals: &HashMap<String, AbstractValue>,
-        context: FragmentEvalContext<'_>,
-        seen: &mut HashSet<String>,
-    ) -> HelperSummary {
-        let outer_bindings_key: BTreeMap<String, AbstractValue> = outer_bindings
-            .into_iter()
-            .flatten()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
-        let fragment_locals_key: BTreeMap<String, AbstractValue> = fragment_locals
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
-        let key = BoundHelperCallCacheKey {
-            name: name.to_string(),
-            arg: format!("{arg:?}"),
-            current_dot: current_dot.cloned(),
-            outer_bindings: outer_bindings_key,
-            fragment_locals: fragment_locals_key,
-            seen: seen.iter().cloned().collect(),
-        };
-
-        if let Some(cached) = self.bound_helper_call.borrow().get(&key) {
-            return cached.clone();
-        }
-
-        let summary = analyze_bound_helper_call_with_fragment_locals(
-            name,
-            arg,
-            outer_bindings,
-            current_dot,
-            fragment_locals,
-            context,
-            seen,
-        );
-        self.bound_helper_call
-            .borrow_mut()
-            .insert(key, summary.clone());
-        summary
-    }
 }
 
 #[cfg(test)]
