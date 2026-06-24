@@ -1,7 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ProviderSchemaUse;
-use crate::ValueKind;
 use crate::contract::{
     ContractPathObservation, ContractSourceObservation, ContractTypeHint, ContractUse,
     ContractUseObservation,
@@ -28,21 +27,6 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         builder.record_declared_type_hint(type_hint);
     }
     builder.finish()
-}
-
-fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
-    let last = path.last()?.as_str();
-    let prev = path.get(path.len().checked_sub(2)?)?.as_str();
-    if prev != "metadata" {
-        return None;
-    }
-
-    match last {
-        "labels" | "annotations" => Some(MetadataFieldKind::StringMap),
-        "name" => Some(MetadataFieldKind::Name),
-        "namespace" => Some(MetadataFieldKind::Namespace),
-        _ => None,
-    }
 }
 
 #[derive(Default)]
@@ -124,15 +108,13 @@ impl PathSchemaFactsAccumulator {
         self.has_nullable_render_use = true;
     }
 
-    fn record_source_identity(&mut self, source: &ContractSourceObservation) {
-        if let Some(field_kind) = metadata_field_kind_from_yaml_path(&source.path.0) {
+    fn record_source_facts(&mut self, source: &ContractSourceObservation) {
+        if let Some(field_kind) = source.metadata_field_kind {
             self.metadata_field_kinds.insert(field_kind);
         }
-        self.used_as_fragment |= source.kind == ValueKind::Fragment;
-        self.used_as_pathless_fragment |=
-            source.kind == ValueKind::Fragment && source.path.0.is_empty();
-        self.is_partial_scalar_value_path |=
-            source.kind == ValueKind::PartialScalar && !source.path.0.is_empty();
+        self.used_as_fragment |= source.used_as_fragment;
+        self.used_as_pathless_fragment |= source.used_as_pathless_fragment;
+        self.is_partial_scalar_value_path |= source.is_partial_scalar_value_path;
     }
 
     fn mark_dependency_values_root_fragment(&mut self) {
@@ -269,7 +251,8 @@ impl ContractPathAccumulator {
             }
         }
         if let Some(render_use) = observation.guard_render_use {
-            self.facts.record_render_use(render_use.range_guarded, None);
+            self.facts
+                .record_render_use(render_use.range_guarded, render_use.self_guarded);
         }
         if observation.nullable_render_use {
             self.facts.mark_nullable_render_use();
@@ -281,41 +264,28 @@ impl ContractPathAccumulator {
             self.facts.record_provider_schema_use(provider_use);
         }
         self.referenced = true;
-        self.facts.record_source_identity(source);
+        self.facts.record_source_facts(source);
         if let Some(render_use) = source.render_use {
             self.facts
-                .record_render_use(render_use.range_guarded, Some(render_use.self_guarded));
+                .record_render_use(render_use.range_guarded, render_use.self_guarded);
             if source.guards_empty {
                 self.facts.mark_unconditional_render_use();
+                self.has_unconditional_overlay_peer = true;
+            } else if let Some(guards) = source.lowerable_conditional_guards.clone() {
+                let branch = self.conditional_overlay_branches.entry(guards).or_default();
+                branch.record_render_use(render_use.range_guarded, render_use.self_guarded);
+                branch.mark_nullable_render_use();
+                branch.record_nullable_observation(source.null_tolerant);
+                branch.record_source_facts(source);
+
+                if let Some(provider_schema_use) = source.provider_schema_use.clone() {
+                    branch.record_provider_schema_use(provider_schema_use);
+                }
+            } else {
+                self.saw_unsupported_overlay = true;
             }
         }
         self.facts.record_nullable_observation(source.null_tolerant);
-
-        self.observe_conditional_overlay(source);
-    }
-
-    fn observe_conditional_overlay(&mut self, source: &ContractSourceObservation) {
-        let Some(render_use) = source.render_use else {
-            return;
-        };
-        if source.guards_empty {
-            self.has_unconditional_overlay_peer = true;
-            return;
-        }
-        let Some(guards) = source.lowerable_conditional_guards.clone() else {
-            self.saw_unsupported_overlay = true;
-            return;
-        };
-
-        let branch = self.conditional_overlay_branches.entry(guards).or_default();
-        branch.record_render_use(render_use.range_guarded, Some(render_use.self_guarded));
-        branch.mark_nullable_render_use();
-        branch.record_nullable_observation(source.null_tolerant);
-        branch.record_source_identity(source);
-
-        if let Some(provider_schema_use) = source.provider_schema_use.clone() {
-            branch.record_provider_schema_use(provider_schema_use);
-        }
     }
 
     fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {

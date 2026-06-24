@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::Guard;
 use crate::ProviderSchemaUse;
 use crate::ValueKind;
-use crate::contract_signals::{ConditionalGuard, ContractRequirednessEvidence};
+use crate::contract_signals::{ConditionalGuard, ContractRequirednessEvidence, MetadataFieldKind};
 use crate::predicate::Predicate;
 
 use super::ContractUse;
@@ -18,31 +18,28 @@ pub(crate) struct ContractPathObservation {
     pub(crate) ranged: bool,
     pub(crate) guard_predicates: Vec<ConditionalGuard>,
     pub(crate) requiredness: ContractRequirednessEvidence,
-    pub(crate) guard_render_use: Option<ContractPathRenderUse>,
+    pub(crate) guard_render_use: Option<ContractRenderUse>,
     pub(crate) nullable_render_use: bool,
     pub(crate) source_use: Option<ContractSourceObservation>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct ContractPathRenderUse {
+pub(crate) struct ContractRenderUse {
     pub(crate) range_guarded: bool,
+    pub(crate) self_guarded: Option<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ContractSourceObservation {
-    pub(crate) path: crate::YamlPath,
-    pub(crate) kind: ValueKind,
-    pub(crate) render_use: Option<ContractSourceRenderUse>,
+    pub(crate) metadata_field_kind: Option<MetadataFieldKind>,
+    pub(crate) used_as_fragment: bool,
+    pub(crate) used_as_pathless_fragment: bool,
+    pub(crate) is_partial_scalar_value_path: bool,
+    pub(crate) render_use: Option<ContractRenderUse>,
     pub(crate) guards_empty: bool,
     pub(crate) null_tolerant: bool,
     pub(crate) lowerable_conditional_guards: Option<Vec<ConditionalGuard>>,
     pub(crate) provider_schema_use: Option<ProviderSchemaUse>,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct ContractSourceRenderUse {
-    pub(crate) range_guarded: bool,
-    pub(crate) self_guarded: bool,
 }
 
 impl ContractUseObservation {
@@ -86,11 +83,15 @@ impl ContractUseObservation {
                 path_observation(&mut path_observations, &contract_use.source_expr)
         {
             observation.source_use = Some(ContractSourceObservation {
-                path: contract_use.path.clone(),
-                kind: contract_use.kind,
-                render_use: (!path_is_empty).then_some(ContractSourceRenderUse {
+                metadata_field_kind: metadata_field_kind_from_yaml_path(&contract_use.path.0),
+                used_as_fragment: contract_use.kind == ValueKind::Fragment,
+                used_as_pathless_fragment: contract_use.kind == ValueKind::Fragment
+                    && contract_use.path.0.is_empty(),
+                is_partial_scalar_value_path: contract_use.kind == ValueKind::PartialScalar
+                    && !contract_use.path.0.is_empty(),
+                render_use: (!path_is_empty).then_some(ContractRenderUse {
                     range_guarded: self_range_guarded,
-                    self_guarded: path_is_empty || has_matching_self_guard,
+                    self_guarded: Some(has_matching_self_guard),
                 }),
                 guards_empty: contract_use.guards.is_empty(),
                 null_tolerant: path_is_empty || has_matching_self_guard,
@@ -143,8 +144,9 @@ impl ContractUseObservation {
             };
             observation.referenced |= has_source;
             if !path_is_empty {
-                observation.guard_render_use = Some(ContractPathRenderUse {
+                observation.guard_render_use = Some(ContractRenderUse {
                     range_guarded: range_guard_paths.contains(&path),
+                    self_guarded: None,
                 });
             }
         }
@@ -158,6 +160,19 @@ impl ContractUseObservation {
         }
 
         Self { path_observations }
+    }
+}
+
+fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
+    if path.get(path.len().checked_sub(2)?)?.as_str() != "metadata" {
+        return None;
+    }
+
+    match path.last()?.as_str() {
+        "labels" | "annotations" => Some(MetadataFieldKind::StringMap),
+        "name" => Some(MetadataFieldKind::Name),
+        "namespace" => Some(MetadataFieldKind::Namespace),
+        _ => None,
     }
 }
 
