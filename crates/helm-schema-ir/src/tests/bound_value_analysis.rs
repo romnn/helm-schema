@@ -2,9 +2,11 @@ use std::collections::HashMap;
 use test_util::prelude::sim_assert_eq;
 
 use super::{
-    GetBinding, GetBindingPlan, extract_bound_values_from_exprs, parse_get_binding_from_exprs,
+    BoundValueContext, GetBinding, GetBindingPlan, parse_get_binding_from_exprs,
     parse_literal_list_range_expr,
 };
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_exprs_effects;
 use crate::fragment_assignment::AssignmentKind;
 use crate::template_expr_cache::parse_expr_text;
 
@@ -26,7 +28,12 @@ fn extract_bound_values(
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
-    extract_bound_values_from_exprs(&parse_expr_text(text), range_domains, get_bindings)
+    let mut env = EvalEnv::default();
+    env.bound_values = BoundValueContext::new(range_domains, get_bindings);
+    eval_exprs_effects(&parse_expr_text(text), &env)
+        .bound_output_paths
+        .into_iter()
+        .collect()
 }
 
 #[test]

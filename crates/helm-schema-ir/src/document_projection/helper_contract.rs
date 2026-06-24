@@ -11,7 +11,6 @@ use super::tracker::OutputSlot;
 
 pub(crate) struct DocumentOutputFacts {
     pub(crate) output_effects: Effects,
-    pub(crate) bound_values: Vec<String>,
     pub(crate) helper: HelperSummary,
 }
 
@@ -37,7 +36,6 @@ pub(crate) fn document_output_contract(
 ) -> ContractIr {
     let DocumentOutputFacts {
         mut output_effects,
-        bound_values,
         helper,
     } = facts;
     let mut contract = ContractIr::default();
@@ -49,7 +47,7 @@ pub(crate) fn document_output_contract(
     }
 
     if output_effects.output_paths.is_empty()
-        && bound_values.is_empty()
+        && output_effects.bound_output_paths.is_empty()
         && !helper.has_document_value_facts()
     {
         return contract;
@@ -104,7 +102,8 @@ pub(crate) fn document_output_contract(
         }
     }
 
-    for value in bound_values {
+    let bound_output_values = std::mem::take(&mut output_effects.bound_output_paths);
+    for value in bound_output_values {
         contract.push(context.contract_use(
             value,
             YamlPath(Vec::new()),

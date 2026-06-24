@@ -18,6 +18,55 @@ pub(crate) struct GetBindingPlan {
     pub(crate) binding: GetBinding,
 }
 
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct BoundValueContext {
+    range_domains: HashMap<String, Vec<String>>,
+    get_bindings: HashMap<String, GetBinding>,
+    constraints: DomainConstraints,
+}
+
+impl BoundValueContext {
+    pub(crate) fn new(
+        range_domains: &HashMap<String, Vec<String>>,
+        get_bindings: &HashMap<String, GetBinding>,
+    ) -> Self {
+        Self {
+            range_domains: range_domains.clone(),
+            get_bindings: get_bindings.clone(),
+            constraints: DomainConstraints::default(),
+        }
+    }
+
+    pub(crate) fn selector_paths(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+        let Some((variable, rest)) = bound_selector_read(expr) else {
+            return BTreeSet::new();
+        };
+        let Some(binding) = self.get_bindings.get(variable) else {
+            return BTreeSet::new();
+        };
+        let Some(domain) = self.range_domains.get(&binding.key_var) else {
+            return BTreeSet::new();
+        };
+
+        domain
+            .iter()
+            .filter(|value| self.constraints.allows(&binding.key_var, value))
+            .map(|value| format!("{}.{}.{}", binding.base, value, rest))
+            .collect()
+    }
+
+    pub(crate) fn with_predicate_constraints(&self, expr: &TemplateExpr, truthy: bool) -> Self {
+        let Some(next_constraints) = predicate_domain_constraints(expr, truthy) else {
+            return self.clone();
+        };
+        Self {
+            range_domains: self.range_domains.clone(),
+            get_bindings: self.get_bindings.clone(),
+            constraints: self.constraints.and(&next_constraints),
+        }
+    }
+}
+
 pub(crate) fn parse_literal_list_range_expr(expr: &TemplateExpr) -> Option<(String, Vec<String>)> {
     let TemplateExpr::VariableDefinition { name, value } = expr.deparen() else {
         return None;
@@ -229,126 +278,6 @@ fn eq_domain_constraints(args: &[TemplateExpr], truthy: bool) -> Option<DomainCo
     } else {
         DomainConstraints::exclude(&variable, values)
     })
-}
-
-pub(crate) fn extract_bound_values_from_exprs(
-    exprs: &[TemplateExpr],
-    range_domains: &HashMap<String, Vec<String>>,
-    get_bindings: &HashMap<String, GetBinding>,
-) -> Vec<String> {
-    let mut out: BTreeSet<String> = BTreeSet::new();
-
-    for expr in exprs {
-        collect_bound_values_from_expr(
-            expr,
-            &DomainConstraints::default(),
-            range_domains,
-            get_bindings,
-            &mut out,
-        );
-    }
-
-    out.into_iter().collect()
-}
-
-pub(crate) fn extract_bound_values_expr(
-    expr: &TemplateExpr,
-    range_domains: &HashMap<String, Vec<String>>,
-    get_bindings: &HashMap<String, GetBinding>,
-) -> Vec<String> {
-    extract_bound_values_from_exprs(std::slice::from_ref(expr), range_domains, get_bindings)
-}
-
-fn collect_bound_values_from_expr(
-    expr: &TemplateExpr,
-    constraints: &DomainConstraints,
-    range_domains: &HashMap<String, Vec<String>>,
-    get_bindings: &HashMap<String, GetBinding>,
-    out: &mut BTreeSet<String>,
-) {
-    match expr.deparen() {
-        TemplateExpr::Call { function, args } if function == "and" => {
-            collect_short_circuit_args(args, true, constraints, range_domains, get_bindings, out);
-        }
-        TemplateExpr::Call { function, args } if function == "or" => {
-            collect_short_circuit_args(args, false, constraints, range_domains, get_bindings, out);
-        }
-        TemplateExpr::Call { args, .. } => {
-            for arg in args {
-                collect_bound_values_from_expr(arg, constraints, range_domains, get_bindings, out);
-            }
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for stage in stages {
-                collect_bound_values_from_expr(
-                    stage,
-                    constraints,
-                    range_domains,
-                    get_bindings,
-                    out,
-                );
-            }
-        }
-        TemplateExpr::Selector { operand, .. } => {
-            collect_bound_selector_value(
-                expr.deparen(),
-                constraints,
-                range_domains,
-                get_bindings,
-                out,
-            );
-            collect_bound_values_from_expr(operand, constraints, range_domains, get_bindings, out);
-        }
-        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            collect_bound_values_from_expr(value, constraints, range_domains, get_bindings, out);
-        }
-        TemplateExpr::Parenthesized(_)
-        | TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
-}
-
-fn collect_short_circuit_args(
-    args: &[TemplateExpr],
-    previous_truthy: bool,
-    constraints: &DomainConstraints,
-    range_domains: &HashMap<String, Vec<String>>,
-    get_bindings: &HashMap<String, GetBinding>,
-    out: &mut BTreeSet<String>,
-) {
-    let mut arg_constraints = constraints.clone();
-    for arg in args {
-        collect_bound_values_from_expr(arg, &arg_constraints, range_domains, get_bindings, out);
-        if let Some(next_constraints) = predicate_domain_constraints(arg, previous_truthy) {
-            arg_constraints = arg_constraints.and(&next_constraints);
-        }
-    }
-}
-
-fn collect_bound_selector_value(
-    expr: &TemplateExpr,
-    constraints: &DomainConstraints,
-    range_domains: &HashMap<String, Vec<String>>,
-    get_bindings: &HashMap<String, GetBinding>,
-    out: &mut BTreeSet<String>,
-) {
-    let Some((variable, rest)) = bound_selector_read(expr) else {
-        return;
-    };
-    let Some(binding) = get_bindings.get(variable) else {
-        return;
-    };
-    let Some(domain) = range_domains.get(&binding.key_var) else {
-        return;
-    };
-
-    for value in domain {
-        if constraints.allows(&binding.key_var, value) {
-            out.insert(format!("{}.{}.{}", binding.base, value, rest));
-        }
-    }
 }
 
 #[cfg(test)]

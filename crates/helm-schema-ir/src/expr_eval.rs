@@ -97,13 +97,21 @@ pub(crate) fn eval_expr_with_helper_calls(
                     .and_then(|binding| binding.apply_to_path(path))
             {
                 let selected_paths = value.fragment_source_paths();
-                return local_value_result(var, value, Some(&selected_paths), env);
+                return with_bound_selector_paths(
+                    local_value_result(var, value, Some(&selected_paths), env),
+                    expr,
+                    env,
+                );
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && !var.is_empty()
                 && path.first().is_some_and(|segment| segment == "Values")
             {
-                return EvalResult::from_value(values_path_value(path));
+                return with_bound_selector_paths(
+                    EvalResult::from_value(values_path_value(path)),
+                    expr,
+                    env,
+                );
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && var.is_empty()
@@ -113,7 +121,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                     .get(head)
                     .and_then(|value| value.apply_to_path(tail))
             {
-                return EvalResult::from_value(value);
+                return with_bound_selector_paths(EvalResult::from_value(value), expr, env);
             }
             let base = eval_expr_with_helper_calls(operand, env, resolver);
             let value = base
@@ -126,6 +134,9 @@ pub(crate) fn eval_expr_with_helper_calls(
             if let Some(value) = &value {
                 effects.reads.extend(value.paths());
             }
+            effects
+                .bound_output_paths
+                .extend(env.bound_values.selector_paths(expr));
             EvalResult::with_effects(value, effects)
         }
         TemplateExpr::Call { function, args } => {
@@ -355,6 +366,18 @@ fn local_value_result(
             None => result.effects.merge_local_output_meta(meta_by_path.iter()),
         }
     }
+    result
+}
+
+fn with_bound_selector_paths(
+    mut result: EvalResult,
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+) -> EvalResult {
+    result
+        .effects
+        .bound_output_paths
+        .extend(env.bound_values.selector_paths(expr));
     result
 }
 

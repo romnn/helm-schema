@@ -132,12 +132,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let value_path_context = self.value_path_context();
-        plan_if_condition(
-            header,
-            &value_path_context,
-            &self.scope.locals().range_domains,
-            &self.scope.locals().get_bindings,
-        )
+        plan_if_condition(header, &value_path_context)
     }
 
     fn activate_if_condition(&mut self, plan: &ConditionActionPlan) {
@@ -146,12 +141,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
 
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let value_path_context = self.value_path_context();
-        plan_with_condition(
-            header,
-            &value_path_context,
-            &self.scope.locals().range_domains,
-            &self.scope.locals().get_bindings,
-        )
+        plan_with_condition(header, &value_path_context)
     }
 
     fn activate_with_condition(&mut self, plan: &ConditionActionPlan) {

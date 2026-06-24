@@ -28,6 +28,8 @@ fn document_type_hints_resolve_template_local_aliases() {
         ])
         .expect("choice has paths"),
     )]);
+    let range_domains = HashMap::new();
+    let get_bindings = HashMap::new();
     let template_default_paths = HashMap::new();
     let template_output_meta = HashMap::new();
     let defines = DefineIndex::new();
@@ -35,6 +37,8 @@ fn document_type_hints_resolve_template_local_aliases() {
     let context = ValuePathContext {
         root_bindings: &root_bindings,
         template_bindings: &template_bindings,
+        range_domains: &range_domains,
+        get_bindings: &get_bindings,
         template_default_paths: &template_default_paths,
         template_output_meta: &template_output_meta,
         fragment_context: empty_fragment_context(&defines, &analysis_db),

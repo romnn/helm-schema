@@ -7,6 +7,7 @@ use crate::helper_summary::{HelperOutputMeta, HelperSummary, insert_type_hint};
 pub(crate) struct Effects {
     pub(crate) reads: BTreeSet<String>,
     pub(crate) output_paths: BTreeSet<String>,
+    pub(crate) bound_output_paths: BTreeSet<String>,
     pub(crate) defaults: BTreeSet<String>,
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) string_hints: BTreeSet<String>,
@@ -34,6 +35,7 @@ impl Effects {
     pub(crate) fn merge(&mut self, other: Self) {
         self.reads.extend(other.reads);
         self.output_paths.extend(other.output_paths);
+        self.bound_output_paths.extend(other.bound_output_paths);
         self.defaults.extend(other.defaults);
         self.string_hints.extend(other.string_hints);
         self.encoded_paths.extend(other.encoded_paths);

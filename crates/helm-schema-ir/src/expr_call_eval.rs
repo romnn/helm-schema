@@ -23,6 +23,8 @@ pub(crate) fn eval_call_with_helper_calls(
         "include" | "template" => eval_helper_call(args, env, resolver),
         "set" if args.len() == 3 => eval_set_call(args, env, resolver),
         "default" if args.len() == 2 => eval_default(args, env, resolver),
+        "and" => eval_short_circuit_args(args, true, env, resolver),
+        "or" => eval_short_circuit_args(args, false, env, resolver),
         "dict" => eval_dict(args, env, resolver),
         "list" | "tuple" => eval_list(args, env, resolver),
         "first" if args.len() == 1 => eval_first(args, env, resolver),
@@ -52,6 +54,23 @@ pub(crate) fn eval_call_with_helper_calls(
         }
         _ => eval_unknown_call(args, env, resolver),
     }
+}
+
+fn eval_short_circuit_args(
+    args: &[TemplateExpr],
+    previous_truthy: bool,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = Effects::default();
+    let mut constrained_env = env.clone();
+    for arg in args {
+        effects.merge(eval_expr_with_helper_calls(arg, &constrained_env, resolver).effects);
+        constrained_env.bound_values = constrained_env
+            .bound_values
+            .with_predicate_constraints(arg, previous_truthy);
+    }
+    EvalResult::with_effects(None, effects)
 }
 
 fn eval_helper_call(

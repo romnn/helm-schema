@@ -29,9 +29,13 @@ pub(crate) fn branch_condition_facts_for_expr(
 ) -> BranchConditionFacts {
     let guard_paths =
         branch_guard_paths_for_expr(expr, bindings, current_dot, local_bindings, context, seen);
+    let range_domains = HashMap::new();
+    let get_bindings = HashMap::new();
     let value_path_context = ValuePathContext {
         root_bindings: bindings,
         template_bindings: local_bindings,
+        range_domains: &range_domains,
+        get_bindings: &get_bindings,
         template_default_paths: local_default_paths,
         template_output_meta: local_output_meta,
         fragment_context: context,

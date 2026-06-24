@@ -54,6 +54,8 @@ fn condition_context_with_output_meta(
 ) -> ValuePathContext<'static> {
     let root_bindings = Box::leak(Box::new(HashMap::new()));
     let template_bindings = Box::leak(Box::new(template_bindings));
+    let range_domains = Box::leak(Box::new(HashMap::new()));
+    let get_bindings = Box::leak(Box::new(HashMap::new()));
     let template_default_paths = Box::leak(Box::new(HashMap::new()));
     let template_output_meta: &'static HashMap<String, BTreeMap<String, HelperOutputMeta>> =
         Box::leak(Box::new(template_output_meta));
@@ -63,6 +65,8 @@ fn condition_context_with_output_meta(
     ValuePathContext {
         root_bindings,
         template_bindings,
+        range_domains,
+        get_bindings,
         template_default_paths,
         template_output_meta,
         fragment_context: FragmentEvalContext::new(defines, analysis_db),

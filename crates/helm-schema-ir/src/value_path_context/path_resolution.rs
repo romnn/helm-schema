@@ -3,6 +3,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
+use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{direct_values_path, eval_expr, eval_exprs_effects};
@@ -41,15 +42,24 @@ impl ValuePathContext<'_> {
         let effects = self.expression_effects(exprs);
         let mut values = effects.output_value_paths();
         let defaults = effects.default_paths_with_local();
+        let type_hints = effects.schema_type_hints();
         values.extend(defaults.iter().cloned());
         Effects {
             output_paths: values,
+            bound_output_paths: effects.bound_output_paths,
             defaults,
-            type_hints: effects.schema_type_hints(),
+            type_hints,
             encoded_paths: effects.encoded_paths,
             local_output_meta: effects.local_output_meta,
             ..Effects::default()
         }
+    }
+
+    pub(crate) fn bound_output_paths_expr(&self, expr: &TemplateExpr) -> Vec<String> {
+        self.expression_effects(std::slice::from_ref(expr))
+            .bound_output_paths
+            .into_iter()
+            .collect()
     }
 
     fn expression_effects(&self, exprs: &[TemplateExpr]) -> Effects {
@@ -68,6 +78,7 @@ impl ValuePathContext<'_> {
         env.locals = locals_with_roots(self.template_bindings, self.root_bindings);
         env.local_default_paths = self.template_default_paths.clone();
         env.local_output_meta = self.template_output_meta.clone();
+        env.bound_values = BoundValueContext::new(self.range_domains, self.get_bindings);
         env
     }
 

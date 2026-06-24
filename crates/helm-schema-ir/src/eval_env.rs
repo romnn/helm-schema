@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
+use crate::bound_value_analysis::BoundValueContext;
 use crate::helper_summary::HelperOutputMeta;
 
 /// Abstract interpreter environment for Helm expression evaluation.
@@ -11,6 +12,7 @@ pub(crate) struct EvalEnv {
     pub(crate) locals: HashMap<String, AbstractValue>,
     pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    pub(crate) bound_values: BoundValueContext,
     pub(crate) allow_field_root_lookup: bool,
     pub(crate) skip_helper_call_args: bool,
 }
@@ -33,6 +35,7 @@ impl EvalEnv {
             locals: HashMap::new(),
             local_default_paths: HashMap::new(),
             local_output_meta: HashMap::new(),
+            bound_values: BoundValueContext::default(),
             allow_field_root_lookup: true,
             skip_helper_call_args: false,
         }
@@ -96,6 +99,7 @@ impl EvalEnv {
             locals,
             local_default_paths: HashMap::new(),
             local_output_meta: HashMap::new(),
+            bound_values: BoundValueContext::default(),
             allow_field_root_lookup: true,
             skip_helper_call_args: false,
         }
@@ -115,6 +119,7 @@ impl EvalEnv {
             locals,
             local_default_paths: HashMap::new(),
             local_output_meta: HashMap::new(),
+            bound_values: BoundValueContext::default(),
             allow_field_root_lookup: false,
             skip_helper_call_args: false,
         }

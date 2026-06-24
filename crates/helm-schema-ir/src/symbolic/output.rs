@@ -1,7 +1,6 @@
 use helm_schema_ast::TemplateExpr;
 
 use crate::SourceSpan;
-use crate::bound_value_analysis::extract_bound_values_from_exprs;
 use crate::contract_sink::ContractUseContext;
 use crate::document_projection::{DocumentOutputFacts, document_output_contract};
 
@@ -15,11 +14,6 @@ impl SymbolicWalker<'_> {
         let value_path_context = self.value_path_context();
         DocumentOutputFacts {
             output_effects: value_path_context.expression_output_effects(exprs),
-            bound_values: extract_bound_values_from_exprs(
-                exprs,
-                &self.scope.locals().range_domains,
-                &self.scope.locals().get_bindings,
-            ),
             helper: self.summarize_bound_helper_calls_in_exprs(exprs),
         }
     }

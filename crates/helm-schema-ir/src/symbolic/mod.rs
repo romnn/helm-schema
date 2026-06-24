@@ -203,6 +203,8 @@ impl<'a> SymbolicWalker<'a> {
         ValuePathContext {
             root_bindings: &self.root_bindings,
             template_bindings: &self.scope.locals().fragment_values,
+            range_domains: &self.scope.locals().range_domains,
+            get_bindings: &self.scope.locals().get_bindings,
             template_default_paths: &self.scope.locals().default_paths,
             template_output_meta: &self.scope.locals().output_meta,
             fragment_context: self.fragment_eval_context(),
