@@ -13,7 +13,6 @@ use super::yaml_tree::{
 use super::{OutputSlot, OutputSlotKind};
 
 const PLACEHOLDER_PREFIX: &str = "__HS";
-const INLINE_PLACEHOLDER: &str = "__HSINLINE__";
 
 #[derive(Clone, Debug)]
 pub(super) struct ResolvedNodeContext {
@@ -153,12 +152,6 @@ pub(super) fn build_attribution_index(
                 &YamlPath(Vec::new()),
             )
         });
-        let inline_context = resolve_inline_output_probe_context(
-            &sanitized,
-            output.action_start,
-            output.action_end,
-            &output.placeholder,
-        );
         let rendered_context = output.structural_indent.and_then(|indent| {
             let tree = tree.as_ref()?;
             let root = tree.root_node();
@@ -174,19 +167,21 @@ pub(super) fn build_attribution_index(
                 &sanitized,
                 output.action_start,
                 indent,
-            );
+            )
+            .or_else(|| {
+                resolve_inline_mapping_value_slot_context(root, &sanitized, output.action_start)
+            });
             rendered.or(mapping)
         });
 
         let context = if output.structural_indent.is_some() {
-            let base_context = merge_resolved_contexts(base_context, inline_context);
             if rendered_context_is_better_base(&base_context, &rendered_context) {
                 rendered_context.clone().or(base_context)
             } else {
                 base_context.or(rendered_context.clone())
             }
         } else {
-            merge_resolved_contexts(base_context, inline_context)
+            base_context
         };
 
         if let Some(context) = context {
@@ -376,80 +371,6 @@ fn rendered_context_is_better_base(
         && path_has_equivalent_prefix(&rendered.output_path.0, &base.output_path.0)
 }
 
-fn merge_resolved_contexts(
-    global: Option<ResolvedNodeContext>,
-    local: Option<ResolvedNodeContext>,
-) -> Option<ResolvedNodeContext> {
-    match (global, local) {
-        (Some(mut global), Some(local)) => {
-            global.current_path = prefer_context_path(global.current_path, local.current_path);
-            global.output_path = prefer_context_path(global.output_path, local.output_path);
-            global.mapping_entry_path =
-                prefer_context_path(global.mapping_entry_path, local.mapping_entry_path);
-            global.in_mapping_key |= local.in_mapping_key;
-            global.entire_scalar_value |= local.entire_scalar_value;
-            global.inside_block_scalar |= local.inside_block_scalar;
-            global.explicit_mapping_value_slot |= local.explicit_mapping_value_slot;
-            global.sequence_item_slot |= local.sequence_item_slot;
-            Some(global)
-        }
-        (Some(global), None) => Some(global),
-        (None, Some(local)) => Some(local),
-        (None, None) => None,
-    }
-}
-
-fn prefer_context_path(left: YamlPath, right: YamlPath) -> YamlPath {
-    match (left.0.is_empty(), right.0.is_empty()) {
-        (true, true) => YamlPath(Vec::new()),
-        (true, false) => right,
-        (false, true) => left,
-        (false, false) => {
-            if path_is_relative_sequence(&left.0) && !path_is_relative_sequence(&right.0) {
-                right
-            } else if path_is_relative_sequence(&right.0) && !path_is_relative_sequence(&left.0) {
-                left
-            } else if path_looks_like_scalar_header_artifact(&left.0)
-                && !path_looks_like_scalar_header_artifact(&right.0)
-            {
-                right
-            } else if (path_looks_like_scalar_header_artifact(&right.0)
-                && !path_looks_like_scalar_header_artifact(&left.0))
-                || (path_has_equivalent_suffix(&left.0, &right.0) && left.0.len() > right.0.len())
-            {
-                left
-            } else if (path_has_equivalent_suffix(&right.0, &left.0)
-                && right.0.len() > left.0.len())
-                || (right.0.len() > left.0.len()
-                    && !path_looks_like_scalar_header_artifact(&right.0))
-            {
-                right
-            } else {
-                left
-            }
-        }
-    }
-}
-
-fn resolve_inline_output_probe_context(
-    sanitized: &str,
-    action_start: usize,
-    action_end: usize,
-    placeholder: &str,
-) -> Option<ResolvedNodeContext> {
-    let mut probe = sanitized.as_bytes().to_vec();
-    fill_placeholder(&mut probe, action_start, action_end, placeholder);
-    let probe = String::from_utf8(probe).ok()?;
-    let tree = parse_yaml_tree(&probe)?;
-    resolve_yaml_context(
-        tree.root_node(),
-        &probe,
-        action_start.min(probe.len()),
-        ContextMode::Output { placeholder },
-        &YamlPath(Vec::new()),
-    )
-}
-
 fn resolve_full_document_fragment_output_context(
     root: tree_sitter::Node<'_>,
     sanitized: &str,
@@ -509,6 +430,54 @@ fn resolve_full_document_mapping_entry_context(
         (Some(structural), _) => Some(structural),
         (None, Some(value_slot)) => Some(value_slot),
         (None, None) => None,
+    }
+}
+
+fn resolve_inline_mapping_value_slot_context(
+    root: tree_sitter::Node<'_>,
+    sanitized: &str,
+    insertion_byte: usize,
+) -> Option<ResolvedNodeContext> {
+    let insertion_byte = insertion_byte.min(sanitized.len());
+    let line_start = sanitized[..insertion_byte]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let prefix = &sanitized[line_start..insertion_byte];
+    let indent = prefix.chars().take_while(|&ch| ch == ' ').count();
+    let key_offset = inline_mapping_value_key_offset(&prefix[indent..])?;
+    let key_byte = line_start + indent + key_offset;
+    let mut context = resolve_yaml_context(
+        root,
+        sanitized,
+        key_byte.min(root.end_byte()),
+        ContextMode::Control,
+        &YamlPath(Vec::new()),
+    )?;
+    if context.current_path.0.is_empty() {
+        return None;
+    }
+    context.output_path = context.current_path.clone();
+    context.mapping_entry_path = context.current_path.clone();
+    context.explicit_mapping_value_slot = true;
+    Some(context)
+}
+
+fn inline_mapping_value_key_offset(prefix: &str) -> Option<usize> {
+    let text = prefix.trim_end();
+    let colon = first_mapping_colon_offset(text)?;
+    if !text[colon + 1..].trim().is_empty() {
+        return None;
+    }
+
+    if let Some(after_dash) = text.strip_prefix('-') {
+        let whitespace = after_dash.len() - after_dash.trim_start().len();
+        if whitespace == 0 {
+            None
+        } else {
+            Some(1 + whitespace)
+        }
+    } else {
+        Some(0)
     }
 }
 
@@ -1337,20 +1306,8 @@ fn action_is_inline_mapping_value(sanitized: &[u8], start: usize) -> bool {
     let Ok(prefix) = std::str::from_utf8(prefix) else {
         return false;
     };
-    let snippet = format!("{prefix}{INLINE_PLACEHOLDER}\n");
-    let Some(tree) = parse_yaml_tree(&snippet) else {
-        return false;
-    };
-    resolve_yaml_context(
-        tree.root_node(),
-        &snippet,
-        prefix.len(),
-        ContextMode::Output {
-            placeholder: INLINE_PLACEHOLDER,
-        },
-        &YamlPath(Vec::new()),
-    )
-    .is_some_and(|context| context.entire_scalar_value && !context.output_path.0.is_empty())
+    let indent = prefix.chars().take_while(|&ch| ch == ' ').count();
+    inline_mapping_value_key_offset(&prefix[indent..]).is_some()
 }
 
 fn expr_uses_indent_filter(expr: &TemplateExpr) -> bool {
