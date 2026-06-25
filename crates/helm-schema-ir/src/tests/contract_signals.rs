@@ -1,15 +1,15 @@
 use std::collections::BTreeSet;
 
 use crate::contract::{ContractIr, ContractUse};
-use crate::contract_signals::{ConditionalGuard, ContractSchemaSignals, MetadataFieldKind};
 use crate::{Guard, GuardValue, ResourceRef, ValueKind, YamlPath};
+use helm_schema_core::{ConditionalGuard, ContractSchemaSignals, MetadataFieldKind};
 use test_util::prelude::sim_assert_eq;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct FlattenedConditionalOverlay {
     target_value_path: String,
     guards: Vec<ConditionalGuard>,
-    evidence: crate::contract_signals::ConditionalOverlayEvidence,
+    evidence: helm_schema_core::ConditionalOverlayEvidence,
     preserve_base_schema: bool,
 }
 

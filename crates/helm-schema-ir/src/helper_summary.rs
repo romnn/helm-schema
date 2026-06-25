@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
-use crate::output_path;
-use crate::predicate::Predicate;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
+use helm_schema_core as output_path;
+use helm_schema_core::Predicate;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct HelperOutputMeta {

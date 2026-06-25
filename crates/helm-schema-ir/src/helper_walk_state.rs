@@ -3,8 +3,8 @@ use std::collections::{BTreeSet, HashSet};
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
-use crate::predicate::Predicate;
 use crate::symbolic_local_state::SymbolicLocalState;
+use helm_schema_core::Predicate;
 
 #[derive(Clone)]
 pub(crate) struct HelperRangeIteration {

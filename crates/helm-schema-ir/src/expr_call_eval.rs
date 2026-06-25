@@ -6,13 +6,13 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::expr_function_catalog::{
+use crate::helper_summary::HelperOutputMeta;
+use helm_schema_ast::expression_schema_type;
+use helm_schema_ast::{
     is_merge_function, is_provenance_preserving_function, is_string_transform_function,
     type_is_schema_type,
 };
-use crate::helper_summary::HelperOutputMeta;
-use crate::literal_schema_type::expression_schema_type;
-use crate::printf_eval::{literal_printf_format, render_printf_string_sets};
+use helm_schema_ast::{literal_printf_format, render_printf_string_sets};
 
 pub(crate) fn eval_call_with_helper_calls(
     function: &str,
@@ -451,7 +451,7 @@ fn eval_index(
                     for next_path in next.paths() {
                         for base_path in &base_paths {
                             if !base_path.is_empty()
-                                && crate::output_path::values_path_is_descendant(
+                                && helm_schema_core::values_path_is_descendant(
                                     &next_path, base_path,
                                 )
                             {

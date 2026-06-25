@@ -1,7 +1,7 @@
 use crate::Guard;
 use crate::abstract_value::AbstractValue;
-use crate::predicate::Predicate;
 use crate::symbolic_local_state::{SymbolicLocalState, SymbolicLocalStateSnapshot};
+use helm_schema_core::Predicate;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct SymbolicScopeState {

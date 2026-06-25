@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use crate::{Literal, TemplateExpr};
 
-pub(crate) fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
+pub fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
     match args.first()?.deparen() {
         TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) => {
             Some(format.as_str())
@@ -11,7 +11,7 @@ pub(crate) fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
     }
 }
 
-pub(crate) fn render_printf_string_sets(
+pub fn render_printf_string_sets(
     format: &str,
     arg_strings: &[BTreeSet<String>],
 ) -> Option<BTreeSet<String>> {

@@ -4,8 +4,8 @@ use crate::abstract_value::AbstractValue;
 use crate::helper_summary::{
     HelperFragmentOutputUse, HelperOutputMeta, HelperSummary, insert_type_hint,
 };
-use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
+use helm_schema_core::Predicate;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {

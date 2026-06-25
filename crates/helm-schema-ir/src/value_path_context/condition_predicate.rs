@@ -2,9 +2,9 @@ use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::expr_function_catalog::type_is_schema_type;
-use crate::predicate::Predicate;
 use crate::{Guard, GuardValue};
+use helm_schema_ast::type_is_schema_type;
+use helm_schema_core::Predicate;
 
 use super::ValuePathContext;
 

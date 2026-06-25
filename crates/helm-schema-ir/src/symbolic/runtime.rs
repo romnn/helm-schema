@@ -13,10 +13,10 @@ use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, activate_condition_alternative_guards,
     activate_if_condition_plan, activate_range_action_plan, activate_with_condition_plan,
 };
-use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
 use crate::{Guard, ValueKind, YamlPath};
+use helm_schema_core::Predicate;
 
 use super::SymbolicWalker;
 

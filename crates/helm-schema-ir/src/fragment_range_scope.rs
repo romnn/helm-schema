@@ -7,7 +7,7 @@ use helm_schema_ast::{
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::tree_sitter_utils::{children_with_field, parse_expr_text};
+use helm_schema_ast::{children_with_field, parse_expr_text};
 
 pub(crate) fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
     let TemplateExpr::VariableDefinition { name, .. } = expr.deparen() else {

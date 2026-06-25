@@ -1,7 +1,7 @@
-use helm_schema_ast::{Literal, TemplateExpr};
+use crate::{Literal, TemplateExpr};
 
 /// Map Helm/Sprig `typeIs` names to JSON Schema scalar/container names.
-pub(crate) fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
+pub fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
     let TemplateExpr::Literal(Literal::String(type_name) | Literal::RawString(type_name)) =
         expr?.deparen()
     else {
@@ -19,7 +19,7 @@ pub(crate) fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String>
     Some(schema_type.to_string())
 }
 
-pub(crate) fn is_string_transform_function(function: &str) -> bool {
+pub fn is_string_transform_function(function: &str) -> bool {
     matches!(
         function,
         "quote"
@@ -36,7 +36,7 @@ pub(crate) fn is_string_transform_function(function: &str) -> bool {
     )
 }
 
-pub(crate) fn is_provenance_preserving_function(function: &str) -> bool {
+pub fn is_provenance_preserving_function(function: &str) -> bool {
     matches!(
         function,
         "toYaml"
@@ -51,7 +51,7 @@ pub(crate) fn is_provenance_preserving_function(function: &str) -> bool {
     )
 }
 
-pub(crate) fn is_merge_function(function: &str) -> bool {
+pub fn is_merge_function(function: &str) -> bool {
     matches!(
         function,
         "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite"

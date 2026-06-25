@@ -454,7 +454,7 @@ fn literal_call_strings(function: &str, args: &[TemplateExpr]) -> Option<BTreeSe
                 .skip(1)
                 .map(literal_strings)
                 .collect::<Option<Vec<_>>>()?;
-            render_printf_string_sets(format, &arg_strings)
+            crate::render_printf_string_sets(format, &arg_strings)
         }
         "quote" => args.first().and_then(literal_strings),
         _ => None,
@@ -478,90 +478,4 @@ fn literal_string(expr: &TemplateExpr) -> Option<&str> {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => Some(value),
         _ => None,
     }
-}
-
-fn render_printf_string_sets(
-    format: &str,
-    arg_strings: &[BTreeSet<String>],
-) -> Option<BTreeSet<String>> {
-    let parts = parse_supported_printf_format(format)?;
-    let substitutions = parts
-        .iter()
-        .filter(|part| **part == PrintfPart::Sub)
-        .count();
-    if substitutions != arg_strings.len() {
-        return None;
-    }
-
-    let mut rendered: BTreeSet<String> = [String::new()].into_iter().collect();
-    let mut arg_index = 0usize;
-    for part in parts {
-        match part {
-            PrintfPart::Literal(literal) => {
-                rendered = rendered
-                    .into_iter()
-                    .map(|mut current| {
-                        current.push_str(literal);
-                        current
-                    })
-                    .collect();
-            }
-            PrintfPart::Sub => {
-                let strings = arg_strings.get(arg_index)?;
-                if strings.is_empty() {
-                    return None;
-                }
-                let mut next = BTreeSet::new();
-                for current in &rendered {
-                    for value in strings {
-                        let mut rendered_value = current.clone();
-                        rendered_value.push_str(value);
-                        next.insert(rendered_value);
-                    }
-                }
-                rendered = next;
-                arg_index += 1;
-            }
-        }
-    }
-    Some(rendered)
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PrintfPart<'a> {
-    Literal(&'a str),
-    Sub,
-}
-
-fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>> {
-    let mut parts = Vec::new();
-    let mut literal_start = 0usize;
-    let bytes = format.as_bytes();
-    let mut index = 0usize;
-    while index < bytes.len() {
-        if bytes[index] != b'%' {
-            index += 1;
-            continue;
-        }
-        if literal_start < index {
-            parts.push(PrintfPart::Literal(format.get(literal_start..index)?));
-        }
-        match *bytes.get(index + 1)? {
-            b'%' => {
-                parts.push(PrintfPart::Literal("%"));
-                index += 2;
-                literal_start = index;
-            }
-            b's' => {
-                parts.push(PrintfPart::Sub);
-                index += 2;
-                literal_start = index;
-            }
-            _ => return None,
-        }
-    }
-    if literal_start < format.len() {
-        parts.push(PrintfPart::Literal(format.get(literal_start..)?));
-    }
-    Some(parts)
 }

@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::{ContractDocument, FinalizedContract};
 use crate::contract_normalization::normalize_contract_uses;
-use crate::contract_signals::ContractSchemaSignals;
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
+use helm_schema_core::ContractSchemaSignals;
 
 /// Opaque guarded contract graph for one template interpretation.
 ///

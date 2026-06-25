@@ -15,7 +15,7 @@ pub struct ContractUse {
 }
 
 impl ContractUse {
-    pub(crate) fn new(
+    pub fn new(
         source_expr: String,
         path: YamlPath,
         kind: ValueKind,
@@ -25,7 +25,7 @@ impl ContractUse {
         Self::with_provenances(source_expr, path, kind, guards, resource, None)
     }
 
-    pub(crate) fn with_provenances(
+    pub fn with_provenances(
         source_expr: String,
         path: YamlPath,
         kind: ValueKind,
@@ -43,13 +43,13 @@ impl ContractUse {
         }
     }
 
-    pub(crate) fn canonicalize(&mut self) {
+    pub fn canonicalize(&mut self) {
         Guard::canonicalize_all(&mut self.guards);
         self.provenance.sort();
         self.provenance.dedup();
     }
 
-    pub(super) fn map_value_paths<F>(&mut self, map: &mut F)
+    pub fn map_value_paths<F>(&mut self, map: &mut F)
     where
         F: FnMut(&str) -> String,
     {

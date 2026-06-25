@@ -4,8 +4,8 @@ use crate::expr_eval::{
     apply_local_set_mutations_expr, bindings_for_helper_arg_with, direct_values_path, eval_expr,
     eval_exprs_effects,
 };
-use crate::printf_eval::render_printf_string_sets;
-use crate::tree_sitter_utils::parse_expr_text;
+use helm_schema_ast::parse_expr_text;
+use helm_schema_ast::render_printf_string_sets;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;

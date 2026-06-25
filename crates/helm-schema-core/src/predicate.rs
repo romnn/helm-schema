@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use crate::Guard;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum Predicate {
+pub enum Predicate {
     True,
     False,
     Guard(Guard),
@@ -29,11 +29,11 @@ impl From<Guard> for Predicate {
 }
 
 impl Predicate {
-    pub(crate) fn truthy_path(path: impl Into<String>) -> Self {
+    pub fn truthy_path(path: impl Into<String>) -> Self {
         Self::Guard(Guard::Truthy { path: path.into() })
     }
 
-    pub(crate) fn all(predicates: Vec<Self>) -> Self {
+    pub fn all(predicates: Vec<Self>) -> Self {
         match predicates.as_slice() {
             [] => Self::True,
             [predicate] => predicate.clone(),
@@ -41,7 +41,7 @@ impl Predicate {
         }
     }
 
-    pub(crate) fn negated(&self) -> Self {
+    pub fn negated(&self) -> Self {
         match self {
             Self::True => Self::False,
             Self::False => Self::True,
@@ -50,17 +50,17 @@ impl Predicate {
         }
     }
 
-    pub(crate) fn is_trivial(&self) -> bool {
+    pub fn is_trivial(&self) -> bool {
         matches!(self, Self::True | Self::False)
     }
 
-    pub(crate) fn value_paths(&self) -> BTreeSet<String> {
+    pub fn value_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         self.collect_value_paths(&mut paths);
         paths
     }
 
-    pub(crate) fn truthy_disjunction_paths(&self) -> Option<Vec<String>> {
+    pub fn truthy_disjunction_paths(&self) -> Option<Vec<String>> {
         match self {
             Self::Guard(Guard::Truthy { path }) => Some(vec![path.clone()]),
             Self::Or(predicates) => predicates
@@ -74,7 +74,7 @@ impl Predicate {
         }
     }
 
-    pub(crate) fn with_context_predicates(self) -> Vec<Self> {
+    pub fn with_context_predicates(self) -> Vec<Self> {
         match self {
             Self::True => Vec::new(),
             Self::False => vec![Self::False],
@@ -122,13 +122,13 @@ impl Predicate {
         }
     }
 
-    pub(crate) fn conditionally_optional_paths(&self) -> BTreeSet<String> {
+    pub fn conditionally_optional_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         self.collect_conditionally_optional_paths(&mut paths);
         paths
     }
 
-    pub(crate) fn contract_guards(&self) -> Vec<Guard> {
+    pub fn contract_guards(&self) -> Vec<Guard> {
         match self {
             Self::True | Self::False => Vec::new(),
             Self::Guard(guard) => vec![guard.clone()],
@@ -192,7 +192,7 @@ impl Predicate {
         }
     }
 
-    pub(crate) fn contract_guard_stack(predicates: &[Self]) -> Vec<Guard> {
+    pub fn contract_guard_stack(predicates: &[Self]) -> Vec<Guard> {
         let mut guards = Vec::new();
         for predicate in predicates {
             for guard in predicate.contract_guards() {

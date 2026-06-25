@@ -3,8 +3,8 @@ use test_util::prelude::sim_assert_eq;
 
 use super::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
 use crate::abstract_value::AbstractValue;
-use crate::predicate::Predicate;
 use crate::{Guard, ValueKind, YamlPath};
+use helm_schema_core::Predicate;
 
 fn output_paths(paths: impl IntoIterator<Item = String>) -> AbstractValue {
     AbstractValue::choice(

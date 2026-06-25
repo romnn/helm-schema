@@ -9,8 +9,8 @@ use crate::helper_body_analysis::{
     ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };
 use crate::helper_summary::HelperSummary;
-use crate::tree_sitter_utils::parse_go_template;
 use crate::{ContractProvenance, SourceSpan};
+use helm_schema_ast::parse_go_template;
 
 pub(crate) struct ParsedHelperBody<'a> {
     pub(crate) source: &'a str,

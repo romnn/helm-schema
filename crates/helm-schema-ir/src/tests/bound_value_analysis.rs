@@ -8,7 +8,7 @@ use super::{
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_exprs_effects;
 use crate::fragment_assignment::AssignmentKind;
-use crate::tree_sitter_utils::parse_expr_text;
+use helm_schema_ast::parse_expr_text;
 
 fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
     let header = header.trim();

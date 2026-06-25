@@ -11,8 +11,8 @@ use crate::fragment_expr_eval::{
 };
 use crate::helper_summary::{HelperOutputMeta, HelperSummary};
 use crate::helper_walk_state::HelperValuesWalkState;
-use crate::predicate::Predicate;
 use helm_schema_ast::TemplateExpr;
+use helm_schema_core::Predicate;
 
 pub(crate) fn collect_helper_value_expression_from_exprs(
     exprs: &[TemplateExpr],

@@ -1,8 +1,8 @@
 use crate::abstract_value::AbstractValue;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
+use helm_schema_core::Predicate;
 
 pub(crate) trait NodeActionEffectSink {
     fn push_predicate_if_absent(&mut self, predicate: Predicate);

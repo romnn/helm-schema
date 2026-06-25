@@ -1,6 +1,6 @@
-use helm_schema_ast::{TemplateExpr, parse_action_expressions};
+use crate::{TemplateExpr, parse_action_expressions};
 
-pub(crate) fn children_with_field<'node>(
+pub fn children_with_field<'node>(
     node: tree_sitter::Node<'node>,
     field: &str,
 ) -> Vec<tree_sitter::Node<'node>> {
@@ -10,7 +10,7 @@ pub(crate) fn children_with_field<'node>(
         .collect()
 }
 
-pub(crate) fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
+pub fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
     let trimmed = text.trim();
     if trimmed.is_empty() {
         Vec::new()
@@ -22,7 +22,7 @@ pub(crate) fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
 }
 
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]
-pub(crate) fn parse_go_template(source: &str) -> Option<tree_sitter::Tree> {
+pub fn parse_go_template(source: &str) -> Option<tree_sitter::Tree> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
     let mut parser = tree_sitter::Parser::new();
@@ -33,7 +33,7 @@ pub(crate) fn parse_go_template(source: &str) -> Option<tree_sitter::Tree> {
 }
 
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]
-pub(crate) fn parse_helm_template(source: &str) -> Option<tree_sitter::Tree> {
+pub fn parse_helm_template(source: &str) -> Option<tree_sitter::Tree> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
     let mut parser = tree_sitter::Parser::new();

@@ -1,10 +1,8 @@
-use helm_schema_ast::{Literal, TemplateExpr};
+use crate::{Literal, TemplateExpr};
 
-use crate::expr_function_catalog::{
-    is_provenance_preserving_function, is_string_transform_function,
-};
+use crate::{is_provenance_preserving_function, is_string_transform_function};
 
-pub(crate) fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
+pub fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_)) => Some("string"),
         TemplateExpr::Literal(Literal::Int(_)) => Some("integer"),
@@ -23,7 +21,7 @@ pub(crate) fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
     }
 }
 
-pub(crate) fn expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
+pub fn expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
     match expr.deparen() {
         TemplateExpr::Literal(_) => literal_schema_type(expr),
         TemplateExpr::Parenthesized(inner) => expression_schema_type(inner),

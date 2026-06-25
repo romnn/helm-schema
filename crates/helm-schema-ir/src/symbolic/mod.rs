@@ -18,10 +18,10 @@ use crate::fragment_expr_eval::{
 };
 use crate::helper_summary::HelperSummary;
 use crate::node_eval::eval_node;
-use crate::predicate::Predicate;
 use crate::symbolic_scope_state::SymbolicScopeState;
-use crate::tree_sitter_utils::parse_go_template;
 use crate::value_path_context::ValuePathContext;
+use helm_schema_ast::parse_go_template;
+use helm_schema_core::Predicate;
 
 /// Reusable state for generating symbolic IR across many templates that
 /// share one [`DefineIndex`].

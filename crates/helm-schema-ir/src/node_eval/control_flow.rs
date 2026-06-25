@@ -1,6 +1,6 @@
 use helm_schema_ast::TemplateHeader;
 
-use crate::tree_sitter_utils::children_with_field;
+use helm_schema_ast::children_with_field;
 
 use super::action;
 use super::{NodeEvalRuntime, eval_children, eval_node};

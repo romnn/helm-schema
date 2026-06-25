@@ -25,9 +25,9 @@ use crate::helper_walk_state::{
     HelperValuesWalkState,
 };
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
-use crate::predicate::Predicate;
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::{ValueKind, YamlPath};
+use helm_schema_core::Predicate;
 
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, AbstractValue>,

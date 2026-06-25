@@ -10,10 +10,10 @@ use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with
 use crate::fragment_range_scope::{range_iterable_binding_expr, range_variable_name_expr};
 use crate::helper_summary::HelperOutputMeta;
 use crate::helper_walk_state::{HelperRangeIteration, HelperRuntimeControlState, RangeFrame};
-use crate::predicate::Predicate;
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
 use crate::value_path_context::computed_with_body_fragment_value_expr;
+use helm_schema_core::Predicate;
 
 #[derive(Clone)]
 pub(crate) struct HelperConditionPlan {

@@ -1,14 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::predicate::Predicate;
-use crate::{
-    Guard, ProviderSchemaUse, ValueKind,
-    contract::ContractUse,
-    contract_signals::{
-        ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
-        ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
-        ContractValuePathFacts, MetadataFieldKind,
-    },
+use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
+use helm_schema_core::{
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
+    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
+    ContractValuePathFacts, MetadataFieldKind, Predicate,
 };
 
 pub(crate) fn derive_schema_signals_from_contract_parts(

@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
-use crate::predicate::Predicate;
-use crate::{ValueKind, YamlPath, output_path};
+use crate::{ValueKind, YamlPath};
+use helm_schema_core::{self as output_path, Predicate};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum AbstractValue {

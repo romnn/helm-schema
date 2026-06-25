@@ -3,7 +3,7 @@ mod control_flow;
 mod effects;
 mod runtime;
 
-use crate::tree_sitter_utils::children_with_field;
+use helm_schema_ast::children_with_field;
 
 use action::{NodeAction, node_action};
 pub(crate) use effects::{

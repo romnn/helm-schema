@@ -8,7 +8,8 @@ use crate::contract_sink::ContractUseContext;
 use crate::document_projection::OutputSlot;
 use crate::eval_effect::Effects;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
-use crate::{Guard, ValueKind, YamlPath, output_path};
+use crate::{Guard, ValueKind, YamlPath};
+use helm_schema_core as output_path;
 
 use super::SymbolicWalker;
 

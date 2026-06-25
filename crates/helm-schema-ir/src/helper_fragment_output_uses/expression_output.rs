@@ -13,9 +13,9 @@ use crate::fragment_expr_eval::{
 };
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_walk_state::FragmentOutputWalkState;
-use crate::output_path;
-use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
+use helm_schema_core as output_path;
+use helm_schema_core::Predicate;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn collect_bound_fragment_output_uses_from_exprs(

@@ -1,8 +1,8 @@
 use helm_schema_ast::TemplateHeader;
 
 use crate::abstract_value::AbstractValue;
-use crate::predicate::Predicate;
 use crate::value_path_context::ValuePathContext;
+use helm_schema_core::Predicate;
 
 #[derive(Clone)]
 pub(crate) struct ConditionActionPlan {

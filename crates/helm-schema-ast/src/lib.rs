@@ -1,14 +1,27 @@
 mod capability_branch;
 pub mod expr;
+mod expr_function_catalog;
 mod helper_output;
+mod literal_schema_type;
+mod printf_eval;
 mod tree_sitter_parser;
+mod tree_sitter_utils;
 mod values_comments;
 mod yaml_syntax;
 
 pub use capability_branch::{decode_guard, decode_guard_expr};
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
+pub use expr_function_catalog::{
+    is_merge_function, is_provenance_preserving_function, is_string_transform_function,
+    type_is_schema_type,
+};
 pub use helper_output::HelperOutputEvaluator;
+pub use literal_schema_type::{expression_schema_type, literal_schema_type};
+pub use printf_eval::{literal_printf_format, render_printf_string_sets};
 pub use tree_sitter_parser::{ParsedTemplate, TreeSitterParser, contains_template_action};
+pub use tree_sitter_utils::{
+    children_with_field, parse_expr_text, parse_go_template, parse_helm_template,
+};
 pub use values_comments::extract_values_yaml_descriptions;
 pub use yaml_syntax::{ParsedYamlKey, first_mapping_colon_offset, parse_yaml_key};
 

@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
 use crate::helper_summary::HelperFragmentOutputUse;
-use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
+use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
 
 #[test]

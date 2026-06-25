@@ -1,7 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::GuardValue;
-use helm_schema_core::ProviderSchemaUse;
+use crate::{GuardValue, ProviderSchemaUse};
 
 /// Values-decidable guard expression that can be lowered into JSON Schema
 /// conditionals.
@@ -144,7 +143,7 @@ pub struct ContractSchemaSignals {
 
 impl ContractSchemaSignals {
     #[must_use]
-    pub(crate) fn new(
+    pub fn new(
         schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
     ) -> Self {
         Self {
@@ -186,7 +185,7 @@ pub struct ContractValuePathFacts {
 }
 
 impl ContractValuePathFacts {
-    pub(crate) fn record_render_use(&mut self, range_guarded: bool, self_guarded: Option<bool>) {
+    pub fn record_render_use(&mut self, range_guarded: bool, self_guarded: Option<bool>) {
         if !self.has_render_use {
             self.all_render_uses_self_guarded = true;
         }
@@ -198,7 +197,7 @@ impl ContractValuePathFacts {
         }
     }
 
-    pub(crate) fn merge_render_use_facts(&mut self, other: Self) {
+    pub fn merge_render_use_facts(&mut self, other: Self) {
         if !other.has_render_use {
             return;
         }

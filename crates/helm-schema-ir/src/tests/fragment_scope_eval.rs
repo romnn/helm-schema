@@ -10,7 +10,7 @@ use crate::fragment_assignment::{
 };
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_range_scope::range_body_renders_mapping_entries_from_ast;
-use crate::tree_sitter_utils::parse_expr_text;
+use helm_schema_ast::parse_expr_text;
 use test_util::prelude::sim_assert_eq;
 
 #[derive(Clone, Debug, PartialEq)]

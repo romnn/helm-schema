@@ -6,8 +6,8 @@ use crate::resource_identity::ResourceIdentityDetector;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
-use crate::tree_sitter_utils::parse_go_template;
 use crate::{ContractUse, ValueKind, YamlPath};
+use helm_schema_ast::parse_go_template;
 use helm_schema_ast::{HelmAst, TemplateExpr};
 
 use super::SymbolicWalker;

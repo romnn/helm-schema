@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::{ContractDocument, ContractUse};
 use crate::contract_signal_builder::derive_schema_signals_from_contract_parts;
-use crate::contract_signals::ContractSchemaSignals;
+use helm_schema_core::ContractSchemaSignals;
 
 /// Finalized contract artifact derived from one canonical normalized contract.
 ///
