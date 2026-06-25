@@ -1066,6 +1066,63 @@ fn tracker_preserves_entire_scalar_for_bitnami_metrics_port_after_nested_blocks(
 }
 
 #[test]
+fn tracker_attributes_common_affinity_match_labels_include_to_nested_selector() {
+    let source = include_str!(
+        "../../../../../../testdata/charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_affinities.tpl"
+    );
+    let tree = parse_template(source);
+    let defines = DefineIndex::new();
+    let mut tracker = DocumentTracker::new(source, &defines);
+    tracker.reset_for_tree(&tree);
+
+    let soft_helper = source
+        .find(r#"define "common.affinities.pods.soft""#)
+        .expect("soft affinity helper");
+    let hard_helper = source
+        .find(r#"define "common.affinities.pods.hard""#)
+        .expect("hard affinity helper");
+    let mut actions = Vec::new();
+    output_nodes_containing(
+        tree.root_node(),
+        source,
+        "common.labels.matchLabels",
+        &mut actions,
+    );
+
+    let soft_action = actions
+        .iter()
+        .copied()
+        .find(|node| node.start_byte() > soft_helper && node.start_byte() < hard_helper)
+        .expect("soft matchLabels include");
+    sim_assert_eq!(
+        have: tracker.output_slot_for_action(soft_action).path.0,
+        want: vec![
+            "preferredDuringSchedulingIgnoredDuringExecution[*]",
+            "podAffinityTerm",
+            "labelSelector",
+            "matchLabels",
+        ],
+        "current={:?}",
+        tracker.control_site_for_node(soft_action).path.0
+    );
+
+    let hard_action = actions
+        .into_iter()
+        .find(|node| node.start_byte() > hard_helper)
+        .expect("hard matchLabels include");
+    sim_assert_eq!(
+        have: tracker.output_slot_for_action(hard_action).path.0,
+        want: vec![
+            "requiredDuringSchedulingIgnoredDuringExecution[*]",
+            "labelSelector",
+            "matchLabels",
+        ],
+        "current={:?}",
+        tracker.control_site_for_node(hard_action).path.0
+    );
+}
+
+#[test]
 fn tracker_keeps_script_block_scalar_outputs_pathless() {
     let source = r#"args:
   - -ec
@@ -1093,6 +1150,36 @@ fn tracker_keeps_script_block_scalar_outputs_pathless() {
             .output_slot_for_action(action)
             .path
             .0,
+        want: Vec::<String>::new()
+    );
+    sim_assert_eq!(
+        have: tracker.output_slot_for_action(action).slot,
+        want: OutputSlotKind::BlockScalarSuppressed
+    );
+}
+
+#[test]
+fn tracker_keeps_structural_fragment_inside_block_scalar_pathless() {
+    let source = r#"data:
+  config.yaml: |-
+    persistence:
+      {{- toYaml .Values.persistence.sql | nindent 6 }}
+"#;
+    let tree = parse_template(source);
+    let defines = DefineIndex::new();
+    let mut tracker = DocumentTracker::new(source, &defines);
+    tracker.reset_for_tree(&tree);
+
+    let mut actions = Vec::new();
+    output_nodes_containing(
+        tree.root_node(),
+        source,
+        ".Values.persistence.sql",
+        &mut actions,
+    );
+    let action = actions.into_iter().next().expect("block scalar output");
+    sim_assert_eq!(
+        have: tracker.output_slot_for_action(action).path.0,
         want: Vec::<String>::new()
     );
     sim_assert_eq!(

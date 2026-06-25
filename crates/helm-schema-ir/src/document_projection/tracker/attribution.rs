@@ -4,7 +4,7 @@ use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
 use crate::fragment_range_scope::range_body_mapping_entry_indent_from_source;
 use crate::tree_sitter_utils::parse_go_template;
-use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
+use crate::yaml_syntax::first_mapping_colon_offset;
 use crate::{SourceSpan, ValueKind, YamlPath};
 
 use super::yaml_tree::{
@@ -22,8 +22,6 @@ pub(super) struct ResolvedNodeContext {
     pub(super) in_mapping_key: bool,
     pub(super) entire_scalar_value: bool,
     pub(super) inside_block_scalar: bool,
-    explicit_mapping_value_slot: bool,
-    pub(super) sequence_item_slot: bool,
 }
 
 #[derive(Default)]
@@ -110,12 +108,12 @@ pub(super) fn build_attribution_index(
     let sanitized = String::from_utf8(sanitized).expect("sanitized template is utf-8");
     let tree = parse_yaml_tree(&sanitized);
     let mut attribution = AttributionIndex::default();
-    let mut previous_output_paths = Vec::new();
+    let root = tree.as_ref().map(tree_sitter::Tree::root_node);
 
     for output in outputs {
-        let base_context = tree.as_ref().and_then(|tree| {
+        let base_context = root.and_then(|root| {
             resolve_yaml_context(
-                tree.root_node(),
+                root,
                 &sanitized,
                 output.node_start,
                 ContextMode::Output {
@@ -128,12 +126,13 @@ pub(super) fn build_attribution_index(
             resolve_structural_output_context(&sanitized, output.action_start, indent)
         });
 
-        let context = if output.structural_indent.is_some() {
-            if rendered_context_is_better_base(&base_context, &rendered_context) {
-                rendered_context.clone().or(base_context)
-            } else {
-                base_context.or(rendered_context.clone())
-            }
+        let context = if base_context
+            .as_ref()
+            .is_some_and(|context| context.inside_block_scalar)
+        {
+            base_context
+        } else if output.structural_indent.is_some() {
+            rendered_context.clone().or(base_context)
         } else {
             base_context
         };
@@ -146,16 +145,11 @@ pub(super) fn build_attribution_index(
             } else {
                 ResolvedNodeContext::default()
             };
-            let context = rebase_relative_sequence_context(context, &previous_output_paths);
-            if !context.output_path.0.is_empty() {
-                previous_output_paths.push(context.output_path.clone());
-            }
             let action_slot = output_slot_from_context(
                 &output,
                 output.action_start,
                 output.action_end,
                 &context,
-                rendered_context.as_ref(),
                 source,
             );
             let node_slot = output_slot_from_context(
@@ -163,7 +157,6 @@ pub(super) fn build_attribution_index(
                 output.node_start,
                 output.node_end,
                 &context,
-                rendered_context.as_ref(),
                 source,
             );
             attribution
@@ -175,8 +168,7 @@ pub(super) fn build_attribution_index(
         }
     }
 
-    if let Some(tree) = tree.as_ref() {
-        let root = tree.root_node();
+    if let Some(root) = root {
         for control in controls {
             let control_context = resolve_yaml_context(
                 root,
@@ -220,13 +212,10 @@ fn output_slot_from_context(
     start: usize,
     end: usize,
     context: &ResolvedNodeContext,
-    rendered_context: Option<&ResolvedNodeContext>,
     source: &str,
 ) -> OutputSlot {
     let mut path = if context.in_mapping_key || context.inside_block_scalar {
         YamlPath(Vec::new())
-    } else if output.kind == ValueKind::Fragment {
-        prefer_fragment_output_path(context, rendered_context)
     } else {
         context.output_path.clone()
     };
@@ -272,76 +261,16 @@ fn output_slot_kind(
     }
 }
 
-fn prefer_fragment_output_path(
-    current: &ResolvedNodeContext,
-    rendered: Option<&ResolvedNodeContext>,
-) -> YamlPath {
-    let current_path = &current.output_path;
-    let Some(rendered) = rendered else {
-        return current_path.clone();
-    };
-    let rendered_path = &rendered.output_path;
-    if current_path.0.is_empty() {
-        return rendered_path.clone();
-    }
-    if rendered_path.0.is_empty() {
-        return current_path.clone();
-    }
-    if path_has_equivalent_prefix(&current_path.0, &rendered_path.0) {
-        if rendered.sequence_item_slot {
-            return rendered_path.clone();
-        }
-        return current_path.clone();
-    }
-    if path_has_equivalent_prefix(&rendered_path.0, &current_path.0) {
-        return preserve_specific_prefix(current_path, rendered_path);
-    }
-    rendered_path.clone()
-}
-
-fn preserve_specific_prefix(prefix: &YamlPath, path: &YamlPath) -> YamlPath {
-    if prefix.0.is_empty() || prefix.0.len() > path.0.len() {
-        return path.clone();
-    }
-
-    let mut merged = prefix.0.clone();
-    merged.extend(path.0.iter().skip(prefix.0.len()).cloned());
-    YamlPath(merged)
-}
-
 fn document_site_is_yaml_comment_part(source: &str, start: usize) -> bool {
     let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
     source[line_start..start].trim_start().starts_with('#')
 }
 
-fn rendered_context_is_better_base(
-    base: &Option<ResolvedNodeContext>,
-    rendered: &Option<ResolvedNodeContext>,
-) -> bool {
-    let Some(rendered) = rendered else {
-        return false;
-    };
-    if rendered.explicit_mapping_value_slot {
-        return true;
-    }
-    let Some(base) = base else {
-        return true;
-    };
-    rendered.output_path.0.len() > base.output_path.0.len()
-        && path_has_equivalent_prefix(&rendered.output_path.0, &base.output_path.0)
-}
-
-struct SourceSlot {
+#[derive(Clone)]
+struct StructuralSlot {
     indent: usize,
     path: YamlPath,
-    kind: SourceSlotKind,
-    has_same_indent_sequence_value: bool,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum SourceSlotKind {
-    MappingValue,
-    SequenceItem,
+    allow_same_indent_output: bool,
 }
 
 fn resolve_structural_output_context(
@@ -349,165 +278,202 @@ fn resolve_structural_output_context(
     insertion_byte: usize,
     output_indent: usize,
 ) -> Option<ResolvedNodeContext> {
-    let insertion_byte = insertion_byte.min(sanitized.len());
     if output_indent == 0 {
         return Some(default_context(&YamlPath(Vec::new())));
     }
 
-    let line_start = sanitized[..insertion_byte]
-        .rfind('\n')
-        .map_or(0, |index| index + 1);
-    let mut slots = Vec::new();
-    for line in sanitized[..line_start].lines() {
-        observe_source_slot_line(line, &mut slots);
+    let insertion_byte = insertion_byte.min(sanitized.len());
+    let prefix = &sanitized[..insertion_byte];
+    let context = resolve_structural_context_from_prefix(prefix, output_indent);
+    if context
+        .as_ref()
+        .is_some_and(|context| context.output_path.0.len() > 1)
+    {
+        return context;
     }
 
-    let prefix = &sanitized[line_start..insertion_byte];
-    let prefix_produced_slot = observe_source_slot_line(prefix, &mut slots);
-    if prefix.trim().is_empty() {
-        close_dedented_slots_for_action_prefix(prefix, output_indent, &mut slots);
+    let local_start = structural_prefix_root_start(prefix);
+    if local_start == 0 {
+        return context;
     }
-    if !prefix.trim().is_empty() && !prefix_produced_slot {
-        return None;
-    }
+    resolve_structural_context_from_prefix(&prefix[local_start..], output_indent).or(context)
+}
 
-    let slot = slots
+fn resolve_structural_context_from_prefix(
+    prefix: &str,
+    output_indent: usize,
+) -> Option<ResolvedNodeContext> {
+    let mut active = Vec::new();
+    let mut last = Vec::new();
+    let prefix_tree = parse_yaml_tree(prefix)?;
+    collect_structural_slots_before(
+        prefix_tree.root_node(),
+        prefix,
+        prefix.len(),
+        &YamlPath(Vec::new()),
+        &mut active,
+        &mut last,
+    );
+    let slot = last
         .iter()
         .rev()
         .find(|slot| {
             slot.indent < output_indent
-                || (slot.indent == output_indent && slot.kind == SourceSlotKind::MappingValue)
+                || (slot.indent == output_indent && slot.allow_same_indent_output)
         })
-        .or_else(|| slots.last())?;
+        .or_else(|| last.last())?;
     Some(context_for_source_slot(slot))
 }
 
-fn observe_source_slot_line(line: &str, slots: &mut Vec<SourceSlot>) -> bool {
-    let trimmed = line.trim_start_matches(' ');
-    let text = trimmed.trim_end();
-    if text.is_empty() || text.starts_with('#') || text.starts_with(PLACEHOLDER_PREFIX) {
-        return false;
+fn structural_prefix_root_start(prefix: &str) -> usize {
+    let mut line_end = prefix.len();
+    while line_end > 0 {
+        let line_start = prefix[..line_end].rfind('\n').map_or(0, |index| index + 1);
+        let line = &prefix[line_start..line_end];
+        let trimmed = line.trim_start();
+        let indent = line.len() - trimmed.len();
+        if indent == 0
+            && !trimmed.starts_with(PLACEHOLDER_PREFIX)
+            && first_mapping_colon_offset(trimmed).is_some()
+        {
+            return line_start;
+        }
+        if line_start == 0 {
+            break;
+        }
+        line_end = line_start - 1;
     }
-    if matches!(text, "---" | "...") {
-        slots.clear();
-        return false;
-    }
-
-    let indent = line.len() - trimmed.len();
-    if let Some(after_dash) = text.strip_prefix('-') {
-        let same_indent_parent_index = slots
-            .iter()
-            .rev()
-            .position(|slot| slot.indent == indent && slot.kind == SourceSlotKind::MappingValue)
-            .map(|index| slots.len() - 1 - index);
-        let same_indent_parent = same_indent_parent_index.map(|index| {
-            slots[index].has_same_indent_sequence_value = true;
-            slots[index].path.clone()
-        });
-        slots.retain(|slot| {
-            slot.indent < indent
-                || (same_indent_parent.is_some()
-                    && slot.indent == indent
-                    && slot.kind == SourceSlotKind::MappingValue)
-        });
-        observe_sequence_slot(indent, after_dash, same_indent_parent, slots)
-    } else {
-        slots.retain(|slot| slot.indent < indent);
-        observe_mapping_slot(indent, text, slots)
-    }
+    0
 }
 
-fn observe_sequence_slot(
-    indent: usize,
-    after_dash: &str,
-    same_indent_parent: Option<YamlPath>,
-    slots: &mut Vec<SourceSlot>,
-) -> bool {
-    let parent = same_indent_parent.unwrap_or_else(|| current_source_slot_path(slots, indent));
-    let item_path = append_sequence_segment(&parent);
-    slots.push(SourceSlot {
-        indent,
-        path: item_path.clone(),
-        kind: SourceSlotKind::SequenceItem,
-        has_same_indent_sequence_value: false,
-    });
-
-    let after_dash = after_dash.trim_start();
-    if after_dash.is_empty() {
-        return true;
-    }
-    observe_mapping_slot_with_parent(indent + 2, after_dash, item_path, slots);
-    true
-}
-
-fn observe_mapping_slot(indent: usize, text: &str, slots: &mut Vec<SourceSlot>) -> bool {
-    let parent = current_source_slot_path(slots, indent);
-    observe_mapping_slot_with_parent(indent, text, parent, slots)
-}
-
-fn observe_mapping_slot_with_parent(
-    indent: usize,
-    text: &str,
-    parent: YamlPath,
-    slots: &mut Vec<SourceSlot>,
-) -> bool {
-    let Some(colon) = first_mapping_colon_offset(text) else {
-        return false;
-    };
-    if !text[colon + 1..].trim().is_empty() {
-        return false;
-    }
-    let Some(key) = parse_yaml_key(text).map(|key| key.into_key()) else {
-        return false;
-    };
-    if key.contains(PLACEHOLDER_PREFIX) {
-        return false;
-    }
-    slots.push(SourceSlot {
-        indent,
-        path: append_mapping_segment(&parent, &key),
-        kind: SourceSlotKind::MappingValue,
-        has_same_indent_sequence_value: false,
-    });
-    true
-}
-
-fn close_dedented_slots_for_action_prefix(
-    prefix: &str,
-    output_indent: usize,
-    slots: &mut Vec<SourceSlot>,
+fn collect_structural_slots_before(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    insertion_byte: usize,
+    path: &YamlPath,
+    active: &mut Vec<StructuralSlot>,
+    last: &mut Vec<StructuralSlot>,
 ) {
-    let indent = prefix
-        .chars()
-        .take_while(|&ch| ch == ' ')
-        .count()
-        .max(output_indent);
-    if !slots.iter().any(|slot| slot.indent > indent) {
+    if node.start_byte() >= insertion_byte {
         return;
     }
 
-    slots.retain(|slot| {
-        slot.indent < indent
-            || (slot.indent == indent
-                && slot.kind == SourceSlotKind::MappingValue
-                && slot.has_same_indent_sequence_value)
+    match node.kind() {
+        "stream" | "document" | "block_node" | "flow_node" => {
+            collect_structural_child_slots(node, source, insertion_byte, path, active, last);
+        }
+        "block_mapping" | "flow_mapping" => {
+            collect_structural_child_slots(node, source, insertion_byte, path, active, last);
+        }
+        "block_mapping_pair" | "flow_pair" => {
+            collect_mapping_pair_slots(node, source, insertion_byte, path, active, last);
+        }
+        "block_sequence" | "flow_sequence" => {
+            collect_structural_child_slots(node, source, insertion_byte, path, active, last);
+        }
+        "block_sequence_item" => {
+            let item_path = append_sequence_segment(path);
+            active.push(StructuralSlot {
+                indent: node.start_position().column,
+                path: item_path.clone(),
+                allow_same_indent_output: false,
+            });
+            *last = active.clone();
+            collect_structural_child_slots(node, source, insertion_byte, &item_path, active, last);
+            active.pop();
+        }
+        kind if is_scalar_like(kind) => {
+            *last = active.clone();
+        }
+        _ => {
+            collect_structural_child_slots(node, source, insertion_byte, path, active, last);
+        }
+    }
+}
+
+fn collect_structural_child_slots(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    insertion_byte: usize,
+    path: &YamlPath,
+    active: &mut Vec<StructuralSlot>,
+    last: &mut Vec<StructuralSlot>,
+) {
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.is_named() {
+            collect_structural_slots_before(child, source, insertion_byte, path, active, last);
+        }
+    }
+}
+
+fn collect_mapping_pair_slots(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    insertion_byte: usize,
+    path: &YamlPath,
+    active: &mut Vec<StructuralSlot>,
+    last: &mut Vec<StructuralSlot>,
+) {
+    let key = node.child_by_field_name("key");
+    let value = node.child_by_field_name("value");
+    let child_path = key
+        .and_then(|node| scalar_text(node, source))
+        .filter(|key| !key.contains(PLACEHOLDER_PREFIX))
+        .map_or_else(|| path.clone(), |key| append_mapping_segment(path, &key));
+
+    let same_indent = key.is_some_and(|key| mapping_value_allows_same_indent_output(key, value));
+    let block_value = key.is_some_and(|key| {
+        value.is_none_or(|value| value.start_position().row > key.end_position().row)
     });
+    if block_value {
+        active.push(StructuralSlot {
+            indent: key.map_or_else(
+                || node.start_position().column,
+                |node| node.start_position().column,
+            ),
+            path: child_path.clone(),
+            allow_same_indent_output: same_indent,
+        });
+        *last = active.clone();
+    }
+
+    if let Some(value) = value
+        && value.start_byte() < insertion_byte
+    {
+        collect_structural_slots_before(value, source, insertion_byte, &child_path, active, last);
+    }
+
+    if block_value {
+        active.pop();
+    }
 }
 
-fn current_source_slot_path(slots: &[SourceSlot], indent: usize) -> YamlPath {
-    slots
-        .iter()
-        .rev()
-        .find(|slot| slot.indent < indent)
-        .map(|slot| slot.path.clone())
-        .unwrap_or_else(|| YamlPath(Vec::new()))
+fn mapping_value_allows_same_indent_output(
+    key: tree_sitter::Node<'_>,
+    value: Option<tree_sitter::Node<'_>>,
+) -> bool {
+    let Some(value) = value else {
+        return true;
+    };
+    if value.start_position().row <= key.end_position().row {
+        return false;
+    }
+    let value = unwrap_yaml_node(value);
+    if value.kind() != "block_sequence" {
+        return false;
+    }
+
+    let mut cursor = value.walk();
+    value.children(&mut cursor).any(|child| {
+        child.is_named()
+            && child.kind() == "block_sequence_item"
+            && child.start_position().column == key.start_position().column
+    })
 }
 
-fn context_for_source_slot(slot: &SourceSlot) -> ResolvedNodeContext {
-    let mut context = default_context(&slot.path);
-    context.explicit_mapping_value_slot = slot.kind == SourceSlotKind::MappingValue;
-    context.sequence_item_slot = slot.kind == SourceSlotKind::SequenceItem;
-    context
+fn context_for_source_slot(slot: &StructuralSlot) -> ResolvedNodeContext {
+    default_context(&slot.path)
 }
 
 fn inline_mapping_value_key_offset(prefix: &str) -> Option<usize> {
@@ -527,26 +493,6 @@ fn inline_mapping_value_key_offset(prefix: &str) -> Option<usize> {
     } else {
         Some(0)
     }
-}
-
-fn rebase_relative_sequence_context(
-    mut context: ResolvedNodeContext,
-    previous_output_paths: &[YamlPath],
-) -> ResolvedNodeContext {
-    let Some(suffix) = context.output_path.0.strip_prefix(&["[*]".to_string()]) else {
-        return context;
-    };
-    let Some(base) = previous_output_paths
-        .iter()
-        .rev()
-        .find(|path| path_has_equivalent_suffix(&path.0, suffix))
-    else {
-        return context;
-    };
-    context.current_path = base.clone();
-    context.output_path = base.clone();
-    context.mapping_entry_path = base.clone();
-    context
 }
 
 #[derive(Clone)]
@@ -1185,8 +1131,6 @@ fn output_mapping_key_context(
             in_mapping_key: false,
             entire_scalar_value: true,
             inside_block_scalar: false,
-            explicit_mapping_value_slot: false,
-            sequence_item_slot: false,
         };
     }
 
@@ -1197,8 +1141,6 @@ fn output_mapping_key_context(
         in_mapping_key: true,
         entire_scalar_value: false,
         inside_block_scalar: false,
-        explicit_mapping_value_slot: false,
-        sequence_item_slot: false,
     }
 }
 
@@ -1210,8 +1152,6 @@ fn block_scalar_context(path: &YamlPath) -> ResolvedNodeContext {
         in_mapping_key: false,
         entire_scalar_value: false,
         inside_block_scalar: true,
-        explicit_mapping_value_slot: false,
-        sequence_item_slot: false,
     }
 }
 
@@ -1230,8 +1170,6 @@ fn resolve_scalar_context(
         in_mapping_key: false,
         entire_scalar_value: text == placeholder,
         inside_block_scalar: false,
-        explicit_mapping_value_slot: false,
-        sequence_item_slot: false,
     }
 }
 
@@ -1243,8 +1181,6 @@ fn default_context(path: &YamlPath) -> ResolvedNodeContext {
         in_mapping_key: false,
         entire_scalar_value: false,
         inside_block_scalar: false,
-        explicit_mapping_value_slot: false,
-        sequence_item_slot: false,
     }
 }
 
@@ -1266,35 +1202,6 @@ fn append_sequence_segment(path: &YamlPath) -> YamlPath {
         path.0.push("[*]".to_string());
     }
     path
-}
-
-fn path_has_equivalent_suffix(path: &[String], suffix: &[String]) -> bool {
-    if suffix.len() > path.len() {
-        return false;
-    }
-    path[path.len() - suffix.len()..]
-        .iter()
-        .zip(suffix)
-        .all(|(left, right)| path_segments_equivalent(left, right))
-}
-
-fn path_has_equivalent_prefix(path: &[String], prefix: &[String]) -> bool {
-    if prefix.len() > path.len() {
-        return false;
-    }
-    path.iter()
-        .zip(prefix)
-        .all(|(left, right)| path_segments_equivalent(left, right))
-}
-
-fn path_segments_equivalent(left: &str, right: &str) -> bool {
-    left == right
-        || left
-            .strip_suffix("[*]")
-            .is_some_and(|stripped| stripped == right)
-        || right
-            .strip_suffix("[*]")
-            .is_some_and(|stripped| stripped == left)
 }
 
 fn contains_byte(node: tree_sitter::Node<'_>, byte: usize) -> bool {
