@@ -1,7 +1,6 @@
-use helm_schema_ast::DefineIndex;
+use helm_schema_ast::{DefineIndex, ResourceIdentityIndex};
 use indoc::indoc;
 
-use crate::resource_identity::ResourceIdentityIndex;
 use test_util::prelude::sim_assert_eq;
 
 #[test]

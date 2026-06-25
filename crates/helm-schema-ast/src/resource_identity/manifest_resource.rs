@@ -1,7 +1,7 @@
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use crate::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_core::ResourceRef;
 
 use super::ResourceIdentityDetector;
-use crate::ResourceRef;
 
 pub(super) fn detect_manifest_resource(source: &str, defines: &DefineIndex) -> Option<ResourceRef> {
     if let Some(resource) = TreeSitterParser

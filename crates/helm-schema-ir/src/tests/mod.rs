@@ -7,6 +7,7 @@ mod document_projection {
 mod expr_eval;
 mod expr_eval_helper_hooks;
 mod fragment_expr_eval;
+mod fragment_range_scope;
 mod fragment_scope_eval;
 mod resource_identity;
 mod symbolic_local_state;

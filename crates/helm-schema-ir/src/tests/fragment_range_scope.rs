@@ -1,4 +1,4 @@
-use super::{
+use helm_schema_ast::{
     mapping_key_text_refs_range_key_variable, range_body_mapping_entry_indent_from_source,
 };
 use test_util::prelude::sim_assert_eq;

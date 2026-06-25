@@ -1,6 +1,5 @@
-use super::*;
 use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, HelperOutputEvaluator, TreeSitterParser};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 

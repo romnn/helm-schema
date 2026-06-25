@@ -1,4 +1,4 @@
-use helm_schema_ast::parse_helm_template;
+use crate::parse_helm_template;
 
 pub(super) struct ListItemSource<'source> {
     pub(super) source: &'source str,

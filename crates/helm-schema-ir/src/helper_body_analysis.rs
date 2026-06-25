@@ -1,16 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
-use helm_schema_ast::TemplateExpr;
+use helm_schema_ast::{
+    TemplateExpr, range_body_emits_sequence_item_from_source,
+    range_body_renders_mapping_entries_from_ast, range_has_destructured_variable_definition,
+};
 
 use crate::abstract_value::AbstractValue;
 use crate::document_projection::{ControlSite, DocumentTracker};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
     helper_result_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
-};
-use crate::fragment_range_scope::{
-    range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
-    range_has_destructured_variable_definition,
 };
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_exprs;
 use crate::helper_runtime_plan::{

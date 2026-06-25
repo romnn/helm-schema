@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, TemplateExpr};
+use helm_schema_ast::{DefineIndex, TemplateExpr, range_body_renders_mapping_entries_from_ast};
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
@@ -9,7 +9,6 @@ use crate::fragment_assignment::{
     parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::fragment_range_scope::range_body_renders_mapping_entries_from_ast;
 use helm_schema_ast::parse_expr_text;
 use test_util::prelude::sim_assert_eq;
 

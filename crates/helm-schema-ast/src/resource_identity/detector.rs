@@ -1,8 +1,7 @@
-use helm_schema_ast::{DefineIndex, HelmAst};
+use crate::{DefineIndex, HelmAst, HelperOutputEvaluator};
 
-use super::helper_output::HelperOutputEvaluator;
 use super::state::ResourceState;
-use crate::ResourceRef;
+use helm_schema_core::ResourceRef;
 
 /// AST-driven detector for Kubernetes resource identity.
 ///
@@ -12,13 +11,13 @@ use crate::ResourceRef;
 /// outputs. It preserves typed capability branches so the K8s lookup layer can
 /// choose the runtime-live branch instead of flattening mutually-exclusive
 /// alternatives.
-pub(crate) struct ResourceIdentityDetector<'a> {
+pub struct ResourceIdentityDetector<'a> {
     defines: &'a DefineIndex,
 }
 
 impl<'a> ResourceIdentityDetector<'a> {
     #[must_use]
-    pub(crate) fn new(defines: &'a DefineIndex) -> Self {
+    pub fn new(defines: &'a DefineIndex) -> Self {
         Self { defines }
     }
 
@@ -28,7 +27,7 @@ impl<'a> ResourceIdentityDetector<'a> {
     /// Keeping that boundary outside the detector avoids mixing `apiVersion`
     /// candidates from unrelated YAML documents.
     #[must_use]
-    pub(crate) fn detect(&self, ast: &HelmAst) -> Option<ResourceRef> {
+    pub fn detect(&self, ast: &HelmAst) -> Option<ResourceRef> {
         let mut state = ResourceState::default();
         self.scan_node(ast, &mut state, true);
         state.into_resource()

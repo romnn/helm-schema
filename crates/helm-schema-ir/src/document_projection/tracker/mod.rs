@@ -1,11 +1,9 @@
-use helm_schema_ast::DefineIndex;
+use helm_schema_ast::{
+    AttributionIndex, ControlSite, DefineIndex, OutputSlot, OutputSlotKind, ResourceIdentityIndex,
+    build_attribution_index,
+};
 
-use crate::resource_identity::ResourceIdentityIndex;
 use crate::{ResourceRef, ValueKind, YamlPath};
-
-mod attribution;
-
-use attribution::{AttributionIndex, build_attribution_index};
 
 /// Tracks document-local path and resource attribution while the symbolic
 /// interpreter walks mixed YAML and Helm actions.
@@ -14,80 +12,6 @@ pub(crate) struct DocumentTracker<'a> {
     defines: &'a DefineIndex,
     resource_identity: ResourceIdentityIndex,
     attribution: AttributionIndex,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct OutputSlot {
-    pub(crate) kind: ValueKind,
-    pub(crate) path: YamlPath,
-    pub(crate) resource: Option<ResourceRef>,
-    pub(crate) slot: OutputSlotKind,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum OutputSlotKind {
-    MappingKey,
-    YamlComment,
-    WholeScalar,
-    PartialScalar,
-    FragmentInsertion,
-    BlockScalarSuppressed,
-    Opaque,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct ControlSite {
-    pub(crate) path: YamlPath,
-    pub(crate) range_mapping_entry_path: Option<YamlPath>,
-}
-
-impl OutputSlot {
-    pub(crate) fn suppresses_fragment_output(&self) -> bool {
-        self.slot == OutputSlotKind::MappingKey
-    }
-
-    pub(crate) fn direct_value_kind(&self) -> ValueKind {
-        if self.kind == ValueKind::Scalar
-            && self.slot == OutputSlotKind::PartialScalar
-            && !self.path.0.is_empty()
-        {
-            ValueKind::PartialScalar
-        } else {
-            self.kind
-        }
-    }
-
-    pub(crate) fn direct_value_path(&self, source_expr: &str) -> YamlPath {
-        if source_expr.ends_with(".*") && !self.in_sequence_item() {
-            YamlPath(Vec::new())
-        } else {
-            self.path.clone()
-        }
-    }
-
-    pub(crate) fn can_project_scalar_helper_to_caller_path(&self) -> bool {
-        !self.path.0.is_empty()
-            && self.kind == ValueKind::Scalar
-            && self.slot == OutputSlotKind::WholeScalar
-    }
-
-    pub(crate) fn can_project_structured_helper_to_caller_path(&self) -> bool {
-        !self.path.0.is_empty()
-            && (self.kind == ValueKind::Fragment
-                || (self.kind == ValueKind::Scalar && self.slot == OutputSlotKind::WholeScalar))
-    }
-
-    pub(crate) fn is_yaml_comment(&self) -> bool {
-        self.slot == OutputSlotKind::YamlComment
-    }
-
-    fn in_sequence_item(&self) -> bool {
-        self.path
-            .0
-            .last()
-            .map(std::string::String::as_str)
-            .is_some_and(|segment| segment.ends_with("[*]"))
-    }
 }
 
 impl<'a> DocumentTracker<'a> {

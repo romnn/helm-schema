@@ -1,3 +1,4 @@
 mod tracker;
 
-pub(crate) use tracker::{ControlSite, DocumentTracker, OutputSlot};
+pub(crate) use helm_schema_ast::{ControlSite, OutputSlot};
+pub(crate) use tracker::DocumentTracker;

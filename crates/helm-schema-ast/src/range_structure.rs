@@ -1,51 +1,16 @@
-use std::collections::{HashMap, HashSet};
-
-use helm_schema_ast::{
-    HelmAst, HelmParser as _, TemplateExpr, TemplateHeader, TreeSitterParser,
-    first_mapping_colon_offset, parse_yaml_key,
+use crate::{
+    HelmAst, HelmParser as _, TemplateExpr, TemplateHeader, TreeSitterParser, children_with_field,
+    first_mapping_colon_offset, parse_expr_text, parse_yaml_key,
 };
 
-use crate::abstract_value::AbstractValue;
-use crate::fragment_expr_eval::FragmentEvalContext;
-use helm_schema_ast::{children_with_field, parse_expr_text};
-
-pub(crate) fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
+pub fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
     let TemplateExpr::VariableDefinition { name, .. } = expr.deparen() else {
         return None;
     };
     Some(name.trim_start_matches('$').to_string())
 }
 
-pub(crate) fn range_iterable_binding_expr(
-    expr: &TemplateExpr,
-    local_bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> Option<AbstractValue> {
-    let value = match expr.deparen() {
-        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            value.as_ref()
-        }
-        expr => expr,
-    };
-    fragment_value_from_range_value_expr(value, local_bindings, current_dot, context, seen)
-}
-
-fn fragment_value_from_range_value_expr(
-    value: &TemplateExpr,
-    local_bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> Option<AbstractValue> {
-    context.fragment_value_from_expr(value, local_bindings, current_dot, seen)
-}
-
-pub(crate) fn range_header_text_from_source(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-) -> Option<String> {
+pub fn range_header_text_from_source(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
     if let Some(range) = node.child_by_field_name("range") {
         return range
             .utf8_text(source.as_bytes())
@@ -66,14 +31,14 @@ pub(crate) fn range_header_text_from_source(
     None
 }
 
-pub(crate) fn range_header_from_source(
+pub fn range_header_from_source(
     node: tree_sitter::Node<'_>,
     source: &str,
 ) -> Option<TemplateHeader> {
     range_header_text_from_source(node, source).map(TemplateHeader::parse_range)
 }
 
-pub(crate) fn range_body_emits_sequence_item_from_source(
+pub fn range_body_emits_sequence_item_from_source(
     node: tree_sitter::Node<'_>,
     source: &str,
 ) -> bool {
@@ -91,7 +56,7 @@ pub(crate) fn range_body_emits_sequence_item_from_source(
     false
 }
 
-pub(crate) fn range_body_renders_mapping_entries_from_ast(
+pub fn range_body_renders_mapping_entries_from_ast(
     node: tree_sitter::Node<'_>,
     source: &str,
 ) -> bool {
@@ -112,7 +77,7 @@ pub(crate) fn range_body_renders_mapping_entries_from_ast(
     ast_directly_renders_templated_mapping_key(&ast, &key_variable)
 }
 
-pub(crate) fn range_body_mapping_entry_indent_from_source(
+pub fn range_body_mapping_entry_indent_from_source(
     node: tree_sitter::Node<'_>,
     source: &str,
 ) -> Option<usize> {
@@ -135,7 +100,7 @@ pub(crate) fn range_body_mapping_entry_indent_from_source(
     None
 }
 
-fn mapping_key_text_refs_range_key_variable(text: &str, key_variable: &str) -> bool {
+pub fn mapping_key_text_refs_range_key_variable(text: &str, key_variable: &str) -> bool {
     let Some(colon_offset) = first_mapping_colon_offset(text) else {
         return false;
     };
@@ -201,7 +166,7 @@ fn ast_key_refs_range_key_variable(key: &HelmAst, key_variable: &str) -> bool {
     }
 }
 
-pub(crate) fn range_body_renders_scalar_sequence_items_from_source(
+pub fn range_body_renders_scalar_sequence_items_from_source(
     node: tree_sitter::Node<'_>,
     source: &str,
 ) -> bool {
@@ -235,7 +200,7 @@ pub(crate) fn range_body_renders_scalar_sequence_items_from_source(
     saw_sequence_item
 }
 
-pub(crate) fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -> bool {
+pub fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -> bool {
     let mut walker = node.walk();
     node.named_children(&mut walker)
         .find(|child| child.kind() == "range_variable_definition")
@@ -265,7 +230,3 @@ fn range_destructured_key_variable(node: tree_sitter::Node<'_>, source: &str) ->
         .ok()
         .map(|text| text.trim_start_matches('$').to_string())
 }
-
-#[cfg(test)]
-#[path = "tests/fragment_range_scope.rs"]
-mod tests;

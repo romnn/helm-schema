@@ -1,33 +1,104 @@
 use std::collections::HashMap;
 
-use helm_schema_ast::{TemplateExpr, first_mapping_colon_offset, parse_action_expressions};
+use helm_schema_core::{ResourceRef, ValueKind, YamlPath};
 
-use crate::fragment_range_scope::range_body_mapping_entry_indent_from_source;
-use crate::{ValueKind, YamlPath};
+use crate::{
+    TemplateExpr, first_mapping_colon_offset, parse_action_expressions,
+    range_body_mapping_entry_indent_from_source,
+};
 
-use super::{ControlSite, OutputSlot, OutputSlotKind};
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OutputSlot {
+    pub kind: ValueKind,
+    pub path: YamlPath,
+    pub resource: Option<ResourceRef>,
+    pub slot: OutputSlotKind,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OutputSlotKind {
+    MappingKey,
+    YamlComment,
+    WholeScalar,
+    PartialScalar,
+    FragmentInsertion,
+    BlockScalarSuppressed,
+    Opaque,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ControlSite {
+    pub path: YamlPath,
+    pub range_mapping_entry_path: Option<YamlPath>,
+}
+
+impl OutputSlot {
+    pub fn suppresses_fragment_output(&self) -> bool {
+        self.slot == OutputSlotKind::MappingKey
+    }
+
+    pub fn direct_value_kind(&self) -> ValueKind {
+        if self.kind == ValueKind::Scalar
+            && self.slot == OutputSlotKind::PartialScalar
+            && !self.path.0.is_empty()
+        {
+            ValueKind::PartialScalar
+        } else {
+            self.kind
+        }
+    }
+
+    pub fn direct_value_path(&self, source_expr: &str) -> YamlPath {
+        if source_expr.ends_with(".*") && !self.in_sequence_item() {
+            YamlPath(Vec::new())
+        } else {
+            self.path.clone()
+        }
+    }
+
+    pub fn can_project_scalar_helper_to_caller_path(&self) -> bool {
+        !self.path.0.is_empty()
+            && self.kind == ValueKind::Scalar
+            && self.slot == OutputSlotKind::WholeScalar
+    }
+
+    pub fn can_project_structured_helper_to_caller_path(&self) -> bool {
+        !self.path.0.is_empty()
+            && (self.kind == ValueKind::Fragment
+                || (self.kind == ValueKind::Scalar && self.slot == OutputSlotKind::WholeScalar))
+    }
+
+    pub fn is_yaml_comment(&self) -> bool {
+        self.slot == OutputSlotKind::YamlComment
+    }
+
+    fn in_sequence_item(&self) -> bool {
+        self.path
+            .0
+            .last()
+            .map(std::string::String::as_str)
+            .is_some_and(|segment| segment.ends_with("[*]"))
+    }
+}
 
 #[derive(Clone, Debug, Default)]
-pub(super) struct ResolvedNodeContext {
-    pub(super) current_path: YamlPath,
-    pub(super) output_path: YamlPath,
-    pub(super) mapping_entry_path: YamlPath,
-    pub(super) in_mapping_key: bool,
-    pub(super) entire_scalar_value: bool,
-    pub(super) inside_block_scalar: bool,
+pub struct ResolvedNodeContext {
+    pub current_path: YamlPath,
+    pub output_path: YamlPath,
+    pub mapping_entry_path: YamlPath,
+    pub in_mapping_key: bool,
+    pub entire_scalar_value: bool,
+    pub inside_block_scalar: bool,
 }
 
 #[derive(Default)]
-pub(super) struct AttributionIndex {
+pub struct AttributionIndex {
     output_slots: HashMap<(usize, usize), OutputSlot>,
     control_sites: HashMap<(usize, usize), ControlSite>,
 }
 
 impl AttributionIndex {
-    pub(super) fn output_slot_for_node(
-        &self,
-        mut node: tree_sitter::Node<'_>,
-    ) -> Option<OutputSlot> {
+    pub fn output_slot_for_node(&self, mut node: tree_sitter::Node<'_>) -> Option<OutputSlot> {
         loop {
             if let Some(slot) = self.output_slots.get(&(node.start_byte(), node.end_byte())) {
                 return Some(slot.clone());
@@ -36,10 +107,7 @@ impl AttributionIndex {
         }
     }
 
-    pub(super) fn control_site_for_node(
-        &self,
-        mut node: tree_sitter::Node<'_>,
-    ) -> Option<ControlSite> {
+    pub fn control_site_for_node(&self, mut node: tree_sitter::Node<'_>) -> Option<ControlSite> {
         loop {
             if let Some(site) = self
                 .control_sites
@@ -70,10 +138,7 @@ struct ControlSpan {
     mapping_entry_indent: Option<usize>,
 }
 
-pub(super) fn build_attribution_index(
-    source: &str,
-    root: tree_sitter::Node<'_>,
-) -> AttributionIndex {
+pub fn build_attribution_index(source: &str, root: tree_sitter::Node<'_>) -> AttributionIndex {
     let mut outputs = Vec::new();
     let mut controls = Vec::new();
     collect_spans(source, root, &mut outputs, &mut controls);
@@ -696,7 +761,7 @@ fn append_sequence_segment(path: &YamlPath) -> YamlPath {
     path
 }
 
-pub(super) fn is_output_root_kind(kind: &str) -> bool {
+pub fn is_output_root_kind(kind: &str) -> bool {
     matches!(
         kind,
         "template_action"

@@ -1,4 +1,4 @@
-use crate::{HelperBranch, HelperBranchBody, ResourceRef};
+use helm_schema_core::{HelperBranch, HelperBranchBody, ResourceRef};
 
 #[derive(Default)]
 pub(super) struct ResourceState {

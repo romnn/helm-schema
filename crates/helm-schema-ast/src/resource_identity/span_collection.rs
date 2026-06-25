@@ -1,9 +1,9 @@
-use helm_schema_ast::DefineIndex;
+use crate::DefineIndex;
+use helm_schema_core::ResourceRef;
 
 use super::list_envelope::list_item_sources;
 use super::manifest_resource::{detect_manifest_resource, is_kubernetes_list_envelope};
 use super::source_documents::document_spans;
-use crate::ResourceRef;
 
 #[derive(Clone, Debug)]
 pub(super) struct ResourceSpan {

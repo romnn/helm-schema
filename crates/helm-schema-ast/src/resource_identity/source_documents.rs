@@ -1,4 +1,4 @@
-use helm_schema_ast::parse_helm_template;
+use crate::parse_helm_template;
 
 pub(super) fn document_spans(source: &str) -> Vec<(usize, usize)> {
     let Some(tree) = parse_helm_template(source) else {

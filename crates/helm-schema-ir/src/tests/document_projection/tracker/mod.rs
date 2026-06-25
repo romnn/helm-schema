@@ -1,10 +1,11 @@
-use helm_schema_ast::DefineIndex;
+use helm_schema_ast::{
+    DefineIndex, OutputSlot, OutputSlotKind, build_attribution_index, is_output_root_kind,
+};
 use test_util::prelude::sim_assert_eq;
 
 use crate::{ValueKind, YamlPath};
 
-use super::attribution::{build_attribution_index, is_output_root_kind};
-use super::{DocumentTracker, OutputSlot, OutputSlotKind};
+use super::DocumentTracker;
 
 fn parse_template(source: &str) -> tree_sitter::Tree {
     let language =

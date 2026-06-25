@@ -1,6 +1,5 @@
-use helm_schema_ast::{TemplateExpr, TemplateHeader};
+use helm_schema_ast::{TemplateExpr, TemplateHeader, range_header_from_source};
 
-use crate::fragment_range_scope::range_header_from_source;
 use helm_schema_ast::parse_expr_text;
 
 #[derive(Clone, Debug)]

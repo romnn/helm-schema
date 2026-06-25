@@ -2,11 +2,11 @@ use std::collections::HashSet;
 
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr, expr_literal_helper_call_callee};
-use crate::resource_identity::ResourceIdentityDetector;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
 use crate::{ContractUse, ValueKind, YamlPath};
+use helm_schema_ast::ResourceIdentityDetector;
 use helm_schema_ast::parse_go_template;
 use helm_schema_ast::{HelmAst, TemplateExpr};
 

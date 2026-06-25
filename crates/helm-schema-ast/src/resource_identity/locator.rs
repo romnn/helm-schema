@@ -1,7 +1,7 @@
-use helm_schema_ast::DefineIndex;
+use crate::DefineIndex;
+use helm_schema_core::{ResourceRef, YamlPath};
 
 use super::span_collection::{ResourceSpan, collect_resource_spans};
-use crate::{ResourceRef, YamlPath};
 
 /// Source-position index for Kubernetes resource identity claims.
 ///
@@ -9,25 +9,25 @@ use crate::{ResourceRef, YamlPath};
 /// This type only answers "which resource contains this byte position?" and
 /// rebases YAML paths from transparent list envelopes onto the inner resource.
 #[derive(Default, Clone, Debug)]
-pub(crate) struct ResourceIdentityIndex {
+pub struct ResourceIdentityIndex {
     spans: Vec<ResourceSpan>,
 }
 
 impl ResourceIdentityIndex {
     #[must_use]
-    pub(crate) fn from_source(source: &str, defines: &DefineIndex) -> Self {
+    pub fn from_source(source: &str, defines: &DefineIndex) -> Self {
         Self {
             spans: collect_resource_spans(source, defines),
         }
     }
 
-    pub(crate) fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
+    pub fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
         self.span_index_at(byte)
             .and_then(|index| self.spans.get(index))
             .map(|span| &span.resource)
     }
 
-    pub(crate) fn rebase_path_at(&self, byte: usize, path: YamlPath) -> YamlPath {
+    pub fn rebase_path_at(&self, byte: usize, path: YamlPath) -> YamlPath {
         let Some(span) = self
             .span_index_at(byte)
             .and_then(|index| self.spans.get(index))

@@ -1,13 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{TemplateExpr, TemplateHeader};
+use helm_schema_ast::{TemplateExpr, TemplateHeader, range_variable_name_expr};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with_fragment_locals};
-use crate::fragment_range_scope::{range_iterable_binding_expr, range_variable_name_expr};
 use crate::helper_summary::HelperOutputMeta;
 use crate::helper_walk_state::{HelperRangeIteration, HelperRuntimeControlState, RangeFrame};
 use crate::symbolic_local_state::SymbolicLocalState;
@@ -313,6 +312,22 @@ fn branch_guard_paths_for_expr(
         .dependency_relevant_paths(),
     );
     branch_guard_paths
+}
+
+fn range_iterable_binding_expr(
+    expr: &TemplateExpr,
+    local_bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> Option<AbstractValue> {
+    let value = match expr.deparen() {
+        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
+            value.as_ref()
+        }
+        expr => expr,
+    };
+    context.fragment_value_from_expr(value, local_bindings, current_dot, seen)
 }
 
 #[cfg(test)]
