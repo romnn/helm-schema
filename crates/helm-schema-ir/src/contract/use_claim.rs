@@ -22,18 +22,7 @@ impl ContractUse {
         guards: Vec<Guard>,
         resource: Option<ResourceRef>,
     ) -> Self {
-        Self::with_provenance(source_expr, path, kind, guards, resource, None)
-    }
-
-    pub(crate) fn with_provenance(
-        source_expr: String,
-        path: YamlPath,
-        kind: ValueKind,
-        guards: Vec<Guard>,
-        resource: Option<ResourceRef>,
-        provenance: Option<ContractProvenance>,
-    ) -> Self {
-        Self::with_provenances(source_expr, path, kind, guards, resource, provenance)
+        Self::with_provenances(source_expr, path, kind, guards, resource, None)
     }
 
     pub(crate) fn with_provenances(

@@ -128,7 +128,6 @@ struct SymbolicWalker<'a> {
 
     scope: SymbolicScopeState,
 
-    inline_helpers_in_fragments: bool,
     root_bindings: HashMap<String, AbstractValue>,
 }
 
@@ -157,7 +156,6 @@ impl<'a> SymbolicWalker<'a> {
 
             scope: SymbolicScopeState::default(),
 
-            inline_helpers_in_fragments: false,
             root_bindings: HashMap::new(),
         }
     }
@@ -183,11 +181,6 @@ impl<'a> SymbolicWalker<'a> {
             .filter_map(|entry| entry.strip_prefix("define:"))
             .map(std::string::ToString::to_string)
             .collect()
-    }
-
-    fn with_inline_helpers_in_fragments(mut self, enabled: bool) -> Self {
-        self.inline_helpers_in_fragments = enabled;
-        self
     }
 
     fn with_helper_values(mut self, bindings: HashMap<String, AbstractValue>) -> Self {

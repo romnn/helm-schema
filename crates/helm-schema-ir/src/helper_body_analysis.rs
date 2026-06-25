@@ -16,8 +16,8 @@ use crate::fragment_range_scope::{
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_exprs;
 use crate::helper_range_plan::NonExactRangeVariableBinding;
 use crate::helper_runtime_plan::{
-    HelperConditionPlan, HelperRangeDotSource, HelperRangeRuntimePlan, HelperRuntimeSemantics,
-    helper_if_condition_plan, helper_range_runtime_plan, helper_with_condition_plan,
+    HelperConditionPlan, HelperRangeRuntimePlan, helper_if_condition_plan,
+    helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
@@ -32,18 +32,6 @@ use crate::node_eval::{
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
-
-const VALUE_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
-    apply_alternative_predicate: true,
-    non_exact_range_variable_binding: NonExactRangeVariableBinding::Bind,
-    range_dot_source: HelperRangeDotSource::HelperValue,
-};
-
-const FRAGMENT_SEMANTICS: HelperRuntimeSemantics = HelperRuntimeSemantics {
-    apply_alternative_predicate: false,
-    non_exact_range_variable_binding: NonExactRangeVariableBinding::Skip,
-    range_dot_source: HelperRangeDotSource::FragmentValue,
-};
 
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, AbstractValue>,
@@ -569,7 +557,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.local_output_meta,
                 self.context,
                 self.value_seen,
-                VALUE_SEMANTICS,
+                true,
             ),
             fragment: helper_if_condition_plan(
                 header,
@@ -580,13 +568,15 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.local_output_meta,
                 self.context,
                 self.fragment_seen,
-                FRAGMENT_SEMANTICS,
+                false,
             ),
         }
     }
 
     fn activate_if_condition(&mut self, plan: &Self::ConditionPlan) {
-        plan.value.record_guard_paths_into(self.analysis);
+        for path in &plan.value.guard_paths {
+            self.analysis.add_guard_path(path.clone());
+        }
         Self::activate_if_control(&mut self.value_control, &plan.value.action);
         Self::activate_if_control(&mut self.fragment_control, &plan.fragment.action);
     }
@@ -610,7 +600,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.local_output_meta,
                 self.context,
                 self.value_seen,
-                VALUE_SEMANTICS,
+                true,
             ),
             fragment: helper_with_condition_plan(
                 header,
@@ -622,13 +612,15 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.local_output_meta,
                 self.context,
                 self.fragment_seen,
-                FRAGMENT_SEMANTICS,
+                false,
             ),
         }
     }
 
     fn activate_with_condition(&mut self, plan: &Self::ConditionPlan) {
-        plan.value.record_guard_paths_into(self.analysis);
+        for path in &plan.value.guard_paths {
+            self.analysis.add_guard_path(path.clone());
+        }
         Self::activate_with_control(&mut self.value_control, &plan.value.action);
         Self::activate_with_control(&mut self.fragment_control, &plan.fragment.action);
     }
@@ -658,7 +650,8 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 &self.value_locals.bindings,
                 self.context,
                 self.value_seen,
-                VALUE_SEMANTICS,
+                NonExactRangeVariableBinding::Bind,
+                false,
             ),
             fragment: helper_range_runtime_plan(
                 header,
@@ -668,7 +661,8 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 &self.fragment_locals.bindings,
                 self.context,
                 self.fragment_seen,
-                FRAGMENT_SEMANTICS,
+                NonExactRangeVariableBinding::Skip,
+                true,
             ),
         }
     }
@@ -679,23 +673,21 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         plan: &Self::RangePlan,
         current_path: &YamlPath,
     ) {
-        let value_activated = plan
-            .value
-            .clone()
+        plan.value
             .activate(&mut self.value_control, self.value_locals);
-        value_activated.record_guard_paths_into(self.analysis);
-        Self::activate_range_control(&mut self.value_control, &value_activated.action);
+        for path in &plan.value.guard_paths {
+            self.analysis.add_guard_path(path.clone());
+        }
+        Self::activate_range_control(&mut self.value_control, &plan.value.action);
 
-        let fragment_activated = plan
-            .fragment
-            .clone()
+        plan.fragment
             .activate(&mut self.fragment_control, self.fragment_locals);
         self.collect_destructured_range_fragment_outputs(
             node,
-            fragment_activated.range_fragment_value.as_ref(),
+            plan.fragment.range_fragment_value.as_ref(),
             current_path,
         );
-        Self::activate_range_control(&mut self.fragment_control, &fragment_activated.action);
+        Self::activate_range_control(&mut self.fragment_control, &plan.fragment.action);
     }
 }
 

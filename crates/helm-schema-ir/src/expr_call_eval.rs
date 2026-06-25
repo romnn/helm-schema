@@ -56,6 +56,88 @@ pub(crate) fn eval_call_with_helper_calls(
     }
 }
 
+pub(crate) fn eval_pipeline_with_helper_calls(
+    stages: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let Some(first_stage) = stages.first() else {
+        return EvalResult::none();
+    };
+    let mut current = eval_expr_with_helper_calls(first_stage, env, resolver);
+
+    for stage in &stages[1..] {
+        let TemplateExpr::Call { function, args } = stage else {
+            current
+                .effects
+                .merge(eval_expr_with_helper_calls(stage, env, resolver).effects);
+            continue;
+        };
+
+        current = match function.as_str() {
+            "default" => {
+                let mut effects = current.effects;
+                let current_paths = value_paths(&current.value);
+                effects.add_default_paths(current_paths.clone());
+                if let Some(schema_type) = args.first().and_then(expression_schema_type) {
+                    effects.add_type_hints(current_paths, schema_type);
+                }
+                let mut values = current.value.into_iter().collect::<Vec<_>>();
+                merge_arg_values(args, env, resolver, &mut values, &mut effects);
+                EvalResult::with_effects(AbstractValue::choice(values), effects)
+            }
+            function if is_merge_function(function) => {
+                let mut effects = current.effects;
+                let mut values = current.value.into_iter().collect::<Vec<_>>();
+                merge_arg_values(args, env, resolver, &mut values, &mut effects);
+                EvalResult::with_effects(AbstractValue::merge_all(values), effects)
+            }
+            "ternary" => {
+                let mut effects = current.effects;
+                let mut values = Vec::new();
+                for (index, arg) in args.iter().enumerate() {
+                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
+                    effects.merge(arg_result.effects);
+                    if index < 2
+                        && let Some(value) = arg_result.value
+                    {
+                        values.push(value);
+                    }
+                }
+                EvalResult::with_effects(AbstractValue::choice(values), effects)
+            }
+            function if is_string_transform_function(function) => {
+                let mut effects = current.effects;
+                let current_paths = value_paths(&current.value);
+                effects.add_string_hints(current_paths.clone());
+                if function == "b64enc" {
+                    effects.add_encoded_paths(current_paths);
+                }
+                for arg in args {
+                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
+                    if function == "b64enc" {
+                        effects.add_encoded_paths(value_paths(&arg_result.value));
+                    }
+                    effects.merge(arg_result.effects);
+                }
+                EvalResult::with_effects(current.value, effects)
+            }
+            function if is_provenance_preserving_function(function) => {
+                let mut effects = current.effects;
+                merge_arg_effects(args, env, resolver, &mut effects);
+                EvalResult::with_effects(current.value, effects)
+            }
+            _ => {
+                let mut effects = current.effects;
+                merge_arg_effects(args, env, resolver, &mut effects);
+                EvalResult::with_effects(None, effects)
+            }
+        };
+    }
+
+    current
+}
+
 fn eval_short_circuit_args(
     args: &[TemplateExpr],
     previous_truthy: bool,
@@ -591,6 +673,17 @@ fn eval_all_args(
 ) -> EvalResult {
     let mut values = Vec::new();
     let mut effects = Effects::default();
+    merge_arg_values(args, env, resolver, &mut values, &mut effects);
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn merge_arg_values(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    values: &mut Vec<AbstractValue>,
+    effects: &mut Effects,
+) {
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
@@ -598,7 +691,17 @@ fn eval_all_args(
             values.push(value);
         }
     }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn merge_arg_effects(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    effects: &mut Effects,
+) {
+    for arg in args {
+        effects.merge(eval_expr_with_helper_calls(arg, env, resolver).effects);
+    }
 }
 
 fn eval_unknown_call(
@@ -607,9 +710,7 @@ fn eval_unknown_call(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = Effects::default();
-    for arg in args {
-        effects.merge(eval_expr_with_helper_calls(arg, env, resolver).effects);
-    }
+    merge_arg_effects(args, env, resolver, &mut effects);
     EvalResult::with_effects(None, effects)
 }
 

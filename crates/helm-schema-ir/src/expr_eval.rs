@@ -5,9 +5,8 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_call_eval::eval_call_with_helper_calls;
+use crate::expr_call_eval::{eval_call_with_helper_calls, eval_pipeline_with_helper_calls};
 use crate::expr_function_catalog::is_merge_function;
-use crate::expr_pipeline_eval::eval_pipeline_with_helper_calls;
 
 pub(crate) trait HelperCallValueResolver {
     fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
@@ -252,11 +251,13 @@ pub(crate) fn eval_non_helper_output_exprs_effects(
     effects
 }
 
-pub(crate) fn eval_output_expr_effects(expr: &TemplateExpr, env: &EvalEnv) -> Effects {
+fn eval_output_expr_effects(expr: &TemplateExpr, env: &EvalEnv) -> Effects {
     let result = eval_expr(expr, env);
     if let Some(value) = result.value {
-        let mut effects = Effects::default();
-        effects.encoded_paths = result.effects.encoded_paths;
+        let mut effects = Effects {
+            encoded_paths: result.effects.encoded_paths,
+            ..Effects::default()
+        };
         effects.rendered_output_values.push(value);
         return effects;
     }
@@ -289,7 +290,7 @@ pub(crate) fn eval_output_expr_effects(expr: &TemplateExpr, env: &EvalEnv) -> Ef
     effects
 }
 
-pub(crate) fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
+fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
     let mut found = false;
     expr.walk(|node| {
         if let TemplateExpr::Call { function, .. } = node
@@ -340,14 +341,6 @@ fn local_value_result(
     env: &EvalEnv,
 ) -> EvalResult {
     let mut result = EvalResult::from_value(value.clone());
-    result
-        .effects
-        .local_source_paths
-        .extend(value.fragment_source_paths());
-    result
-        .effects
-        .local_rendered_paths
-        .extend(value.fragment_rendered_paths());
     result.effects.local_output_values.push(value);
     if let Some(default_paths) = env.local_default_paths.get(var) {
         result

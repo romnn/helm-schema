@@ -169,7 +169,7 @@ fn collect_assignment_bound_helper_values(
         state.seen,
     );
     let fallback_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
-    let local_source_paths = result.effects.local_source_paths.clone();
+    let local_source_paths = result.effects.local_source_paths();
     let local_default_paths = result.effects.local_default_paths.clone();
     let local_output_meta = result.effects.local_output_meta.clone();
     let result_output_meta = result

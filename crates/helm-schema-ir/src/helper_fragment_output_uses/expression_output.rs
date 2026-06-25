@@ -90,12 +90,12 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let handled_outputs: BTreeSet<String> = direct_output_uses
         .iter()
         .map(|output| output.source_expr.clone())
-        .chain(local_effects.local_rendered_paths.iter().cloned())
+        .chain(local_effects.local_rendered_paths())
         .collect();
     state.outputs.extend(direct_output_uses);
 
     let local_output_uses = local_output_uses_from_effects(
-        &local_effects,
+        local_effects,
         &output_path,
         kind,
         active_output_predicates,
@@ -103,13 +103,17 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     );
 
     let mut expression_output_uses = Vec::new();
+    let mut expression_default_paths = fallback_paths.clone();
+    expression_default_paths.extend(local_effects.local_default_paths.iter().cloned());
     if let Some(binding) = &result.value {
-        binding.collect_output_uses(
+        binding.collect_output_uses_with_encoding(
             &mut expression_output_uses,
             &output_path,
             kind,
+            &local_effects.encoded_paths,
             active_output_predicates,
-            &fallback_paths,
+            &expression_default_paths,
+            true,
         );
     }
     let nested = result.effects.helper_summary;
@@ -131,8 +135,10 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .collect();
     let nested_has_fragment_outputs = !nested_fragment_outputs.is_empty();
 
-    expression_output_uses
-        .retain(|output| expression_output_use_is_keyed_map_projection(output, &output_path));
+    expression_output_uses.retain(|output| {
+        (!output_path.0.is_empty() && output.relative_path == output_path)
+            || expression_output_use_is_keyed_map_projection(output, &output_path)
+    });
     let expression_descendant_sources: BTreeSet<String> = expression_output_uses
         .iter()
         .filter(|output| !output.relative_path.0.is_empty())
@@ -186,6 +192,50 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             meta,
         ));
     }
+}
+
+fn local_output_uses_from_effects(
+    effects: &Effects,
+    output_path: &YamlPath,
+    kind: ValueKind,
+    active_output_predicates: &BTreeSet<Predicate>,
+    local_fallback_paths: &BTreeSet<String>,
+) -> Vec<HelperFragmentOutputUse> {
+    let mut local_output_uses = Vec::new();
+    for binding in &effects.local_output_values {
+        binding.collect_output_uses_with_encoding(
+            &mut local_output_uses,
+            output_path,
+            kind,
+            &BTreeSet::new(),
+            active_output_predicates,
+            local_fallback_paths,
+            true,
+        );
+    }
+    local_output_uses
+}
+
+fn output_uses_from_rendered_effects(
+    effects: &Effects,
+    output_path: &YamlPath,
+    kind: ValueKind,
+    active_output_predicates: &BTreeSet<Predicate>,
+    fallback_paths: &BTreeSet<String>,
+) -> Vec<HelperFragmentOutputUse> {
+    let mut outputs = Vec::new();
+    for value in &effects.rendered_output_values {
+        value.collect_output_uses_with_encoding(
+            &mut outputs,
+            output_path,
+            kind,
+            &effects.encoded_paths,
+            active_output_predicates,
+            fallback_paths,
+            false,
+        );
+    }
+    outputs
 }
 
 fn collect_bound_fragment_output_assignment_uses(
@@ -250,47 +300,6 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut defaulted_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
     defaulted_paths.extend(local_default_paths);
     state.locals.set_default_paths(var, defaulted_paths);
-}
-
-fn local_output_uses_from_effects(
-    effects: &Effects,
-    output_path: &YamlPath,
-    kind: ValueKind,
-    active_output_predicates: &BTreeSet<Predicate>,
-    local_fallback_paths: &BTreeSet<String>,
-) -> Vec<HelperFragmentOutputUse> {
-    let mut local_output_uses = Vec::new();
-    for binding in &effects.local_output_values {
-        binding.collect_fragment_output_uses(
-            &mut local_output_uses,
-            output_path,
-            kind,
-            active_output_predicates,
-            local_fallback_paths,
-        );
-    }
-    local_output_uses
-}
-
-fn output_uses_from_rendered_effects(
-    effects: &Effects,
-    output_path: &YamlPath,
-    kind: ValueKind,
-    active_output_predicates: &BTreeSet<Predicate>,
-    fallback_paths: &BTreeSet<String>,
-) -> Vec<HelperFragmentOutputUse> {
-    let mut outputs = Vec::new();
-    for value in &effects.rendered_output_values {
-        value.collect_output_uses_with_encoding(
-            &mut outputs,
-            output_path,
-            kind,
-            &effects.encoded_paths,
-            active_output_predicates,
-            fallback_paths,
-        );
-    }
-    outputs
 }
 
 fn expression_output_use_is_keyed_map_projection(

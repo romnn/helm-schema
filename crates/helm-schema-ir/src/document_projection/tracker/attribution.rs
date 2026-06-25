@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 
 use crate::fragment_range_scope::range_body_mapping_entry_indent_from_source;
-use crate::tree_sitter_utils::parse_go_template;
 use crate::yaml_syntax::first_mapping_colon_offset;
 use crate::{SourceSpan, ValueKind, YamlPath};
 
@@ -299,6 +298,27 @@ fn resolve_structural_output_context(
     resolve_structural_context_from_prefix(&prefix[local_start..], output_indent).or(context)
 }
 
+fn structural_prefix_root_start(prefix: &str) -> usize {
+    let mut line_end = prefix.len();
+    while line_end > 0 {
+        let line_start = prefix[..line_end].rfind('\n').map_or(0, |index| index + 1);
+        let line = &prefix[line_start..line_end];
+        let trimmed = line.trim_start();
+        let indent = line.len() - trimmed.len();
+        if indent == 0
+            && !trimmed.starts_with(PLACEHOLDER_PREFIX)
+            && first_mapping_colon_offset(trimmed).is_some()
+        {
+            return line_start;
+        }
+        if line_start == 0 {
+            break;
+        }
+        line_end = line_start - 1;
+    }
+    0
+}
+
 fn resolve_structural_context_from_prefix(
     prefix: &str,
     output_indent: usize,
@@ -323,27 +343,6 @@ fn resolve_structural_context_from_prefix(
         })
         .or_else(|| last.last())?;
     Some(context_for_source_slot(slot))
-}
-
-fn structural_prefix_root_start(prefix: &str) -> usize {
-    let mut line_end = prefix.len();
-    while line_end > 0 {
-        let line_start = prefix[..line_end].rfind('\n').map_or(0, |index| index + 1);
-        let line = &prefix[line_start..line_end];
-        let trimmed = line.trim_start();
-        let indent = line.len() - trimmed.len();
-        if indent == 0
-            && !trimmed.starts_with(PLACEHOLDER_PREFIX)
-            && first_mapping_colon_offset(trimmed).is_some()
-        {
-            return line_start;
-        }
-        if line_start == 0 {
-            break;
-        }
-        line_end = line_start - 1;
-    }
-    0
 }
 
 fn collect_structural_slots_before(
@@ -719,8 +718,6 @@ fn sanitize_stream(
 
         if node.is_named() && node.kind() == "comment" {
             blank_range(sanitized, node.start_byte(), node.end_byte());
-        } else if matches!(node.kind(), "text" | "yaml_no_injection_text") {
-            sanitize_embedded_template_actions(node, sanitized);
         }
 
         index += 1;
@@ -837,72 +834,6 @@ fn first_nonblank_byte(sanitized: &[u8], start: usize, end: usize) -> Option<usi
         .iter()
         .position(|byte| !matches!(byte, b' ' | b'\t' | b'\n' | b'\r'))
         .map(|offset| start + offset)
-}
-
-fn sanitize_embedded_template_actions(node: tree_sitter::Node<'_>, sanitized: &mut [u8]) {
-    let Ok(text) = node.utf8_text(sanitized) else {
-        return;
-    };
-    let text = text.to_string();
-    if !text.contains("{{") {
-        return;
-    }
-
-    let Some(tree) = parse_go_template(&text) else {
-        return;
-    };
-    let mut ranges = Vec::new();
-    collect_template_action_ranges(tree.root_node(), &mut ranges);
-
-    for (local_start, local_end) in ranges {
-        if local_start >= local_end || local_end > text.len() {
-            continue;
-        }
-        let start = node.start_byte() + local_start;
-        let end = node.start_byte() + local_end;
-        let action_text = &text[local_start..local_end];
-        if parse_action_expressions(action_text).is_empty() {
-            blank_range(sanitized, start, end);
-        } else {
-            let token = embedded_placeholder_token(local_start, end - start);
-            fill_placeholder(sanitized, start, end, &token);
-        }
-    }
-}
-
-fn collect_template_action_ranges(node: tree_sitter::Node<'_>, ranges: &mut Vec<(usize, usize)>) {
-    let children = direct_children(node);
-    let mut index = 0usize;
-    while index < children.len() {
-        let child = children[index].node;
-        if is_template_delim_start(child.kind()) {
-            let mut end_index = index + 1;
-            while end_index < children.len()
-                && !is_template_delim_end(children[end_index].node.kind())
-            {
-                end_index += 1;
-            }
-            if end_index < children.len() {
-                ranges.push((child.start_byte(), children[end_index].node.end_byte()));
-                index = end_index + 1;
-                continue;
-            }
-        }
-
-        collect_template_action_ranges(child, ranges);
-        index += 1;
-    }
-}
-
-fn embedded_placeholder_token(offset: usize, len: usize) -> String {
-    let base = format!("__HSE{}_", base36(offset));
-    if base.len() >= len {
-        base[..len].to_string()
-    } else {
-        let mut token = base;
-        token.push_str(&"x".repeat(len - token.len()));
-        token
-    }
 }
 
 #[derive(Clone, Copy)]

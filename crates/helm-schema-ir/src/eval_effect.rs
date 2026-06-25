@@ -13,8 +13,6 @@ pub(crate) struct Effects {
     pub(crate) string_hints: BTreeSet<String>,
     pub(crate) encoded_paths: BTreeSet<String>,
     pub(crate) chart_default_paths: BTreeSet<String>,
-    pub(crate) local_source_paths: BTreeSet<String>,
-    pub(crate) local_rendered_paths: BTreeSet<String>,
     pub(crate) local_default_paths: BTreeSet<String>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) local_output_values: Vec<AbstractValue>,
@@ -40,8 +38,6 @@ impl Effects {
         self.string_hints.extend(other.string_hints);
         self.encoded_paths.extend(other.encoded_paths);
         self.chart_default_paths.extend(other.chart_default_paths);
-        self.local_source_paths.extend(other.local_source_paths);
-        self.local_rendered_paths.extend(other.local_rendered_paths);
         self.local_default_paths.extend(other.local_default_paths);
         self.local_output_values.extend(other.local_output_values);
         self.rendered_output_values
@@ -68,16 +64,11 @@ impl Effects {
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
-    pub(crate) fn add_type_hint(&mut self, path: String, schema_type: &str) {
-        if path.trim().is_empty() {
-            return;
-        }
-        insert_type_hint(&mut self.type_hints, path, schema_type);
-    }
-
     pub(crate) fn add_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
         for path in paths {
-            self.add_type_hint(path, schema_type);
+            if !path.trim().is_empty() {
+                insert_type_hint(&mut self.type_hints, path, schema_type);
+            }
         }
     }
 
@@ -101,7 +92,7 @@ impl Effects {
 
     pub(crate) fn output_value_paths(&self) -> BTreeSet<String> {
         let mut paths = self.output_paths.clone();
-        paths.extend(self.local_source_paths.iter().cloned());
+        paths.extend(self.local_source_paths());
         paths.extend(self.local_output_meta.keys().cloned());
         paths.retain(|path| !path.trim().is_empty());
         paths
@@ -115,10 +106,24 @@ impl Effects {
     }
 
     pub(crate) fn local_output_sources(&self) -> BTreeSet<String> {
-        let mut paths = self.local_rendered_paths.clone();
+        let mut paths = self.local_rendered_paths();
         paths.extend(self.local_output_meta.keys().cloned());
         paths.retain(|path| !path.trim().is_empty());
         paths
+    }
+
+    pub(crate) fn local_source_paths(&self) -> BTreeSet<String> {
+        self.local_output_values
+            .iter()
+            .flat_map(AbstractValue::fragment_source_paths)
+            .collect()
+    }
+
+    pub(crate) fn local_rendered_paths(&self) -> BTreeSet<String> {
+        self.local_output_values
+            .iter()
+            .flat_map(AbstractValue::fragment_rendered_paths)
+            .collect()
     }
 
     pub(crate) fn merge_local_output_meta<'a>(

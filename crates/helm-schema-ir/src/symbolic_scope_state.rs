@@ -21,8 +21,8 @@ impl SymbolicScopeState {
     pub(crate) fn reset_control(&mut self, predicates: &[Predicate], dot: Option<AbstractValue>) {
         self.predicates = predicates.to_vec();
         self.dot_stack.clear();
-        if let Some(dot) = dot {
-            self.dot_stack.push(Some(dot));
+        if dot.is_some() {
+            self.dot_stack.push(dot);
         }
     }
 

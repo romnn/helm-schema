@@ -104,13 +104,12 @@ fn omit_keys_removes_known_map_entries_but_preserves_values_root() {
 }
 
 #[test]
-fn shallow_paths_do_not_descend_structured_maps() {
+fn paths_descend_structured_maps() {
     let value = AbstractValue::Dict(BTreeMap::from([(
         "metadata".to_string(),
         AbstractValue::ValuesPath("podLabels".to_string()),
     )]));
 
-    sim_assert_eq!(have: value.shallow_paths(), want: BTreeSet::new());
     sim_assert_eq!(have: value.paths(), want: paths(&["podLabels"]));
 }
 

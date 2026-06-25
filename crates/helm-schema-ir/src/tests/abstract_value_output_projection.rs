@@ -62,21 +62,25 @@ fn direct_and_fragment_values_share_structural_output_projection() {
     let defaulted_paths = BTreeSet::from(["containers.image".to_string()]);
 
     let mut helper_outputs = Vec::new();
-    direct_value.collect_output_uses(
+    direct_value.collect_output_uses_with_encoding(
         &mut helper_outputs,
         &relative_path,
         ValueKind::Fragment,
+        &BTreeSet::new(),
         &predicates,
         &defaulted_paths,
+        false,
     );
 
     let mut fragment_outputs = Vec::new();
-    fragment_value.collect_fragment_output_uses(
+    fragment_value.collect_output_uses_with_encoding(
         &mut fragment_outputs,
         &relative_path,
         ValueKind::Fragment,
+        &BTreeSet::new(),
         &predicates,
         &defaulted_paths,
+        true,
     );
 
     sim_assert_eq!(
@@ -111,12 +115,14 @@ fn nested_fragment_values_root_still_abstains_from_output_projection() {
     )]));
     let mut outputs = Vec::new();
 
-    fragment_value.collect_fragment_output_uses(
+    fragment_value.collect_output_uses_with_encoding(
         &mut outputs,
         &YamlPath(Vec::new()),
         ValueKind::Fragment,
         &BTreeSet::new(),
         &BTreeSet::new(),
+        &BTreeSet::new(),
+        true,
     );
 
     assert!(outputs.is_empty());

@@ -1,45 +1,28 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::TemplateHeader;
+use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use crate::abstract_value::AbstractValue;
 use crate::condition_action_plan::ConditionActionPlan;
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with_fragment_locals};
 use crate::helper_range_frame::RangeFrame;
 use crate::helper_range_plan::{
     HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
 };
-use crate::helper_runtime_guards::{branch_condition_facts_for_expr, branch_guard_paths_for_expr};
-use crate::helper_summary::{HelperOutputMeta, HelperSummary};
+use crate::helper_summary::HelperOutputMeta;
 use crate::helper_walk_state::{HelperRuntimeControlState, HelperRuntimeLocals};
+use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
+use crate::value_path_context::ValuePathContext;
 use crate::value_path_context::computed_with_body_fragment_value_expr;
-
-#[derive(Clone, Copy)]
-pub(crate) enum HelperRangeDotSource {
-    HelperValue,
-    FragmentValue,
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct HelperRuntimeSemantics {
-    pub(crate) apply_alternative_predicate: bool,
-    pub(crate) non_exact_range_variable_binding: NonExactRangeVariableBinding,
-    pub(crate) range_dot_source: HelperRangeDotSource,
-}
 
 #[derive(Clone)]
 pub(crate) struct HelperConditionPlan {
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) action: ConditionActionPlan,
-}
-
-impl HelperConditionPlan {
-    pub(crate) fn record_guard_paths_into(&self, analysis: &mut HelperSummary) {
-        for path in &self.guard_paths {
-            analysis.add_guard_path(path.clone());
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -51,37 +34,17 @@ pub(crate) struct HelperRangeRuntimePlan {
     pub(crate) range_fragment_value: Option<AbstractValue>,
 }
 
-pub(crate) struct ActivatedHelperRange {
-    pub(crate) guard_paths: BTreeSet<String>,
-    pub(crate) action: RangeActionPlan,
-    pub(crate) range_fragment_value: Option<AbstractValue>,
-}
-
 impl HelperRangeRuntimePlan {
     pub(crate) fn activate(
-        self,
+        &self,
         control: &mut HelperRuntimeControlState,
         locals: &mut HelperRuntimeLocals,
-    ) -> ActivatedHelperRange {
+    ) {
         control.extend_truthy_predicates(self.guard_paths.iter().cloned());
-        if let Some((variable, binding)) = self.non_exact_variable_binding {
-            locals.bindings.insert(variable, binding);
+        if let Some((variable, binding)) = &self.non_exact_variable_binding {
+            locals.bindings.insert(variable.clone(), binding.clone());
         }
-        control.push_range_frame(self.frame);
-
-        ActivatedHelperRange {
-            guard_paths: self.guard_paths,
-            action: self.action,
-            range_fragment_value: self.range_fragment_value,
-        }
-    }
-}
-
-impl ActivatedHelperRange {
-    pub(crate) fn record_guard_paths_into(&self, analysis: &mut HelperSummary) {
-        for path in &self.guard_paths {
-            analysis.add_guard_path(path.clone());
-        }
+        control.push_range_frame(self.frame.clone());
     }
 }
 
@@ -94,7 +57,7 @@ pub(crate) fn helper_if_condition_plan(
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    semantics: HelperRuntimeSemantics,
+    apply_alternative_predicate: bool,
 ) -> HelperConditionPlan {
     let facts = branch_condition_facts_for_expr(
         header.expr(),
@@ -111,7 +74,7 @@ pub(crate) fn helper_if_condition_plan(
             predicate: facts.predicate,
             bound_values: Vec::new(),
             dot_binding: None,
-            apply_alternative_predicate: semantics.apply_alternative_predicate,
+            apply_alternative_predicate,
         },
         guard_paths: facts.guard_paths,
     }
@@ -127,7 +90,7 @@ pub(crate) fn helper_with_condition_plan(
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    semantics: HelperRuntimeSemantics,
+    apply_alternative_predicate: bool,
 ) -> HelperConditionPlan {
     let facts = branch_condition_facts_for_expr(
         header.expr(),
@@ -152,7 +115,7 @@ pub(crate) fn helper_with_condition_plan(
             predicate: facts.predicate,
             bound_values: Vec::new(),
             dot_binding: body_dot,
-            apply_alternative_predicate: semantics.apply_alternative_predicate,
+            apply_alternative_predicate,
         },
         guard_paths: facts.guard_paths,
     }
@@ -166,7 +129,8 @@ pub(crate) fn helper_range_runtime_plan(
     local_bindings: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    semantics: HelperRuntimeSemantics,
+    non_exact_range_variable_binding: NonExactRangeVariableBinding,
+    use_fragment_dot: bool,
 ) -> HelperRangeRuntimePlan {
     let Some(header) = header else {
         return HelperRangeRuntimePlan {
@@ -192,19 +156,20 @@ pub(crate) fn helper_range_runtime_plan(
         current_dot_fragment,
         context,
         seen,
-        semantics.non_exact_range_variable_binding,
+        non_exact_range_variable_binding,
     );
     let non_exact_variable_binding = range_plan.take_non_exact_variable_binding();
     let range_fragment_value = range_plan.range_fragment_value().cloned();
-    let (frame, dot_binding) = match semantics.range_dot_source {
-        HelperRangeDotSource::HelperValue => (
-            range_plan.helper_value_frame(),
-            range_plan.helper_value_body_dot(),
-        ),
-        HelperRangeDotSource::FragmentValue => (
+    let (frame, dot_binding) = if use_fragment_dot {
+        (
             range_plan.fragment_output_frame(),
             range_plan.fragment_output_body_dot(),
-        ),
+        )
+    } else {
+        (
+            range_plan.helper_value_frame(),
+            range_plan.helper_value_body_dot(),
+        )
     };
 
     HelperRangeRuntimePlan {
@@ -216,6 +181,91 @@ pub(crate) fn helper_range_runtime_plan(
     }
 }
 
+struct BranchConditionFacts {
+    guard_paths: BTreeSet<String>,
+    predicate: Predicate,
+}
+
+fn branch_condition_facts_for_expr(
+    expr: &TemplateExpr,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    local_default_paths: &HashMap<String, BTreeSet<String>>,
+    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> BranchConditionFacts {
+    let guard_paths =
+        branch_guard_paths_for_expr(expr, bindings, current_dot, local_bindings, context, seen);
+    let range_domains = HashMap::new();
+    let get_bindings = HashMap::new();
+    let value_path_context = ValuePathContext {
+        root_bindings: bindings,
+        template_bindings: local_bindings,
+        range_domains: &range_domains,
+        get_bindings: &get_bindings,
+        template_default_paths: local_default_paths,
+        template_output_meta: local_output_meta,
+        fragment_context: context,
+        current_dot_fragment: None,
+        current_dot_binding: current_dot.cloned(),
+    };
+    let predicate = value_path_context.condition_predicate_expr(expr);
+    let predicate = if predicate.is_trivial() {
+        Predicate::all(
+            guard_paths
+                .iter()
+                .cloned()
+                .map(Predicate::truthy_path)
+                .collect(),
+        )
+    } else {
+        predicate
+    };
+    BranchConditionFacts {
+        guard_paths,
+        predicate,
+    }
+}
+
+fn branch_guard_paths_for_expr(
+    expr: &TemplateExpr,
+    bindings: &HashMap<String, AbstractValue>,
+    current_dot: Option<&AbstractValue>,
+    local_bindings: &HashMap<String, AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> BTreeSet<String> {
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot).without_helper_call_args();
+    let mut branch_guard_paths = eval_expr(expr, &env).effects.reads;
+    let local_env = EvalEnv {
+        locals: local_bindings.clone(),
+        skip_helper_call_args: true,
+        ..EvalEnv::default()
+    };
+    branch_guard_paths.extend(eval_expr(expr, &local_env).effects.local_source_paths());
+
+    branch_guard_paths.extend(
+        helper_result_from_expr_with_fragment_locals(
+            expr,
+            FragmentLocalFacts::bindings_only(local_bindings),
+            Some(bindings),
+            current_dot,
+            context,
+            seen,
+        )
+        .effects
+        .helper_summary
+        .dependency_relevant_paths(),
+    );
+    branch_guard_paths
+}
+
 #[cfg(test)]
 #[path = "tests/helper_runtime_plan.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "tests/helper_runtime_guards.rs"]
+mod guard_tests;

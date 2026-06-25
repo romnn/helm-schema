@@ -27,37 +27,51 @@ impl AbstractValue {
     }
 
     pub(crate) fn paths(&self) -> BTreeSet<String> {
-        match self {
-            Self::ValuesPath(path) => [path.clone()].into_iter().collect(),
-            Self::OutputSet(outputs) => outputs.keys().cloned().collect(),
-            Self::Dict(map) => map.values().flat_map(Self::paths).collect(),
-            Self::List(items) => items.iter().flat_map(Self::paths).collect(),
-            Self::Overlay { entries, fallback } => entries
-                .values()
-                .flat_map(Self::paths)
-                .chain(fallback.paths())
-                .collect(),
-            Self::Choice(choices) => choices.iter().flat_map(Self::paths).collect(),
-            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => BTreeSet::new(),
-        }
+        let mut paths = BTreeSet::new();
+        self.collect_paths(&mut paths, true, false);
+        paths
     }
 
-    pub(crate) fn shallow_paths(&self) -> BTreeSet<String> {
+    fn collect_paths(
+        &self,
+        out: &mut BTreeSet<String>,
+        descend_structures: bool,
+        suppress_values_root: bool,
+    ) {
         match self {
-            Self::ValuesPath(path) => [path.clone()].into_iter().collect(),
-            Self::OutputSet(outputs) => outputs.keys().cloned().collect(),
+            Self::ValuesPath(path) => {
+                if !suppress_values_root || !path.is_empty() {
+                    out.insert(path.clone());
+                }
+            }
+            Self::OutputSet(outputs) => out.extend(outputs.keys().cloned()),
+            Self::Dict(map) if descend_structures => {
+                for value in map.values() {
+                    value.collect_paths(out, descend_structures, suppress_values_root);
+                }
+            }
+            Self::List(items) if descend_structures => {
+                for value in items {
+                    value.collect_paths(out, descend_structures, suppress_values_root);
+                }
+            }
             Self::Overlay { entries, fallback } => entries
                 .values()
-                .flat_map(Self::shallow_paths)
-                .chain(fallback.shallow_paths())
-                .collect(),
-            Self::Choice(choices) => choices.iter().flat_map(Self::shallow_paths).collect(),
+                .chain(std::iter::once(fallback.as_ref()))
+                .for_each(|value| {
+                    value.collect_paths(out, descend_structures, suppress_values_root);
+                }),
+            Self::Choice(choices) => {
+                for value in choices {
+                    value.collect_paths(out, descend_structures, suppress_values_root);
+                }
+            }
             Self::Top
             | Self::Unknown
             | Self::RootContext
             | Self::StringSet(_)
             | Self::Dict(_)
-            | Self::List(_) => BTreeSet::new(),
+            | Self::List(_) => {}
         }
     }
 
@@ -520,88 +534,16 @@ impl AbstractValue {
         }
     }
 
-    /// Project a value for rendered-output attribution.
-    ///
-    /// An empty values-root path means the whole values document is available as
-    /// data, not that the output path is the whole values document. Output
-    /// attribution therefore abstains instead of inventing a root source path.
-    pub(crate) fn for_fragment_output_projection(&self) -> Self {
-        match self {
-            Self::ValuesPath(path) if path.is_empty() => Self::Unknown,
-            Self::ValuesPath(path) => Self::ValuesPath(path.clone()),
-            Self::RootContext => Self::RootContext,
-            Self::Unknown => Self::Unknown,
-            Self::Top => Self::Top,
-            Self::OutputSet(outputs) => Self::OutputSet(outputs.clone()),
-            Self::StringSet(strings) => Self::StringSet(strings.clone()),
-            Self::Dict(map) => Self::Dict(
-                map.iter()
-                    .map(|(key, value)| (key.clone(), value.for_fragment_output_projection()))
-                    .collect(),
-            ),
-            Self::List(items) => Self::List(
-                items
-                    .iter()
-                    .map(Self::for_fragment_output_projection)
-                    .collect(),
-            ),
-            Self::Overlay { entries, fallback } => Self::Overlay {
-                entries: entries
-                    .iter()
-                    .map(|(key, value)| (key.clone(), value.for_fragment_output_projection()))
-                    .collect(),
-                fallback: Box::new(fallback.for_fragment_output_projection()),
-            },
-            Self::Choice(choices) => Self::Choice(
-                choices
-                    .iter()
-                    .map(Self::for_fragment_output_projection)
-                    .collect::<BTreeSet<_>>(),
-            ),
-        }
-    }
-
     pub(crate) fn fragment_source_paths(&self) -> BTreeSet<String> {
-        self.for_fragment_output_projection().shallow_paths()
+        let mut paths = BTreeSet::new();
+        self.collect_paths(&mut paths, false, true);
+        paths
     }
 
     pub(crate) fn fragment_rendered_paths(&self) -> BTreeSet<String> {
-        self.for_fragment_output_projection().paths()
-    }
-
-    pub(crate) fn collect_output_uses(
-        &self,
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-        relative_path: &YamlPath,
-        kind: ValueKind,
-        active_output_predicates: &BTreeSet<Predicate>,
-        defaulted_paths: &BTreeSet<String>,
-    ) {
-        self.collect_output_uses_with_encoding(
-            outputs,
-            relative_path,
-            kind,
-            &BTreeSet::new(),
-            active_output_predicates,
-            defaulted_paths,
-        );
-    }
-
-    pub(crate) fn collect_fragment_output_uses(
-        &self,
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-        relative_path: &YamlPath,
-        kind: ValueKind,
-        active_output_predicates: &BTreeSet<Predicate>,
-        defaulted_paths: &BTreeSet<String>,
-    ) {
-        self.for_fragment_output_projection().collect_output_uses(
-            outputs,
-            relative_path,
-            kind,
-            active_output_predicates,
-            defaulted_paths,
-        );
+        let mut paths = BTreeSet::new();
+        self.collect_paths(&mut paths, true, true);
+        paths
     }
 
     pub(crate) fn collect_output_uses_with_encoding(
@@ -612,9 +554,10 @@ impl AbstractValue {
         encoded_paths: &BTreeSet<String>,
         active_output_predicates: &BTreeSet<Predicate>,
         defaulted_paths: &BTreeSet<String>,
+        suppress_values_root: bool,
     ) {
         match self {
-            Self::ValuesPath(path) => {
+            Self::ValuesPath(path) if !suppress_values_root || !path.is_empty() => {
                 push_output_path(
                     outputs,
                     path,
@@ -626,6 +569,7 @@ impl AbstractValue {
                     defaulted_paths,
                 );
             }
+            Self::ValuesPath(_) => {}
             Self::OutputSet(outputs_by_path) => {
                 for (path, meta) in outputs_by_path {
                     push_output_path(
@@ -653,6 +597,7 @@ impl AbstractValue {
                         encoded_paths,
                         active_output_predicates,
                         defaulted_paths,
+                        suppress_values_root,
                     );
                 }
             }
@@ -664,6 +609,7 @@ impl AbstractValue {
                     encoded_paths,
                     active_output_predicates,
                     defaulted_paths,
+                    suppress_values_root,
                 );
                 for (key, value) in entries {
                     let child_path = output_path::append_relative_path(
@@ -677,6 +623,7 @@ impl AbstractValue {
                         encoded_paths,
                         active_output_predicates,
                         defaulted_paths,
+                        suppress_values_root,
                     );
                 }
             }
@@ -689,6 +636,7 @@ impl AbstractValue {
                         encoded_paths,
                         active_output_predicates,
                         defaulted_paths,
+                        suppress_values_root,
                     );
                 }
             }
@@ -702,6 +650,7 @@ impl AbstractValue {
                         encoded_paths,
                         active_output_predicates,
                         defaulted_paths,
+                        suppress_values_root,
                     );
                 }
             }

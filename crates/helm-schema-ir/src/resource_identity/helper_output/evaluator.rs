@@ -464,8 +464,8 @@ fn static_literal_outputs(expr: &TemplateExpr) -> Vec<String> {
     let result = eval_expr(expr, &EvalEnv::default());
     if !result.effects.reads.is_empty()
         || !result.effects.output_paths.is_empty()
-        || !result.effects.local_source_paths.is_empty()
-        || !result.effects.local_rendered_paths.is_empty()
+        || !result.effects.local_source_paths().is_empty()
+        || !result.effects.local_rendered_paths().is_empty()
     {
         return Vec::new();
     }

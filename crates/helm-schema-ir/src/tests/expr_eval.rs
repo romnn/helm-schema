@@ -194,7 +194,7 @@ fn local_fragment_variable_effects_include_shallow_source_paths() {
     let result = eval_expr(&single_expr("$nodeSelector"), &env);
 
     sim_assert_eq!(
-        have: result.effects.local_source_paths,
+        have: result.effects.local_source_paths(),
         want: BTreeSet::from([
             "global.nodeSelector".to_string(),
             "nodeSelector".to_string(),

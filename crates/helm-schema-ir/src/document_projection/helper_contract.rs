@@ -1,43 +1,20 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use crate::ValueKind;
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
 use crate::eval_effect::Effects;
-use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
+use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
 use crate::{Guard, YamlPath, output_path};
 
 use super::tracker::OutputSlot;
 
-pub(crate) struct DocumentOutputFacts {
-    pub(crate) output_effects: Effects,
-    pub(crate) helper: HelperSummary,
-}
-
-impl DocumentOutputFacts {
-    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = self.output_effects.local_output_meta.clone();
-        for (path, meta) in &self.helper.scalar_output_meta {
-            out.entry(path.clone()).or_default().merge_ref(meta);
-        }
-        for output in &self.helper.fragment_output_uses {
-            out.entry(output.source_expr.clone())
-                .or_default()
-                .merge_ref(&output.meta);
-        }
-        out
-    }
-}
-
 pub(crate) fn document_output_contract(
     site: OutputSlot,
-    facts: DocumentOutputFacts,
+    mut output_effects: Effects,
+    helper: HelperSummary,
     context: &ContractUseContext<'_>,
 ) -> ContractIr {
-    let DocumentOutputFacts {
-        mut output_effects,
-        helper,
-    } = facts;
     let mut contract = ContractIr::default();
     if site.kind == ValueKind::Scalar {
         let all_values = output_effects.output_paths.clone();

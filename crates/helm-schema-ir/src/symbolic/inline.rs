@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr};
-use crate::helper_inline::plan_exact_helper_inline_from_exprs;
+use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr, expr_literal_helper_call_callee};
+use crate::resource_identity::ResourceIdentityDetector;
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
 use crate::tree_sitter_utils::parse_go_template;
 use crate::{ContractUse, ValueKind, YamlPath};
-use helm_schema_ast::TemplateExpr;
+use helm_schema_ast::{HelmAst, TemplateExpr};
 
 use super::SymbolicWalker;
 
@@ -66,46 +66,65 @@ impl SymbolicWalker<'_> {
         .with_initial_predicates(self.scope.predicates().to_vec())
         .with_initial_dot_binding(request.dot)
         .with_inline_stack(stack)
-        .with_inline_helpers_in_fragments(true)
         .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
         let contract = nested.run_contract(&tree);
         self.contract.append(contract);
     }
 
     pub(super) fn inline_exact_helper_call(&mut self, exprs: &[TemplateExpr]) -> bool {
-        let Some(plan) = plan_exact_helper_inline_from_exprs(
-            exprs,
-            self.defines,
-            &self.ir_context.inner.analysis_db,
-            &self.inline_stack,
-        ) else {
+        let [expr] = exprs else {
+            return false;
+        };
+        let TemplateExpr::Call { args, .. } = expr else {
+            return false;
+        };
+        let Some(name) = expr_literal_helper_call_callee(expr) else {
+            return false;
+        };
+        let Some(body_ast) = self.defines.get(name) else {
+            return false;
+        };
+        let ast = HelmAst::Document {
+            items: body_ast.to_vec(),
+        };
+        if ResourceIdentityDetector::new(self.defines)
+            .detect(&ast)
+            .is_none()
+        {
+            return false;
+        }
+        let Some(body) = self.ir_context.inner.analysis_db.parsed_helper_body(name) else {
+            return false;
+        };
+        let token = format!("define:{name}");
+        if self.inline_stack.iter().any(|entry| entry == &token) {
             return false;
         };
         let helper_summary = self.summarize_bound_helper_calls_in_exprs(exprs);
 
         let current_dot = self.current_dot_binding();
         let env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref());
+        let arg = args.get(1).cloned();
         let bindings =
-            bindings_for_helper_arg_with(plan.arg.as_ref(), Some(&self.root_bindings), |expr| {
+            bindings_for_helper_arg_with(arg.as_ref(), Some(&self.root_bindings), |expr| {
                 eval_expr(expr, &env)
                     .value
                     .map(|value| value.to_context_value())
             });
         let mut stack = self.inline_stack.clone();
-        stack.push(plan.token);
+        stack.push(token);
         let mut nested = SymbolicWalker::new_with_context(
-            plan.body.source,
-            Some(plan.body.source_path),
-            plan.body.body_offset,
+            body.source,
+            Some(body.source_path),
+            body.body_offset,
             self.defines,
             self.ir_context.clone(),
         )
         .with_initial_predicates(self.scope.predicates().to_vec())
         .with_inline_stack(stack)
-        .with_inline_helpers_in_fragments(true)
         .with_helper_values(bindings)
         .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
-        let mut contract = nested.run_contract(&plan.body.tree);
+        let mut contract = nested.run_contract(&body.tree);
         let helper_renders_output = helper_summary.has_document_value_facts();
         let suppress_roots = helper_summary.suppress_roots;
         let helper_type_hints = helper_summary.type_hints;

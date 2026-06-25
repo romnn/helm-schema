@@ -62,19 +62,13 @@ impl IrAnalysisDb {
         self.define_bodies.contains_key(name)
     }
 
-    fn define_source(&self, name: &str) -> Option<&str> {
-        self.define_bodies
-            .get(name)
-            .map(|body| body.source.as_str())
-    }
-
     #[tracing::instrument(skip_all)]
     fn define_tree(&self, name: &str) -> Option<tree_sitter::Tree> {
         if let Some(tree) = self.define_trees.borrow().get(name) {
             return Some(tree.clone());
         }
 
-        let src = self.define_source(name)?;
+        let src = self.define_bodies.get(name)?.source.as_str();
         let tree = parse_go_template(src)?;
         self.define_trees
             .borrow_mut()

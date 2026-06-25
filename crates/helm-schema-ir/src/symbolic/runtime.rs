@@ -202,13 +202,25 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         variable: String,
         rhs_expr: &helm_schema_ast::TemplateExpr,
     ) {
-        let facts = self.document_output_facts_for_exprs(std::slice::from_ref(rhs_expr));
+        let exprs = std::slice::from_ref(rhs_expr);
+        let output_effects = self.value_path_context().expression_output_effects(exprs);
+        let helper = self.summarize_bound_helper_calls_in_exprs(exprs);
+        let mut output_meta = output_effects.local_output_meta.clone();
+        for (path, meta) in &helper.scalar_output_meta {
+            output_meta.entry(path.clone()).or_default().merge_ref(meta);
+        }
+        for output in &helper.fragment_output_uses {
+            output_meta
+                .entry(output.source_expr.clone())
+                .or_default()
+                .merge_ref(&output.meta);
+        }
         self.scope
             .locals_mut()
-            .set_default_paths(&variable, facts.output_effects.defaults.clone());
+            .set_default_paths(&variable, output_effects.defaults.clone());
         self.scope
             .locals_mut()
-            .set_output_meta(variable, facts.output_meta());
+            .set_output_meta(variable, output_meta);
     }
 
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
