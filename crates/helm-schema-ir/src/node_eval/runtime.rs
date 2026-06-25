@@ -2,15 +2,7 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use super::effects::NodeActionEffectSink;
 use crate::YamlPath;
-use crate::assignment_action_plan::AssignmentActionPlan;
 use crate::document_projection::ControlSite;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum AssignmentObservation {
-    Unhandled,
-    ExpressionObserved,
-    LocalMutationApplied,
-}
 
 pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     type ScopeSnapshot: Clone;
@@ -61,16 +53,7 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn handle_output_node(&mut self, node: tree_sitter::Node<'_>, exprs: &[TemplateExpr]);
 
-    fn observe_assignment_exprs(&mut self, _exprs: &[TemplateExpr]) -> AssignmentObservation {
-        AssignmentObservation::Unhandled
-    }
-
-    fn plan_assignment_action(&self, _exprs: &[TemplateExpr]) -> AssignmentActionPlan {
-        AssignmentActionPlan {
-            get_binding: None,
-            local_assignment: None,
-        }
-    }
+    fn observe_assignment_exprs(&mut self, _exprs: &[TemplateExpr]) {}
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan;
 

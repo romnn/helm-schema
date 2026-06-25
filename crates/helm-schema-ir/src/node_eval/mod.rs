@@ -10,7 +10,7 @@ pub(crate) use effects::{
     NodeActionEffectSink, activate_condition_alternative_guards, activate_if_condition_plan,
     activate_range_action_plan, activate_with_condition_plan,
 };
-pub(crate) use runtime::{AssignmentObservation, NodeEvalRuntime};
+pub(crate) use runtime::NodeEvalRuntime;
 
 pub(crate) fn eval_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
 where

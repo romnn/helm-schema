@@ -35,14 +35,6 @@ impl RangeActionPlan {
             apply_dot_binding: true,
         }
     }
-
-    pub(crate) fn dot_binding(dot_binding: Option<AbstractValue>, apply_dot_binding: bool) -> Self {
-        Self {
-            dot_binding,
-            apply_dot_binding,
-            ..Self::empty()
-        }
-    }
 }
 
 pub(crate) fn plan_range_action(

@@ -3,7 +3,6 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
-use crate::condition_action_plan::ConditionActionPlan;
 use crate::document_projection::{ControlSite, DocumentTracker};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
@@ -14,10 +13,9 @@ use crate::fragment_range_scope::{
     range_has_destructured_variable_definition,
 };
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_exprs;
-use crate::helper_range_plan::NonExactRangeVariableBinding;
 use crate::helper_runtime_plan::{
-    HelperConditionPlan, HelperRangeRuntimePlan, helper_if_condition_plan,
-    helper_range_runtime_plan, helper_with_condition_plan,
+    HelperConditionPlan, HelperRangeRuntimePlan, NonExactRangeVariableBinding,
+    helper_if_condition_plan, helper_range_runtime_plan, helper_with_condition_plan,
 };
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
@@ -26,12 +24,9 @@ use crate::helper_walk_state::{
     HelperRangeJoinBehavior, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
     HelperRuntimeLocals, HelperValuesWalkState,
 };
-use crate::node_eval::{
-    AssignmentObservation, NodeActionEffectSink, NodeEvalRuntime, eval_template_body,
-};
+use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
-use crate::range_action_plan::RangeActionPlan;
-use crate::{Guard, ValueKind, YamlPath};
+use crate::{ValueKind, YamlPath};
 
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, AbstractValue>,
@@ -333,39 +328,26 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         }
     }
 
-    fn activate_if_control(control: &mut HelperRuntimeControlState, plan: &ConditionActionPlan) {
+    fn activate_if_control(control: &mut HelperRuntimeControlState, plan: &HelperConditionPlan) {
         push_condition_predicates(control, plan);
     }
 
-    fn activate_with_control(control: &mut HelperRuntimeControlState, plan: &ConditionActionPlan) {
+    fn activate_with_control(control: &mut HelperRuntimeControlState, plan: &HelperConditionPlan) {
         push_condition_predicates(control, plan);
         control.push_effect_dot_binding(plan.dot_binding.clone());
     }
 
     fn activate_alternative_control(
         control: &mut HelperRuntimeControlState,
-        plan: &ConditionActionPlan,
+        plan: &HelperConditionPlan,
     ) {
         if plan.apply_alternative_predicate {
             control.push_predicate_if_absent(plan.predicate.negated());
         }
     }
-
-    fn activate_range_control(control: &mut HelperRuntimeControlState, plan: &RangeActionPlan) {
-        if plan.has_header {
-            for source_path in &plan.source_paths {
-                control.push_predicate_if_absent(Predicate::from(Guard::Range {
-                    path: source_path.clone(),
-                }));
-            }
-        }
-        if plan.apply_dot_binding {
-            control.push_effect_dot_binding(plan.dot_binding.clone());
-        }
-    }
 }
 
-fn push_condition_predicates(control: &mut HelperRuntimeControlState, plan: &ConditionActionPlan) {
+fn push_condition_predicates(control: &mut HelperRuntimeControlState, plan: &HelperConditionPlan) {
     let guards = plan.predicate.contract_guards();
     for guard in &guards {
         control.push_predicate_if_absent(Predicate::from(guard.clone()));
@@ -520,10 +502,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         self.collect_fragment_expression(exprs, &output_slot.path, output_slot.direct_value_kind());
     }
 
-    fn observe_assignment_exprs(
-        &mut self,
-        exprs: &[helm_schema_ast::TemplateExpr],
-    ) -> AssignmentObservation {
+    fn observe_assignment_exprs(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) {
         self.collect_value_expression(exprs);
 
         let mut seen_set = HashSet::new();
@@ -535,10 +514,9 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
             self.context,
             &mut seen_set,
         ) {
-            return AssignmentObservation::LocalMutationApplied;
+            return;
         }
         self.collect_fragment_expression(exprs, &YamlPath(Vec::new()), ValueKind::Scalar);
-        AssignmentObservation::ExpressionObserved
     }
 
     fn plan_if_condition(
@@ -577,8 +555,8 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         for path in &plan.value.guard_paths {
             self.analysis.add_guard_path(path.clone());
         }
-        Self::activate_if_control(&mut self.value_control, &plan.value.action);
-        Self::activate_if_control(&mut self.fragment_control, &plan.fragment.action);
+        Self::activate_if_control(&mut self.value_control, &plan.value);
+        Self::activate_if_control(&mut self.fragment_control, &plan.fragment);
     }
 
     fn plan_with_condition(
@@ -621,13 +599,13 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         for path in &plan.value.guard_paths {
             self.analysis.add_guard_path(path.clone());
         }
-        Self::activate_with_control(&mut self.value_control, &plan.value.action);
-        Self::activate_with_control(&mut self.fragment_control, &plan.fragment.action);
+        Self::activate_with_control(&mut self.value_control, &plan.value);
+        Self::activate_with_control(&mut self.fragment_control, &plan.fragment);
     }
 
     fn activate_condition_alternative(&mut self, plan: &Self::ConditionPlan) {
-        Self::activate_alternative_control(&mut self.value_control, &plan.value.action);
-        Self::activate_alternative_control(&mut self.fragment_control, &plan.fragment.action);
+        Self::activate_alternative_control(&mut self.value_control, &plan.value);
+        Self::activate_alternative_control(&mut self.fragment_control, &plan.fragment);
     }
 
     fn plan_range_action(
@@ -678,7 +656,6 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         for path in &plan.value.guard_paths {
             self.analysis.add_guard_path(path.clone());
         }
-        Self::activate_range_control(&mut self.value_control, &plan.value.action);
 
         plan.fragment
             .activate(&mut self.fragment_control, self.fragment_locals);
@@ -687,7 +664,6 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
             plan.fragment.range_fragment_value.as_ref(),
             current_path,
         );
-        Self::activate_range_control(&mut self.fragment_control, &plan.fragment.action);
     }
 }
 

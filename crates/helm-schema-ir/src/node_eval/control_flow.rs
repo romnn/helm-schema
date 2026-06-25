@@ -3,8 +3,7 @@ use helm_schema_ast::TemplateHeader;
 use crate::tree_sitter_utils::children_with_field;
 
 use super::action;
-use super::effects::apply_assignment_action_plan;
-use super::{AssignmentObservation, NodeEvalRuntime, eval_children, eval_node};
+use super::{NodeEvalRuntime, eval_children, eval_node};
 
 pub(super) fn eval_assignment_node<R>(
     runtime: &mut R,
@@ -14,14 +13,7 @@ pub(super) fn eval_assignment_node<R>(
     R: NodeEvalRuntime,
 {
     if let Some(exprs) = exprs {
-        match runtime.observe_assignment_exprs(exprs) {
-            AssignmentObservation::Unhandled => {
-                let plan = runtime.plan_assignment_action(exprs);
-                apply_assignment_action_plan(runtime, plan);
-            }
-            AssignmentObservation::ExpressionObserved
-            | AssignmentObservation::LocalMutationApplied => {}
-        }
+        runtime.observe_assignment_exprs(exprs);
     }
 
     runtime.enter_no_output();

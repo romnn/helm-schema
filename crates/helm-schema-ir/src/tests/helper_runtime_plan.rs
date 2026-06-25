@@ -4,15 +4,14 @@ use test_util::prelude::sim_assert_eq;
 
 use super::HelperRangeRuntimePlan;
 use crate::abstract_value::AbstractValue;
-use crate::helper_range_frame::RangeFrame;
-use crate::helper_walk_state::{HelperRuntimeControlState, HelperRuntimeLocals};
-use crate::range_action_plan::RangeActionPlan;
+use crate::helper_walk_state::{HelperRuntimeControlState, HelperRuntimeLocals, RangeFrame};
 
 #[test]
 fn activate_range_plan_installs_predicates_binding_and_frame() {
     let plan = HelperRangeRuntimePlan {
         guard_paths: BTreeSet::from(["serviceAccount.create".to_string()]),
-        action: RangeActionPlan::empty(),
+        dot_binding: None,
+        apply_dot_binding: true,
         frame: RangeFrame {
             definitely_nonempty: false,
             iterations: None,
@@ -41,7 +40,6 @@ fn activate_range_plan_installs_predicates_binding_and_frame() {
         have: plan.guard_paths,
         want: BTreeSet::from(["serviceAccount.create".to_string()])
     );
-    sim_assert_eq!(have: plan.action.has_header, want: false);
     sim_assert_eq!(
         have: plan.range_fragment_value,
         want: Some(AbstractValue::ValuesPath("serviceAccount".to_string()))

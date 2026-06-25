@@ -1,11 +1,14 @@
-use helm_schema_ast::TemplateHeader;
+use std::collections::HashSet;
+
+use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use crate::abstract_value::AbstractValue;
-use crate::assignment_action_plan::{AssignmentActionPlan, plan_assignment_action};
-use crate::bound_value_analysis::GetBindingPlan;
+use crate::bound_value_analysis::parse_get_binding_from_exprs;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::contract_sink::ContractUseContext;
 use crate::document_projection::ControlSite;
+use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
+use crate::fragment_expr_eval::fragment_value_from_expr;
 use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, activate_condition_alternative_guards,
     activate_if_condition_plan, activate_range_action_plan, activate_with_condition_plan,
@@ -50,6 +53,63 @@ impl SymbolicWalker<'_> {
         );
         self.contract
             .push(context.contract_use(source_expr, path, kind, extra_guards));
+    }
+
+    fn observe_symbolic_assignment(&mut self, exprs: &[TemplateExpr]) {
+        if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
+            let mut locals = self.scope.locals().fragment_values.clone();
+            for (key, value) in &self.root_bindings {
+                locals.insert(key.clone(), value.to_context_value());
+            }
+            let current_dot = self
+                .current_dot_binding()
+                .map(|value| value.to_context_value());
+            let mut seen = HashSet::new();
+            let fragment_value = fragment_value_from_expr(
+                &assignment.rhs_expr,
+                &locals,
+                current_dot.as_ref(),
+                self.fragment_eval_context(),
+                &mut seen,
+            );
+            match assignment.kind {
+                AssignmentKind::Declaration => self
+                    .scope
+                    .locals_mut()
+                    .declare_fragment_value(assignment.variable.clone(), fragment_value),
+                AssignmentKind::Assignment => self
+                    .scope
+                    .locals_mut()
+                    .assign_fragment_value(assignment.variable.clone(), fragment_value),
+            }
+            self.refresh_assignment_facts(assignment.variable, &assignment.rhs_expr);
+        }
+
+        if let Some(get_binding) = parse_get_binding_from_exprs(exprs) {
+            self.scope.locals_mut().apply_get_binding(get_binding);
+        }
+    }
+
+    fn refresh_assignment_facts(&mut self, variable: String, rhs_expr: &TemplateExpr) {
+        let exprs = std::slice::from_ref(rhs_expr);
+        let output_effects = self.value_path_context().expression_output_effects(exprs);
+        let helper = self.summarize_bound_helper_calls_in_exprs(exprs);
+        let mut output_meta = output_effects.local_output_meta.clone();
+        for (path, meta) in &helper.scalar_output_meta {
+            output_meta.entry(path.clone()).or_default().merge_ref(meta);
+        }
+        for output in &helper.fragment_output_uses {
+            output_meta
+                .entry(output.source_expr.clone())
+                .or_default()
+                .merge_ref(&output.meta);
+        }
+        self.scope
+            .locals_mut()
+            .set_default_paths(&variable, output_effects.defaults.clone());
+        self.scope
+            .locals_mut()
+            .set_output_meta(variable, output_meta);
     }
 }
 
@@ -113,19 +173,8 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         SymbolicWalker::handle_output_node(self, node, exprs);
     }
 
-    fn plan_assignment_action(
-        &self,
-        exprs: &[helm_schema_ast::TemplateExpr],
-    ) -> AssignmentActionPlan {
-        let fragment_context = self.fragment_eval_context();
-        let current_dot = self.current_dot_binding();
-        plan_assignment_action(
-            exprs,
-            fragment_context,
-            &self.scope.locals().fragment_values,
-            &self.root_bindings,
-            current_dot.as_ref(),
-        )
+    fn observe_assignment_exprs(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) {
+        self.observe_symbolic_assignment(exprs);
     }
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
@@ -179,48 +228,6 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
 }
 
 impl NodeActionEffectSink for SymbolicWalker<'_> {
-    fn apply_get_binding(&mut self, plan: GetBindingPlan) {
-        self.scope.locals_mut().apply_get_binding(plan);
-    }
-
-    fn declare_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
-        self.scope
-            .locals_mut()
-            .declare_fragment_value(variable, binding);
-    }
-
-    fn assign_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
-        self.scope
-            .locals_mut()
-            .assign_fragment_value(variable, binding);
-    }
-
-    fn refresh_assignment_facts(
-        &mut self,
-        variable: String,
-        rhs_expr: &helm_schema_ast::TemplateExpr,
-    ) {
-        let exprs = std::slice::from_ref(rhs_expr);
-        let output_effects = self.value_path_context().expression_output_effects(exprs);
-        let helper = self.summarize_bound_helper_calls_in_exprs(exprs);
-        let mut output_meta = output_effects.local_output_meta.clone();
-        for (path, meta) in &helper.scalar_output_meta {
-            output_meta.entry(path.clone()).or_default().merge_ref(meta);
-        }
-        for output in &helper.fragment_output_uses {
-            output_meta
-                .entry(output.source_expr.clone())
-                .or_default()
-                .merge_ref(&output.meta);
-        }
-        self.scope
-            .locals_mut()
-            .set_default_paths(&variable, output_effects.defaults.clone());
-        self.scope
-            .locals_mut()
-            .set_output_meta(variable, output_meta);
-    }
-
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         self.scope.push_predicate_if_absent(predicate);
     }

@@ -3,10 +3,21 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::abstract_value::AbstractValue;
 use crate::fragment_assignment::merge_fragment_locals;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_range_frame::RangeFrame;
-use crate::helper_range_plan::HelperRangeIteration;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
 use crate::predicate::Predicate;
+
+#[derive(Clone)]
+pub(crate) struct HelperRangeIteration {
+    pub(crate) helper_dot_binding: Option<AbstractValue>,
+    pub(crate) fragment_dot_binding: Option<AbstractValue>,
+    pub(crate) variable_binding: Option<(String, AbstractValue)>,
+}
+
+#[derive(Clone)]
+pub(crate) struct RangeFrame {
+    pub(crate) definitely_nonempty: bool,
+    pub(crate) iterations: Option<Vec<HelperRangeIteration>>,
+}
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct HelperRuntimeLocals {
@@ -35,7 +46,7 @@ pub(crate) struct HelperRuntimeControlState {
     helper_dot_stack: Vec<Option<AbstractValue>>,
     fragment_dot_stack: Option<Vec<Option<AbstractValue>>>,
     active_output_predicates: BTreeSet<Predicate>,
-    range_frames: Vec<RangeFrame<HelperRangeIteration>>,
+    range_frames: Vec<RangeFrame>,
     no_output_depth: usize,
 }
 
@@ -132,7 +143,7 @@ impl HelperRuntimeControlState {
         self.active_output_predicates = snapshot.active_output_predicates.clone();
     }
 
-    pub(crate) fn push_range_frame(&mut self, frame: RangeFrame<HelperRangeIteration>) {
+    pub(crate) fn push_range_frame(&mut self, frame: RangeFrame) {
         self.range_frames.push(frame);
     }
 

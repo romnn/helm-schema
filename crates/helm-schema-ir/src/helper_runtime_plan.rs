@@ -3,33 +3,33 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use crate::abstract_value::AbstractValue;
-use crate::condition_action_plan::ConditionActionPlan;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with_fragment_locals};
-use crate::helper_range_frame::RangeFrame;
-use crate::helper_range_plan::{
-    HelperRangeIteration, NonExactRangeVariableBinding, plan_helper_range_binding,
-};
+use crate::fragment_range_scope::{range_iterable_binding_expr, range_variable_name_expr};
 use crate::helper_summary::HelperOutputMeta;
-use crate::helper_walk_state::{HelperRuntimeControlState, HelperRuntimeLocals};
+use crate::helper_walk_state::{
+    HelperRangeIteration, HelperRuntimeControlState, HelperRuntimeLocals, RangeFrame,
+};
 use crate::predicate::Predicate;
-use crate::range_action_plan::RangeActionPlan;
 use crate::value_path_context::ValuePathContext;
 use crate::value_path_context::computed_with_body_fragment_value_expr;
 
 #[derive(Clone)]
 pub(crate) struct HelperConditionPlan {
     pub(crate) guard_paths: BTreeSet<String>,
-    pub(crate) action: ConditionActionPlan,
+    pub(crate) predicate: Predicate,
+    pub(crate) dot_binding: Option<AbstractValue>,
+    pub(crate) apply_alternative_predicate: bool,
 }
 
 #[derive(Clone)]
 pub(crate) struct HelperRangeRuntimePlan {
     pub(crate) guard_paths: BTreeSet<String>,
-    pub(crate) action: RangeActionPlan,
-    pub(crate) frame: RangeFrame<HelperRangeIteration>,
+    pub(crate) dot_binding: Option<AbstractValue>,
+    pub(crate) apply_dot_binding: bool,
+    pub(crate) frame: RangeFrame,
     pub(crate) non_exact_variable_binding: Option<(String, AbstractValue)>,
     pub(crate) range_fragment_value: Option<AbstractValue>,
 }
@@ -44,8 +44,17 @@ impl HelperRangeRuntimePlan {
         if let Some((variable, binding)) = &self.non_exact_variable_binding {
             locals.bindings.insert(variable.clone(), binding.clone());
         }
+        if self.apply_dot_binding {
+            control.push_effect_dot_binding(self.dot_binding.clone());
+        }
         control.push_range_frame(self.frame.clone());
     }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum NonExactRangeVariableBinding {
+    Bind,
+    Skip,
 }
 
 pub(crate) fn helper_if_condition_plan(
@@ -70,13 +79,10 @@ pub(crate) fn helper_if_condition_plan(
         seen,
     );
     HelperConditionPlan {
-        action: ConditionActionPlan {
-            predicate: facts.predicate,
-            bound_values: Vec::new(),
-            dot_binding: None,
-            apply_alternative_predicate,
-        },
         guard_paths: facts.guard_paths,
+        predicate: facts.predicate,
+        dot_binding: None,
+        apply_alternative_predicate,
     }
 }
 
@@ -111,13 +117,10 @@ pub(crate) fn helper_with_condition_plan(
         current_dot,
     );
     HelperConditionPlan {
-        action: ConditionActionPlan {
-            predicate: facts.predicate,
-            bound_values: Vec::new(),
-            dot_binding: body_dot,
-            apply_alternative_predicate,
-        },
         guard_paths: facts.guard_paths,
+        predicate: facts.predicate,
+        dot_binding: body_dot,
+        apply_alternative_predicate,
     }
 }
 
@@ -135,7 +138,8 @@ pub(crate) fn helper_range_runtime_plan(
     let Some(header) = header else {
         return HelperRangeRuntimePlan {
             guard_paths: BTreeSet::new(),
-            action: RangeActionPlan::empty(),
+            dot_binding: None,
+            apply_dot_binding: true,
             frame: RangeFrame {
                 definitely_nonempty: false,
                 iterations: None,
@@ -153,30 +157,75 @@ pub(crate) fn helper_range_runtime_plan(
         context,
         seen,
     );
-    let mut range_plan = plan_helper_range_binding(
-        header,
+    let range_fragment_value = range_iterable_binding_expr(
+        header.expr(),
         local_bindings,
         current_dot_fragment,
         context,
         seen,
-        non_exact_range_variable_binding,
     );
-    let non_exact_variable_binding = range_plan.take_non_exact_variable_binding();
-    let range_fragment_value = range_plan.range_fragment_value().cloned();
-    let (frame, dot_binding) = if use_fragment_dot {
+    let range_helper_value = range_fragment_value
+        .as_ref()
+        .map(AbstractValue::to_context_value);
+    let range_variable = range_variable_name_expr(header.expr());
+    let exact_iterations = if let Some(AbstractValue::List(items)) = &range_fragment_value {
+        Some(
+            items
+                .iter()
+                .map(|item| HelperRangeIteration {
+                    helper_dot_binding: Some(item.to_context_value()),
+                    fragment_dot_binding: Some(item.clone()),
+                    variable_binding: range_variable
+                        .as_ref()
+                        .map(|variable| (variable.clone(), item.clone())),
+                })
+                .collect::<Vec<_>>(),
+        )
+    } else {
+        None
+    };
+    let bind_non_exact_variable = matches!(
+        non_exact_range_variable_binding,
+        NonExactRangeVariableBinding::Bind
+    );
+    let non_exact_variable_binding = if exact_iterations.is_none() && bind_non_exact_variable {
+        range_variable.zip(
+            range_fragment_value
+                .as_ref()
+                .and_then(AbstractValue::fragment_range_item)
+                .map(|binding| binding.to_context_value()),
+        )
+    } else {
+        None
+    };
+    let (frame_value, dot_binding) = if use_fragment_dot {
         (
-            range_plan.fragment_output_frame(),
-            range_plan.fragment_output_body_dot(),
+            &range_fragment_value,
+            range_fragment_value
+                .as_ref()
+                .and_then(AbstractValue::fragment_range_item)
+                .map(|binding| binding.to_context_value()),
         )
     } else {
         (
-            range_plan.helper_value_frame(),
-            range_plan.helper_value_body_dot(),
+            &range_helper_value,
+            range_helper_value
+                .as_ref()
+                .and_then(AbstractValue::helper_range_item)
+                .map(|binding| binding.to_context_value()),
         )
+    };
+    let apply_dot_binding = exact_iterations.is_none();
+    let frame = RangeFrame {
+        definitely_nonempty: frame_value
+            .as_ref()
+            .is_some_and(AbstractValue::definitely_nonempty_iterable),
+        iterations: exact_iterations,
     };
 
     HelperRangeRuntimePlan {
-        action: RangeActionPlan::dot_binding(dot_binding, range_plan.apply_dot_binding()),
+        dot_binding,
+        apply_dot_binding,
         frame,
         guard_paths,
         non_exact_variable_binding,

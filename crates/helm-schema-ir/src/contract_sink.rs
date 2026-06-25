@@ -13,9 +13,7 @@ pub(crate) struct ContractUseContext<'a> {
     chart_value_defaults: &'a BTreeSet<String>,
     suppress_document_path: bool,
     resource: Option<ResourceRef>,
-    source_path: Option<&'a str>,
-    source_span: Option<SourceSpan>,
-    helper_chain: Vec<String>,
+    site_provenance: Option<ContractProvenance>,
 }
 
 impl<'a> ContractUseContext<'a> {
@@ -28,14 +26,17 @@ impl<'a> ContractUseContext<'a> {
         source_span: Option<SourceSpan>,
         helper_chain: Vec<String>,
     ) -> Self {
+        let site_provenance = source_path
+            .zip(source_span)
+            .map(|(source_path, source_span)| {
+                ContractProvenance::new(source_path, source_span, helper_chain)
+            });
         Self {
             guards,
             chart_value_defaults,
             suppress_document_path,
             resource,
-            source_path,
-            source_span,
-            helper_chain,
+            site_provenance,
         }
     }
 
@@ -135,8 +136,8 @@ impl<'a> ContractUseContext<'a> {
 
     fn provenance_sites(&self, extra_provenance: &[ContractProvenance]) -> Vec<ContractProvenance> {
         let mut provenance = Vec::new();
-        if let Some(site) = self.site_provenance() {
-            provenance.push(site);
+        if let Some(site) = &self.site_provenance {
+            provenance.push(site.clone());
         }
         for extra in extra_provenance {
             if !provenance.contains(extra) {
@@ -144,14 +145,6 @@ impl<'a> ContractUseContext<'a> {
             }
         }
         provenance
-    }
-
-    fn site_provenance(&self) -> Option<ContractProvenance> {
-        Some(ContractProvenance::new(
-            self.source_path?,
-            self.source_span?,
-            self.helper_chain.clone(),
-        ))
     }
 }
 

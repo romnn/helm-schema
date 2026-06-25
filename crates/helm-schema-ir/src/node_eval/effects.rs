@@ -1,23 +1,10 @@
-use helm_schema_ast::TemplateExpr;
-
 use crate::abstract_value::AbstractValue;
-use crate::assignment_action_plan::{AssignmentActionPlan, LocalAssignmentPlan};
-use crate::bound_value_analysis::GetBindingPlan;
 use crate::condition_action_plan::ConditionActionPlan;
-use crate::fragment_assignment::AssignmentKind;
 use crate::predicate::Predicate;
 use crate::range_action_plan::RangeActionPlan;
 use crate::{Guard, ValueKind, YamlPath};
 
 pub(crate) trait NodeActionEffectSink {
-    fn apply_get_binding(&mut self, _plan: GetBindingPlan) {}
-
-    fn declare_fragment_value(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
-
-    fn assign_fragment_value(&mut self, _variable: String, _binding: Option<AbstractValue>) {}
-
-    fn refresh_assignment_facts(&mut self, _variable: String, _rhs_expr: &TemplateExpr) {}
-
     fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
     fn push_dot_binding(&mut self, binding: Option<AbstractValue>);
@@ -36,32 +23,6 @@ pub(crate) trait NodeActionEffectSink {
         _extra_guards: &[Guard],
     ) {
     }
-}
-
-pub(super) fn apply_assignment_action_plan(
-    sink: &mut impl NodeActionEffectSink,
-    plan: AssignmentActionPlan,
-) {
-    if let Some(local_assignment) = plan.local_assignment {
-        apply_local_assignment_plan(sink, local_assignment);
-    }
-
-    if let Some(get_binding) = plan.get_binding {
-        sink.apply_get_binding(get_binding);
-    }
-}
-
-fn apply_local_assignment_plan(sink: &mut impl NodeActionEffectSink, plan: LocalAssignmentPlan) {
-    let variable = plan.variable;
-    match plan.kind {
-        AssignmentKind::Declaration => {
-            sink.declare_fragment_value(variable.clone(), plan.fragment_value);
-        }
-        AssignmentKind::Assignment => {
-            sink.assign_fragment_value(variable.clone(), plan.fragment_value);
-        }
-    }
-    sink.refresh_assignment_facts(variable, &plan.rhs_expr);
 }
 
 pub(crate) fn activate_if_condition_plan(

@@ -2,9 +2,8 @@ use std::collections::{BTreeSet, HashMap};
 
 use test_util::prelude::sim_assert_eq;
 
-use super::{HelperRangeJoinBehavior, HelperRuntimeControlState, HelperRuntimeLocals};
+use super::{HelperRangeJoinBehavior, HelperRuntimeControlState, HelperRuntimeLocals, RangeFrame};
 use crate::abstract_value::AbstractValue;
-use crate::helper_range_frame::RangeFrame;
 
 #[test]
 fn merge_intersects_default_paths_by_branch_presence() {
