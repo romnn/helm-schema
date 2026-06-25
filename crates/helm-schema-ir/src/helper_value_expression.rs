@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::expr_eval::{eval_helper_exprs_direct_effects, eval_helper_exprs_effects};
+use crate::expr_eval::eval_helper_exprs_direct_effects;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
@@ -65,8 +65,8 @@ pub(crate) fn collect_helper_value_expression_from_exprs(
         state.context,
         state.seen,
     );
-    let fallback_paths = eval_helper_exprs_effects(exprs, bindings, current_dot).defaults;
     let local_effects = &result.effects;
+    let fallback_paths = local_effects.defaults.clone();
     let expression_kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
         ValueKind::Fragment
     } else {
@@ -136,7 +136,7 @@ fn collect_assignment_bound_helper_values(
         &mut seen_set,
     ) {
         let defaulted_dependencies =
-            eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
+            eval_helper_exprs_direct_effects(rhs_exprs, bindings, current_dot).defaults;
         for path in defaulted_dependencies {
             state.analysis.merge_dependency_meta(
                 path,
@@ -158,8 +158,8 @@ fn collect_assignment_bound_helper_values(
         state.context,
         state.seen,
     );
-    let fallback_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
     let mut local_source_paths = result.effects.local_source_paths();
+    let fallback_paths = result.effects.defaults.clone();
     let local_default_paths = result.effects.local_default_paths.clone();
     let local_output_meta = result.effects.local_output_meta.clone();
     let binding = result.value.clone();

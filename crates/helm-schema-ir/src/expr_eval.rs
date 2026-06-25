@@ -184,15 +184,6 @@ pub(crate) fn eval_helper_exprs_direct_effects(
     eval_exprs_effects(exprs, &env)
 }
 
-pub(crate) fn eval_helper_exprs_effects(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-) -> Effects {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    eval_exprs_effects(exprs, &env)
-}
-
 pub(crate) fn bindings_for_helper_arg_with(
     arg: Option<&TemplateExpr>,
     outer: Option<&HashMap<String, AbstractValue>>,
@@ -233,73 +224,6 @@ fn bindings_from_helper_arg_value(
         }
         _ => HashMap::new(),
     }
-}
-
-pub(crate) fn eval_non_helper_output_exprs_effects(
-    exprs: &[TemplateExpr],
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-) -> Effects {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot);
-    let mut effects = Effects::default();
-    for expr in exprs {
-        if expr_contains_helper_call(expr) {
-            continue;
-        }
-        effects.merge(eval_output_expr_effects(expr, &env));
-    }
-    effects
-}
-
-fn eval_output_expr_effects(expr: &TemplateExpr, env: &EvalEnv) -> Effects {
-    let result = eval_expr(expr, env);
-    if let Some(value) = result.value {
-        let mut effects = Effects {
-            encoded_paths: result.effects.encoded_paths,
-            ..Effects::default()
-        };
-        effects.rendered_output_values.push(value);
-        return effects;
-    }
-
-    let mut effects = Effects::default();
-    match expr {
-        TemplateExpr::Call { args, .. } => {
-            for arg in args {
-                effects.merge(eval_output_expr_effects(arg, env));
-            }
-        }
-        TemplateExpr::Selector { operand, .. } => {
-            effects.merge(eval_output_expr_effects(operand, env));
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for stage in stages {
-                effects.merge(eval_output_expr_effects(stage, env));
-            }
-        }
-        TemplateExpr::Parenthesized(inner)
-        | TemplateExpr::VariableDefinition { value: inner, .. }
-        | TemplateExpr::Assignment { value: inner, .. } => {
-            effects.merge(eval_output_expr_effects(inner, env));
-        }
-        TemplateExpr::Literal(_)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Unknown(_) => {}
-    }
-    effects
-}
-
-fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
-    let mut found = false;
-    expr.walk(|node| {
-        if let TemplateExpr::Call { function, .. } = node
-            && is_helper_call_function(function)
-        {
-            found = true;
-        }
-    });
-    found
 }
 
 pub(crate) fn expr_starts_with_helper_call(expr: &TemplateExpr) -> bool {

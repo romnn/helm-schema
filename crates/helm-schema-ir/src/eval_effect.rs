@@ -20,7 +20,6 @@ pub(crate) struct Effects {
     pub(crate) local_default_paths: BTreeSet<String>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) local_output_values: Vec<AbstractValue>,
-    pub(crate) rendered_output_values: Vec<AbstractValue>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
     pub(crate) helper_summary: HelperSummary,
 }
@@ -44,8 +43,6 @@ impl Effects {
         self.chart_default_paths.extend(other.chart_default_paths);
         self.local_default_paths.extend(other.local_default_paths);
         self.local_output_values.extend(other.local_output_values);
-        self.rendered_output_values
-            .extend(other.rendered_output_values);
         for (path, meta) in other.local_output_meta {
             self.local_output_meta.entry(path).or_default().merge(meta);
         }
@@ -159,24 +156,6 @@ impl Effects {
             .entry(name)
             .or_default()
             .extend(entries);
-    }
-
-    pub(crate) fn rendered_output_uses(
-        &self,
-        output_path: &YamlPath,
-        kind: ValueKind,
-        active_output_predicates: &BTreeSet<Predicate>,
-        defaulted_paths: &BTreeSet<String>,
-    ) -> Vec<HelperFragmentOutputUse> {
-        output_uses_from_values(
-            &self.rendered_output_values,
-            output_path,
-            kind,
-            &self.encoded_paths,
-            active_output_predicates,
-            defaulted_paths,
-            false,
-        )
     }
 
     pub(crate) fn local_output_uses(

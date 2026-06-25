@@ -3,9 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::expr_eval::{
-    eval_helper_exprs_effects, eval_non_helper_output_exprs_effects, expr_starts_with_helper_call,
-};
+use crate::expr_eval::expr_starts_with_helper_call;
 use crate::fragment_assignment::{
     apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
 };
@@ -64,7 +62,6 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let output_path = static_yaml_fragment_output_path_from_exprs(exprs)
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
-    let fallback_paths = eval_helper_exprs_effects(exprs, bindings, current_dot).defaults;
     let result = helper_result_from_exprs_with_fragment_locals(
         exprs,
         FragmentLocalFacts::without_output_meta(
@@ -76,21 +73,10 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         state.context,
         state.seen,
     );
+    let fallback_paths = result.effects.defaults.clone();
     let local_effects = &result.effects;
 
-    let direct_output_effects = eval_non_helper_output_exprs_effects(exprs, bindings, current_dot);
-    let direct_output_uses = direct_output_effects.rendered_output_uses(
-        &output_path,
-        kind,
-        active_output_predicates,
-        &fallback_paths,
-    );
-    let handled_outputs: BTreeSet<String> = direct_output_uses
-        .iter()
-        .map(|output| output.source_expr.clone())
-        .chain(local_effects.local_rendered_paths())
-        .collect();
-    state.outputs.extend(direct_output_uses);
+    let handled_outputs: BTreeSet<String> = local_effects.local_rendered_paths();
 
     let local_output_uses =
         local_effects.local_output_uses(&output_path, kind, active_output_predicates);
@@ -108,6 +94,36 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             &expression_default_paths,
             true,
         );
+    }
+    if !exprs.iter().any(expr_contains_helper_call)
+        && let Some(value) = AbstractValue::path_choices(local_effects.output_paths.clone())
+    {
+        let existing = expression_output_uses
+            .iter()
+            .map(|output| (output.source_expr.clone(), output.relative_path.clone()))
+            .collect::<BTreeSet<_>>();
+        let mut effect_output_uses = Vec::new();
+        value.collect_output_uses_with_encoding(
+            &mut effect_output_uses,
+            &output_path,
+            kind,
+            &local_effects.encoded_paths,
+            active_output_predicates,
+            &expression_default_paths,
+            true,
+        );
+        for output in &mut effect_output_uses {
+            if kind == ValueKind::Scalar
+                && output.source_expr.ends_with(".*")
+                && output.relative_path == output_path
+                && !existing.contains(&(output.source_expr.clone(), output.relative_path.clone()))
+            {
+                output.relative_path = output_path::sequence_item_path(&output.relative_path);
+            }
+        }
+        expression_output_uses.extend(effect_output_uses.into_iter().filter(|output| {
+            !existing.contains(&(output.source_expr.clone(), output.relative_path.clone()))
+        }));
     }
     let nested_outputs = result.effects.helper_summary.output_uses;
     let nested_structured_outputs = nested_outputs
@@ -135,9 +151,14 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .map(|output| output.source_expr.clone())
         .collect();
     let nested_has_structured_outputs = !nested_structured_outputs.is_empty();
+    let sequence_output_path = output_path::sequence_item_path(&output_path);
 
     expression_output_uses.retain(|output| {
-        (!output_path.0.is_empty() && output.relative_path == output_path)
+        (kind == ValueKind::Fragment && output.relative_path.0.is_empty())
+            || (!output_path.0.is_empty() && output.relative_path == output_path)
+            || (kind == ValueKind::Scalar
+                && !sequence_output_path.0.is_empty()
+                && output.relative_path == sequence_output_path)
             || expression_output_use_is_keyed_map_projection(output, &output_path)
     });
     let expression_descendant_sources: BTreeSet<String> = expression_output_uses
@@ -261,7 +282,7 @@ fn collect_bound_fragment_output_assignment_uses(
             .fragment_values
             .insert(var.to_string(), binding);
     }
-    let mut defaulted_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
+    let mut defaulted_paths = result.effects.defaults.clone();
     defaulted_paths.extend(local_default_paths);
     state.locals.set_default_paths(var, defaulted_paths);
     state.locals.set_output_meta(var.to_string(), output_meta);
@@ -277,6 +298,18 @@ fn merge_output_use_meta(
             .or_default()
             .merge_ref(&output.meta);
     }
+}
+
+fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
+    let mut found = false;
+    expr.walk(|node| {
+        if let TemplateExpr::Call { function, .. } = node
+            && matches!(function.as_str(), "include" | "template")
+        {
+            found = true;
+        }
+    });
+    found
 }
 
 fn expression_output_use_is_keyed_map_projection(
