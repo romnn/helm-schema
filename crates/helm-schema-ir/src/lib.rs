@@ -1,7 +1,6 @@
 mod abstract_value;
 mod analysis_db;
 mod bound_value_analysis;
-mod capability_branch;
 mod condition_action_plan;
 mod contract;
 mod contract_normalization;
@@ -38,7 +37,6 @@ mod symbolic_local_state;
 mod symbolic_scope_state;
 mod tree_sitter_utils;
 mod value_path_context;
-mod yaml_syntax;
 
 pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};
 pub use contract_signals::{

@@ -1,9 +1,8 @@
-use helm_schema_ast::{TemplateExpr, parse_action_expressions};
+use helm_schema_core::CapabilityGuard;
 
-use crate::CapabilityGuard;
+use crate::{TemplateExpr, parse_action_expressions};
 
-/// Decode an if-condition string into a typed [`CapabilityGuard`].
-pub(crate) fn decode_guard(cond: &str) -> CapabilityGuard {
+pub fn decode_guard(cond: &str) -> CapabilityGuard {
     let trimmed = cond.trim();
     let wrapped = format!("{{{{ {trimmed} }}}}");
     let exprs = parse_action_expressions(&wrapped);
@@ -17,7 +16,7 @@ pub(crate) fn decode_guard(cond: &str) -> CapabilityGuard {
     }
 }
 
-pub(crate) fn decode_guard_expr(expr: &TemplateExpr, raw: &str) -> Option<CapabilityGuard> {
+pub fn decode_guard_expr(expr: &TemplateExpr, raw: &str) -> Option<CapabilityGuard> {
     find_capability_has(expr, false)
         .map(|(negated, api)| {
             if negated {

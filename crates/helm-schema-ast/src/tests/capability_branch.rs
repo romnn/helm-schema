@@ -1,6 +1,7 @@
-use super::*;
-use helm_schema_core::{ApiPresenceQuery, CapabilityPresencePredicate};
+use helm_schema_core::{ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate};
 use test_util::prelude::sim_assert_eq;
+
+use super::decode_guard;
 
 #[test]
 fn decode_guard_recognises_capability_has() {

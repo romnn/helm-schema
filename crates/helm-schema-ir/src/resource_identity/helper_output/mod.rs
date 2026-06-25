@@ -16,11 +16,7 @@
 //! Output is typed so the common `if Capabilities.APIVersions.Has … else …`
 //! shape stays branch-aware for Kubernetes lookup.
 
-mod evaluator;
-
-pub(super) use evaluator::HelperOutputEvaluator;
-
-const MAX_RECURSION_DEPTH: usize = 6;
+pub(super) use helm_schema_ast::HelperOutputEvaluator;
 
 #[cfg(test)]
 #[path = "../../tests/resource_identity/helper_output.rs"]

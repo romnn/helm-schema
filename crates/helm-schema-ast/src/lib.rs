@@ -1,10 +1,16 @@
+mod capability_branch;
 pub mod expr;
+mod helper_output;
 mod tree_sitter_parser;
 mod values_comments;
+mod yaml_syntax;
 
+pub use capability_branch::{decode_guard, decode_guard_expr};
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
+pub use helper_output::HelperOutputEvaluator;
 pub use tree_sitter_parser::{ParsedTemplate, TreeSitterParser, contains_template_action};
 pub use values_comments::extract_values_yaml_descriptions;
+pub use yaml_syntax::{ParsedYamlKey, first_mapping_colon_offset, parse_yaml_key};
 
 use std::collections::{HashMap, hash_map::Entry};
 use std::fmt::Write;

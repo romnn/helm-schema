@@ -1,14 +1,15 @@
-pub(crate) struct ParsedYamlKey {
+pub struct ParsedYamlKey {
     key: String,
 }
 
 impl ParsedYamlKey {
-    pub(crate) fn into_key(self) -> String {
+    #[must_use]
+    pub fn into_key(self) -> String {
         self.key
     }
 }
 
-pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
+pub fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
     fn finalize_yaml_key(key: String) -> Option<ParsedYamlKey> {
         if key.is_empty() {
             return None;
@@ -66,10 +67,7 @@ pub(crate) fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
     None
 }
 
-pub(crate) fn first_mapping_colon_offset(line: &str) -> Option<usize> {
-    // Find the first YAML mapping separator on the physical line while skipping
-    // quoted scalars and Helm actions. This distinguishes template output that
-    // contributes to a mapping key from output that contributes to the value.
+pub fn first_mapping_colon_offset(line: &str) -> Option<usize> {
     let bytes = line.as_bytes();
     let mut idx = 0usize;
     while idx < bytes.len() {

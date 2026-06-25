@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_ast::{Literal, TemplateExpr, parse_yaml_key};
 
 use crate::abstract_value::AbstractValue;
 use crate::expr_eval::expr_starts_with_helper_call;
@@ -15,7 +15,6 @@ use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::output_path;
 use crate::predicate::Predicate;
-use crate::yaml_syntax::parse_yaml_key;
 use crate::{ValueKind, YamlPath};
 
 #[allow(clippy::too_many_arguments)]
