@@ -6,14 +6,12 @@ use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::doc_backed_schema::{
-    LocalSchemaLeaf, debug_materialize_local_schema,
-    descend_schema_path_expanding_leaf_with_root_metadata_source, fragment_for_source_leaf,
+    LocalSchemaLeaf, debug_materialize_local_schema, lookup_root_metadata_path,
 };
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
-    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
-    ProviderSchemaSource,
+    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
 
@@ -125,14 +123,6 @@ impl LocalSchemaProvider {
         LocalSchemaDocLoad::Loaded(doc)
     }
 
-    fn schema_leaf_for_resource_path_from_doc(
-        &self,
-        root: &SchemaDoc,
-        path: &YamlPath,
-    ) -> Option<LocalSchemaLeaf> {
-        descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
-    }
-
     fn source_for_leaf(
         &self,
         resource: &ResourceRef,
@@ -146,15 +136,6 @@ impl LocalSchemaProvider {
             Self::relative_path_for_resource(resource)?,
             pointer.to_string(),
         ))
-    }
-
-    fn fragment_for_leaf(
-        &self,
-        resource: &ResourceRef,
-        root: &SchemaDoc,
-        leaf: LocalSchemaLeaf,
-    ) -> ProviderSchemaFragment {
-        fragment_for_source_leaf(root, self.source_for_leaf(resource, &leaf), leaf)
     }
 }
 
@@ -176,13 +157,7 @@ impl K8sSchemaProvider for LocalSchemaProvider {
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult {
         match self.load_schema_doc_result(resource) {
             LocalSchemaDocLoad::Loaded(root) => {
-                match self.schema_leaf_for_resource_path_from_doc(&root, path) {
-                    Some(leaf) => ProviderLookupResult::Found {
-                        schema: self.fragment_for_leaf(resource, &root, leaf),
-                        resolved_k8s_version: None,
-                    },
-                    None => ProviderLookupResult::PathUnresolved,
-                }
+                lookup_root_metadata_path(&root, path, |leaf| self.source_for_leaf(resource, leaf))
             }
             LocalSchemaDocLoad::NotOwned => ProviderLookupResult::NotOwned,
             LocalSchemaDocLoad::Error {

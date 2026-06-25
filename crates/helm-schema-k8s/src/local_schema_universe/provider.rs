@@ -2,15 +2,12 @@ use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::doc_backed_schema::{
-    LocalSchemaLeaf, debug_materialize_local_schema,
-    descend_schema_path_expanding_leaf_with_root_metadata_source, fragment_for_source_leaf,
+    LocalSchemaLeaf, debug_materialize_local_schema, lookup_root_metadata_path,
 };
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
-    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
-    ProviderSchemaSource,
+    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
 };
-use crate::schema_doc::SchemaDoc;
 
 use super::LocalSchemaUniverse;
 use super::universe::LocalSchemaDocument;
@@ -41,20 +38,12 @@ impl ChartLocalCrdSchemaProvider {
         self.universe.is_empty()
     }
 
-    fn schema_leaf_for_resource_path_from_doc(
-        &self,
-        root: &SchemaDoc,
-        path: &YamlPath,
-    ) -> Option<LocalSchemaLeaf> {
-        descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
-    }
-
-    fn fragment_for_leaf(
+    fn source_for_leaf(
         &self,
         document: &LocalSchemaDocument,
-        leaf: LocalSchemaLeaf,
-    ) -> ProviderSchemaFragment {
-        let source = leaf.pointer().map(|pointer| {
+        leaf: &LocalSchemaLeaf,
+    ) -> Option<ProviderSchemaSource> {
+        leaf.pointer().map(|pointer| {
             ProviderSchemaSource::new(
                 ProviderOrigin::ChartLocalCrd,
                 document.source_id().to_string(),
@@ -62,8 +51,7 @@ impl ChartLocalCrdSchemaProvider {
                 document.filename().to_string(),
                 pointer.to_string(),
             )
-        });
-        fragment_for_source_leaf(document.schema_doc(), source, leaf)
+        })
     }
 }
 
@@ -77,13 +65,9 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
             return ProviderLookupResult::NotOwned;
         };
 
-        match self.schema_leaf_for_resource_path_from_doc(document.schema_doc(), path) {
-            Some(leaf) => ProviderLookupResult::Found {
-                schema: self.fragment_for_leaf(document, leaf),
-                resolved_k8s_version: None,
-            },
-            None => ProviderLookupResult::PathUnresolved,
-        }
+        lookup_root_metadata_path(document.schema_doc(), path, |leaf| {
+            self.source_for_leaf(document, leaf)
+        })
     }
 
     fn has_resource(&self, resource: &ResourceRef) -> bool {

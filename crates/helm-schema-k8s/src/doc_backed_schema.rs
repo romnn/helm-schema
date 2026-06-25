@@ -1,9 +1,12 @@
 use serde_json::Value;
 
+use helm_schema_core::YamlPath;
+use json_schema_walk::visit_subschemas_mut;
+
 use crate::lookup::source_bundle::{
     SourceBundleNode, bundle_source_schema, schema_refs_point_inside,
 };
-use crate::lookup::{ProviderSchemaFragment, ProviderSchemaSource};
+use crate::lookup::{ProviderLookupResult, ProviderSchemaFragment, ProviderSchemaSource};
 use crate::metadata_enrichment::{enrich_root_metadata_schema, enriched_metadata_schema};
 use crate::schema_doc::SchemaDoc;
 
@@ -77,6 +80,29 @@ pub(crate) fn fragment_for_source_leaf(
         (None, _) => {}
     }
     fragment
+}
+
+pub(crate) fn lookup_root_metadata_path(
+    root: &SchemaDoc,
+    path: &YamlPath,
+    source_for_leaf: impl FnOnce(&LocalSchemaLeaf) -> Option<ProviderSchemaSource>,
+) -> ProviderLookupResult {
+    fragment_for_root_metadata_path(root, path, source_for_leaf).map_or(
+        ProviderLookupResult::PathUnresolved,
+        |schema| ProviderLookupResult::Found {
+            schema,
+            resolved_k8s_version: None,
+        },
+    )
+}
+
+fn fragment_for_root_metadata_path(
+    root: &SchemaDoc,
+    path: &YamlPath,
+    source_for_leaf: impl FnOnce(&LocalSchemaLeaf) -> Option<ProviderSchemaSource>,
+) -> Option<ProviderSchemaFragment> {
+    let leaf = descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)?;
+    Some(fragment_for_source_leaf(root, source_for_leaf(&leaf), leaf))
 }
 
 pub(crate) fn bundled_local_definition_schema(
@@ -341,55 +367,15 @@ pub(crate) fn expand_local_refs(
         return out;
     }
 
-    let Some(object) = schema.as_object() else {
+    if !schema.is_object() {
         return schema.clone();
-    };
-
-    let mut out = object.clone();
-
-    for keyword in ["allOf", "anyOf", "oneOf"] {
-        if let Some(branches) = out.get(keyword).and_then(Value::as_array) {
-            let expanded = branches
-                .iter()
-                .map(|branch| expand_local_refs(root, branch, depth + 1, stack))
-                .collect();
-            out.insert(keyword.to_string(), Value::Array(expanded));
-        }
     }
 
-    for map_key in ["properties", "patternProperties", "definitions", "$defs"] {
-        if let Some(map) = out.get(map_key).and_then(Value::as_object) {
-            let mut expanded = serde_json::Map::new();
-            for (key, value) in map {
-                expanded.insert(
-                    key.clone(),
-                    expand_local_refs(root, value, depth + 1, stack),
-                );
-            }
-            out.insert(map_key.to_string(), Value::Object(expanded));
-        }
-    }
-
-    for single_key in [
-        "items",
-        "contains",
-        "not",
-        "if",
-        "then",
-        "else",
-        "additionalProperties",
-    ] {
-        if let Some(value) = out.get(single_key).cloned()
-            && !value.is_boolean()
-        {
-            out.insert(
-                single_key.to_string(),
-                expand_local_refs(root, &value, depth + 1, stack),
-            );
-        }
-    }
-
-    Value::Object(out)
+    let mut out = schema.clone();
+    visit_subschemas_mut(&mut out, &mut |subschema| {
+        *subschema = expand_local_refs(root, subschema, depth + 1, stack);
+    });
+    out
 }
 
 fn strip_ref(schema: &Value) -> Value {

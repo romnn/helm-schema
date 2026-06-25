@@ -10,15 +10,13 @@ use crate::cache::{
 };
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{
-    LocalSchemaLeaf, debug_materialize_local_schema,
-    descend_schema_path_expanding_leaf_with_root_metadata_source, fragment_for_source_leaf,
+    LocalSchemaLeaf, debug_materialize_local_schema, lookup_root_metadata_path,
 };
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::inference::cache_scan::scan_crd_cache;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
-    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
-    ProviderSchemaSource,
+    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
@@ -219,14 +217,6 @@ impl CrdsCatalogSchemaProvider {
         false
     }
 
-    fn schema_leaf_for_resource_path_from_doc(
-        &self,
-        root: &SchemaDoc,
-        path: &YamlPath,
-    ) -> Option<LocalSchemaLeaf> {
-        descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
-    }
-
     fn source_for_leaf(
         &self,
         loaded: &LoadedCrdSchemaDoc,
@@ -240,14 +230,6 @@ impl CrdsCatalogSchemaProvider {
             loaded.relative_path.clone(),
             pointer.to_string(),
         ))
-    }
-
-    fn fragment_for_leaf(
-        &self,
-        loaded: &LoadedCrdSchemaDoc,
-        leaf: LocalSchemaLeaf,
-    ) -> ProviderSchemaFragment {
-        fragment_for_source_leaf(&loaded.doc, self.source_for_leaf(loaded, &leaf), leaf)
     }
 }
 
@@ -287,13 +269,9 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         let Some(loaded) = self.load_schema_doc(resource) else {
             return ProviderLookupResult::NotOwned;
         };
-        match self.schema_leaf_for_resource_path_from_doc(&loaded.doc, path) {
-            Some(leaf) => ProviderLookupResult::Found {
-                schema: self.fragment_for_leaf(&loaded, leaf),
-                resolved_k8s_version: None,
-            },
-            None => ProviderLookupResult::PathUnresolved,
-        }
+        lookup_root_metadata_path(&loaded.doc, path, |leaf| {
+            self.source_for_leaf(&loaded, leaf)
+        })
     }
 
     fn has_resource(&self, resource: &ResourceRef) -> bool {

@@ -1,10 +1,9 @@
 mod detector;
 mod list_envelope;
-mod locator;
 mod manifest_resource;
 mod source_documents;
 mod span_collection;
 mod state;
 
 pub use detector::ResourceIdentityDetector;
-pub use locator::ResourceIdentityIndex;
+pub(crate) use span_collection::{ResourceSpan, collect_resource_spans};

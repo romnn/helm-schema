@@ -15,7 +15,7 @@ mod yaml_syntax;
 pub use capability_branch::{decode_guard, decode_guard_expr};
 pub use document_attribution::{
     AttributionIndex, ControlSite, OutputSlot, OutputSlotKind, ResolvedNodeContext,
-    build_attribution_index, is_output_root_kind,
+    build_attribution_index, build_attribution_index_with_resources, is_output_root_kind,
 };
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
 pub use expr_function_catalog::{
@@ -32,8 +32,8 @@ pub use range_structure::{
     range_has_destructured_variable_definition, range_header_from_source,
     range_header_text_from_source, range_variable_name_expr,
 };
-pub use resource_identity::{ResourceIdentityDetector, ResourceIdentityIndex};
-pub use tree_sitter_parser::{ParsedTemplate, TreeSitterParser, contains_template_action};
+pub use resource_identity::ResourceIdentityDetector;
+pub use tree_sitter_parser::{TreeSitterParser, contains_template_action};
 pub use tree_sitter_utils::{
     children_with_field, parse_expr_text, parse_go_template, parse_helm_template,
 };
@@ -41,7 +41,6 @@ pub use values_comments::extract_values_yaml_descriptions;
 pub use yaml_syntax::{ParsedYamlKey, first_mapping_colon_offset, parse_yaml_key};
 
 use std::collections::{HashMap, hash_map::Entry};
-use std::fmt::Write;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
@@ -171,23 +170,10 @@ impl TemplateAction {
     }
 
     #[must_use]
-    pub fn renders_yaml_fragment(&self) -> bool {
-        self.exprs.iter().any(TemplateExpr::renders_yaml_fragment)
-    }
-
-    #[must_use]
     pub fn may_inject_yaml_structure(&self) -> bool {
         self.exprs
             .iter()
             .any(TemplateExpr::may_inject_yaml_structure)
-    }
-
-    #[must_use]
-    pub fn fragment_indent_width(&self) -> Option<usize> {
-        self.exprs
-            .iter()
-            .rev()
-            .find_map(TemplateExpr::fragment_indent_width)
     }
 }
 
@@ -246,76 +232,6 @@ pub enum HelmAst {
 }
 
 impl HelmAst {
-    /// Render this AST as a pretty-printed S-expression string.
-    #[must_use]
-    pub fn to_sexpr(&self) -> String {
-        let mut buf = String::new();
-        self.write_sexpr(&mut buf, 0);
-        buf
-    }
-
-    /// Visit every top-level template expression structurally embedded in this
-    /// AST node: standalone Helm actions plus control-flow headers.
-    pub fn walk_template_expr_roots(&self, visit: &mut impl FnMut(&TemplateExpr)) {
-        match self {
-            HelmAst::Document { items }
-            | HelmAst::Mapping { items }
-            | HelmAst::Sequence { items } => {
-                for item in items {
-                    item.walk_template_expr_roots(visit);
-                }
-            }
-            HelmAst::Pair { key, value } => {
-                key.walk_template_expr_roots(visit);
-                if let Some(value) = value.as_deref() {
-                    value.walk_template_expr_roots(visit);
-                }
-            }
-            HelmAst::HelmExpr { action } => {
-                for expr in action.exprs() {
-                    visit(expr);
-                }
-            }
-            HelmAst::If {
-                condition,
-                then_branch,
-                else_branch,
-            } => {
-                visit(condition.expr());
-                for item in then_branch {
-                    item.walk_template_expr_roots(visit);
-                }
-                for item in else_branch {
-                    item.walk_template_expr_roots(visit);
-                }
-            }
-            HelmAst::Range {
-                header,
-                body,
-                else_branch,
-            }
-            | HelmAst::With {
-                header,
-                body,
-                else_branch,
-            } => {
-                visit(header.expr());
-                for item in body {
-                    item.walk_template_expr_roots(visit);
-                }
-                for item in else_branch {
-                    item.walk_template_expr_roots(visit);
-                }
-            }
-            HelmAst::Define { body, .. } | HelmAst::Block { body, .. } => {
-                for item in body {
-                    item.walk_template_expr_roots(visit);
-                }
-            }
-            HelmAst::Scalar { .. } | HelmAst::HelmComment { .. } => {}
-        }
-    }
-
     /// Visit every typed template expression reachable from this AST node,
     /// including actions embedded inside scalar text fragments.
     pub fn walk_template_exprs(&self, visit: &mut impl FnMut(&TemplateExpr)) {
@@ -380,148 +296,6 @@ impl HelmAst {
                 }
             }
             HelmAst::HelmComment { .. } => {}
-        }
-    }
-
-    #[allow(clippy::too_many_lines)]
-    fn write_sexpr(&self, buf: &mut String, indent: usize) {
-        let pad = "  ".repeat(indent);
-        match self {
-            HelmAst::Document { items } => {
-                let _ = write!(buf, "{pad}(Document");
-                for item in items {
-                    buf.push('\n');
-                    item.write_sexpr(buf, indent + 1);
-                }
-                buf.push(')');
-            }
-            HelmAst::Mapping { items } => {
-                let _ = write!(buf, "{pad}(Mapping");
-                for item in items {
-                    buf.push('\n');
-                    item.write_sexpr(buf, indent + 1);
-                }
-                buf.push(')');
-            }
-            HelmAst::Pair { key, value } => {
-                let _ = write!(buf, "{pad}(Pair");
-                buf.push('\n');
-                key.write_sexpr(buf, indent + 1);
-                if let Some(v) = value {
-                    buf.push('\n');
-                    v.write_sexpr(buf, indent + 1);
-                }
-                buf.push(')');
-            }
-            HelmAst::Sequence { items } => {
-                let _ = write!(buf, "{pad}(Sequence");
-                for item in items {
-                    buf.push('\n');
-                    item.write_sexpr(buf, indent + 1);
-                }
-                buf.push(')');
-            }
-            HelmAst::Scalar { text } => {
-                let _ = write!(buf, "{pad}(Scalar {text:?})");
-            }
-            HelmAst::HelmExpr { action } => {
-                let _ = write!(buf, "{pad}(HelmExpr {:?})", action.raw());
-            }
-            HelmAst::HelmComment { text } => {
-                let _ = write!(buf, "{pad}(HelmComment {text:?})");
-            }
-            HelmAst::If {
-                condition,
-                then_branch,
-                else_branch,
-            } => {
-                let _ = write!(buf, "{pad}(If {:?}", condition.raw(),);
-                if !then_branch.is_empty() {
-                    let _ = write!(buf, "\n{pad}  (then");
-                    for item in then_branch {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 2);
-                    }
-                    buf.push(')');
-                }
-                if !else_branch.is_empty() {
-                    let _ = write!(buf, "\n{pad}  (else");
-                    for item in else_branch {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 2);
-                    }
-                    buf.push(')');
-                }
-                buf.push(')');
-            }
-            HelmAst::Range {
-                header,
-                body,
-                else_branch,
-            } => {
-                let _ = write!(buf, "{pad}(Range {:?}", header.raw(),);
-                if !body.is_empty() {
-                    let _ = write!(buf, "\n{pad}  (body");
-                    for item in body {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 2);
-                    }
-                    buf.push(')');
-                }
-                if !else_branch.is_empty() {
-                    let _ = write!(buf, "\n{pad}  (else");
-                    for item in else_branch {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 2);
-                    }
-                    buf.push(')');
-                }
-                buf.push(')');
-            }
-            HelmAst::With {
-                header,
-                body,
-                else_branch,
-            } => {
-                let _ = write!(buf, "{pad}(With {:?}", header.raw(),);
-                if !body.is_empty() {
-                    let _ = write!(buf, "\n{pad}  (body");
-                    for item in body {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 2);
-                    }
-                    buf.push(')');
-                }
-                if !else_branch.is_empty() {
-                    let _ = write!(buf, "\n{pad}  (else");
-                    for item in else_branch {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 2);
-                    }
-                    buf.push(')');
-                }
-                buf.push(')');
-            }
-            HelmAst::Define { name, body } => {
-                let _ = write!(buf, "{pad}(Define {name:?}");
-                if !body.is_empty() {
-                    for item in body {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 1);
-                    }
-                }
-                buf.push(')');
-            }
-            HelmAst::Block { name, body } => {
-                let _ = write!(buf, "{pad}(Block {name:?}");
-                if !body.is_empty() {
-                    for item in body {
-                        buf.push('\n');
-                        item.write_sexpr(buf, indent + 1);
-                    }
-                }
-                buf.push(')');
-            }
         }
     }
 }

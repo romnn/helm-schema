@@ -6,12 +6,6 @@ use crate::{HelmAst, HelmParser, ParseError, TemplateAction, TemplateHeader};
 /// `helm_template` grammar for re-parsing YAML fragments within text nodes.
 pub struct TreeSitterParser;
 
-/// Fused template parse result plus syntax-level metadata.
-pub struct ParsedTemplate {
-    pub ast: HelmAst,
-    pub contains_template_action: bool,
-}
-
 /// Return whether the source contains any Helm/Go-template action.
 ///
 /// This is a syntax-level check over the template grammar. Callers that only
@@ -104,13 +98,6 @@ struct DeindentedYamlFragment {
 impl HelmParser for TreeSitterParser {
     #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError> {
-        self.parse_with_metadata(src).map(|parsed| parsed.ast)
-    }
-}
-
-impl TreeSitterParser {
-    #[tracing::instrument(skip_all, fields(bytes = src.len()))]
-    pub fn parse_with_metadata(&self, src: &str) -> Result<ParsedTemplate, ParseError> {
         let language =
             tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
         let mut parser = tree_sitter::Parser::new();
@@ -123,17 +110,13 @@ impl TreeSitterParser {
             .ok_or(ParseError::TreeSitterParseFailed)?;
 
         let root = tree.root_node();
-        let contains_template_action = node_contains_template_action(root);
         let mut blocks = Vec::new();
         let mut c = root.walk();
         for ch in root.children(&mut c) {
             blocks.push(ch);
         }
         let items = fuse_blocks(&blocks, src, false);
-        Ok(ParsedTemplate {
-            ast: HelmAst::Document { items },
-            contains_template_action,
-        })
+        Ok(HelmAst::Document { items })
     }
 }
 

@@ -22,7 +22,18 @@ impl SymbolicWalker<'_> {
     ) {
         self.inline_static_file_templates_from_helper_calls(exprs);
 
-        let output_slot = self.document_tracker.output_slot_for_action(node);
+        let mut output_slot = self.document_tracker.output_slot_for_action(node);
+        if output_slot.resource.is_none()
+            && let Some(resource) = self
+                .document_tracker
+                .resource_at(node.start_byte())
+                .cloned()
+        {
+            output_slot.path = self
+                .document_tracker
+                .rebase_path_at(node.start_byte(), output_slot.path);
+            output_slot.resource = Some(resource);
+        }
         if output_slot.is_yaml_comment() {
             return;
         }

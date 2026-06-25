@@ -1,7 +1,12 @@
-use helm_schema_ast::{DefineIndex, ResourceIdentityIndex};
+use helm_schema_ast::{AttributionIndex, DefineIndex, build_attribution_index_with_resources};
 use indoc::indoc;
 
 use test_util::prelude::sim_assert_eq;
+
+fn attribution_index(source: &str) -> AttributionIndex {
+    let tree = helm_schema_ast::parse_go_template(source).expect("parse template");
+    build_attribution_index_with_resources(source, tree.root_node(), &DefineIndex::new())
+}
 
 #[test]
 fn resource_locator_keeps_multi_document_resources_separate() {
@@ -16,7 +21,7 @@ fn resource_locator_keeps_multi_document_resources_separate() {
         spec:
           replicas: {{ .Values.replicas }}
     "#};
-    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = attribution_index(source);
 
     let first_byte = source.find("first").expect("first marker");
     let first = locator.resource_at(first_byte).expect("first resource");
@@ -48,7 +53,7 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
               ports:
                 - port: {{ .Values.port }}
     "#};
-    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = attribution_index(source);
 
     let host_byte = source.find("host").expect("host marker");
     let ingress = locator.resource_at(host_byte).expect("ingress resource");
@@ -107,7 +112,7 @@ fn resource_locator_descends_into_ranged_list_items() {
                 - host: {{ $.Values.host | quote }}
         {{- end }}
     "#};
-    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = attribution_index(source);
 
     let host_byte = source.find("host").expect("host marker");
     let ingress = locator.resource_at(host_byte).expect("ingress resource");
@@ -140,7 +145,7 @@ fn resource_locator_keeps_non_kubernetes_list_kind_as_resource() {
               ports:
                 - port: {{ .Values.port }}
     "#};
-    let locator = ResourceIdentityIndex::from_source(source, &DefineIndex::new());
+    let locator = attribution_index(source);
 
     let port_byte = source.find("port").expect("port marker");
     let resource = locator.resource_at(port_byte).expect("outer resource");

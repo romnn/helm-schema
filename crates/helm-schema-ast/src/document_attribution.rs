@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use helm_schema_core::{ResourceRef, ValueKind, YamlPath};
 
+use crate::resource_identity::{ResourceSpan, collect_resource_spans};
 use crate::{
-    TemplateExpr, first_mapping_colon_offset, parse_action_expressions,
+    DefineIndex, TemplateExpr, first_mapping_colon_offset, parse_action_expressions,
     range_body_mapping_entry_indent_from_source,
 };
 
@@ -95,13 +96,14 @@ pub struct ResolvedNodeContext {
 pub struct AttributionIndex {
     output_slots: HashMap<(usize, usize), OutputSlot>,
     control_sites: HashMap<(usize, usize), ControlSite>,
+    resource_spans: Vec<ResourceSpan>,
 }
 
 impl AttributionIndex {
     pub fn output_slot_for_node(&self, mut node: tree_sitter::Node<'_>) -> Option<OutputSlot> {
         loop {
             if let Some(slot) = self.output_slots.get(&(node.start_byte(), node.end_byte())) {
-                return Some(slot.clone());
+                return Some(self.resource_scoped_slot(node.start_byte(), slot.clone()));
             }
             node = node.parent()?;
         }
@@ -117,6 +119,39 @@ impl AttributionIndex {
             }
             node = node.parent()?;
         }
+    }
+
+    pub fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
+        self.resource_span_at(byte).map(|span| &span.resource)
+    }
+
+    pub fn rebase_path_at(&self, byte: usize, path: YamlPath) -> YamlPath {
+        let Some(span) = self.resource_span_at(byte) else {
+            return path;
+        };
+        if span.path_prefix.is_empty() || !path.0.starts_with(&span.path_prefix) {
+            return path;
+        }
+        YamlPath(path.0[span.path_prefix.len()..].to_vec())
+    }
+
+    fn resource_scoped_slot(&self, byte: usize, mut slot: OutputSlot) -> OutputSlot {
+        slot.path = self.rebase_path_at(byte, slot.path);
+        slot.resource = self.resource_at(byte).cloned();
+        slot
+    }
+
+    fn resource_span_at(&self, byte: usize) -> Option<&ResourceSpan> {
+        self.resource_spans
+            .iter()
+            .filter(|span| span.start <= byte && byte < span.end)
+            .min_by(|left, right| {
+                let left_len = left.end.saturating_sub(left.start);
+                let right_len = right.end.saturating_sub(right.start);
+                left_len
+                    .cmp(&right_len)
+                    .then_with(|| right.start.cmp(&left.start))
+            })
     }
 }
 
@@ -184,6 +219,16 @@ pub fn build_attribution_index(source: &str, root: tree_sitter::Node<'_>) -> Att
         }
     }
 
+    attribution
+}
+
+pub fn build_attribution_index_with_resources(
+    source: &str,
+    root: tree_sitter::Node<'_>,
+    defines: &DefineIndex,
+) -> AttributionIndex {
+    let mut attribution = build_attribution_index(source, root);
+    attribution.resource_spans = collect_resource_spans(source, defines);
     attribution
 }
 

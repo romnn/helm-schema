@@ -6,14 +6,14 @@ use super::manifest_resource::{detect_manifest_resource, is_kubernetes_list_enve
 use super::source_documents::document_spans;
 
 #[derive(Clone, Debug)]
-pub(super) struct ResourceSpan {
-    pub(super) start: usize,
-    pub(super) end: usize,
-    pub(super) resource: ResourceRef,
-    pub(super) path_prefix: Vec<String>,
+pub(crate) struct ResourceSpan {
+    pub(crate) start: usize,
+    pub(crate) end: usize,
+    pub(crate) resource: ResourceRef,
+    pub(crate) path_prefix: Vec<String>,
 }
 
-pub(super) fn collect_resource_spans(source: &str, defines: &DefineIndex) -> Vec<ResourceSpan> {
+pub(crate) fn collect_resource_spans(source: &str, defines: &DefineIndex) -> Vec<ResourceSpan> {
     let mut spans = Vec::new();
     for (start, end) in document_spans(source) {
         let Some(document_source) = source.get(start..end) else {
