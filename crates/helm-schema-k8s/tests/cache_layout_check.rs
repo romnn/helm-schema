@@ -6,8 +6,11 @@ use test_util::prelude::sim_assert_eq;
 
 use helm_schema_k8s::{
     CACHE_LAYOUT_VERSION, Diagnostic, DiagnosticSink, K8sSchemaProvider,
-    KubernetesJsonSchemaProvider, LAYOUT_MARKER_FILENAME, MockFetcher, MockResponse,
+    KubernetesJsonSchemaProvider, LAYOUT_MARKER_FILENAME,
 };
+
+mod common;
+use common::{MockFetcher, MockResponse};
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
     let p = std::env::temp_dir().join(format!(

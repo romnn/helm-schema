@@ -5,13 +5,14 @@ mod runtime;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{DefineIndex, TemplateExpr};
+use helm_schema_ast::{
+    AttributionIndex, DefineIndex, TemplateExpr, build_attribution_index_with_resources,
+};
 
 use crate::Guard;
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::contract::ContractIr;
-use crate::document_projection::DocumentTracker;
 use crate::expr_eval::expr_literal_helper_call_callee;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
@@ -119,7 +120,7 @@ struct SymbolicWalker<'a> {
     seed_predicates: Vec<Predicate>,
     seed_dot: Option<AbstractValue>,
     no_output_depth: usize,
-    document_tracker: DocumentTracker<'a>,
+    attribution: AttributionIndex,
     current_source_span: Option<crate::SourceSpan>,
 
     inline_stack: Vec<String>,
@@ -147,7 +148,7 @@ impl<'a> SymbolicWalker<'a> {
             seed_predicates: Vec::new(),
             seed_dot: None,
             no_output_depth: 0,
-            document_tracker: DocumentTracker::new(source, defines),
+            attribution: AttributionIndex::default(),
             current_source_span: None,
 
             inline_stack: Vec::new(),
@@ -215,7 +216,8 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {
-        self.document_tracker.reset_for_tree(tree);
+        self.attribution =
+            build_attribution_index_with_resources(self.source, tree.root_node(), self.defines);
         self.scope
             .reset_control(&self.seed_predicates, self.seed_dot.clone());
         self.no_output_depth = 0;

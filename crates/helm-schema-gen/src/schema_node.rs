@@ -43,10 +43,6 @@ impl JsonSchemaType {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum SchemaNode {
     Empty,
-    Typed {
-        ty: JsonSchemaType,
-        keywords: BTreeMap<String, Value>,
-    },
     Object {
         properties: BTreeMap<String, SchemaNode>,
         include_empty_properties: bool,
@@ -60,9 +56,6 @@ pub(crate) enum SchemaNode {
         items: Option<Box<SchemaNode>>,
         min_items: Option<u64>,
     },
-    Enum(Vec<Value>),
-    Const(Value),
-    Not(Box<SchemaNode>),
     AllOf(Vec<SchemaNode>),
     AnyOf(Vec<SchemaNode>),
     Foreign(Value),
@@ -90,10 +83,7 @@ impl SchemaNode {
     }
 
     pub(crate) fn typed(ty: JsonSchemaType) -> Self {
-        Self::Typed {
-            ty,
-            keywords: BTreeMap::new(),
-        }
+        Self::Foreign(Value::Object(type_map(ty)))
     }
 
     pub(crate) fn type_named(name: &str) -> Self {
@@ -105,8 +95,8 @@ impl SchemaNode {
     pub(crate) fn typed_keyword(mut self, key: impl Into<String>, value: Value) -> Self {
         let key = key.into();
         match &mut self {
-            Self::Typed { keywords, .. } => {
-                keywords.insert(key, value);
+            Self::Foreign(Value::Object(object)) => {
+                object.insert(key, value);
                 self
             }
             _ => self,
@@ -224,15 +214,25 @@ impl SchemaNode {
     }
 
     pub(crate) fn enum_values(values: Vec<Value>) -> Self {
-        Self::Enum(values)
+        Self::foreign(Value::Object(
+            [("enum".to_string(), Value::Array(values))]
+                .into_iter()
+                .collect(),
+        ))
     }
 
     pub(crate) fn const_value(value: Value) -> Self {
-        Self::Const(value)
+        Self::foreign(Value::Object(
+            [("const".to_string(), value)].into_iter().collect(),
+        ))
     }
 
     pub(crate) fn not(value: SchemaNode) -> Self {
-        Self::Not(Box::new(value))
+        Self::foreign(Value::Object(
+            [("not".to_string(), value.into_value())]
+                .into_iter()
+                .collect(),
+        ))
     }
 
     pub(crate) fn all_of(values: Vec<SchemaNode>) -> Self {
@@ -294,11 +294,7 @@ impl SchemaNode {
     pub(crate) fn is_object_like(&self) -> bool {
         match self {
             Self::Object { .. } => true,
-            Self::Typed {
-                ty: JsonSchemaType::Object,
-                ..
-            } => true,
-            Self::Array { .. } | Self::Typed { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
+            Self::Array { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
             Self::Foreign(value) => foreign_is_object_like(value),
             _ => false,
         }
@@ -307,11 +303,7 @@ impl SchemaNode {
     pub(crate) fn is_array_like(&self) -> bool {
         match self {
             Self::Array { .. } => true,
-            Self::Typed {
-                ty: JsonSchemaType::Array,
-                ..
-            } => true,
-            Self::Object { .. } | Self::Typed { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
+            Self::Object { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
             Self::Foreign(value) => foreign_is_array_like(value),
             _ => false,
         }
@@ -454,11 +446,6 @@ impl SchemaNode {
     pub(crate) fn into_value(self) -> Value {
         match self {
             Self::Empty => Value::Object(Map::new()),
-            Self::Typed { ty, keywords } => {
-                let mut object = type_map(ty);
-                object.extend(keywords);
-                Value::Object(object)
-            }
             Self::Object {
                 properties,
                 include_empty_properties,
@@ -525,19 +512,6 @@ impl SchemaNode {
                 }
                 Value::Object(object)
             }
-            Self::Enum(values) => Value::Object(
-                [("enum".to_string(), Value::Array(values))]
-                    .into_iter()
-                    .collect(),
-            ),
-            Self::Const(value) => {
-                Value::Object([("const".to_string(), value)].into_iter().collect())
-            }
-            Self::Not(value) => Value::Object(
-                [("not".to_string(), value.into_value())]
-                    .into_iter()
-                    .collect(),
-            ),
             Self::AllOf(values) => Value::Object(
                 [(
                     "allOf".to_string(),

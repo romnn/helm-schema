@@ -20,10 +20,8 @@ impl fmt::Display for FetchError {
 
 impl std::error::Error for FetchError {}
 
-/// Trait abstraction over HTTP fetches so providers can be unit-tested
-/// without touching the network. Production code wires
-/// [`crate::fetch::UreqFetcher`]; tests inject a `MockFetcher` from the
-/// `test-util` feature.
+/// Trait abstraction over HTTP fetches so providers can be tested without
+/// touching the network. Production code wires [`crate::fetch::UreqFetcher`].
 pub trait HttpFetcher: Send + Sync + fmt::Debug {
     /// Fetch the URL.
     ///

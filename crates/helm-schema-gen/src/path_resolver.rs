@@ -7,7 +7,6 @@ use serde_yaml::Value as YamlValue;
 
 use helm_schema_ir::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
 
-use crate::foreign_schema::ForeignSchema;
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
@@ -272,9 +271,7 @@ fn lookup_provider_schema(
         .schema_fragment_for_use(provider_use)
         .and_then(|fragment| {
             fragment.try_map_schema(|schema| {
-                resolve_policy
-                    .provider_schema_for_value_use(schema, provider_use)
-                    .map(ForeignSchema::into_value)
+                resolve_policy.provider_schema_for_value_use(schema, provider_use)
             })
         })
         .map(ProviderSchemaCandidate::from_provider_fragment)
@@ -284,7 +281,7 @@ fn lookup_provider_schema(
 fn provider_schema_for_path(
     provider_schemas: Vec<Arc<ProviderSchemaCandidate>>,
     metadata_schema: Value,
-) -> (ForeignSchema, Option<ProviderSchemaCandidate>) {
+) -> (Value, Option<ProviderSchemaCandidate>) {
     let single_provider_schema = match provider_schemas.as_slice() {
         [schema] => Some(schema.clone()),
         _ => None,
@@ -306,7 +303,7 @@ fn provider_schema_for_path(
     };
 
     (
-        ForeignSchema::new(merge_schema_list(vec![provider_schema, metadata_schema])),
+        merge_schema_list(vec![provider_schema, metadata_schema]),
         provider_schema_candidate,
     )
 }

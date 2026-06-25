@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::convert::Infallible;
 
+use json_schema_walk::{SchemaTraversalContext, ref_points_inside, try_map_schema_context};
 use serde_json::{Map, Value};
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -53,7 +55,7 @@ impl SourceBundleNode {
 }
 
 pub(crate) fn schema_refs_point_inside(root: &Value, schema: &Value) -> bool {
-    schema_refs_point_inside_value(root, schema, SchemaTraversalContext::Schema)
+    json_schema_walk::schema_refs_point_inside(root, schema)
 }
 
 pub(crate) fn bundle_source_schema(
@@ -160,80 +162,24 @@ where
         current_location: &SourceBundleLocation,
         depth: usize,
     ) -> Value {
-        match value {
-            Value::Array(values) => match context {
-                SchemaTraversalContext::Data => Value::Array(values.clone()),
-                SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
-                    Value::Array(
-                        values
-                            .iter()
-                            .map(|value| {
-                                self.bundle_schema_value(
-                                    value,
-                                    SchemaTraversalContext::Schema,
-                                    current_location,
-                                    depth + 1,
-                                )
-                            })
-                            .collect(),
-                    )
+        let mapped: Result<Value, Infallible> =
+            try_map_schema_context(value, context, |value, context, relative_depth| {
+                if matches!(context, SchemaTraversalContext::Data) {
+                    return Ok(None);
                 }
-                SchemaTraversalContext::SchemaMapValues => Value::Array(
-                    values
-                        .iter()
-                        .map(|value| {
-                            self.bundle_schema_value(
-                                value,
-                                SchemaTraversalContext::SchemaMapValues,
-                                current_location,
-                                depth + 1,
-                            )
-                        })
-                        .collect(),
-                ),
-            },
-            Value::Object(object) => match context {
-                SchemaTraversalContext::Data => Value::Object(object.clone()),
-                SchemaTraversalContext::SchemaMapValues => Value::Object(
-                    object
-                        .iter()
-                        .map(|(key, value)| {
-                            (
-                                key.clone(),
-                                self.bundle_schema_value(
-                                    value,
-                                    SchemaTraversalContext::Schema,
-                                    current_location,
-                                    depth + 1,
-                                ),
-                            )
-                        })
-                        .collect(),
-                ),
-                SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
-                    if let Some(reference) = object.get("$ref").and_then(Value::as_str) {
-                        return self.bundle_schema_ref(value, reference, current_location, depth);
-                    }
-
-                    Value::Object(
-                        object
-                            .iter()
-                            .map(|(key, value)| {
-                                (
-                                    key.clone(),
-                                    self.bundle_schema_value(
-                                        value,
-                                        schema_child_context_for_keyword(key),
-                                        current_location,
-                                        depth + 1,
-                                    ),
-                                )
-                            })
-                            .collect(),
-                    )
-                }
-            },
-            _ => value.clone(),
+                let Some(reference) = value.get("$ref").and_then(Value::as_str) else {
+                    return Ok(None);
+                };
+                Ok(Some(self.bundle_schema_ref(
+                    value,
+                    reference,
+                    current_location,
+                    depth + relative_depth,
+                )))
+            });
+        match mapped {
+            Ok(value) => value,
+            Err(err) => match err {},
         }
     }
 
@@ -303,54 +249,6 @@ where
     }
 }
 
-fn schema_refs_point_inside_value(
-    root: &Value,
-    value: &Value,
-    context: SchemaTraversalContext,
-) -> bool {
-    match value {
-        Value::Array(values) => match context {
-            SchemaTraversalContext::Data => true,
-            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
-                values.iter().all(|value| {
-                    schema_refs_point_inside_value(root, value, SchemaTraversalContext::Schema)
-                })
-            }
-            SchemaTraversalContext::SchemaMapValues => values.iter().all(|value| {
-                schema_refs_point_inside_value(root, value, SchemaTraversalContext::SchemaMapValues)
-            }),
-        },
-        Value::Object(object) => match context {
-            SchemaTraversalContext::Data => true,
-            SchemaTraversalContext::SchemaMapValues => object.values().all(|value| {
-                schema_refs_point_inside_value(root, value, SchemaTraversalContext::Schema)
-            }),
-            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
-                if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-                    && !ref_points_inside(root, reference)
-                {
-                    return false;
-                }
-                object.iter().all(|(key, value)| {
-                    schema_refs_point_inside_value(
-                        root,
-                        value,
-                        schema_child_context_for_keyword(key),
-                    )
-                })
-            }
-        },
-        _ => true,
-    }
-}
-
-fn ref_points_inside(root: &Value, reference: &str) -> bool {
-    let Some(pointer) = reference.strip_prefix('#') else {
-        return false;
-    };
-    pointer.is_empty() || root.pointer(pointer).is_some()
-}
-
 fn strip_ref(schema: &Value) -> Value {
     let Some(object) = schema.as_object() else {
         return schema.clone();
@@ -358,35 +256,6 @@ fn strip_ref(schema: &Value) -> Value {
     let mut out = object.clone();
     out.remove("$ref");
     Value::Object(out)
-}
-
-#[derive(Clone, Copy)]
-enum SchemaTraversalContext {
-    Schema,
-    SchemaArray,
-    SchemaMapValues,
-    Data,
-}
-
-fn schema_child_context_for_keyword(key: &str) -> SchemaTraversalContext {
-    match key {
-        "properties" | "patternProperties" | "$defs" | "definitions" | "dependentSchemas" => {
-            SchemaTraversalContext::SchemaMapValues
-        }
-        "allOf" | "anyOf" | "oneOf" | "prefixItems" => SchemaTraversalContext::SchemaArray,
-        "additionalItems"
-        | "additionalProperties"
-        | "contains"
-        | "else"
-        | "if"
-        | "items"
-        | "not"
-        | "propertyNames"
-        | "then"
-        | "unevaluatedItems"
-        | "unevaluatedProperties" => SchemaTraversalContext::Schema,
-        _ => SchemaTraversalContext::Data,
-    }
 }
 
 fn definition_base_name(pointer: &str) -> String {

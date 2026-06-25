@@ -321,26 +321,7 @@ fn compact_json_len(value: &Value) -> usize {
 }
 
 fn canonical_compact_json_string(value: &Value) -> String {
-    serde_json::to_string(&canonicalize_json_value(value))
-        .expect("serialize canonical serde_json value")
-}
-
-fn canonicalize_json_value(value: &Value) -> Value {
-    match value {
-        Value::Object(object) => {
-            let mut out = Map::new();
-            let mut keys: Vec<_> = object.keys().collect();
-            keys.sort();
-            for key in keys {
-                if let Some(value) = object.get(key) {
-                    out.insert(key.clone(), canonicalize_json_value(value));
-                }
-            }
-            Value::Object(out)
-        }
-        Value::Array(values) => Value::Array(values.iter().map(canonicalize_json_value).collect()),
-        other => other.clone(),
-    }
+    json_schema_walk::canonical_json_string(value)
 }
 
 #[cfg(test)]

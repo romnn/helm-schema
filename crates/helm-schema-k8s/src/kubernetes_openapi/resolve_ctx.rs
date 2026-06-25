@@ -227,20 +227,6 @@ fn strip_ref(schema: &Value) -> Value {
     Value::Object(out)
 }
 
-pub fn expand_schema_node<F: FnMut(&str) -> Option<SchemaDoc>>(
-    ctx: &mut ResolveCtx<F>,
-    current_filename: &str,
-    schema: &Value,
-    depth: usize,
-) -> (String, Value) {
-    let node = ResolvedSchemaNode::root(current_filename.to_string(), schema.clone());
-    let expanded = expand_schema_node_at(ctx, node, depth);
-    (
-        expanded.location.filename().to_string(),
-        expanded.into_schema(),
-    )
-}
-
 fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
     ctx: &mut ResolveCtx<F>,
     node: ResolvedSchemaNode,

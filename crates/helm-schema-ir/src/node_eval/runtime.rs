@@ -2,7 +2,7 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use super::effects::NodeActionEffectSink;
 use crate::YamlPath;
-use crate::document_projection::ControlSite;
+use helm_schema_ast::ControlSite;
 
 pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     type ScopeSnapshot: Clone;

@@ -1,26 +1,18 @@
+#![allow(dead_code)]
+
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use super::http_fetcher::{FetchError, HttpFetcher};
+use helm_schema_k8s::{FetchError, HttpFetcher};
 
-/// Response a [`MockFetcher`] returns for a given URL.
 #[derive(Debug, Clone)]
 pub enum MockResponse {
-    /// HTTP 200 with these bytes.
     Body(Vec<u8>),
-    /// HTTP 404 — definitively not present.
     NotFound,
-    /// Transport error.
     Transport(String),
-    /// Network was disabled.
     NetworkDisabled,
 }
 
-/// In-memory [`HttpFetcher`] for unit + integration tests.
-///
-/// URLs without an explicit response default to [`MockResponse::NotFound`]
-/// so tests can pre-seed only the URLs they care about and let everything
-/// else 404 naturally.
 #[derive(Debug)]
 pub struct MockFetcher {
     responses: Mutex<HashMap<String, MockResponse>>,
@@ -44,7 +36,6 @@ impl MockFetcher {
         }
     }
 
-    /// Wire a canned response for an exact URL.
     #[must_use]
     pub fn with(self, url: impl Into<String>, response: MockResponse) -> Self {
         if let Ok(mut guard) = self.responses.lock() {
@@ -53,14 +44,11 @@ impl MockFetcher {
         self
     }
 
-    /// Wire a canned body for an exact URL (convenience for HTTP 200).
     #[must_use]
     pub fn with_body(self, url: impl Into<String>, body: impl Into<Vec<u8>>) -> Self {
         self.with(url, MockResponse::Body(body.into()))
     }
 
-    /// Change the default response for any URL not explicitly wired
-    /// (default: 404).
     #[must_use]
     pub fn with_default(self, response: MockResponse) -> Self {
         if let Ok(mut guard) = self.default.lock() {
@@ -69,7 +57,6 @@ impl MockFetcher {
         self
     }
 
-    /// Count of `fetch` invocations across all URLs.
     #[must_use]
     pub fn total_calls(&self) -> usize {
         self.call_counts
@@ -78,7 +65,6 @@ impl MockFetcher {
             .unwrap_or(0)
     }
 
-    /// Count of `fetch` invocations for a specific URL.
     #[must_use]
     pub fn calls_for(&self, url: &str) -> usize {
         self.call_counts

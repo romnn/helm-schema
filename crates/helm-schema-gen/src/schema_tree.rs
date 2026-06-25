@@ -5,7 +5,8 @@ use serde_yaml::Value as YamlValue;
 
 use crate::merge::{merge_schema_list, merge_two_schemas};
 use crate::schema_model::is_empty_schema;
-use crate::schema_node::{JsonSchemaType, SchemaNode};
+use crate::schema_node::SchemaNode;
+use crate::values_yaml::{schema_from_yaml_value, yaml_value_at_segments};
 
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
 
@@ -47,7 +48,7 @@ impl SchemaDocument {
     ) {
         let mut insertions = Vec::new();
         for root_path in root_paths {
-            let Some(yaml) = yaml_value_at_path(values_yaml_doc, root_path) else {
+            let Some(yaml) = yaml_value_at_segments(values_yaml_doc, root_path) else {
                 continue;
             };
             collect_missing_yaml_default_insertions(
@@ -220,18 +221,6 @@ fn add_branch_property_placeholders_to_node(host: &mut SchemaNode, branch: &Sche
     }
 }
 
-fn yaml_value_at_path<'a>(yaml: &'a YamlValue, path_segments: &[String]) -> Option<&'a YamlValue> {
-    let mut current = yaml;
-    for segment in path_segments {
-        let YamlValue::Mapping(mapping) = current else {
-            return None;
-        };
-        let key = YamlValue::String(segment.clone());
-        current = mapping.get(&key)?;
-    }
-    Some(current)
-}
-
 fn collect_missing_yaml_default_insertions(
     root_schema: &SchemaNode,
     current_path: &[String],
@@ -295,16 +284,6 @@ fn schema_node_from_yaml_default(
         return None;
     }
     match value {
-        YamlValue::Null | YamlValue::Tagged(_) => Some(SchemaNode::empty()),
-        YamlValue::Bool(_) => Some(SchemaNode::typed(JsonSchemaType::Boolean)),
-        YamlValue::Number(number) => {
-            if number.as_i64().is_some() || number.as_u64().is_some() {
-                Some(SchemaNode::typed(JsonSchemaType::Integer))
-            } else {
-                Some(SchemaNode::typed(JsonSchemaType::Number))
-            }
-        }
-        YamlValue::String(_) => Some(SchemaNode::typed(JsonSchemaType::String)),
         YamlValue::Sequence(sequence) => {
             let items = if sequence.is_empty() {
                 SchemaNode::empty()
@@ -347,6 +326,7 @@ fn schema_node_from_yaml_default(
             }
             inserted.then_some(schema)
         }
+        _ => Some(SchemaNode::foreign(schema_from_yaml_value(value))),
     }
 }
 

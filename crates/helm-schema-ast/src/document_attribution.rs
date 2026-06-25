@@ -82,6 +82,17 @@ impl OutputSlot {
     }
 }
 
+impl Default for OutputSlot {
+    fn default() -> Self {
+        Self {
+            kind: ValueKind::Scalar,
+            path: YamlPath(Vec::new()),
+            resource: None,
+            slot: OutputSlotKind::Opaque,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct ResolvedNodeContext {
     pub current_path: YamlPath,

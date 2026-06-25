@@ -4,7 +4,7 @@ use helm_schema_ir::{
     ConditionalGuard, ContractValuePathFacts, GuardValue, ProviderSchemaUse, ValueKind,
 };
 
-use crate::foreign_schema::{ForeignSchema, ForeignSchemaRestriction};
+use crate::foreign_schema::ForeignSchemaRestriction;
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
     EmptyMapPlaceholderUse, empty_map_placeholder_has_structural_object_use,
@@ -99,7 +99,7 @@ impl ValuePathSchemaFacts {
 /// before the policy decides which schemas to prefer, merge, or preserve.
 pub(crate) struct ValuePathSchemaInputs {
     pub(crate) facts: ValuePathSchemaFacts,
-    pub(crate) provider_schema: ForeignSchema,
+    pub(crate) provider_schema: Value,
     pub(crate) values_yaml_schema: Value,
     pub(crate) guard_predicate_schema: Value,
     pub(crate) type_hint_schema: Value,
@@ -119,17 +119,14 @@ impl ResolvePolicy {
         &self,
         schema: &Value,
         use_: &ProviderSchemaUse,
-    ) -> Option<ForeignSchema> {
+    ) -> Option<Value> {
         match use_.kind {
-            ValueKind::Fragment => Some(ForeignSchema::new(schema.clone())),
+            ValueKind::Fragment => Some(schema.clone()),
             ValueKind::PartialScalar => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
-                ForeignSchema::new(schema.clone())
-                    .restrict(ForeignSchemaRestriction::ScalarCollection)
+                ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
             }
-            ValueKind::Scalar => {
-                ForeignSchema::new(schema.clone()).restrict(ForeignSchemaRestriction::Scalar)
-            }
+            ValueKind::Scalar => ForeignSchemaRestriction::Scalar.apply(schema.clone()),
         }
     }
 
@@ -173,10 +170,6 @@ impl ResolvePolicy {
         }
     }
 
-    fn restrict_to_scalar_domain(&self, schema: ForeignSchema) -> Option<ForeignSchema> {
-        schema.restrict(ForeignSchemaRestriction::Scalar)
-    }
-
     pub(crate) fn resolve_schema_for_value_path(&self, input: ValuePathSchemaInputs) -> Value {
         let ValuePathSchemaInputs {
             facts,
@@ -192,7 +185,7 @@ impl ResolvePolicy {
         let values_yaml_schema = self.adjust_values_yaml_schema_for_value_path(
             values_yaml_schema,
             facts,
-            provider_schema.as_value(),
+            &provider_schema,
         );
         let provider_schema = self.adjust_provider_schema_for_value_path(
             facts,
@@ -203,7 +196,7 @@ impl ResolvePolicy {
         );
         let partial_scalar_schema = self.partial_scalar_schema_for_value_path(
             facts,
-            provider_schema.as_value(),
+            &provider_schema,
             &type_hint_schema,
             &guard_predicate_schema,
         );
@@ -211,7 +204,7 @@ impl ResolvePolicy {
             merge_schema_list(vec![guard_predicate_schema, partial_scalar_schema]);
         let merged = self.resolve_merged_schema_for_value_path(ValuePathMergeInputs {
             facts,
-            provider_schema: provider_schema.into_value(),
+            provider_schema,
             values_yaml_schema,
             guard_predicate_schema,
             type_hint_schema,
@@ -275,17 +268,18 @@ impl ResolvePolicy {
     fn adjust_provider_schema_for_value_path(
         &self,
         facts: ValuePathSchemaFacts,
-        provider_schema: ForeignSchema,
+        provider_schema: Value,
         values_yaml_schema: &Value,
         type_hint_schema: &Value,
         guard_predicate_schema: &Value,
-    ) -> ForeignSchema {
+    ) -> Value {
         if facts.contract.used_as_fragment
             && is_scalar_schema(values_yaml_schema)
             && (is_scalar_like_schema(type_hint_schema)
                 || is_scalar_like_schema(guard_predicate_schema))
         {
-            self.restrict_to_scalar_domain(provider_schema.clone())
+            ForeignSchemaRestriction::Scalar
+                .apply(provider_schema.clone())
                 .unwrap_or(provider_schema)
         } else {
             provider_schema

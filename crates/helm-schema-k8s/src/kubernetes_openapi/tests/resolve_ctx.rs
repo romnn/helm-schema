@@ -106,7 +106,19 @@ fn lazy_path_descent_matches_full_expansion_for_cross_file_array_ref() {
         "root.json".to_string(),
         root.clone(),
     );
-    let expanded_root = expand_schema_node(&mut full_ctx, "root.json", root.root(), 0).1;
+    let expanded_root_doc = full_ctx
+        .doc("root.json")
+        .cloned()
+        .expect("root doc should be present");
+    let expanded_root = descend_schema_path_expanding_leaf_with_location(
+        &mut full_ctx,
+        "root.json",
+        &expanded_root_doc,
+        &[],
+    )
+    .expect("expanded root should be present")
+    .schema()
+    .clone();
     let expected =
         descend_schema_path(&expanded_root, &path).expect("expanded root should contain path");
 

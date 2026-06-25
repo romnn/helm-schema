@@ -1,13 +1,11 @@
 pub mod cases;
 
 use helm_schema_ast::{DefineIndex, HelmParser};
-use helm_schema_core::ResourceSchemaOracle;
+use helm_schema_core::{ResourceSchemaOracle, YamlPath};
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::{ContractIr, ResourceRef};
 use helm_schema_k8s::{
-    Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider,
-    crds_catalog::debug_materialize_schema_for_resource as debug_materialize_crd_schema_for_resource,
-    kubernetes_openapi::debug_materialize_schema_for_resource as debug_materialize_k8s_schema_for_resource,
+    Chain, CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -395,11 +393,11 @@ fn materialized_schema_for_rendered_resource(
     let schema = match provider {
         RenderedSchemaProviderKind::K8s(version) => {
             let provider = KubernetesJsonSchemaProvider::new(version).with_allow_download(true);
-            debug_materialize_k8s_schema_for_resource(&provider, resource)?
+            materialize_provider_root_schema(&provider, resource)?
         }
         RenderedSchemaProviderKind::CrdCatalog => {
             let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
-            debug_materialize_crd_schema_for_resource(&provider, resource)?
+            materialize_provider_root_schema(&provider, resource)?
         }
     };
 
@@ -410,6 +408,16 @@ fn materialized_schema_for_rendered_resource(
         }
         other => other,
     })
+}
+
+fn materialize_provider_root_schema(
+    provider: &impl K8sSchemaProvider,
+    resource: &ResourceRef,
+) -> Option<Value> {
+    provider
+        .lookup(resource, &YamlPath(Vec::new()))
+        .into_schema_fragment()
+        .map(helm_schema_core::ProviderSchemaFragment::into_schema)
 }
 
 #[cfg(test)]

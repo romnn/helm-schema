@@ -1,9 +1,5 @@
 use helm_schema_core::{ResourceRef, YamlPath};
-use helm_schema_k8s::{
-    CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider,
-    crds_catalog::debug_materialize_schema_for_resource as debug_materialize_catalog_schema,
-    local_override::debug_materialize_schema_for_resource as debug_materialize_override_schema,
-};
+use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
@@ -20,6 +16,16 @@ fn make_temp_dir(group_dir: &str) -> std::path::PathBuf {
     dir
 }
 
+fn materialize_schema_for_resource(
+    provider: &impl K8sSchemaProvider,
+    resource: &ResourceRef,
+) -> Option<serde_json::Value> {
+    provider
+        .lookup(resource, &YamlPath(Vec::new()))
+        .into_schema_fragment()
+        .map(helm_schema_core::ProviderSchemaFragment::into_schema)
+}
+
 #[test]
 fn materialize_prometheusrule() {
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
@@ -32,7 +38,7 @@ fn materialize_prometheusrule() {
     };
 
     let upstream_materialized =
-        debug_materialize_catalog_schema(&provider, &r).expect("materialize");
+        materialize_schema_for_resource(&provider, &r).expect("materialize");
 
     let relative_path = "monitoring.coreos.com/prometheusrule_v1.json";
     let cached = provider.cache_dir.join("default").join(relative_path);
@@ -46,7 +52,7 @@ fn materialize_prometheusrule() {
 
     let local_provider = LocalSchemaProvider::new(&root_dir);
     let local_materialized =
-        debug_materialize_override_schema(&local_provider, &r).expect("materialize");
+        materialize_schema_for_resource(&local_provider, &r).expect("materialize");
 
     sim_assert_eq!(have: upstream_materialized, want: local_materialized);
 }
@@ -107,7 +113,7 @@ fn has_resource_true_for_cached_crd() {
         api_version_candidates: Vec::new(),
         api_version_branches: Vec::new(),
     };
-    let _ = debug_materialize_catalog_schema(&provider, &r);
+    let _ = materialize_schema_for_resource(&provider, &r);
 
     assert!(
         provider.has_resource(&r),

@@ -127,6 +127,32 @@ fn lookup_values_yaml_path_info(
     })
 }
 
+pub(crate) fn yaml_value_at_segments<'a>(
+    doc: &'a YamlValue,
+    path_segments: &[String],
+) -> Option<&'a YamlValue> {
+    let mut current = doc;
+    for segment in path_segments {
+        let YamlValue::Mapping(mapping) = current else {
+            return None;
+        };
+        current = mapping.get(YamlValue::String(segment.clone()))?;
+    }
+    Some(current)
+}
+
+pub(crate) fn yaml_value_at_path<'a>(
+    doc: &'a YamlValue,
+    value_path: &str,
+) -> Option<&'a YamlValue> {
+    let segments = value_path
+        .split('.')
+        .filter(|segment| !segment.is_empty())
+        .map(std::string::ToString::to_string)
+        .collect::<Vec<_>>();
+    yaml_value_at_segments(doc, &segments)
+}
+
 fn lookup_values_yaml_values<'a>(
     doc: &'a YamlValue,
     path_segments: &[String],
@@ -240,7 +266,7 @@ fn prune_schema_at_relative_path(schema: &mut Value, relative_segments: &[&str])
     }
 }
 
-fn schema_from_yaml_value(value: &YamlValue) -> Value {
+pub(crate) fn schema_from_yaml_value(value: &YamlValue) -> Value {
     schema_node_from_yaml_value(value).into_value()
 }
 

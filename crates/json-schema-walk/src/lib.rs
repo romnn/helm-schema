@@ -3,6 +3,247 @@
 use serde_json::Value;
 use std::convert::Infallible;
 
+pub fn canonical_json_string(value: &Value) -> String {
+    serde_json::to_string(&canonical_json_value(value)).expect("serialize canonical JSON value")
+}
+
+pub fn canonical_json_value(value: &Value) -> Value {
+    match value {
+        Value::Object(object) => {
+            let mut out = serde_json::Map::new();
+            let mut keys: Vec<_> = object.keys().collect();
+            keys.sort();
+            for key in keys {
+                if let Some(value) = object.get(key) {
+                    out.insert(key.clone(), canonical_json_value(value));
+                }
+            }
+            Value::Object(out)
+        }
+        Value::Array(values) => Value::Array(values.iter().map(canonical_json_value).collect()),
+        other => other.clone(),
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SchemaTraversalContext {
+    Schema,
+    SchemaArray,
+    SchemaMapValues,
+    Data,
+}
+
+pub fn schema_child_context_for_keyword(key: &str) -> SchemaTraversalContext {
+    match key {
+        "properties" | "patternProperties" | "$defs" | "definitions" | "dependentSchemas" => {
+            SchemaTraversalContext::SchemaMapValues
+        }
+        "allOf" | "anyOf" | "oneOf" | "prefixItems" => SchemaTraversalContext::SchemaArray,
+        "additionalItems"
+        | "additionalProperties"
+        | "contains"
+        | "contentSchema"
+        | "else"
+        | "if"
+        | "items"
+        | "not"
+        | "propertyNames"
+        | "then"
+        | "unevaluatedItems"
+        | "unevaluatedProperties" => SchemaTraversalContext::Schema,
+        _ => SchemaTraversalContext::Data,
+    }
+}
+
+pub fn ref_points_inside(root: &Value, reference: &str) -> bool {
+    let Some(pointer) = reference.strip_prefix('#') else {
+        return false;
+    };
+    pointer.is_empty() || root.pointer(pointer).is_some()
+}
+
+pub fn schema_refs_point_inside(root: &Value, schema: &Value) -> bool {
+    schema_refs_point_inside_value(root, schema, SchemaTraversalContext::Schema)
+}
+
+pub fn schema_refs_point_inside_value(
+    root: &Value,
+    value: &Value,
+    context: SchemaTraversalContext,
+) -> bool {
+    match value {
+        Value::Array(values) => match context {
+            SchemaTraversalContext::Data => true,
+            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
+                values.iter().all(|value| {
+                    schema_refs_point_inside_value(root, value, SchemaTraversalContext::Schema)
+                })
+            }
+            SchemaTraversalContext::SchemaMapValues => values.iter().all(|value| {
+                schema_refs_point_inside_value(root, value, SchemaTraversalContext::SchemaMapValues)
+            }),
+        },
+        Value::Object(object) => match context {
+            SchemaTraversalContext::Data => true,
+            SchemaTraversalContext::SchemaMapValues => object.values().all(|value| {
+                schema_refs_point_inside_value(root, value, SchemaTraversalContext::Schema)
+            }),
+            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
+                if let Some(reference) = object.get("$ref").and_then(Value::as_str)
+                    && !ref_points_inside(root, reference)
+                {
+                    return false;
+                }
+                object.iter().all(|(key, value)| {
+                    schema_refs_point_inside_value(
+                        root,
+                        value,
+                        schema_child_context_for_keyword(key),
+                    )
+                })
+            }
+        },
+        _ => true,
+    }
+}
+
+pub fn try_rewrite_schema_refs<E>(
+    value: &Value,
+    context: SchemaTraversalContext,
+    mut rewrite_ref: impl FnMut(&Value) -> Result<Value, E>,
+) -> Result<Value, E> {
+    try_rewrite_schema_refs_in(value, context, &mut rewrite_ref)
+}
+
+fn try_rewrite_schema_refs_in<E>(
+    value: &Value,
+    context: SchemaTraversalContext,
+    rewrite_ref: &mut impl FnMut(&Value) -> Result<Value, E>,
+) -> Result<Value, E> {
+    match value {
+        Value::Array(values) => match context {
+            SchemaTraversalContext::Data => Ok(Value::Array(values.clone())),
+            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => values
+                .iter()
+                .map(|value| {
+                    try_rewrite_schema_refs_in(value, SchemaTraversalContext::Schema, rewrite_ref)
+                })
+                .collect(),
+            SchemaTraversalContext::SchemaMapValues => values
+                .iter()
+                .map(|value| {
+                    try_rewrite_schema_refs_in(
+                        value,
+                        SchemaTraversalContext::SchemaMapValues,
+                        rewrite_ref,
+                    )
+                })
+                .collect(),
+        },
+        Value::Object(object) => match context {
+            SchemaTraversalContext::Data => Ok(Value::Object(object.clone())),
+            SchemaTraversalContext::SchemaMapValues => object
+                .iter()
+                .map(|(key, value)| {
+                    try_rewrite_schema_refs_in(value, SchemaTraversalContext::Schema, rewrite_ref)
+                        .map(|value| (key.clone(), value))
+                })
+                .collect(),
+            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => object
+                .iter()
+                .map(|(key, value)| {
+                    let value = if key == "$ref" {
+                        rewrite_ref(value)?
+                    } else {
+                        try_rewrite_schema_refs_in(
+                            value,
+                            schema_child_context_for_keyword(key),
+                            rewrite_ref,
+                        )?
+                    };
+                    Ok((key.clone(), value))
+                })
+                .collect(),
+        },
+        _ => Ok(value.clone()),
+    }
+}
+
+pub fn try_map_schema_context<E>(
+    value: &Value,
+    context: SchemaTraversalContext,
+    mut rewrite: impl FnMut(&Value, SchemaTraversalContext, usize) -> Result<Option<Value>, E>,
+) -> Result<Value, E> {
+    try_map_schema_context_at(value, context, 0, &mut rewrite)
+}
+
+fn try_map_schema_context_at<E>(
+    value: &Value,
+    context: SchemaTraversalContext,
+    depth: usize,
+    rewrite: &mut impl FnMut(&Value, SchemaTraversalContext, usize) -> Result<Option<Value>, E>,
+) -> Result<Value, E> {
+    if let Some(rewritten) = rewrite(value, context, depth)? {
+        return Ok(rewritten);
+    }
+
+    match value {
+        Value::Array(values) => match context {
+            SchemaTraversalContext::Data => Ok(Value::Array(values.clone())),
+            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => values
+                .iter()
+                .map(|value| {
+                    try_map_schema_context_at(
+                        value,
+                        SchemaTraversalContext::Schema,
+                        depth + 1,
+                        rewrite,
+                    )
+                })
+                .collect(),
+            SchemaTraversalContext::SchemaMapValues => values
+                .iter()
+                .map(|value| {
+                    try_map_schema_context_at(
+                        value,
+                        SchemaTraversalContext::SchemaMapValues,
+                        depth + 1,
+                        rewrite,
+                    )
+                })
+                .collect(),
+        },
+        Value::Object(object) => match context {
+            SchemaTraversalContext::Data => Ok(Value::Object(object.clone())),
+            SchemaTraversalContext::SchemaMapValues => object
+                .iter()
+                .map(|(key, value)| {
+                    try_map_schema_context_at(
+                        value,
+                        SchemaTraversalContext::Schema,
+                        depth + 1,
+                        rewrite,
+                    )
+                    .map(|value| (key.clone(), value))
+                })
+                .collect(),
+            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => object
+                .iter()
+                .map(|(key, value)| {
+                    try_map_schema_context_at(
+                        value,
+                        schema_child_context_for_keyword(key),
+                        depth + 1,
+                        rewrite,
+                    )
+                    .map(|value| (key.clone(), value))
+                })
+                .collect(),
+        },
+        _ => Ok(value.clone()),
+    }
+}
+
 /// Visit direct child schema positions under `schema`.
 ///
 /// The walker follows JSON Schema keywords whose values are themselves schemas,

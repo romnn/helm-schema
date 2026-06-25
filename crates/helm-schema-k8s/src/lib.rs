@@ -1,8 +1,7 @@
 //! Kubernetes / CRD schema providers.
 //!
 //! Composed from these cross-cutting modules:
-//!   - [`fetch`]: HTTP boundary (`HttpFetcher` trait + `UreqFetcher` /
-//!     `MockFetcher`).
+//!   - [`fetch`]: HTTP boundary (`HttpFetcher` trait + `UreqFetcher`).
 //!   - [`cache`]: per-source layout, marker-based invalidation,
 //!     negative cache.
 //!   - [`diagnostic`]: typed `Diagnostic` enum + `DiagnosticSink`.
@@ -39,7 +38,7 @@ pub use crds_catalog::CrdsCatalogSchemaProvider;
 pub use diagnostic::{
     Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,
 };
-pub use fetch::{FetchError, HttpFetcher, MockFetcher, MockResponse, UreqFetcher};
+pub use fetch::{FetchError, HttpFetcher, UreqFetcher};
 pub use filename::{
     candidate_filenames_for_resource, filename_for_resource, ordered_api_versions_for_resource,
 };

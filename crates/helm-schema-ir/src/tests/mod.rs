@@ -2,7 +2,56 @@ mod abstract_value_output_projection;
 mod contract;
 mod contract_signals;
 mod document_projection {
+    use helm_schema_ast::{
+        AttributionIndex, DefineIndex, OutputSlot, OutputSlotKind,
+        build_attribution_index_with_resources,
+    };
+
+    use crate::{ValueKind, YamlPath};
+
+    struct DocumentTracker<'a> {
+        source: &'a str,
+        defines: &'a DefineIndex,
+        attribution: AttributionIndex,
+    }
+
+    impl<'a> DocumentTracker<'a> {
+        fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
+            Self {
+                source,
+                defines,
+                attribution: AttributionIndex::default(),
+            }
+        }
+
+        fn reset_for_tree(&mut self, tree: &tree_sitter::Tree) {
+            self.attribution =
+                build_attribution_index_with_resources(self.source, tree.root_node(), self.defines);
+        }
+
+        fn control_site_for_node(
+            &self,
+            node: tree_sitter::Node<'_>,
+        ) -> helm_schema_ast::ControlSite {
+            self.attribution
+                .control_site_for_node(node)
+                .unwrap_or_default()
+        }
+
+        fn output_slot_for_action(&self, node: tree_sitter::Node<'_>) -> OutputSlot {
+            self.attribution
+                .output_slot_for_node(node)
+                .unwrap_or_else(|| OutputSlot {
+                    kind: ValueKind::Scalar,
+                    path: YamlPath(Vec::new()),
+                    resource: None,
+                    slot: OutputSlotKind::Opaque,
+                })
+        }
+    }
+
     mod helper_contract;
+    mod tracker;
 }
 mod expr_eval;
 mod expr_eval_helper_hooks;

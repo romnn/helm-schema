@@ -6,7 +6,6 @@ mod contract;
 mod contract_normalization;
 mod contract_signal_builder;
 mod contract_sink;
-mod document_projection;
 mod eval_effect;
 mod eval_env;
 mod expr_call_eval;

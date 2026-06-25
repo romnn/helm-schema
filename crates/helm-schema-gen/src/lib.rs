@@ -27,6 +27,7 @@ use schema_model::{
 };
 use schema_node::{JsonSchemaType, SchemaNode, is_placeholder_fragment_object_schema};
 use schema_tree::{SchemaDocument, draft07_root_document};
+use values_yaml::yaml_value_at_path;
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
@@ -773,17 +774,6 @@ fn matches_yaml_schema_type(value: &YamlValue, schema_type: &str) -> bool {
         "string" => value.as_str().is_some(),
         _ => false,
     }
-}
-
-fn yaml_value_at_path<'a>(root: &'a YamlValue, value_path: &str) -> Option<&'a YamlValue> {
-    let mut current = root;
-    for segment in value_path.split('.').filter(|segment| !segment.is_empty()) {
-        let YamlValue::Mapping(mapping) = current else {
-            return None;
-        };
-        current = mapping.get(YamlValue::String(segment.to_string()))?;
-    }
-    Some(current)
 }
 
 fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {

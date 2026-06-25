@@ -6,7 +6,6 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_get_binding_from_exprs;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::contract_sink::ContractUseContext;
-use crate::document_projection::ControlSite;
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
 use crate::fragment_expr_eval::fragment_value_from_expr;
 use crate::node_eval::{
@@ -16,6 +15,7 @@ use crate::node_eval::{
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
 use crate::{Guard, ValueKind, YamlPath};
+use helm_schema_ast::ControlSite;
 use helm_schema_core::Predicate;
 
 use super::SymbolicWalker;
@@ -35,11 +35,11 @@ impl SymbolicWalker<'_> {
     ) {
         let current_byte = self.current_source_byte();
         let path = match current_byte {
-            Some(byte) => self.document_tracker.rebase_path_at(byte, path),
+            Some(byte) => self.attribution.rebase_path_at(byte, path),
             None => path,
         };
         let resource = current_byte
-            .and_then(|byte| self.document_tracker.resource_at(byte))
+            .and_then(|byte| self.attribution.resource_at(byte))
             .cloned();
         let guards = self.contract_guards();
         let context = ContractUseContext::new(
@@ -127,7 +127,9 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn document_control_site_for_node(&self, node: tree_sitter::Node<'_>) -> ControlSite {
-        self.document_tracker.control_site_for_node(node)
+        self.attribution
+            .control_site_for_node(node)
+            .unwrap_or_default()
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {

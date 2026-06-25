@@ -209,26 +209,7 @@ fn dedup_schemas(schemas: Vec<Value>) -> Vec<Value> {
 }
 
 fn canonical_json_string(v: &Value) -> String {
-    let v = canonicalize_json_value(v);
-    serde_json::to_string(&v).expect("serialize canonical json schema value")
-}
-
-fn canonicalize_json_value(v: &Value) -> Value {
-    match v {
-        Value::Object(o) => {
-            let mut keys: Vec<&String> = o.keys().collect();
-            keys.sort();
-            let mut out = Map::new();
-            for key in keys {
-                if let Some(value) = o.get(key) {
-                    out.insert(key.clone(), canonicalize_json_value(value));
-                }
-            }
-            Value::Object(out)
-        }
-        Value::Array(values) => Value::Array(values.iter().map(canonicalize_json_value).collect()),
-        _ => v.clone(),
-    }
+    json_schema_walk::canonical_json_string(v)
 }
 
 fn is_exact_empty_object_schema(v: &Value) -> bool {

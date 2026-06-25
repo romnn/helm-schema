@@ -605,30 +605,6 @@ fn bundled_definition_schema_for_source_leaf<F: FnMut(&str) -> Option<SchemaDoc>
     )
 }
 
-/// Expand the full upstream provider document for regression tests and debugging.
-///
-/// Production provider lookup stays on the fragment-first path.
-#[must_use]
-pub fn debug_materialize_schema_for_resource(
-    provider: &KubernetesJsonSchemaProvider,
-    resource: &ResourceRef,
-) -> Option<Value> {
-    let LoadedK8sSchemaDoc {
-        source,
-        version,
-        filename,
-        doc,
-    } = provider.load_resource_doc(resource)?;
-    let mut ctx = ResolveCtx::new(
-        |next_filename| provider.try_load_from_source(&source, &version, next_filename),
-        filename.clone(),
-        doc,
-    );
-    let root_doc = ctx.doc(&filename)?.clone();
-    let (_, expanded) = super::resolve_ctx::expand_schema_node(&mut ctx, &filename, &root_doc, 0);
-    Some(expanded)
-}
-
 impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     fn origin(&self) -> ProviderOrigin {
         ProviderOrigin::KubernetesOpenApi

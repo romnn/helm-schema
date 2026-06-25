@@ -1,9 +1,16 @@
 use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
-use helm_schema_k8s::{
-    Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider,
-    kubernetes_openapi::debug_materialize_schema_for_resource,
-};
+use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider};
 use test_util::prelude::sim_assert_eq;
+
+fn materialize_schema_for_resource(
+    provider: &impl K8sSchemaProvider,
+    resource: &ResourceRef,
+) -> Option<serde_json::Value> {
+    provider
+        .lookup(resource, &YamlPath(Vec::new()))
+        .into_schema_fragment()
+        .map(helm_schema_core::ProviderSchemaFragment::into_schema)
+}
 
 #[test]
 fn materialize_networkpolicy_v1_35() {
@@ -16,7 +23,7 @@ fn materialize_networkpolicy_v1_35() {
         api_version_branches: Vec::new(),
     };
 
-    let schema = debug_materialize_schema_for_resource(&provider, &r).expect("materialize schema");
+    let schema = materialize_schema_for_resource(&provider, &r).expect("materialize schema");
 
     let expected: serde_json::Value = serde_json::from_str(include_str!(
         "fixtures/networkpolicy_v1_35_materialized.json"
@@ -157,7 +164,7 @@ fn kind_scan_legacy_path_retired() {
     };
 
     assert!(
-        debug_materialize_schema_for_resource(&provider, &r).is_none(),
+        materialize_schema_for_resource(&provider, &r).is_none(),
         "single K8s provider must not resolve schemas for an empty api_version (inference is chain-level)"
     );
 }

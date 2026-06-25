@@ -1,9 +1,6 @@
 use helm_schema_core::{ResourceRef, YamlPath};
-use serde_json::Value;
 
-use crate::doc_backed_schema::{
-    LocalSchemaLeaf, debug_materialize_local_schema, lookup_root_metadata_path,
-};
+use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
@@ -89,18 +86,6 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
             })
             .collect()
     }
-}
-
-/// Expand the full chart-local CRD document for regression tests and debugging.
-///
-/// Production provider lookup stays on the fragment-first path.
-#[must_use]
-pub fn debug_materialize_schema_for_resource(
-    provider: &ChartLocalCrdSchemaProvider,
-    resource: &ResourceRef,
-) -> Option<Value> {
-    let root = provider.universe.schema_doc_for_resource(resource)?;
-    Some(debug_materialize_local_schema(root.root()))
 }
 
 #[cfg(test)]

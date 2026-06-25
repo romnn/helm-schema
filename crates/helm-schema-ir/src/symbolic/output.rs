@@ -5,10 +5,10 @@ use helm_schema_ast::TemplateExpr;
 use crate::SourceSpan;
 use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
-use crate::document_projection::OutputSlot;
 use crate::eval_effect::Effects;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
 use crate::{Guard, ValueKind, YamlPath};
+use helm_schema_ast::OutputSlot;
 use helm_schema_core as output_path;
 
 use super::SymbolicWalker;
@@ -22,15 +22,15 @@ impl SymbolicWalker<'_> {
     ) {
         self.inline_static_file_templates_from_helper_calls(exprs);
 
-        let mut output_slot = self.document_tracker.output_slot_for_action(node);
+        let mut output_slot = self
+            .attribution
+            .output_slot_for_node(node)
+            .unwrap_or_default();
         if output_slot.resource.is_none()
-            && let Some(resource) = self
-                .document_tracker
-                .resource_at(node.start_byte())
-                .cloned()
+            && let Some(resource) = self.attribution.resource_at(node.start_byte()).cloned()
         {
             output_slot.path = self
-                .document_tracker
+                .attribution
                 .rebase_path_at(node.start_byte(), output_slot.path);
             output_slot.resource = Some(resource);
         }

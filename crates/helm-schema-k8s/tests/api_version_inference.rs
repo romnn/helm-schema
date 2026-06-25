@@ -6,10 +6,13 @@ use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, Val
 use helm_schema_k8s::inference::aggregate;
 use helm_schema_k8s::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, Chain, CrdsCatalogSchemaProvider, Diagnostic,
-    DiagnosticSink, InferenceSource, K8sSchemaProvider, KubernetesJsonSchemaProvider, MockFetcher,
-    MockResponse, ProviderLookupResult, ProviderOrigin, source_id_for_url,
+    DiagnosticSink, InferenceSource, K8sSchemaProvider, KubernetesJsonSchemaProvider,
+    ProviderLookupResult, ProviderOrigin, source_id_for_url,
 };
 use test_util::prelude::sim_assert_eq;
+
+mod common;
+use common::{MockFetcher, MockResponse};
 
 fn tmp_dir(label: &str) -> std::path::PathBuf {
     let p = std::env::temp_dir().join(format!(

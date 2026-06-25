@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{
-    TemplateExpr, range_body_emits_sequence_item_from_source,
-    range_body_renders_mapping_entries_from_ast, range_has_destructured_variable_definition,
+    AttributionIndex, ControlSite, TemplateExpr, build_attribution_index_with_resources,
+    range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
+    range_has_destructured_variable_definition,
 };
 
 use crate::abstract_value::AbstractValue;
-use crate::document_projection::{ControlSite, DocumentTracker};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
     helper_result_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
@@ -151,8 +151,8 @@ fn collect_helper_summary(
     let mut fragment_output_uses = Vec::new();
     let mut value_seen = seen.clone();
     let mut fragment_seen = seen.clone();
-    let mut document_tracker = DocumentTracker::new(body.source, context.defines);
-    document_tracker.reset_for_tree(&body.tree);
+    let attribution =
+        build_attribution_index_with_resources(body.source, body.tree.root_node(), context.defines);
     let mut runtime = HelperAnalysisRuntime {
         source: body.source,
         bindings: &resolution.bindings,
@@ -168,7 +168,7 @@ fn collect_helper_summary(
         fragment_seen: &mut fragment_seen,
         analysis,
         outputs: &mut fragment_output_uses,
-        document_tracker,
+        attribution,
     };
     eval_template_body(&mut runtime, body.tree.root_node());
     fragment_output_uses
@@ -195,7 +195,7 @@ struct HelperAnalysisRuntime<'context, 'state> {
     fragment_seen: &'state mut HashSet<String>,
     analysis: &'state mut HelperSummary,
     outputs: &'state mut Vec<HelperFragmentOutputUse>,
-    document_tracker: DocumentTracker<'state>,
+    attribution: AttributionIndex,
 }
 
 #[derive(Clone)]
@@ -380,7 +380,9 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
     }
 
     fn document_control_site_for_node(&self, node: tree_sitter::Node<'_>) -> ControlSite {
-        self.document_tracker.control_site_for_node(node)
+        self.attribution
+            .control_site_for_node(node)
+            .unwrap_or_default()
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
@@ -479,7 +481,10 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         if self.fragment_control.suppresses_output() {
             return;
         }
-        let output_slot = self.document_tracker.output_slot_for_action(node);
+        let output_slot = self
+            .attribution
+            .output_slot_for_node(node)
+            .unwrap_or_default();
         if output_slot.suppresses_fragment_output() {
             return;
         }

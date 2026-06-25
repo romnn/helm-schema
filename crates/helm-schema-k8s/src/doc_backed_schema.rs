@@ -129,12 +129,6 @@ pub(crate) fn bundled_local_definition_schema(
     )
 }
 
-#[must_use]
-pub(crate) fn debug_materialize_local_schema(root: &Value) -> Value {
-    let mut stack = std::collections::HashSet::new();
-    enrich_root_metadata_schema(expand_local_refs(root, root, 0, &mut stack))
-}
-
 #[tracing::instrument(skip_all, fields(path_len = path.len()))]
 pub(crate) fn descend_schema_path_expanding_leaf_with_source(
     root: &Value,

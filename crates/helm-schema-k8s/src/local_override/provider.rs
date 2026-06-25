@@ -5,9 +5,7 @@ use std::sync::Mutex;
 use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
-use crate::doc_backed_schema::{
-    LocalSchemaLeaf, debug_materialize_local_schema, lookup_root_metadata_path,
-};
+use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
@@ -74,13 +72,6 @@ impl LocalSchemaProvider {
             self.root_dir
                 .join(Self::relative_path_for_resource(resource)?),
         )
-    }
-
-    fn load_schema_doc(&self, resource: &ResourceRef) -> Option<SchemaDoc> {
-        match self.load_schema_doc_result(resource) {
-            LocalSchemaDocLoad::Loaded(doc) => Some(doc),
-            LocalSchemaDocLoad::NotOwned | LocalSchemaDocLoad::Error { .. } => None,
-        }
     }
 
     fn load_schema_doc_result(&self, resource: &ResourceRef) -> LocalSchemaDocLoad {
@@ -186,18 +177,6 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         }
         out
     }
-}
-
-/// Expand the full override document for regression tests and debugging.
-///
-/// Production provider lookup stays on the fragment-first path.
-#[must_use]
-pub fn debug_materialize_schema_for_resource(
-    provider: &LocalSchemaProvider,
-    resource: &ResourceRef,
-) -> Option<Value> {
-    let root = provider.load_schema_doc(resource)?;
-    Some(debug_materialize_local_schema(root.root()))
 }
 
 #[cfg(test)]

@@ -3,15 +3,12 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use helm_schema_core::{ResourceRef, YamlPath};
-use serde_json::Value;
 
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, crd_cache_path,
 };
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
-use crate::doc_backed_schema::{
-    LocalSchemaLeaf, debug_materialize_local_schema, lookup_root_metadata_path,
-};
+use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::inference::cache_scan::scan_crd_cache;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
@@ -243,18 +240,6 @@ impl Default for CrdsCatalogSchemaProvider {
     fn default() -> Self {
         Self::new()
     }
-}
-
-/// Expand the full catalog document for regression tests and debugging.
-///
-/// Production provider lookup stays on the fragment-first path.
-#[must_use]
-pub fn debug_materialize_schema_for_resource(
-    provider: &CrdsCatalogSchemaProvider,
-    resource: &ResourceRef,
-) -> Option<Value> {
-    let loaded = provider.load_schema_doc(resource)?;
-    Some(debug_materialize_local_schema(loaded.doc.root()))
 }
 
 impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
