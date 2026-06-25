@@ -11,6 +11,7 @@ fn contract_use_context_attaches_chart_default_only_to_rendered_paths() {
         false,
         None,
         None,
+        None,
         Vec::new(),
     );
 
@@ -19,7 +20,6 @@ fn contract_use_context_attaches_chart_default_only_to_rendered_paths() {
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         &[],
-        None,
     );
     sim_assert_eq!(
         have: rendered.guards,
@@ -41,6 +41,7 @@ fn contract_use_context_lowers_pathless_partial_scalar_to_scalar() {
         &guards,
         &chart_value_defaults,
         false,
+        None,
         None,
         None,
         Vec::new(),

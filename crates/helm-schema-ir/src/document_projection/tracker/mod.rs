@@ -1,7 +1,7 @@
 use helm_schema_ast::DefineIndex;
 
 use crate::resource_identity::ResourceIdentityIndex;
-use crate::{ResourceRef, SourceSpan, ValueKind, YamlPath};
+use crate::{ResourceRef, ValueKind, YamlPath};
 
 mod attribution;
 mod yaml_tree;
@@ -23,7 +23,6 @@ pub(crate) struct OutputSlot {
     pub(crate) path: YamlPath,
     pub(crate) resource: Option<ResourceRef>,
     pub(crate) slot: OutputSlotKind,
-    pub(crate) source_span: SourceSpan,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -130,7 +129,6 @@ impl<'a> DocumentTracker<'a> {
                 path: YamlPath(Vec::new()),
                 resource: None,
                 slot: OutputSlotKind::Opaque,
-                source_span: SourceSpan::new(node.start_byte(), node.end_byte()),
             });
         slot.path = self
             .resource_identity

@@ -148,7 +148,7 @@ impl HelperRuntimeControlState {
         if self
             .range_frames
             .pop()
-            .is_some_and(|frame| frame.is_definitely_nonempty())
+            .is_some_and(|frame| frame.definitely_nonempty)
         {
             HelperRangeJoinBehavior::PromoteBodyOutcome
         } else {
@@ -159,7 +159,7 @@ impl HelperRuntimeControlState {
     pub(crate) fn range_iteration_count(&self) -> usize {
         self.range_frames
             .last()
-            .map(RangeFrame::iteration_count)
+            .and_then(|frame| frame.iterations.as_ref().map(Vec::len))
             .unwrap_or(1)
     }
 
@@ -167,7 +167,9 @@ impl HelperRuntimeControlState {
         let Some(iteration) = self
             .range_frames
             .last()
-            .and_then(|frame| frame.iteration(index))
+            .and_then(|frame| frame.iterations.as_ref())
+            .and_then(|iterations| iterations.get(index))
+            .cloned()
         else {
             return;
         };
@@ -184,7 +186,7 @@ impl HelperRuntimeControlState {
         if self
             .range_frames
             .last()
-            .is_some_and(RangeFrame::has_exact_iterations)
+            .is_some_and(|frame| frame.iterations.is_some())
         {
             self.helper_dot_stack.pop();
             if let Some(fragment_dot_stack) = &mut self.fragment_dot_stack {

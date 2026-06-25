@@ -366,7 +366,7 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
 }
 
 fn push_condition_predicates(control: &mut HelperRuntimeControlState, plan: &ConditionActionPlan) {
-    let guards = plan.contract_guards();
+    let guards = plan.predicate.contract_guards();
     for guard in &guards {
         control.push_predicate_if_absent(Predicate::from(guard.clone()));
     }

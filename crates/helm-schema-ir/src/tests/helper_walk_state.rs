@@ -110,7 +110,10 @@ fn fragment_control_state_tracks_fragment_and_helper_dot() {
 #[test]
 fn prepare_range_join_promotes_body_for_definitely_nonempty_frame() {
     let mut state = HelperRuntimeControlState::for_value(None);
-    state.push_range_frame(RangeFrame::new(true, None));
+    state.push_range_frame(RangeFrame {
+        definitely_nonempty: true,
+        iterations: None,
+    });
     let snapshot = state.snapshot();
 
     let behavior = state.prepare_range_join(&snapshot);
@@ -121,7 +124,10 @@ fn prepare_range_join_promotes_body_for_definitely_nonempty_frame() {
 #[test]
 fn prepare_range_join_merges_when_frame_is_not_definitely_nonempty() {
     let mut state = HelperRuntimeControlState::for_value(None);
-    state.push_range_frame(RangeFrame::new(false, None));
+    state.push_range_frame(RangeFrame {
+        definitely_nonempty: false,
+        iterations: None,
+    });
     let snapshot = state.snapshot();
 
     let behavior = state.prepare_range_join(&snapshot);

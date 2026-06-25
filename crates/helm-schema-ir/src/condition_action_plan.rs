@@ -12,12 +12,6 @@ pub(crate) struct ConditionActionPlan {
     pub(crate) apply_alternative_predicate: bool,
 }
 
-impl ConditionActionPlan {
-    pub(crate) fn contract_guards(&self) -> Vec<crate::Guard> {
-        self.predicate.contract_guards()
-    }
-}
-
 pub(crate) fn plan_if_condition(
     header: &TemplateHeader,
     value_path_context: &ValuePathContext<'_>,

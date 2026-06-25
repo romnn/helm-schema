@@ -5,7 +5,7 @@ use crate::expr_eval::{
     eval_exprs_effects,
 };
 use crate::printf_eval::render_printf_string_sets;
-use crate::template_expr_cache::parse_expr_text;
+use crate::tree_sitter_utils::parse_expr_text;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;

@@ -12,6 +12,7 @@ pub(crate) struct ContractUseContext<'a> {
     guards: &'a [Guard],
     chart_value_defaults: &'a BTreeSet<String>,
     suppress_document_path: bool,
+    resource: Option<ResourceRef>,
     source_path: Option<&'a str>,
     source_span: Option<SourceSpan>,
     helper_chain: Vec<String>,
@@ -22,6 +23,7 @@ impl<'a> ContractUseContext<'a> {
         guards: &'a [Guard],
         chart_value_defaults: &'a BTreeSet<String>,
         suppress_document_path: bool,
+        resource: Option<ResourceRef>,
         source_path: Option<&'a str>,
         source_span: Option<SourceSpan>,
         helper_chain: Vec<String>,
@@ -30,6 +32,7 @@ impl<'a> ContractUseContext<'a> {
             guards,
             chart_value_defaults,
             suppress_document_path,
+            resource,
             source_path,
             source_span,
             helper_chain,
@@ -42,19 +45,29 @@ impl<'a> ContractUseContext<'a> {
         path: YamlPath,
         kind: ValueKind,
         extra_guards: &[Guard],
-        resource: Option<ResourceRef>,
     ) -> ContractUse {
-        self.contract_use_with_extra_provenance(
+        self.contract_use_with_extra_provenance(source_expr, path, kind, extra_guards, &[])
+    }
+
+    pub(crate) fn contract_use_with_extra_provenance(
+        &self,
+        source_expr: String,
+        path: YamlPath,
+        kind: ValueKind,
+        extra_guards: &[Guard],
+        extra_provenance: &[ContractProvenance],
+    ) -> ContractUse {
+        self.contract_use_with_resource(
             source_expr,
             path,
             kind,
             extra_guards,
-            resource,
-            &[],
+            self.resource.clone(),
+            extra_provenance,
         )
     }
 
-    pub(crate) fn contract_use_with_extra_provenance(
+    fn contract_use_with_resource(
         &self,
         source_expr: String,
         mut path: YamlPath,
@@ -104,7 +117,7 @@ impl<'a> ContractUseContext<'a> {
         extra_guards: &[Guard],
         extra_provenance: &[ContractProvenance],
     ) -> ContractUse {
-        self.contract_use_with_extra_provenance(
+        self.contract_use_with_resource(
             source_expr,
             YamlPath(Vec::new()),
             kind,

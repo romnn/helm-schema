@@ -20,7 +20,6 @@ use crate::helper_summary::HelperSummary;
 use crate::node_eval::eval_node;
 use crate::predicate::Predicate;
 use crate::symbolic_scope_state::SymbolicScopeState;
-use crate::template_expr_cache::clear_template_expr_cache;
 use crate::tree_sitter_utils::parse_go_template;
 use crate::value_path_context::ValuePathContext;
 
@@ -42,7 +41,6 @@ struct SymbolicIrContextInner {
 impl SymbolicIrContext {
     #[tracing::instrument(skip_all)]
     pub fn new(defines: &DefineIndex) -> Self {
-        clear_template_expr_cache();
         Self {
             inner: Rc::new(SymbolicIrContextInner {
                 analysis_db: IrAnalysisDb::new(defines),

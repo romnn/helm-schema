@@ -13,7 +13,7 @@ use crate::node_eval::{
 use crate::predicate::Predicate;
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
-use crate::{Guard, ResourceRef, ValueKind, YamlPath};
+use crate::{Guard, ValueKind, YamlPath};
 
 use super::SymbolicWalker;
 
@@ -23,35 +23,33 @@ impl SymbolicWalker<'_> {
             .and_then(|span| span.start.checked_sub(self.source_offset))
     }
 
-    fn current_resource(&self) -> Option<ResourceRef> {
-        self.current_source_byte()
-            .and_then(|byte| self.document_tracker.resource_at(byte))
-            .cloned()
-    }
-
-    fn push_contract_use_with_resource(
+    fn push_contract_use(
         &mut self,
         source_expr: String,
         path: YamlPath,
         kind: ValueKind,
         extra_guards: &[Guard],
-        resource: Option<ResourceRef>,
     ) {
-        let path = match self.current_source_byte() {
+        let current_byte = self.current_source_byte();
+        let path = match current_byte {
             Some(byte) => self.document_tracker.rebase_path_at(byte, path),
             None => path,
         };
+        let resource = current_byte
+            .and_then(|byte| self.document_tracker.resource_at(byte))
+            .cloned();
         let guards = self.contract_guards();
         let context = ContractUseContext::new(
             &guards,
             &self.scope.locals().chart_value_defaults,
             self.no_output_depth > 0,
+            resource,
             self.source_path,
             self.current_source_span,
             self.provenance_helper_chain(),
         );
         self.contract
-            .push(context.contract_use(source_expr, path, kind, extra_guards, resource));
+            .push(context.contract_use(source_expr, path, kind, extra_guards));
     }
 }
 
@@ -244,12 +242,6 @@ impl NodeActionEffectSink for SymbolicWalker<'_> {
         kind: ValueKind,
         extra_guards: &[Guard],
     ) {
-        self.push_contract_use_with_resource(
-            source_expr,
-            path,
-            kind,
-            extra_guards,
-            self.current_resource(),
-        );
+        self.push_contract_use(source_expr, path, kind, extra_guards);
     }
 }

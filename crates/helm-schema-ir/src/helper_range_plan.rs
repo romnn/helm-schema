@@ -116,20 +116,22 @@ impl HelperRangeBindingPlan {
     }
 
     pub(crate) fn helper_value_frame(&self) -> RangeFrame<HelperRangeIteration> {
-        RangeFrame::new(
-            self.range_helper_value
+        RangeFrame {
+            definitely_nonempty: self
+                .range_helper_value
                 .as_ref()
                 .is_some_and(AbstractValue::definitely_nonempty_iterable),
-            self.exact_iterations.clone(),
-        )
+            iterations: self.exact_iterations.clone(),
+        }
     }
 
     pub(crate) fn fragment_output_frame(&self) -> RangeFrame<HelperRangeIteration> {
-        RangeFrame::new(
-            self.range_fragment_value
+        RangeFrame {
+            definitely_nonempty: self
+                .range_fragment_value
                 .as_ref()
                 .is_some_and(AbstractValue::definitely_nonempty_iterable),
-            self.exact_iterations.clone(),
-        )
+            iterations: self.exact_iterations.clone(),
+        }
     }
 }

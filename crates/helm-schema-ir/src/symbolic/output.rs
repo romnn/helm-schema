@@ -42,10 +42,11 @@ impl SymbolicWalker<'_> {
                 &guards,
                 &self.scope.locals().chart_value_defaults,
                 self.no_output_depth > 0,
+                output_slot.resource.clone(),
                 self.source_path,
                 Some(SourceSpan::new(
-                    self.source_offset + output_slot.source_span.start,
-                    self.source_offset + output_slot.source_span.end,
+                    self.source_offset + node.start_byte(),
+                    self.source_offset + node.end_byte(),
                 )),
                 self.provenance_helper_chain(),
             );

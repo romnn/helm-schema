@@ -13,7 +13,10 @@ fn activate_range_plan_installs_predicates_binding_and_frame() {
     let plan = HelperRangeRuntimePlan {
         guard_paths: BTreeSet::from(["serviceAccount.create".to_string()]),
         action: RangeActionPlan::empty(),
-        frame: RangeFrame::unknown(),
+        frame: RangeFrame {
+            definitely_nonempty: false,
+            iterations: None,
+        },
         non_exact_variable_binding: Some((
             "item".to_string(),
             AbstractValue::ValuesPath("serviceAccount.*".to_string()),

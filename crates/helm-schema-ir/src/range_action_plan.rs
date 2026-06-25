@@ -63,7 +63,8 @@ pub(crate) fn plan_range_action(
         return RangeActionPlan::empty();
     };
 
-    let direct_iterable_header_path = direct_iterable_header_path(header, value_path_context);
+    let direct_iterable_header_path =
+        value_path_context.single_direct_iterable_range_path_expr(header.expr());
     let source_paths = value_path_context
         .resolved_values_paths_from_expr(header.expr())
         .into_iter()
@@ -104,11 +105,4 @@ pub(crate) fn plan_range_action(
         dot_binding,
         apply_dot_binding: true,
     }
-}
-
-fn direct_iterable_header_path(
-    header: &TemplateHeader,
-    value_path_context: &ValuePathContext<'_>,
-) -> Option<String> {
-    value_path_context.single_direct_iterable_range_path_expr(header.expr())
 }

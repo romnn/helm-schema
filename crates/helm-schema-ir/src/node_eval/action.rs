@@ -1,7 +1,7 @@
 use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use crate::fragment_range_scope::range_header_from_source;
-use crate::template_expr_cache::parse_expr_text;
+use crate::tree_sitter_utils::parse_expr_text;
 
 #[derive(Clone, Debug)]
 pub(crate) enum NodeAction {

@@ -1,7 +1,7 @@
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;
 
-use crate::{SourceSpan, ValueKind, YamlPath};
+use crate::{ValueKind, YamlPath};
 
 use super::attribution::{build_attribution_index, is_output_root_kind};
 use super::{DocumentTracker, OutputSlot, OutputSlotKind};
@@ -84,7 +84,6 @@ fn output_slot_suppresses_fragment_output_for_mapping_keys() {
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         resource: None,
         slot: OutputSlotKind::MappingKey,
-        source_span: SourceSpan::new(0, 0),
     };
 
     assert!(slot.suppresses_fragment_output());
@@ -97,7 +96,6 @@ fn output_slot_marks_partial_scalar_slots() {
         path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
         resource: None,
         slot: OutputSlotKind::PartialScalar,
-        source_span: SourceSpan::new(0, 0),
     };
 
     sim_assert_eq!(have: slot.direct_value_kind(), want: ValueKind::PartialScalar);

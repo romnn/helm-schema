@@ -4,8 +4,7 @@ use helm_schema_ast::{HelmAst, HelmParser as _, TemplateExpr, TemplateHeader, Tr
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::template_expr_cache::parse_expr_text;
-use crate::tree_sitter_utils::children_with_field;
+use crate::tree_sitter_utils::{children_with_field, parse_expr_text};
 use crate::yaml_syntax::{first_mapping_colon_offset, parse_yaml_key};
 
 pub(crate) fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {

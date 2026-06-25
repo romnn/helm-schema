@@ -136,7 +136,10 @@ pub(crate) fn helper_range_runtime_plan(
         return HelperRangeRuntimePlan {
             guard_paths: BTreeSet::new(),
             action: RangeActionPlan::empty(),
-            frame: RangeFrame::unknown(),
+            frame: RangeFrame {
+                definitely_nonempty: false,
+                iterations: None,
+            },
             non_exact_variable_binding: None,
             range_fragment_value: None,
         };

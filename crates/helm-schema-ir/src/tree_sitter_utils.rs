@@ -1,3 +1,5 @@
+use helm_schema_ast::{TemplateExpr, parse_action_expressions};
+
 pub(crate) fn children_with_field<'node>(
     node: tree_sitter::Node<'node>,
     field: &str,
@@ -6,6 +8,17 @@ pub(crate) fn children_with_field<'node>(
     node.children_by_field_name(field, &mut cursor)
         .filter(tree_sitter::Node::is_named)
         .collect()
+}
+
+pub(crate) fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        Vec::new()
+    } else if trimmed.starts_with("{{") {
+        parse_action_expressions(trimmed)
+    } else {
+        parse_action_expressions(&format!("{{{{ {trimmed} }}}}"))
+    }
 }
 
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]

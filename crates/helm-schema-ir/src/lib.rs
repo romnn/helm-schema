@@ -39,7 +39,6 @@ mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
 mod symbolic_scope_state;
-mod template_expr_cache;
 mod tree_sitter_utils;
 mod value_path_context;
 mod yaml_syntax;

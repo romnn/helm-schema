@@ -45,7 +45,6 @@ pub(crate) fn document_output_contract(
                 YamlPath(Vec::new()),
                 ValueKind::Scalar,
                 &[],
-                site.resource.clone(),
             ));
             continue;
         }
@@ -74,20 +73,13 @@ pub(crate) fn document_output_contract(
                 emit_path.clone(),
                 emit_kind,
                 extra_guards,
-                site.resource.clone(),
             ));
         }
     }
 
     let bound_output_values = std::mem::take(&mut output_effects.bound_output_paths);
     for value in bound_output_values {
-        contract.push(context.contract_use(
-            value,
-            YamlPath(Vec::new()),
-            ValueKind::Scalar,
-            &[],
-            site.resource.clone(),
-        ));
+        contract.push(context.contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar, &[]));
     }
 
     contract.extend_type_hints(output_effects.schema_type_hints());
@@ -123,7 +115,6 @@ fn append_document_helper_contract_uses(
                         site.path.clone(),
                         emit_kind,
                         &extra_guards,
-                        site.resource.clone(),
                         &meta.provenance,
                     ));
                 } else {
@@ -185,7 +176,6 @@ fn append_fragment_output_contract_use(
                 emit_path,
                 emit_kind,
                 &extra_guards,
-                site.resource.clone(),
                 &output.meta.provenance,
             ));
         } else {
