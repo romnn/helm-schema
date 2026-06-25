@@ -1,9 +1,8 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::Effects;
 use crate::expr_eval::{
     eval_helper_exprs_effects, eval_non_helper_output_exprs_effects, expr_starts_with_helper_call,
 };
@@ -14,7 +13,7 @@ use crate::fragment_expr_eval::{
     FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
     helper_result_from_exprs_with_fragment_locals,
 };
-use crate::helper_summary::HelperFragmentOutputUse;
+use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::output_path;
 use crate::predicate::Predicate;
@@ -35,7 +34,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let mut seen_set = state.seen.clone();
     if apply_local_set_mutations_from_exprs(
         exprs,
-        &mut state.locals.bindings,
+        &mut state.locals.fragment_values,
         current_dot_fragment,
         state.context,
         &mut seen_set,
@@ -69,7 +68,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let result = helper_result_from_exprs_with_fragment_locals(
         exprs,
         FragmentLocalFacts::without_output_meta(
-            &state.locals.bindings,
+            &state.locals.fragment_values,
             &state.locals.default_paths,
         ),
         Some(bindings),
@@ -80,8 +79,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let local_effects = &result.effects;
 
     let direct_output_effects = eval_non_helper_output_exprs_effects(exprs, bindings, current_dot);
-    let direct_output_uses = output_uses_from_rendered_effects(
-        &direct_output_effects,
+    let direct_output_uses = direct_output_effects.rendered_output_uses(
         &output_path,
         kind,
         active_output_predicates,
@@ -94,13 +92,8 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .collect();
     state.outputs.extend(direct_output_uses);
 
-    let local_output_uses = local_output_uses_from_effects(
-        local_effects,
-        &output_path,
-        kind,
-        active_output_predicates,
-        &local_effects.local_default_paths,
-    );
+    let local_output_uses =
+        local_effects.local_output_uses(&output_path, kind, active_output_predicates);
 
     let mut expression_output_uses = Vec::new();
     let mut expression_default_paths = fallback_paths.clone();
@@ -116,24 +109,32 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             true,
         );
     }
-    let nested = result.effects.helper_summary;
-    let nested_scalar_outputs = nested.scalar_output_meta.into_iter().collect::<Vec<_>>();
-    let nested_fragment_outputs = nested.fragment_output_uses;
-    let nested_structured_sources: BTreeSet<String> = nested_fragment_outputs
+    let nested_outputs = result.effects.helper_summary.output_uses;
+    let nested_structured_outputs = nested_outputs
+        .iter()
+        .filter(|output| output.is_structured_output())
+        .cloned()
+        .collect::<Vec<_>>();
+    let nested_scalar_outputs = nested_outputs
+        .iter()
+        .filter(|output| output.is_scalar_summary_output())
+        .cloned()
+        .collect::<Vec<_>>();
+    let nested_structured_sources: BTreeSet<String> = nested_structured_outputs
         .iter()
         .map(|output| output.source_expr.clone())
         .collect();
     let empty_output_path = YamlPath(Vec::new());
-    let nested_descendant_structured_sources: BTreeSet<String> = nested_fragment_outputs
+    let nested_descendant_structured_sources: BTreeSet<String> = nested_structured_outputs
         .iter()
         .filter(|output| expression_output_use_is_keyed_map_projection(output, &empty_output_path))
         .map(|output| output.source_expr.clone())
         .collect();
     let nested_scalar_sources: BTreeSet<String> = nested_scalar_outputs
         .iter()
-        .map(|(source_expr, _)| source_expr.clone())
+        .map(|output| output.source_expr.clone())
         .collect();
-    let nested_has_fragment_outputs = !nested_fragment_outputs.is_empty();
+    let nested_has_structured_outputs = !nested_structured_outputs.is_empty();
 
     expression_output_uses.retain(|output| {
         (!output_path.0.is_empty() && output.relative_path == output_path)
@@ -156,24 +157,26 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         }
         state.outputs.push(output);
     }
-    for (source_expr, meta) in nested_scalar_outputs {
-        if kind == ValueKind::Fragment && nested_has_fragment_outputs {
+    for nested_output in nested_scalar_outputs {
+        if kind == ValueKind::Fragment && nested_has_structured_outputs {
             continue;
         }
-        if nested_structured_sources.contains(&source_expr)
-            || expression_descendant_sources.contains(&source_expr)
+        if nested_structured_sources.contains(&nested_output.source_expr)
+            || expression_descendant_sources.contains(&nested_output.source_expr)
         {
             continue;
         }
-        let meta = meta.with_additional_predicates(active_output_predicates);
+        let meta = nested_output
+            .meta
+            .with_output_site_predicates(&nested_output.source_expr, active_output_predicates);
         state.outputs.push(HelperFragmentOutputUse::new(
-            source_expr,
+            nested_output.source_expr,
             relative_path.clone(),
             kind,
             meta,
         ));
     }
-    for nested_output in nested_fragment_outputs {
+    for nested_output in nested_structured_outputs {
         if kind == ValueKind::Fragment
             && nested_output.relative_path.0.is_empty()
             && (nested_scalar_sources.contains(&nested_output.source_expr)
@@ -184,7 +187,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         }
         let meta = nested_output
             .meta
-            .with_additional_predicates(active_output_predicates);
+            .with_output_site_predicates(&nested_output.source_expr, active_output_predicates);
         state.outputs.push(HelperFragmentOutputUse::new(
             nested_output.source_expr,
             output_path::append_relative_path(relative_path, &nested_output.relative_path),
@@ -192,50 +195,6 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             meta,
         ));
     }
-}
-
-fn local_output_uses_from_effects(
-    effects: &Effects,
-    output_path: &YamlPath,
-    kind: ValueKind,
-    active_output_predicates: &BTreeSet<Predicate>,
-    local_fallback_paths: &BTreeSet<String>,
-) -> Vec<HelperFragmentOutputUse> {
-    let mut local_output_uses = Vec::new();
-    for binding in &effects.local_output_values {
-        binding.collect_output_uses_with_encoding(
-            &mut local_output_uses,
-            output_path,
-            kind,
-            &BTreeSet::new(),
-            active_output_predicates,
-            local_fallback_paths,
-            true,
-        );
-    }
-    local_output_uses
-}
-
-fn output_uses_from_rendered_effects(
-    effects: &Effects,
-    output_path: &YamlPath,
-    kind: ValueKind,
-    active_output_predicates: &BTreeSet<Predicate>,
-    fallback_paths: &BTreeSet<String>,
-) -> Vec<HelperFragmentOutputUse> {
-    let mut outputs = Vec::new();
-    for value in &effects.rendered_output_values {
-        value.collect_output_uses_with_encoding(
-            &mut outputs,
-            output_path,
-            kind,
-            &effects.encoded_paths,
-            active_output_predicates,
-            fallback_paths,
-            false,
-        );
-    }
-    outputs
 }
 
 fn collect_bound_fragment_output_assignment_uses(
@@ -251,7 +210,7 @@ fn collect_bound_fragment_output_assignment_uses(
     let result = helper_result_from_expr_with_fragment_locals(
         rhs_expr,
         FragmentLocalFacts::without_output_meta(
-            &state.locals.bindings,
+            &state.locals.fragment_values,
             &state.locals.default_paths,
         ),
         Some(bindings),
@@ -261,11 +220,13 @@ fn collect_bound_fragment_output_assignment_uses(
     );
     let mut binding = result.value;
     let local_default_paths = result.effects.local_default_paths.clone();
+    let mut output_meta = result.effects.local_output_meta.clone();
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     if exprs_start_with_helper_call(rhs_exprs) {
         let nested = result.effects.helper_summary;
         let nested_binding = nested.project_value();
         top_level_helper_dependency_paths = nested.dependency_relevant_paths();
+        merge_output_use_meta(&mut output_meta, &nested.output_uses);
         if let Some(nested_binding) = nested_binding {
             binding = match binding {
                 Some(binding) => AbstractValue::merge_context_values(vec![binding, nested_binding]),
@@ -295,11 +256,27 @@ fn collect_bound_fragment_output_assignment_uses(
         };
     }
     if let Some(binding) = binding {
-        state.locals.bindings.insert(var.to_string(), binding);
+        state
+            .locals
+            .fragment_values
+            .insert(var.to_string(), binding);
     }
     let mut defaulted_paths = eval_helper_exprs_effects(rhs_exprs, bindings, current_dot).defaults;
     defaulted_paths.extend(local_default_paths);
     state.locals.set_default_paths(var, defaulted_paths);
+    state.locals.set_output_meta(var.to_string(), output_meta);
+}
+
+fn merge_output_use_meta(
+    output_meta: &mut BTreeMap<String, HelperOutputMeta>,
+    outputs: &[HelperFragmentOutputUse],
+) {
+    for output in outputs {
+        output_meta
+            .entry(output.source_expr.clone())
+            .or_default()
+            .merge_ref(&output.meta);
+    }
 }
 
 fn expression_output_use_is_keyed_map_projection(

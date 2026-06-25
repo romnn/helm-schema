@@ -2,39 +2,36 @@ use std::collections::{BTreeSet, HashMap};
 
 use test_util::prelude::sim_assert_eq;
 
-use super::{HelperRangeJoinBehavior, HelperRuntimeControlState, HelperRuntimeLocals, RangeFrame};
+use super::{HelperRangeJoinBehavior, HelperRuntimeControlState, RangeFrame};
 use crate::abstract_value::AbstractValue;
+use crate::symbolic_local_state::SymbolicLocalState;
 
 #[test]
 fn merge_intersects_default_paths_by_branch_presence() {
-    let base = HelperRuntimeLocals {
-        bindings: HashMap::new(),
-        default_paths: HashMap::from([
-            (
-                "serviceAccount".to_string(),
-                BTreeSet::from(["left.default".to_string()]),
-            ),
-            (
-                "leftOnly".to_string(),
-                BTreeSet::from(["left.only".to_string()]),
-            ),
-        ]),
-    };
-    let other = HelperRuntimeLocals {
-        bindings: HashMap::new(),
-        default_paths: HashMap::from([
-            (
-                "serviceAccount".to_string(),
-                BTreeSet::from(["right.default".to_string()]),
-            ),
-            (
-                "rightOnly".to_string(),
-                BTreeSet::from(["right.only".to_string()]),
-            ),
-        ]),
-    };
+    let mut base = SymbolicLocalState::default();
+    base.default_paths = HashMap::from([
+        (
+            "serviceAccount".to_string(),
+            BTreeSet::from(["left.default".to_string()]),
+        ),
+        (
+            "leftOnly".to_string(),
+            BTreeSet::from(["left.only".to_string()]),
+        ),
+    ]);
+    let mut other = SymbolicLocalState::default();
+    other.default_paths = HashMap::from([
+        (
+            "serviceAccount".to_string(),
+            BTreeSet::from(["right.default".to_string()]),
+        ),
+        (
+            "rightOnly".to_string(),
+            BTreeSet::from(["right.only".to_string()]),
+        ),
+    ]);
 
-    let merged = base.merge(other);
+    let merged = base.merge_helper_outcome(other);
 
     sim_assert_eq!(
         have: merged.default_paths,
@@ -47,25 +44,21 @@ fn merge_intersects_default_paths_by_branch_presence() {
 
 #[test]
 fn merge_unions_fragment_local_bindings() {
-    let base = HelperRuntimeLocals {
-        bindings: HashMap::from([(
-            "config".to_string(),
-            AbstractValue::ValuesPath("left".to_string()),
-        )]),
-        default_paths: HashMap::new(),
-    };
-    let other = HelperRuntimeLocals {
-        bindings: HashMap::from([(
-            "config".to_string(),
-            AbstractValue::ValuesPath("right".to_string()),
-        )]),
-        default_paths: HashMap::new(),
-    };
+    let mut base = SymbolicLocalState::default();
+    base.fragment_values = HashMap::from([(
+        "config".to_string(),
+        AbstractValue::ValuesPath("left".to_string()),
+    )]);
+    let mut other = SymbolicLocalState::default();
+    other.fragment_values = HashMap::from([(
+        "config".to_string(),
+        AbstractValue::ValuesPath("right".to_string()),
+    )]);
 
-    let merged = base.merge(other);
+    let merged = base.merge_helper_outcome(other);
 
     sim_assert_eq!(
-        have: merged.bindings.get("config").cloned(),
+        have: merged.fragment_values.get("config").cloned(),
         want: Some(AbstractValue::Choice(BTreeSet::from([
             AbstractValue::ValuesPath("left".to_string()),
             AbstractValue::ValuesPath("right".to_string())

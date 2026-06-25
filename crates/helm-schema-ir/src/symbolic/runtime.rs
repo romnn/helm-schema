@@ -95,10 +95,7 @@ impl SymbolicWalker<'_> {
         let output_effects = self.value_path_context().expression_output_effects(exprs);
         let helper = self.summarize_bound_helper_calls_in_exprs(exprs);
         let mut output_meta = output_effects.local_output_meta.clone();
-        for (path, meta) in &helper.scalar_output_meta {
-            output_meta.entry(path.clone()).or_default().merge_ref(meta);
-        }
-        for output in &helper.fragment_output_uses {
+        for output in &helper.output_uses {
             output_meta
                 .entry(output.source_expr.clone())
                 .or_default()

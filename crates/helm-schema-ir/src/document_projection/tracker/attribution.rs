@@ -6,9 +6,6 @@ use crate::fragment_range_scope::range_body_mapping_entry_indent_from_source;
 use crate::yaml_syntax::first_mapping_colon_offset;
 use crate::{ValueKind, YamlPath};
 
-use super::yaml_tree::{
-    is_scalar_like, parse_yaml_tree, scalar_text, strip_scalar_quotes, unwrap_yaml_node,
-};
 use super::{ControlSite, OutputSlot, OutputSlotKind};
 
 const PLACEHOLDER_PREFIX: &str = "__HS";
@@ -101,35 +98,10 @@ pub(super) fn build_attribution_index(
     outputs.sort_by_key(|output| output.action_start);
 
     let sanitized = String::from_utf8(sanitized).expect("sanitized template is utf-8");
-    let tree = parse_yaml_tree(&sanitized);
     let mut attribution = AttributionIndex::default();
-    let root = tree.as_ref().map(tree_sitter::Tree::root_node);
 
     for output in outputs {
-        let base_context = root.and_then(|root| {
-            resolve_yaml_context(
-                root,
-                &sanitized,
-                output.node_start,
-                ContextMode::Output {
-                    placeholder: &output.placeholder,
-                },
-            )
-        });
-        let rendered_context = output
-            .structural_indent
-            .and_then(|indent| structural_context_before(&sanitized, output.action_start, indent));
-
-        let context = if base_context
-            .as_ref()
-            .is_some_and(|context| context.inside_block_scalar)
-        {
-            base_context
-        } else if output.structural_indent.is_some() {
-            rendered_context.clone().or(base_context)
-        } else {
-            base_context
-        };
+        let context = output_context(&sanitized, &output);
 
         if let Some(context) = context {
             let context = if output.node_start >= output.action_start
@@ -151,34 +123,31 @@ pub(super) fn build_attribution_index(
         }
     }
 
-    if let Some(root) = root {
-        for control in controls {
-            let control_context =
-                resolve_yaml_context(root, &sanitized, control.context_byte, ContextMode::Control);
+    for control in controls {
+        let control_context = line_context_at(&sanitized, control.context_byte, None);
 
-            let range_mapping_entry_path = control.mapping_entry_indent.and_then(|indent| {
-                structural_context_before(&sanitized, control.context_byte, indent)
-                    .or_else(|| control_context.clone())
-                    .map(|context| context.mapping_entry_path)
-            });
+        let range_mapping_entry_path = control.mapping_entry_indent.and_then(|indent| {
+            structural_context_before(&sanitized, control.context_byte, indent)
+                .or_else(|| control_context.clone())
+                .map(|context| context.mapping_entry_path)
+        });
 
-            let control_path = control_context.map(|context| {
-                if context.inside_block_scalar {
-                    YamlPath(Vec::new())
-                } else {
-                    context.current_path
-                }
-            });
-
-            if control_path.is_some() || range_mapping_entry_path.is_some() {
-                attribution.control_sites.insert(
-                    (control.span_start, control.span_end),
-                    ControlSite {
-                        path: control_path.unwrap_or_else(|| YamlPath(Vec::new())),
-                        range_mapping_entry_path,
-                    },
-                );
+        let control_path = control_context.map(|context| {
+            if context.inside_block_scalar {
+                YamlPath(Vec::new())
+            } else {
+                context.current_path
             }
+        });
+
+        if control_path.is_some() || range_mapping_entry_path.is_some() {
+            attribution.control_sites.insert(
+                (control.span_start, control.span_end),
+                ControlSite {
+                    path: control_path.unwrap_or_else(|| YamlPath(Vec::new())),
+                    range_mapping_entry_path,
+                },
+            );
         }
     }
 
@@ -242,11 +211,26 @@ fn document_site_is_yaml_comment_part(source: &str, start: usize) -> bool {
     source[line_start..start].trim_start().starts_with('#')
 }
 
+fn output_context(sanitized: &str, output: &OutputSpan) -> Option<ResolvedNodeContext> {
+    let line_context = line_context_at(sanitized, output.node_start, Some(&output.placeholder));
+    if line_context
+        .as_ref()
+        .is_some_and(|context| context.inside_block_scalar)
+    {
+        return line_context;
+    }
+    output
+        .structural_indent
+        .and_then(|indent| structural_context_before(sanitized, output.action_start, indent))
+        .or(line_context)
+}
+
 #[derive(Clone)]
 struct StructuralSlot {
     indent: usize,
     path: YamlPath,
     allow_same_indent_output: bool,
+    block_scalar: bool,
 }
 
 fn structural_context_before(
@@ -259,183 +243,268 @@ fn structural_context_before(
     }
 
     let insertion_byte = insertion_byte.min(sanitized.len());
-    let context = structural_context_from_prefix(&sanitized[..insertion_byte], output_indent);
-    if context
-        .as_ref()
-        .is_some_and(|context| context.output_path.0.len() > 1)
-    {
-        return context;
-    }
-
-    let local_start = top_level_mapping_start_before(&sanitized[..insertion_byte]);
-    if local_start == 0 {
-        return context;
-    }
-    structural_context_from_prefix(&sanitized[local_start..insertion_byte], output_indent)
-        .or(context)
-}
-
-fn top_level_mapping_start_before(prefix: &str) -> usize {
-    let mut line_end = prefix.len();
-    while line_end > 0 {
-        let line_start = prefix[..line_end].rfind('\n').map_or(0, |index| index + 1);
-        let line = &prefix[line_start..line_end];
-        let trimmed = line.trim_start();
-        let indent = line.len() - trimmed.len();
-        if indent == 0
-            && !trimmed.starts_with(PLACEHOLDER_PREFIX)
-            && first_mapping_colon_offset(trimmed).is_some()
-        {
-            return line_start;
-        }
-        if line_start == 0 {
-            break;
-        }
-        line_end = line_start - 1;
-    }
-    0
-}
-
-fn structural_context_from_prefix(
-    prefix: &str,
-    output_indent: usize,
-) -> Option<ResolvedNodeContext> {
-    let tree = parse_yaml_tree(prefix)?;
-    let mut active = Vec::new();
-    let mut last = Vec::new();
-    collect_structural_slots(
-        tree.root_node(),
-        prefix,
-        &YamlPath(Vec::new()),
-        &mut active,
-        &mut last,
-    );
-    let slot = last
+    let slots = structural_slot_stack_before(&sanitized[..insertion_byte]);
+    let slot = slots
         .iter()
         .rev()
         .find(|slot| {
             slot.indent < output_indent
                 || (slot.indent == output_indent && slot.allow_same_indent_output)
         })
-        .or_else(|| last.last())?;
+        .or_else(|| slots.last())?;
     Some(default_context(&slot.path))
 }
 
-fn collect_structural_slots(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    path: &YamlPath,
-    active: &mut Vec<StructuralSlot>,
-    last: &mut Vec<StructuralSlot>,
-) {
-    match node.kind() {
-        "stream" | "document" | "block_node" | "flow_node" => {
-            collect_structural_child_slots(node, source, path, active, last);
-        }
-        "block_mapping" | "flow_mapping" => {
-            collect_structural_child_slots(node, source, path, active, last);
-        }
-        "block_mapping_pair" | "flow_pair" => {
-            collect_mapping_pair_slots(node, source, path, active, last);
-        }
-        "block_sequence" | "flow_sequence" => {
-            collect_structural_child_slots(node, source, path, active, last);
-        }
-        "block_sequence_item" => {
-            let item_path = append_sequence_segment(path);
-            active.push(StructuralSlot {
-                indent: node.start_position().column,
-                path: item_path.clone(),
-                allow_same_indent_output: false,
-            });
-            *last = active.clone();
-            collect_structural_child_slots(node, source, &item_path, active, last);
-            active.pop();
-        }
-        kind if is_scalar_like(kind) => {
-            *last = active.clone();
-        }
-        _ => {
-            collect_structural_child_slots(node, source, path, active, last);
-        }
+fn structural_slot_stack_before(prefix: &str) -> Vec<StructuralSlot> {
+    let mut slots = Vec::new();
+    for line in prefix.lines() {
+        push_structural_line(line, &mut slots);
     }
+    slots
 }
 
-fn collect_structural_child_slots(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    path: &YamlPath,
-    active: &mut Vec<StructuralSlot>,
-    last: &mut Vec<StructuralSlot>,
-) {
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        if child.is_named() {
-            collect_structural_slots(child, source, path, active, last);
-        }
-    }
-}
-
-fn collect_mapping_pair_slots(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    path: &YamlPath,
-    active: &mut Vec<StructuralSlot>,
-    last: &mut Vec<StructuralSlot>,
-) {
-    let key = node.child_by_field_name("key");
-    let value = node.child_by_field_name("value");
-    let child_path = key
-        .and_then(|node| scalar_text(node, source))
-        .filter(|key| !key.contains(PLACEHOLDER_PREFIX))
-        .map_or_else(|| path.clone(), |key| append_mapping_segment(path, &key));
-
-    let same_indent = key.is_some_and(|key| mapping_value_allows_same_indent_output(key, value));
-    let block_value = key.is_some_and(|key| {
-        value.is_none_or(|value| value.start_position().row > key.end_position().row)
-    });
-    if block_value {
-        active.push(StructuralSlot {
-            indent: key.map_or_else(
-                || node.start_position().column,
-                |node| node.start_position().column,
-            ),
-            path: child_path.clone(),
-            allow_same_indent_output: same_indent,
-        });
-        *last = active.clone();
+fn push_structural_line(line: &str, slots: &mut Vec<StructuralSlot>) {
+    let trimmed = line.trim_start();
+    if trimmed.is_empty() || trimmed.starts_with('#') {
+        return;
     }
 
-    if let Some(value) = value {
-        collect_structural_slots(value, source, &child_path, active, last);
+    let indent = line.len() - trimmed.len();
+    if slots
+        .last()
+        .is_some_and(|slot| slot.block_scalar && indent > slot.indent)
+    {
+        return;
     }
-
-    if block_value {
-        active.pop();
-    }
-}
-
-fn mapping_value_allows_same_indent_output(
-    key: tree_sitter::Node<'_>,
-    value: Option<tree_sitter::Node<'_>>,
-) -> bool {
-    let Some(value) = value else {
-        return true;
+    let Some(after_dash) = trimmed.strip_prefix('-') else {
+        pop_closed_slots(slots, indent);
+        mark_parent_slot_with_child(slots, indent);
+        push_mapping_slot(trimmed, indent, slots);
+        return;
     };
-    if value.start_position().row <= key.end_position().row {
-        return false;
-    }
-    let value = unwrap_yaml_node(value);
-    if value.kind() != "block_sequence" {
-        return false;
+
+    pop_closed_slots_before_sequence_item(slots, indent);
+    if !after_dash.is_empty() && !after_dash.starts_with(char::is_whitespace) {
+        return;
     }
 
-    let mut cursor = value.walk();
-    value.children(&mut cursor).any(|child| {
-        child.is_named()
-            && child.kind() == "block_sequence_item"
-            && child.start_position().column == key.start_position().column
+    mark_parent_slot_with_child(slots, indent);
+    let parent_path = slots
+        .last()
+        .map(|slot| slot.path.clone())
+        .unwrap_or_else(|| YamlPath(Vec::new()));
+    let item_path = append_sequence_segment(&parent_path);
+    let nested = after_dash.trim_start();
+    let block_scalar = nested.starts_with('|') || nested.starts_with('>');
+    slots.push(StructuralSlot {
+        indent,
+        path: item_path,
+        allow_same_indent_output: false,
+        block_scalar,
+    });
+
+    if !nested.is_empty() && !block_scalar {
+        push_mapping_slot(nested, indent + 2, slots);
+    }
+}
+
+fn pop_closed_slots(slots: &mut Vec<StructuralSlot>, indent: usize) {
+    while slots.last().is_some_and(|slot| slot.indent >= indent) {
+        slots.pop();
+    }
+}
+
+fn pop_closed_slots_before_sequence_item(slots: &mut Vec<StructuralSlot>, indent: usize) {
+    while slots.last().is_some_and(|slot| {
+        slot.indent > indent || (slot.indent == indent && !slot.allow_same_indent_output)
+    }) {
+        slots.pop();
+    }
+}
+
+fn mark_parent_slot_with_child(slots: &mut [StructuralSlot], indent: usize) {
+    if let Some(slot) = slots.iter_mut().rev().find(|slot| slot.indent < indent) {
+        slot.allow_same_indent_output = false;
+    }
+}
+
+fn push_mapping_slot(text: &str, indent: usize, slots: &mut Vec<StructuralSlot>) {
+    let Some(colon) = first_mapping_colon_offset(text) else {
+        return;
+    };
+    if !mapping_colon_is_structural(text, colon) {
+        return;
+    }
+    let value = text[colon + 1..].trim();
+    let block_scalar = value.starts_with('|') || value.starts_with('>');
+    if !value.is_empty() && !block_scalar {
+        return;
+    }
+    let key = strip_scalar_quotes(text[..colon].trim());
+    if key.is_empty() || key.contains(PLACEHOLDER_PREFIX) {
+        return;
+    }
+    let parent_path = slots
+        .last()
+        .map(|slot| slot.path.clone())
+        .unwrap_or_else(|| YamlPath(Vec::new()));
+    slots.push(StructuralSlot {
+        indent,
+        path: append_mapping_segment(&parent_path, key),
+        allow_same_indent_output: value.is_empty(),
+        block_scalar,
     })
+}
+
+fn line_context_at(
+    sanitized: &str,
+    byte: usize,
+    placeholder: Option<&str>,
+) -> Option<ResolvedNodeContext> {
+    let byte = byte.min(sanitized.len());
+    let (line_start, line_end) = line_bounds(sanitized, byte);
+    let line = &sanitized[line_start..line_end];
+    let trimmed = line.trim_start();
+    let indent = line.len() - trimmed.len();
+    let prior_slots = structural_slot_stack_before(&sanitized[..line_start]);
+    if let Some(slot) = prior_slots
+        .last()
+        .filter(|slot| slot.block_scalar && indent > slot.indent)
+    {
+        return Some(block_scalar_context(&slot.path));
+    }
+    if trimmed.starts_with('#') {
+        return Some(default_context(&YamlPath(Vec::new())));
+    }
+    if trimmed.is_empty() {
+        return structural_context_for_line(sanitized, line_start, 0, false);
+    }
+
+    let is_sequence_item = valid_sequence_item(trimmed);
+    let parent_context =
+        structural_context_for_line(sanitized, line_start, indent, is_sequence_item)
+            .unwrap_or_else(|| default_context(&YamlPath(Vec::new())));
+    let parent_path = parent_context.current_path;
+
+    if is_sequence_item {
+        let item_path = append_sequence_segment(&parent_path);
+        let nested = trimmed[1..].trim_start();
+        if placeholder.is_none() && !starts_with_inline_mapping(nested) {
+            return Some(default_context(&parent_path));
+        }
+        return Some(context_from_line_text(
+            nested,
+            &item_path,
+            placeholder,
+            line_start + indent + 1 + trimmed[1..].len() - nested.len(),
+            byte,
+        ));
+    }
+
+    Some(context_from_line_text(
+        trimmed,
+        &parent_path,
+        placeholder,
+        line_start + indent,
+        byte,
+    ))
+}
+
+fn line_bounds(source: &str, byte: usize) -> (usize, usize) {
+    let start = source[..byte].rfind('\n').map_or(0, |index| index + 1);
+    let end = source[byte..]
+        .find('\n')
+        .map_or(source.len(), |offset| byte + offset);
+    (start, end)
+}
+
+fn structural_context_for_line(
+    sanitized: &str,
+    line_start: usize,
+    indent: usize,
+    is_sequence_item: bool,
+) -> Option<ResolvedNodeContext> {
+    let mut slots = structural_slot_stack_before(&sanitized[..line_start]);
+    if is_sequence_item {
+        pop_closed_slots_before_sequence_item(&mut slots, indent);
+    } else {
+        pop_closed_slots(&mut slots, indent);
+    }
+    slots.last().map(|slot| default_context(&slot.path))
+}
+
+fn valid_sequence_item(trimmed: &str) -> bool {
+    let Some(after_dash) = trimmed.strip_prefix('-') else {
+        return false;
+    };
+    after_dash.is_empty() || after_dash.starts_with(char::is_whitespace)
+}
+
+fn starts_with_inline_mapping(text: &str) -> bool {
+    first_mapping_colon_offset(text).is_some_and(|colon| mapping_colon_is_structural(text, colon))
+}
+
+fn context_from_line_text(
+    text: &str,
+    parent_path: &YamlPath,
+    placeholder: Option<&str>,
+    text_start: usize,
+    byte: usize,
+) -> ResolvedNodeContext {
+    let Some(colon) = first_mapping_colon_offset(text) else {
+        return scalar_line_context(text, parent_path, placeholder);
+    };
+    if !mapping_colon_is_structural(text, colon) {
+        return scalar_line_context(text, parent_path, placeholder);
+    }
+
+    let key_start = text_start;
+    let key_end = text_start + colon;
+    let key_text = strip_scalar_quotes(text[..colon].trim());
+    let key_path = if key_text.contains(PLACEHOLDER_PREFIX) {
+        parent_path.clone()
+    } else {
+        append_mapping_segment(parent_path, key_text)
+    };
+
+    if placeholder.is_some() && byte >= key_start && byte <= key_end {
+        return mapping_key_context(parent_path, Some(key_text), placeholder.unwrap());
+    }
+
+    let value_text = text[colon + 1..].trim();
+    ResolvedNodeContext {
+        current_path: key_path.clone(),
+        output_path: key_path.clone(),
+        mapping_entry_path: key_path,
+        in_mapping_key: false,
+        entire_scalar_value: placeholder
+            .is_some_and(|placeholder| strip_scalar_quotes(value_text) == placeholder),
+        inside_block_scalar: false,
+    }
+}
+
+fn scalar_line_context(
+    text: &str,
+    path: &YamlPath,
+    placeholder: Option<&str>,
+) -> ResolvedNodeContext {
+    let value = text.trim();
+    ResolvedNodeContext {
+        current_path: path.clone(),
+        output_path: path.clone(),
+        mapping_entry_path: path.clone(),
+        in_mapping_key: false,
+        entire_scalar_value: placeholder
+            .is_some_and(|placeholder| strip_scalar_quotes(value) == placeholder),
+        inside_block_scalar: false,
+    }
+}
+
+fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
+    text[colon + 1..]
+        .chars()
+        .next()
+        .is_none_or(char::is_whitespace)
 }
 
 fn inline_mapping_value_key_offset(prefix: &str) -> Option<usize> {
@@ -458,17 +527,8 @@ fn inline_mapping_value_key_offset(prefix: &str) -> Option<usize> {
 }
 
 fn direct_children<'tree>(node: tree_sitter::Node<'tree>) -> Vec<tree_sitter::Node<'tree>> {
-    let mut children = Vec::new();
     let mut cursor = node.walk();
-    if cursor.goto_first_child() {
-        loop {
-            children.push(cursor.node());
-            if !cursor.goto_next_sibling() {
-                break;
-            }
-        }
-    }
-    children
+    node.children(&mut cursor).collect()
 }
 
 fn enclosing_template_action_span(mut node: tree_sitter::Node<'_>) -> (usize, usize) {
@@ -782,96 +842,6 @@ fn first_nonblank_byte(sanitized: &[u8], start: usize, end: usize) -> Option<usi
         .map(|offset| start + offset)
 }
 
-#[derive(Clone, Copy)]
-enum ContextMode<'a> {
-    Output { placeholder: &'a str },
-    Control,
-}
-
-fn resolve_yaml_context(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    byte: usize,
-    mode: ContextMode<'_>,
-) -> Option<ResolvedNodeContext> {
-    if !contains_byte(node, byte) {
-        return None;
-    }
-
-    let target = node
-        .named_descendant_for_byte_range(byte, (byte + 1).min(node.end_byte()))
-        .unwrap_or(node);
-    let mut ancestors = Vec::new();
-    let mut current = target;
-    loop {
-        ancestors.push(current);
-        if current.start_byte() == node.start_byte()
-            && current.end_byte() == node.end_byte()
-            && current.kind() == node.kind()
-        {
-            break;
-        }
-        current = current.parent()?;
-    }
-    ancestors.reverse();
-
-    let mut path = YamlPath(Vec::new());
-    let mut inside_flow_sequence = false;
-    for ancestor in ancestors {
-        match ancestor.kind() {
-            "block_sequence_item" => {
-                let direct_scalar_control_item = matches!(mode, ContextMode::Control)
-                    && ancestor
-                        .named_child(0)
-                        .map(unwrap_yaml_node)
-                        .is_some_and(|child| is_scalar_like(child.kind()));
-                if !direct_scalar_control_item {
-                    path = append_sequence_segment(&path);
-                }
-            }
-            "flow_sequence" => {
-                inside_flow_sequence = true;
-            }
-            "block_mapping_pair" | "flow_pair" => {
-                let key = ancestor.child_by_field_name("key");
-                let key_text = key.and_then(|node| scalar_text(node, source));
-                if let ContextMode::Output { placeholder } = mode
-                    && key.is_some_and(|key| contains_byte(key, byte))
-                {
-                    return Some(mapping_key_context(&path, key_text.as_deref(), placeholder));
-                }
-                if let Some(key_text) = key_text.as_deref()
-                    && !key_text.contains(PLACEHOLDER_PREFIX)
-                {
-                    path = append_mapping_segment(&path, key_text);
-                }
-            }
-            "block_scalar" => {
-                return Some(block_scalar_context(&path));
-            }
-            _ => {}
-        }
-    }
-
-    let scalar = is_scalar_like(target.kind()).then_some(target).or_else(|| {
-        let unwrapped = unwrap_yaml_node(target);
-        is_scalar_like(unwrapped.kind()).then_some(unwrapped)
-    });
-    Some(match (mode, scalar) {
-        (ContextMode::Output { placeholder }, Some(scalar)) => {
-            let mut context = scalar_context(scalar, source, placeholder, &path);
-            if inside_flow_sequence && context.entire_scalar_value {
-                let item_path = append_sequence_segment(&path);
-                context.current_path = item_path.clone();
-                context.output_path = item_path.clone();
-                context.mapping_entry_path = item_path;
-            }
-            context
-        }
-        _ => default_context(&path),
-    })
-}
-
 fn mapping_key_context(
     path: &YamlPath,
     key_text: Option<&str>,
@@ -902,24 +872,6 @@ fn block_scalar_context(path: &YamlPath) -> ResolvedNodeContext {
     }
 }
 
-fn scalar_context(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    placeholder: &str,
-    path: &YamlPath,
-) -> ResolvedNodeContext {
-    let text = node.utf8_text(source.as_bytes()).unwrap_or("").trim();
-    let text = strip_scalar_quotes(text);
-    ResolvedNodeContext {
-        current_path: path.clone(),
-        output_path: path.clone(),
-        mapping_entry_path: path.clone(),
-        in_mapping_key: false,
-        entire_scalar_value: text == placeholder,
-        inside_block_scalar: false,
-    }
-}
-
 fn default_context(path: &YamlPath) -> ResolvedNodeContext {
     ResolvedNodeContext {
         current_path: path.clone(),
@@ -928,6 +880,17 @@ fn default_context(path: &YamlPath) -> ResolvedNodeContext {
         in_mapping_key: false,
         entire_scalar_value: false,
         inside_block_scalar: false,
+    }
+}
+
+fn strip_scalar_quotes(text: &str) -> &str {
+    if text.len() >= 2
+        && ((text.starts_with('"') && text.ends_with('"'))
+            || (text.starts_with('\'') && text.ends_with('\'')))
+    {
+        &text[1..text.len() - 1]
+    } else {
+        text
     }
 }
 
@@ -951,16 +914,12 @@ fn append_sequence_segment(path: &YamlPath) -> YamlPath {
     path
 }
 
-fn contains_byte(node: tree_sitter::Node<'_>, byte: usize) -> bool {
-    node.start_byte() <= byte && byte < node.end_byte()
-}
-
 fn is_template_delim_start(kind: &str) -> bool {
-    kind == "{{" || kind == "{{-"
+    matches!(kind, "{{" | "{{-")
 }
 
 fn is_template_delim_end(kind: &str) -> bool {
-    kind == "}}" || kind == "-}}"
+    matches!(kind, "}}" | "-}}")
 }
 
 pub(super) fn is_output_root_kind(kind: &str) -> bool {

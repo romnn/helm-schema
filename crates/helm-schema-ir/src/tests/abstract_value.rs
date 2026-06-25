@@ -148,30 +148,3 @@ fn helper_and_fragment_range_items_keep_distinct_structural_policy() {
         want: Some(AbstractValue::ValuesPath("containers.name".to_string()))
     );
 }
-
-#[test]
-fn output_meta_preserves_values_paths_and_output_set_metadata() {
-    let meta = HelperOutputMeta {
-        predicates: BTreeSet::new(),
-        defaulted: true,
-        provenance: Vec::new(),
-    };
-    let value = AbstractValue::Overlay {
-        entries: BTreeMap::from([("name".to_string(), path("serviceAccount.name"))]),
-        fallback: Box::new(AbstractValue::OutputSet(BTreeMap::from([(
-            "global.nameOverride".to_string(),
-            meta.clone(),
-        )]))),
-    };
-
-    sim_assert_eq!(
-        have: value.output_meta(),
-        want: BTreeMap::from([
-            (
-                "serviceAccount.name".to_string(),
-                HelperOutputMeta::default()
-            ),
-            ("global.nameOverride".to_string(), meta),
-        ])
-    );
-}

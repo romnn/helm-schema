@@ -7,12 +7,13 @@ use crate::predicate::Predicate;
 use crate::{Guard, ValueKind, YamlPath};
 
 fn output_paths(paths: impl IntoIterator<Item = String>) -> AbstractValue {
-    AbstractValue::OutputSet(
+    AbstractValue::choice(
         paths
             .into_iter()
-            .map(|path| (path, HelperOutputMeta::default()))
+            .map(|path| AbstractValue::OutputPath(path, HelperOutputMeta::default()))
             .collect(),
     )
+    .expect("paths should project")
 }
 
 #[test]
@@ -23,6 +24,7 @@ fn helper_output_meta_projects_predicates_to_contract_guard_sets() {
         ))])]),
         defaulted: true,
         provenance: Vec::new(),
+        ..HelperOutputMeta::default()
     };
 
     sim_assert_eq!(
@@ -53,6 +55,7 @@ fn helper_output_meta_preserves_alternative_guard_sets() {
         ]),
         defaulted: true,
         provenance: Vec::new(),
+        ..HelperOutputMeta::default()
     };
 
     sim_assert_eq!(
@@ -85,31 +88,62 @@ fn helper_output_meta_preserves_alternative_guard_sets() {
 }
 
 #[test]
+fn helper_output_meta_suppresses_dynamic_traversal_parent_guards_only_for_selected_child() {
+    let mut meta = HelperOutputMeta {
+        predicates: BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("auth"),
+            Predicate::truthy_path("auth.replicationPassword"),
+        ])]),
+        ..HelperOutputMeta::default()
+    };
+    meta.suppress_predicate_path("auth");
+
+    sim_assert_eq!(
+        have: meta.contract_guard_sets("auth.replicationPassword"),
+        want: vec![vec![Guard::Truthy {
+            path: "auth.replicationPassword".to_string(),
+        }]]
+    );
+    sim_assert_eq!(
+        have: meta.contract_guard_sets("auth"),
+        want: vec![vec![
+            Guard::Truthy {
+                path: "auth".to_string(),
+            },
+            Guard::Truthy {
+                path: "auth.replicationPassword".to_string(),
+            },
+        ]]
+    );
+}
+
+#[test]
 fn helper_summary_merges_fragment_output_uses() {
     let mut summary = HelperSummary::default();
-    summary.add_fragment_output_use(HelperFragmentOutputUse::new(
+    summary.add_output_use(HelperFragmentOutputUse::new(
         "podLabels".to_string(),
         YamlPath(vec!["app".to_string()]),
         ValueKind::Fragment,
         HelperOutputMeta::default(),
     ));
 
-    let outputs = &summary.fragment_output_uses;
+    let outputs = &summary.output_uses;
 
     sim_assert_eq!(have: outputs.len(), want: 1);
 }
 
 #[test]
-fn helper_summary_projection_preserves_structured_output_metadata() {
+fn helper_summary_projection_preserves_structured_output_path_and_keeps_metadata_on_use() {
     let meta = HelperOutputMeta {
         predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
             "enabled".to_string(),
         )])]),
         defaulted: true,
         provenance: Vec::new(),
+        ..HelperOutputMeta::default()
     };
     let mut summary = HelperSummary::default();
-    summary.add_fragment_output_use(HelperFragmentOutputUse::new(
+    summary.add_output_use(HelperFragmentOutputUse::new(
         "podLabels".to_string(),
         YamlPath(vec!["app".to_string()]),
         ValueKind::Fragment,
@@ -120,15 +154,16 @@ fn helper_summary_projection_preserves_structured_output_metadata() {
         have: summary.project_value(),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "app".to_string(),
-            AbstractValue::OutputSet(BTreeMap::from([("podLabels".to_string(), meta)])),
+            AbstractValue::OutputPath("podLabels".to_string(), meta.clone()),
         )])))
     );
+    sim_assert_eq!(have: summary.output_uses[0].meta.clone(), want: meta);
 }
 
 #[test]
 fn helper_summary_projection_preserves_structured_output_path() {
     let mut summary = HelperSummary::default();
-    summary.add_fragment_output_use(HelperFragmentOutputUse::new(
+    summary.add_output_use(HelperFragmentOutputUse::new(
         "podLabels".to_string(),
         YamlPath(vec!["app".to_string()]),
         ValueKind::Fragment,
@@ -139,13 +174,13 @@ fn helper_summary_projection_preserves_structured_output_path() {
         have: summary.project_value(),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "app".to_string(),
-            output_paths(["podLabels".to_string()]),
+            AbstractValue::OutputPath("podLabels".to_string(), HelperOutputMeta::default()),
         )])))
     );
 }
 
 #[test]
-fn helper_summary_projection_merges_scalar_outputs_into_one_output_set() {
+fn helper_summary_projection_merges_scalar_outputs_into_one_choice() {
     let mut summary = HelperSummary::default();
     summary.merge_output_meta("image.repository".to_string(), HelperOutputMeta::default());
     summary.merge_output_meta("image.tag".to_string(), HelperOutputMeta::default());

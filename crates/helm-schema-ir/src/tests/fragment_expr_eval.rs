@@ -161,22 +161,39 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
-    let Some(AbstractValue::OutputSet(output_set)) = helper_result_from_expr_with_fragment_locals(
+    let result = helper_result_from_expr_with_fragment_locals(
         &expr,
         FragmentLocalFacts::bindings_only(&HashMap::new()),
         None,
         None,
         context,
         &mut seen,
-    )
-    .value
-    else {
-        panic!("expected helper projection to resolve to an output-set binding");
-    };
+    );
 
-    let meta = output_set
-        .get("nameOverride")
-        .expect("nameOverride output meta should be present");
+    sim_assert_eq!(
+        have: result.value,
+        want: Some(AbstractValue::OutputPath(
+            "nameOverride".to_string(),
+            HelperOutputMeta {
+                predicates: BTreeSet::new(),
+                defaulted: false,
+                provenance: vec![crate::ContractProvenance::new(
+                    "<inline:0>".to_string(),
+                    crate::SourceSpan::new(28, 54),
+                    vec!["common.name".to_string()],
+                )],
+                ..HelperOutputMeta::default()
+            },
+        ))
+    );
+    let output = result
+        .effects
+        .helper_summary
+        .output_uses
+        .iter()
+        .find(|output| output.source_expr == "nameOverride")
+        .expect("nameOverride output use should be present");
+    let meta = &output.meta;
     assert!(meta.predicates.is_empty());
     assert!(!meta.defaulted);
     assert!(
@@ -205,21 +222,18 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
 
     sim_assert_eq!(
         have: fragment_value_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
-        want: Some(AbstractValue::OutputSet(
-            [(
-                "nameOverride".to_string(),
-                HelperOutputMeta {
-                    predicates: BTreeSet::new(),
-                    defaulted: false,
-                    provenance: vec![crate::ContractProvenance::new(
-                        "<inline:0>".to_string(),
-                        crate::SourceSpan::new(28, 54),
-                        vec!["common.name".to_string()],
-                    )],
-                },
-            )]
-            .into_iter()
-            .collect()
+        want: Some(AbstractValue::OutputPath(
+            "nameOverride".to_string(),
+            HelperOutputMeta {
+                predicates: BTreeSet::new(),
+                defaulted: false,
+                provenance: vec![crate::ContractProvenance::new(
+                    "<inline:0>".to_string(),
+                    crate::SourceSpan::new(28, 54),
+                    vec!["common.name".to_string()],
+                )],
+                ..HelperOutputMeta::default()
+            },
         )),
     );
 }

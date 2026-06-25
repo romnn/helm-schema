@@ -10,6 +10,7 @@ use crate::expr_function_catalog::{
     is_merge_function, is_provenance_preserving_function, is_string_transform_function,
     type_is_schema_type,
 };
+use crate::helper_summary::HelperOutputMeta;
 use crate::literal_schema_type::expression_schema_type;
 use crate::printf_eval::{literal_printf_format, render_printf_string_sets};
 
@@ -42,11 +43,7 @@ pub(crate) fn eval_call_with_helper_calls(
         function if is_string_transform_function(function) => {
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
-            let paths = value_paths(&result.value);
-            effects.add_string_hints(paths.clone());
-            if function == "b64enc" {
-                effects.add_encoded_paths(paths);
-            }
+            record_string_transform_effects(function, &result.value, &mut effects);
             EvalResult::with_effects(result.value, effects)
         }
         function if is_provenance_preserving_function(function) => {
@@ -108,11 +105,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             }
             function if is_string_transform_function(function) => {
                 let mut effects = current.effects;
-                let current_paths = value_paths(&current.value);
-                effects.add_string_hints(current_paths.clone());
-                if function == "b64enc" {
-                    effects.add_encoded_paths(current_paths);
-                }
+                record_string_transform_effects(function, &current.value, &mut effects);
                 for arg in args {
                     let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
                     if function == "b64enc" {
@@ -153,6 +146,18 @@ fn eval_short_circuit_args(
             .with_predicate_constraints(arg, previous_truthy);
     }
     EvalResult::with_effects(None, effects)
+}
+
+fn record_string_transform_effects(
+    function: &str,
+    value: &Option<AbstractValue>,
+    effects: &mut Effects,
+) {
+    let paths = value_paths(value);
+    effects.add_string_hints(paths.clone());
+    if function == "b64enc" {
+        effects.add_encoded_paths(paths);
+    }
 }
 
 fn eval_helper_call(
@@ -440,8 +445,24 @@ fn eval_index(
         };
         let mut next_values = Vec::new();
         for value in &values {
+            let base_paths = value.paths();
             for option in &options {
                 if let Some(next) = apply_index_segment(value, option) {
+                    for next_path in next.paths() {
+                        for base_path in &base_paths {
+                            if !base_path.is_empty()
+                                && crate::output_path::values_path_is_descendant(
+                                    &next_path, base_path,
+                                )
+                            {
+                                effects
+                                    .local_output_meta
+                                    .entry(next_path.clone())
+                                    .or_insert_with(HelperOutputMeta::default)
+                                    .suppress_predicate_path(base_path.clone());
+                            }
+                        }
+                    }
                     next_values.push(next);
                 }
             }

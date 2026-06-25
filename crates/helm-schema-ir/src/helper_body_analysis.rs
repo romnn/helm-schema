@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
@@ -22,10 +22,11 @@ use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_value_expression::collect_helper_value_expression_from_exprs;
 use crate::helper_walk_state::{
     HelperRangeJoinBehavior, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
-    HelperRuntimeLocals, HelperValuesWalkState,
+    HelperValuesWalkState,
 };
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
 use crate::predicate::Predicate;
+use crate::symbolic_local_state::SymbolicLocalState;
 use crate::{ValueKind, YamlPath};
 
 pub(crate) struct BoundHelperCallResolution {
@@ -146,9 +147,8 @@ fn collect_helper_summary(
     seen: &mut HashSet<String>,
     analysis: &mut HelperSummary,
 ) {
-    let mut value_locals = HelperRuntimeLocals::default();
-    let mut fragment_locals = HelperRuntimeLocals::default();
-    let mut local_output_meta = HashMap::new();
+    let mut value_locals = SymbolicLocalState::default();
+    let mut fragment_locals = SymbolicLocalState::default();
     let mut fragment_output_uses = Vec::new();
     let mut value_seen = seen.clone();
     let mut fragment_seen = seen.clone();
@@ -164,7 +164,6 @@ fn collect_helper_summary(
         ),
         value_locals: &mut value_locals,
         fragment_locals: &mut fragment_locals,
-        local_output_meta: &mut local_output_meta,
         context,
         value_seen: &mut value_seen,
         fragment_seen: &mut fragment_seen,
@@ -173,7 +172,16 @@ fn collect_helper_summary(
         document_tracker,
     };
     eval_template_body(&mut runtime, body.tree.root_node());
-    analysis.add_fragment_output_uses(fragment_output_uses);
+    fragment_output_uses
+        .retain(|output| output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty());
+    let structured_sources: std::collections::BTreeSet<String> = fragment_output_uses
+        .iter()
+        .map(|output| output.source_expr.clone())
+        .collect();
+    for source in &structured_sources {
+        analysis.remove_output_path(source);
+    }
+    analysis.add_output_uses(fragment_output_uses);
 }
 
 struct HelperAnalysisRuntime<'context, 'state> {
@@ -181,9 +189,8 @@ struct HelperAnalysisRuntime<'context, 'state> {
     bindings: &'state HashMap<String, AbstractValue>,
     value_control: HelperRuntimeControlState,
     fragment_control: HelperRuntimeControlState,
-    value_locals: &'state mut HelperRuntimeLocals,
-    fragment_locals: &'state mut HelperRuntimeLocals,
-    local_output_meta: &'state mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    value_locals: &'state mut SymbolicLocalState,
+    fragment_locals: &'state mut SymbolicLocalState,
     context: FragmentEvalContext<'context>,
     value_seen: &'state mut HashSet<String>,
     fragment_seen: &'state mut HashSet<String>,
@@ -194,9 +201,8 @@ struct HelperAnalysisRuntime<'context, 'state> {
 
 #[derive(Clone)]
 struct HelperAnalysisSnapshot {
-    value_locals: HelperRuntimeLocals,
-    fragment_locals: HelperRuntimeLocals,
-    local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    value_locals: SymbolicLocalState,
+    fragment_locals: SymbolicLocalState,
     value_control: HelperRuntimeControlSnapshot,
     fragment_control: HelperRuntimeControlSnapshot,
 }
@@ -229,7 +235,6 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         let active_output_predicates = self.value_control.active_output_predicates().clone();
         let mut state = HelperValuesWalkState {
             locals: &mut *self.value_locals,
-            local_output_meta: &mut *self.local_output_meta,
             context: self.context,
             seen: self.value_seen,
             analysis: self.analysis,
@@ -276,14 +281,10 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
             return;
         };
         let mut locals = first.value_locals;
-        let mut local_output_meta = first.local_output_meta;
         for outcome in iter {
-            locals = locals.merge(outcome.value_locals);
-            local_output_meta =
-                merge_helper_output_meta_maps(local_output_meta, outcome.local_output_meta);
+            locals = locals.merge_helper_outcome(outcome.value_locals);
         }
         *self.value_locals = locals;
-        *self.local_output_meta = local_output_meta;
     }
 
     fn merge_fragment_outcomes(&mut self, outcomes: Vec<HelperAnalysisSnapshot>) {
@@ -293,7 +294,7 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         };
         let mut locals = first.fragment_locals;
         for outcome in iter {
-            locals = locals.merge(outcome.fragment_locals);
+            locals = locals.merge_helper_outcome(outcome.fragment_locals);
         }
         *self.fragment_locals = locals;
     }
@@ -357,19 +358,6 @@ fn push_condition_predicates(control: &mut HelperRuntimeControlState, plan: &Hel
     }
 }
 
-fn merge_helper_output_meta_maps(
-    mut base: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    other: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-) -> HashMap<String, BTreeMap<String, HelperOutputMeta>> {
-    for (var, meta_by_path) in other {
-        let entry = base.entry(var).or_default();
-        for (path, meta) in meta_by_path {
-            entry.entry(path).or_default().merge(meta);
-        }
-    }
-    base
-}
-
 impl<'context: 'state, 'state> NodeActionEffectSink for HelperAnalysisRuntime<'context, 'state> {
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         self.value_control
@@ -400,7 +388,6 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         HelperAnalysisSnapshot {
             value_locals: self.value_locals.clone(),
             fragment_locals: self.fragment_locals.clone(),
-            local_output_meta: self.local_output_meta.clone(),
             value_control: self.value_control.snapshot(),
             fragment_control: self.fragment_control.snapshot(),
         }
@@ -409,7 +396,6 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
         *self.value_locals = snapshot.value_locals;
         *self.fragment_locals = snapshot.fragment_locals;
-        *self.local_output_meta = snapshot.local_output_meta;
         self.value_control.restore(&snapshot.value_control);
         self.fragment_control.restore(&snapshot.fragment_control);
     }
@@ -440,7 +426,6 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         if value_join == HelperRangeJoinBehavior::PromoteBodyOutcome {
             if let Some(outcome) = first_body_outcome.clone() {
                 *self.value_locals = outcome.value_locals;
-                *self.local_output_meta = outcome.local_output_meta;
             }
         } else {
             self.merge_value_outcomes(outcomes.clone());
@@ -509,7 +494,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         let current_dot_fragment = self.current_fragment_dot().cloned();
         if crate::fragment_assignment::apply_local_set_mutations_from_exprs(
             exprs,
-            &mut self.fragment_locals.bindings,
+            &mut self.fragment_locals.fragment_values,
             current_dot_fragment.as_ref(),
             self.context,
             &mut seen_set,
@@ -530,9 +515,9 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 header,
                 self.bindings,
                 value_dot.as_ref(),
-                &self.value_locals.bindings,
+                &self.value_locals.fragment_values,
                 &self.value_locals.default_paths,
-                self.local_output_meta,
+                &self.value_locals.output_meta,
                 self.context,
                 self.value_seen,
                 true,
@@ -541,9 +526,9 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 header,
                 self.bindings,
                 fragment_dot.as_ref(),
-                &self.fragment_locals.bindings,
+                &self.fragment_locals.fragment_values,
                 &self.fragment_locals.default_paths,
-                self.local_output_meta,
+                &self.value_locals.output_meta,
                 self.context,
                 self.fragment_seen,
                 false,
@@ -573,9 +558,9 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.bindings,
                 value_dot.as_ref(),
                 value_fragment_dot.as_ref(),
-                &self.value_locals.bindings,
+                &self.value_locals.fragment_values,
                 &self.value_locals.default_paths,
-                self.local_output_meta,
+                &self.value_locals.output_meta,
                 self.context,
                 self.value_seen,
                 true,
@@ -585,9 +570,9 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.bindings,
                 fragment_dot.as_ref(),
                 fragment_current_dot.as_ref(),
-                &self.fragment_locals.bindings,
+                &self.fragment_locals.fragment_values,
                 &self.fragment_locals.default_paths,
-                self.local_output_meta,
+                &self.value_locals.output_meta,
                 self.context,
                 self.fragment_seen,
                 false,
@@ -625,7 +610,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.bindings,
                 value_dot.as_ref(),
                 value_fragment_dot.as_ref(),
-                &self.value_locals.bindings,
+                &self.value_locals.fragment_values,
                 self.context,
                 self.value_seen,
                 NonExactRangeVariableBinding::Bind,
@@ -636,7 +621,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
                 self.bindings,
                 fragment_dot.as_ref(),
                 fragment_current_dot.as_ref(),
-                &self.fragment_locals.bindings,
+                &self.fragment_locals.fragment_values,
                 self.context,
                 self.fragment_seen,
                 NonExactRangeVariableBinding::Skip,

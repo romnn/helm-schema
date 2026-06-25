@@ -13,12 +13,6 @@ pub(crate) struct HelperOutputEvaluator {
     seen: HashSet<String>,
 }
 
-#[derive(Clone, Copy)]
-enum BodyMode<'a> {
-    All,
-    Keyed(&'a str),
-}
-
 impl HelperOutputEvaluator {
     pub(crate) fn new() -> Self {
         Self {
@@ -40,7 +34,7 @@ impl HelperOutputEvaluator {
         key: &str,
         helpers: &DefineIndex,
     ) -> Option<Vec<HelperBranch>> {
-        self.branches_from_if(node, BodyMode::Keyed(key), helpers, 0)
+        self.branches_from_if(node, Some(key), helpers, 0)
     }
 
     pub(super) fn evaluate_body(
@@ -49,35 +43,24 @@ impl HelperOutputEvaluator {
         helpers: &DefineIndex,
         depth: usize,
     ) -> HelperBranchBody {
-        self.collect_body(body, BodyMode::All, helpers, depth)
+        self.collect_body(body, None, helpers, depth)
     }
 
     fn collect_body(
         &mut self,
         body: &[HelmAst],
-        mode: BodyMode<'_>,
+        key_filter: Option<&str>,
         helpers: &DefineIndex,
         depth: usize,
     ) -> HelperBranchBody {
-        match mode {
-            BodyMode::All => self
-                .top_level_branches(body, helpers, depth)
-                .map(|branches| HelperBranchBody::Nested { branches })
-                .unwrap_or_else(|| {
-                    HelperBranchBody::literals(dedup_preserve_order(self.collect_literals(
-                        body,
-                        None,
-                        helpers,
-                        depth,
-                        &mut Vec::new(),
-                    )))
-                }),
-            BodyMode::Keyed(key) => {
-                let mut nested = Vec::new();
-                let literals = self.collect_literals(body, Some(key), helpers, depth, &mut nested);
-                branch_body_from_parts(literals, nested)
-            }
+        if key_filter.is_none()
+            && let Some(branches) = self.top_level_branches(body, helpers, depth)
+        {
+            return HelperBranchBody::Nested { branches };
         }
+        let mut nested = Vec::new();
+        let literals = self.collect_literals(body, key_filter, helpers, depth, &mut nested);
+        branch_body_from_parts(literals, nested)
     }
 
     fn top_level_branches(
@@ -91,7 +74,7 @@ impl HelperOutputEvaluator {
         }
         match single_typed_body(body)? {
             TypedBody::If(node) => {
-                let branches = self.branches_from_if(node, BodyMode::All, helpers, depth)?;
+                let branches = self.branches_from_if(node, None, helpers, depth)?;
                 let has_capability_guard = branches.iter().any(|branch| {
                     matches!(
                         branch.guard,
@@ -112,7 +95,7 @@ impl HelperOutputEvaluator {
     fn branches_from_if(
         &mut self,
         node: &HelmAst,
-        mode: BodyMode<'_>,
+        key_filter: Option<&str>,
         helpers: &DefineIndex,
         depth: usize,
     ) -> Option<Vec<HelperBranch>> {
@@ -130,25 +113,25 @@ impl HelperOutputEvaluator {
 
         let guard = decode_guard_expr(condition.expr(), condition.raw())
             .unwrap_or_else(|| decode_guard(condition.raw()));
-        if matches!(mode, BodyMode::Keyed(_)) && !capability_guard_is_decoded(&guard) {
+        if key_filter.is_some() && !capability_guard_is_decoded(&guard) {
             return None;
         }
 
         let mut branches = vec![HelperBranch {
             guard: Some(guard),
-            body: self.collect_body(then_branch, mode, helpers, depth + 1),
+            body: self.collect_body(then_branch, key_filter, helpers, depth + 1),
         }];
         if let Some(nested_if) = lone_if_in(else_branch) {
-            if let Some(nested) = self.branches_from_if(nested_if, mode, helpers, depth + 1) {
+            if let Some(nested) = self.branches_from_if(nested_if, key_filter, helpers, depth + 1) {
                 branches.extend(nested);
             }
         } else if !else_branch.is_empty() {
-            let body = self.collect_body(else_branch, mode, helpers, depth + 1);
+            let body = self.collect_body(else_branch, key_filter, helpers, depth + 1);
             if !body.is_empty() {
                 branches.push(HelperBranch { guard: None, body });
             }
         }
-        if matches!(mode, BodyMode::Keyed(_)) {
+        if key_filter.is_some() {
             branches.retain(|branch| !branch.body.is_empty());
         }
         (!branches.is_empty()).then_some(branches)
@@ -183,7 +166,7 @@ impl HelperOutputEvaluator {
                         let preserve_nested = key_filter.is_some();
                         let body = self.collect_body(
                             std::slice::from_ref(value),
-                            BodyMode::All,
+                            None,
                             helpers,
                             depth + 1,
                         );
@@ -197,7 +180,7 @@ impl HelperOutputEvaluator {
                 } => {
                     if let Some(key) = key_filter {
                         if let Some(branches) =
-                            self.branches_from_if(node, BodyMode::Keyed(key), helpers, depth + 1)
+                            self.branches_from_if(node, Some(key), helpers, depth + 1)
                         {
                             nested.extend(branches);
                         }
@@ -272,7 +255,7 @@ impl HelperOutputEvaluator {
         if !helper_names.is_empty() {
             return combine_branch_bodies(helper_names.into_iter().filter_map(|name| {
                 self.with_helper_body(&name, helpers, |this, body| {
-                    this.collect_body(body, BodyMode::All, helpers, depth + 1)
+                    this.collect_body(body, None, helpers, depth + 1)
                 })
             }));
         }

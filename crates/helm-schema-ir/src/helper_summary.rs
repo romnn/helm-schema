@@ -10,6 +10,7 @@ pub(crate) struct HelperOutputMeta {
     pub(crate) predicates: BTreeSet<BTreeSet<Predicate>>,
     pub(crate) defaulted: bool,
     pub(crate) provenance: Vec<ContractProvenance>,
+    pub(crate) suppress_predicate_paths: BTreeSet<String>,
 }
 
 impl HelperOutputMeta {
@@ -22,29 +23,29 @@ impl HelperOutputMeta {
             predicates: predicate_branches,
             defaulted,
             provenance: Vec::new(),
+            suppress_predicate_paths: BTreeSet::new(),
         }
     }
 
-    pub(crate) fn add_predicates(&mut self, predicates: impl IntoIterator<Item = Predicate>) {
-        let predicates = predicates.into_iter().collect::<Vec<_>>();
-        if predicates.is_empty() {
-            return;
-        }
-        if self.predicates.is_empty() {
-            self.predicates.insert(BTreeSet::new());
-        }
-        let branches = std::mem::take(&mut self.predicates);
-        self.predicates = branches
+    pub(crate) fn with_output_site_predicates(
+        mut self,
+        _source_expr: &str,
+        predicates: &BTreeSet<Predicate>,
+    ) -> Self {
+        let active_predicates = predicates.iter().cloned().collect::<Vec<_>>();
+        let base_branches = if self.predicates.is_empty() {
+            vec![BTreeSet::new()]
+        } else {
+            self.predicates.into_iter().collect::<Vec<_>>()
+        };
+        self.predicates = base_branches
             .into_iter()
-            .map(|mut branch| {
-                branch.extend(predicates.iter().cloned());
+            .map(|base_branch| {
+                let mut branch = base_branch.clone();
+                branch.extend(active_predicates.iter().cloned());
                 branch
             })
             .collect();
-    }
-
-    pub(crate) fn with_additional_predicates(mut self, predicates: &BTreeSet<Predicate>) -> Self {
-        self.add_predicates(predicates.iter().cloned());
         self
     }
 
@@ -52,12 +53,23 @@ impl HelperOutputMeta {
         self.predicates.extend(other.predicates);
         self.defaulted |= other.defaulted;
         self.merge_provenance(other.provenance);
+        self.suppress_predicate_paths
+            .extend(other.suppress_predicate_paths);
     }
 
     pub(crate) fn merge_ref(&mut self, other: &Self) {
         self.predicates.extend(other.predicates.iter().cloned());
         self.defaulted |= other.defaulted;
         self.merge_provenance(other.provenance.iter().cloned());
+        self.suppress_predicate_paths
+            .extend(other.suppress_predicate_paths.iter().cloned());
+    }
+
+    pub(crate) fn suppress_predicate_path(&mut self, path: impl Into<String>) {
+        let path = path.into();
+        if !path.is_empty() {
+            self.suppress_predicate_paths.insert(path);
+        }
     }
 
     pub(crate) fn add_provenance_site(&mut self, provenance: ContractProvenance) {
@@ -80,6 +92,7 @@ impl HelperOutputMeta {
         };
         let mut guard_sets = Vec::new();
         for predicate_branch in predicate_branches {
+            let predicate_branch = self.prune_suppressed_predicates(predicate_branch, source_expr);
             let mut guards =
                 Predicate::contract_guard_stack(&predicate_branch.into_iter().collect::<Vec<_>>());
             if self.defaulted {
@@ -95,6 +108,36 @@ impl HelperOutputMeta {
             }
         }
         guard_sets
+    }
+
+    fn prune_suppressed_predicates(
+        &self,
+        predicate_branch: BTreeSet<Predicate>,
+        source_expr: &str,
+    ) -> BTreeSet<Predicate> {
+        let has_source_truthy = predicate_branch
+            .iter()
+            .any(|predicate| truthy_guard_path(predicate).is_some_and(|path| path == source_expr));
+        if !has_source_truthy || self.suppress_predicate_paths.is_empty() {
+            return predicate_branch;
+        }
+        predicate_branch
+            .into_iter()
+            .filter(|predicate| {
+                let Some(path) = truthy_guard_path(predicate) else {
+                    return true;
+                };
+                !self.suppress_predicate_paths.contains(path)
+                    || !output_path::values_path_is_descendant(source_expr, path)
+            })
+            .collect()
+    }
+}
+
+fn truthy_guard_path(predicate: &Predicate) -> Option<&str> {
+    match predicate {
+        Predicate::Guard(Guard::Truthy { path }) => Some(path),
+        _ => None,
     }
 }
 
@@ -152,16 +195,23 @@ impl HelperFragmentOutputUse {
             meta,
         }
     }
+
+    pub(crate) fn is_scalar_summary_output(&self) -> bool {
+        self.relative_path.0.is_empty() && self.kind == ValueKind::Scalar && !self.encoded
+    }
+
+    pub(crate) fn is_structured_output(&self) -> bool {
+        !self.is_scalar_summary_output()
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct HelperSummary {
     pub(crate) string_output: BTreeSet<String>,
-    pub(crate) scalar_output_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) dependency_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    pub(crate) fragment_output_uses: Vec<HelperFragmentOutputUse>,
+    pub(crate) output_uses: Vec<HelperFragmentOutputUse>,
     pub(crate) suppress_roots: BTreeSet<String>,
     /// Values-rooted paths that a helper body structurally declares as
     /// null-tolerant via a `set OPERAND "KEY" (OPERAND.KEY | default V)`
@@ -176,9 +226,6 @@ pub(crate) struct HelperSummary {
 
 impl HelperSummary {
     pub(crate) fn extend(&mut self, other: Self) {
-        for (path, meta) in other.scalar_output_meta {
-            self.merge_output_meta(path, meta);
-        }
         for (path, meta) in other.dependency_meta {
             self.merge_dependency_meta(path, meta);
         }
@@ -186,7 +233,7 @@ impl HelperSummary {
         for (path, hints) in other.type_hints {
             self.merge_type_hints(path, hints);
         }
-        self.fragment_output_uses.extend(other.fragment_output_uses);
+        self.add_output_uses(other.output_uses);
         self.string_output.extend(other.string_output);
         self.suppress_roots.extend(other.suppress_roots);
         self.chart_defaults.extend(other.chart_defaults);
@@ -196,7 +243,12 @@ impl HelperSummary {
         if path.trim().is_empty() {
             return;
         }
-        self.scalar_output_meta.entry(path).or_default().merge(meta);
+        self.add_output_use(HelperFragmentOutputUse::new(
+            path,
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            meta,
+        ));
     }
 
     pub(crate) fn merge_dependency_meta(&mut self, path: String, meta: HelperOutputMeta) {
@@ -212,26 +264,24 @@ impl HelperSummary {
         }
     }
 
-    pub(crate) fn add_fragment_output_use(&mut self, output: HelperFragmentOutputUse) {
+    pub(crate) fn add_output_use(&mut self, output: HelperFragmentOutputUse) {
         if output.source_expr.trim().is_empty() {
             return;
         }
-        self.fragment_output_uses.push(output);
+        if output.is_scalar_summary_output()
+            && let Some(existing) = self.output_uses.iter_mut().find(|existing| {
+                existing.is_scalar_summary_output() && existing.source_expr == output.source_expr
+            })
+        {
+            existing.meta.merge(output.meta);
+            return;
+        }
+        self.output_uses.push(output);
     }
 
-    pub(crate) fn add_fragment_output_uses(&mut self, mut outputs: Vec<HelperFragmentOutputUse>) {
-        outputs.retain(|output| {
-            output.kind == ValueKind::Fragment || !output.relative_path.0.is_empty()
-        });
-        let structured_sources: BTreeSet<String> = outputs
-            .iter()
-            .map(|output| output.source_expr.clone())
-            .collect();
-        for source in &structured_sources {
-            self.remove_output_path(source);
-        }
+    pub(crate) fn add_output_uses(&mut self, outputs: Vec<HelperFragmentOutputUse>) {
         for output in outputs {
-            self.add_fragment_output_use(output);
+            self.add_output_use(output);
         }
     }
 
@@ -252,53 +302,45 @@ impl HelperSummary {
     }
 
     pub(crate) fn has_document_value_facts(&self) -> bool {
-        !self.scalar_output_meta.is_empty()
+        !self.output_uses.is_empty()
             || !self.dependency_meta.is_empty()
             || !self.guard_paths.is_empty()
             || !self.type_hints.is_empty()
-            || !self.fragment_output_uses.is_empty()
     }
 
     pub(crate) fn add_provenance(&mut self, provenance: ContractProvenance) {
-        for meta in self.scalar_output_meta.values_mut() {
-            meta.add_provenance_site(provenance.clone());
-        }
         for meta in self.dependency_meta.values_mut() {
             meta.add_provenance_site(provenance.clone());
         }
-        for output in &mut self.fragment_output_uses {
+        for output in &mut self.output_uses {
             output.meta.add_provenance_site(provenance.clone());
         }
     }
 
     pub(crate) fn remove_output_path(&mut self, path: &str) {
-        self.scalar_output_meta.remove(path);
+        self.output_uses
+            .retain(|output| !(output.is_scalar_summary_output() && output.source_expr == path));
     }
 
     pub(crate) fn has_structured_fragment_source(&self, path: &str) -> bool {
-        self.fragment_output_uses
+        self.output_uses
             .iter()
-            .any(|output| output.source_expr == path)
+            .any(|output| output.is_structured_output() && output.source_expr == path)
     }
 
     pub(crate) fn has_rendered_source_descendant(&self, path: &str) -> bool {
-        self.scalar_output_meta
-            .keys()
-            .any(|candidate| output_path::values_path_is_descendant(candidate, path))
-            || self
-                .fragment_output_uses
-                .iter()
-                .any(|output| output_path::values_path_is_descendant(&output.source_expr, path))
+        self.output_uses
+            .iter()
+            .any(|output| output_path::values_path_is_descendant(&output.source_expr, path))
     }
 
     pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
-        paths.extend(self.scalar_output_meta.keys().cloned());
         paths.extend(self.dependency_meta.keys().cloned());
         paths.extend(self.guard_paths.iter().cloned());
         paths.extend(self.type_hints.keys().cloned());
         paths.extend(
-            self.fragment_output_uses
+            self.output_uses
                 .iter()
                 .map(|output| output.source_expr.clone()),
         );
@@ -317,8 +359,12 @@ impl HelperSummary {
         &mut self,
         bindings: &HashMap<String, AbstractValue>,
     ) {
-        let mut rendered_sources: BTreeSet<String> =
-            self.scalar_output_meta.keys().cloned().collect();
+        let mut rendered_sources: BTreeSet<String> = self
+            .output_uses
+            .iter()
+            .filter(|output| output.is_scalar_summary_output())
+            .map(|output| output.source_expr.clone())
+            .collect();
         rendered_sources.extend(self.guard_paths.iter().cloned());
         for binding in bindings.values() {
             let AbstractValue::ValuesPath(root) = binding else {
@@ -331,34 +377,27 @@ impl HelperSummary {
     }
 
     pub(crate) fn project_value(&self) -> Option<AbstractValue> {
-        project_summary_value(self)
+        let mut values = Vec::new();
+        if !self.string_output.is_empty() {
+            values.push(AbstractValue::StringSet(self.string_output.clone()));
+        }
+        for output in self.output_uses.iter().cloned() {
+            if output.is_scalar_summary_output()
+                && (self.has_structured_fragment_source(&output.source_expr)
+                    || self.has_rendered_source_descendant(&output.source_expr))
+            {
+                continue;
+            }
+            values.push(AbstractValue::for_output_path(
+                output.source_expr,
+                &output.relative_path,
+                output.meta,
+            ));
+        }
+        AbstractValue::merge_all(values)
             .map(|value| value.to_context_value())
             .and_then(|value| AbstractValue::merge_context_values(vec![value]))
     }
-}
-
-fn project_summary_value(analysis: &HelperSummary) -> Option<AbstractValue> {
-    let mut values = Vec::new();
-    if !analysis.string_output.is_empty() {
-        values.push(AbstractValue::StringSet(analysis.string_output.clone()));
-    }
-    for output in analysis.fragment_output_uses.iter().cloned() {
-        values.push(AbstractValue::for_output_path(
-            output.source_expr,
-            &output.relative_path,
-            output.meta,
-        ));
-    }
-    for (path, meta) in &analysis.scalar_output_meta {
-        if !analysis.has_structured_fragment_source(path)
-            && !analysis.has_rendered_source_descendant(path)
-        {
-            values.push(AbstractValue::OutputSet(
-                [(path.clone(), meta.clone())].into_iter().collect(),
-            ));
-        }
-    }
-    AbstractValue::merge_all(values)
 }
 
 #[cfg(test)]

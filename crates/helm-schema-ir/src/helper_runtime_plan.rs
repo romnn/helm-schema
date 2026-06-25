@@ -9,10 +9,9 @@ use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with_fragment_locals};
 use crate::fragment_range_scope::{range_iterable_binding_expr, range_variable_name_expr};
 use crate::helper_summary::HelperOutputMeta;
-use crate::helper_walk_state::{
-    HelperRangeIteration, HelperRuntimeControlState, HelperRuntimeLocals, RangeFrame,
-};
+use crate::helper_walk_state::{HelperRangeIteration, HelperRuntimeControlState, RangeFrame};
 use crate::predicate::Predicate;
+use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
 use crate::value_path_context::computed_with_body_fragment_value_expr;
 
@@ -38,11 +37,13 @@ impl HelperRangeRuntimePlan {
     pub(crate) fn activate(
         &self,
         control: &mut HelperRuntimeControlState,
-        locals: &mut HelperRuntimeLocals,
+        locals: &mut SymbolicLocalState,
     ) {
         control.extend_truthy_predicates(self.guard_paths.iter().cloned());
         if let Some((variable, binding)) = &self.non_exact_variable_binding {
-            locals.bindings.insert(variable.clone(), binding.clone());
+            locals
+                .fragment_values
+                .insert(variable.clone(), binding.clone());
         }
         if self.apply_dot_binding {
             control.push_effect_dot_binding(self.dot_binding.clone());

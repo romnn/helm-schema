@@ -9,8 +9,8 @@ pub(crate) enum AbstractValue {
     Top,
     Unknown,
     ValuesPath(String),
+    OutputPath(String, HelperOutputMeta),
     RootContext,
-    OutputSet(BTreeMap<String, HelperOutputMeta>),
     StringSet(BTreeSet<String>),
     Dict(BTreeMap<String, AbstractValue>),
     List(Vec<AbstractValue>),
@@ -44,7 +44,9 @@ impl AbstractValue {
                     out.insert(path.clone());
                 }
             }
-            Self::OutputSet(outputs) => out.extend(outputs.keys().cloned()),
+            Self::OutputPath(path, _) => {
+                out.insert(path.clone());
+            }
             Self::Dict(map) if descend_structures => {
                 for value in map.values() {
                     value.collect_paths(out, descend_structures, suppress_values_root);
@@ -83,76 +85,33 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
-        let mut out = BTreeMap::new();
-        self.collect_output_meta(&mut out);
-        out
-    }
-
-    fn collect_output_meta(&self, out: &mut BTreeMap<String, HelperOutputMeta>) {
-        match self {
-            Self::ValuesPath(path) => {
-                out.entry(path.clone()).or_default();
-            }
-            Self::OutputSet(meta_by_path) => {
-                for (path, meta) in meta_by_path {
-                    out.entry(path.clone()).or_default().merge_ref(meta);
-                }
-            }
-            Self::Dict(entries) => {
-                for value in entries.values() {
-                    value.collect_output_meta(out);
-                }
-            }
-            Self::List(items) => {
-                for value in items {
-                    value.collect_output_meta(out);
-                }
-            }
-            Self::Overlay { entries, fallback } => {
-                for value in entries.values() {
-                    value.collect_output_meta(out);
-                }
-                fallback.collect_output_meta(out);
-            }
-            Self::Choice(choices) => {
-                for choice in choices {
-                    choice.collect_output_meta(out);
-                }
-            }
-            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => {}
-        }
-    }
-
     pub(crate) fn helper_range_item(&self) -> Option<Self> {
+        self.range_item(true)
+    }
+
+    pub(crate) fn fragment_range_item(&self) -> Option<Self> {
+        self.range_item(false)
+    }
+
+    fn range_item(&self, include_map_values: bool) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
-            Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
-            Self::Dict(entries) => Self::choice(entries.values().cloned().collect()),
+            Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
+            Self::Dict(entries) if include_map_values => {
+                Self::choice(entries.values().cloned().collect())
+            }
             Self::List(items) => Self::choice(items.clone()),
-            Self::Overlay { entries, fallback } => {
+            Self::Overlay { entries, fallback } if include_map_values => {
                 let mut choices: Vec<_> = entries.values().cloned().collect();
-                if let Some(fallback_item) = fallback.helper_range_item() {
+                if let Some(fallback_item) = fallback.range_item(include_map_values) {
                     choices.push(fallback_item);
                 }
                 Self::choice(choices)
             }
-            Self::Choice(choices) => {
-                Self::choice(choices.iter().filter_map(Self::helper_range_item).collect())
-            }
-            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => None,
-        }
-    }
-
-    pub(crate) fn fragment_range_item(&self) -> Option<Self> {
-        match self {
-            Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
-            Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
-            Self::List(items) => Self::choice(items.clone()),
             Self::Choice(choices) => Self::choice(
                 choices
                     .iter()
-                    .filter_map(Self::fragment_range_item)
+                    .filter_map(|choice| choice.range_item(include_map_values))
                     .collect(),
             ),
             Self::Top
@@ -222,6 +181,7 @@ impl AbstractValue {
                     Some(Self::ValuesPath(format!("{prefix}.{}", rest.join("."))))
                 }
             }
+            Self::OutputPath(prefix, meta) => Some(Self::OutputPath(prefix.clone(), meta.clone())),
             Self::RootContext => {
                 if rest.first().is_some_and(|segment| segment == "Values") {
                     if rest.len() == 1 {
@@ -236,7 +196,6 @@ impl AbstractValue {
             Self::Top => Some(Self::Top),
             Self::Unknown => None,
             Self::StringSet(_) => None,
-            Self::OutputSet(outputs) => Some(Self::OutputSet(outputs.clone())),
             Self::Choice(choices) => {
                 let mut out = Vec::new();
                 for value in choices {
@@ -370,7 +329,7 @@ impl AbstractValue {
     pub(crate) fn merge_context_values(values: Vec<Self>) -> Option<Self> {
         let mut map = BTreeMap::new();
         let mut non_dict_value_paths = BTreeSet::new();
-        let mut non_dict_output_meta: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
+        let mut non_dict_output_paths = Vec::new();
         let mut non_dict_strings = BTreeSet::new();
 
         let mut pending = values;
@@ -403,10 +362,8 @@ impl AbstractValue {
                 Self::ValuesPath(path) => {
                     non_dict_value_paths.insert(path);
                 }
-                Self::OutputSet(outputs) => {
-                    for (path, meta) in outputs {
-                        non_dict_output_meta.entry(path).or_default().merge(meta);
-                    }
+                Self::OutputPath(path, meta) => {
+                    non_dict_output_paths.push(Self::OutputPath(path, meta));
                 }
                 Self::StringSet(strings) => {
                     non_dict_strings.extend(strings);
@@ -419,9 +376,7 @@ impl AbstractValue {
         if let Some(paths) = Self::path_choices(non_dict_value_paths) {
             fallback_choices.push(paths);
         }
-        if !non_dict_output_meta.is_empty() {
-            fallback_choices.push(Self::OutputSet(non_dict_output_meta));
-        }
+        fallback_choices.extend(non_dict_output_paths);
         if !non_dict_strings.is_empty() {
             fallback_choices.push(Self::StringSet(non_dict_strings));
         }
@@ -446,19 +401,13 @@ impl AbstractValue {
 
         match self {
             Self::ValuesPath(path) if remove.contains(&path) => None,
+            Self::OutputPath(path, _) if remove.contains(&path) => None,
             Self::ValuesPath(_)
+            | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::Unknown
             | Self::Top
             | Self::StringSet(_) => Some(self),
-            Self::OutputSet(mut outputs) => {
-                outputs.retain(|path, _| !remove.contains(path));
-                if outputs.is_empty() {
-                    None
-                } else {
-                    Some(Self::OutputSet(outputs))
-                }
-            }
             Self::Dict(entries) => {
                 let entries = entries
                     .into_iter()
@@ -522,6 +471,7 @@ impl AbstractValue {
     pub(crate) fn to_current_dot_context_value(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(path.clone())),
+            Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
             Self::RootContext => Some(Self::RootContext),
             Self::Top
             | Self::Unknown
@@ -529,7 +479,6 @@ impl AbstractValue {
             | Self::List(_)
             | Self::Overlay { .. }
             | Self::StringSet(_)
-            | Self::OutputSet(_)
             | Self::Choice(_) => None,
         }
     }
@@ -570,19 +519,17 @@ impl AbstractValue {
                 );
             }
             Self::ValuesPath(_) => {}
-            Self::OutputSet(outputs_by_path) => {
-                for (path, meta) in outputs_by_path {
-                    push_output_path(
-                        outputs,
-                        path,
-                        relative_path,
-                        kind,
-                        Some(meta),
-                        encoded_paths,
-                        active_output_predicates,
-                        defaulted_paths,
-                    );
-                }
+            Self::OutputPath(path, meta) => {
+                push_output_path(
+                    outputs,
+                    path,
+                    relative_path,
+                    kind,
+                    Some(meta),
+                    encoded_paths,
+                    active_output_predicates,
+                    defaulted_paths,
+                );
             }
             Self::Dict(entries) => {
                 for (key, value) in entries {
@@ -663,7 +610,7 @@ impl AbstractValue {
         relative_path: &YamlPath,
         meta: HelperOutputMeta,
     ) -> Self {
-        let mut value = Self::OutputSet(BTreeMap::from([(source_expr, meta)]));
+        let mut value = Self::OutputPath(source_expr, meta);
         for segment in relative_path.0.iter().rev() {
             value = Self::Dict(BTreeMap::from([(segment.clone(), value)]));
         }
@@ -683,8 +630,8 @@ impl AbstractValue {
             Self::Top
             | Self::Unknown
             | Self::ValuesPath(_)
+            | Self::OutputPath(_, _)
             | Self::RootContext
-            | Self::OutputSet(_)
             | Self::StringSet(_)
             | Self::Choice(_) => ValueKind::Scalar,
         }
@@ -711,12 +658,9 @@ fn push_output_path(
     defaulted_paths: &BTreeSet<String>,
 ) {
     let base_meta = meta.cloned().unwrap_or_default();
-    let meta = HelperOutputMeta {
-        predicates: base_meta.predicates,
-        defaulted: base_meta.defaulted || defaulted_paths.contains(path),
-        provenance: base_meta.provenance,
-    }
-    .with_additional_predicates(active_output_predicates);
+    let mut meta = base_meta;
+    meta.defaulted |= defaulted_paths.contains(path);
+    let meta = meta.with_output_site_predicates(path, active_output_predicates);
     outputs.push(HelperFragmentOutputUse::with_encoding(
         path.to_string(),
         relative_path.clone(),

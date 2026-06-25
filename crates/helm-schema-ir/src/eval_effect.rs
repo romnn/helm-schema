@@ -1,7 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
-use crate::helper_summary::{HelperOutputMeta, HelperSummary, insert_type_hint};
+use crate::helper_summary::{
+    HelperFragmentOutputUse, HelperOutputMeta, HelperSummary, insert_type_hint,
+};
+use crate::predicate::Predicate;
+use crate::{ValueKind, YamlPath};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
@@ -156,6 +160,71 @@ impl Effects {
             .or_default()
             .extend(entries);
     }
+
+    pub(crate) fn rendered_output_uses(
+        &self,
+        output_path: &YamlPath,
+        kind: ValueKind,
+        active_output_predicates: &BTreeSet<Predicate>,
+        defaulted_paths: &BTreeSet<String>,
+    ) -> Vec<HelperFragmentOutputUse> {
+        output_uses_from_values(
+            &self.rendered_output_values,
+            output_path,
+            kind,
+            &self.encoded_paths,
+            active_output_predicates,
+            defaulted_paths,
+            false,
+        )
+    }
+
+    pub(crate) fn local_output_uses(
+        &self,
+        output_path: &YamlPath,
+        kind: ValueKind,
+        active_output_predicates: &BTreeSet<Predicate>,
+    ) -> Vec<HelperFragmentOutputUse> {
+        let mut outputs = output_uses_from_values(
+            &self.local_output_values,
+            output_path,
+            kind,
+            &BTreeSet::new(),
+            active_output_predicates,
+            &self.local_default_paths,
+            true,
+        );
+        for output in &mut outputs {
+            if let Some(meta) = self.local_output_meta.get(&output.source_expr) {
+                output.meta.merge_ref(meta);
+            }
+        }
+        outputs
+    }
+}
+
+fn output_uses_from_values(
+    values: &[AbstractValue],
+    output_path: &YamlPath,
+    kind: ValueKind,
+    encoded_paths: &BTreeSet<String>,
+    active_output_predicates: &BTreeSet<Predicate>,
+    defaulted_paths: &BTreeSet<String>,
+    suppress_values_root: bool,
+) -> Vec<HelperFragmentOutputUse> {
+    let mut outputs = Vec::new();
+    for value in values {
+        value.collect_output_uses_with_encoding(
+            &mut outputs,
+            output_path,
+            kind,
+            encoded_paths,
+            active_output_predicates,
+            defaulted_paths,
+            suppress_values_root,
+        );
+    }
+    outputs
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

@@ -2,44 +2,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
 use crate::helper_summary::HelperFragmentOutputUse;
-use crate::helper_summary::HelperOutputMeta;
 use crate::predicate::Predicate;
 use crate::{ValueKind, YamlPath};
 use test_util::prelude::sim_assert_eq;
-
-#[test]
-fn abstract_value_output_meta_preserves_output_set_metadata() {
-    let value = AbstractValue::Overlay {
-        entries: BTreeMap::from([(
-            "name".to_string(),
-            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
-        )]),
-        fallback: Box::new(AbstractValue::OutputSet(BTreeMap::from([(
-            "global.nameOverride".to_string(),
-            HelperOutputMeta {
-                predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
-                    "global.enabled".to_string(),
-                )])]),
-                defaulted: true,
-                provenance: Vec::new(),
-            },
-        )]))),
-    };
-
-    let meta = value.output_meta();
-
-    assert!(meta.contains_key("serviceAccount.name"));
-    sim_assert_eq!(
-        have: meta.get("global.nameOverride"),
-        want: Some(&HelperOutputMeta {
-            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
-                "global.enabled".to_string(),
-            )])]),
-            defaulted: true,
-            provenance: Vec::new(),
-        })
-    );
-}
 
 #[test]
 fn direct_and_fragment_values_share_structural_output_projection() {

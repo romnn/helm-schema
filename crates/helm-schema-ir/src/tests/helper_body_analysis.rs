@@ -35,10 +35,12 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
 
     let summary =
         interpret_bound_helper_body("serviceAccountName", &resolution, context, &mut seen);
-    let output_meta = &summary.scalar_output_meta;
-    let meta = output_meta
-        .get("signoz.serviceAccount.name")
+    let output = summary
+        .output_uses
+        .iter()
+        .find(|output| output.source_expr == "signoz.serviceAccount.name")
         .expect("service account name output metadata");
+    let meta = &output.meta;
     let type_hints = &summary.type_hints;
     let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
 
@@ -70,7 +72,12 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
         want: Some(&string_type_hint),
         "defaulted scalar output should retain string type hint"
     );
-    assert!(summary.fragment_output_uses.is_empty());
+    assert!(
+        summary
+            .output_uses
+            .iter()
+            .all(|output| output.is_scalar_summary_output())
+    );
 }
 
 #[test]
@@ -153,7 +160,7 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
 
     let summary =
         interpret_bound_helper_body("common.storage.class", &resolution, context, &mut seen);
-    let outputs = &summary.fragment_output_uses;
+    let outputs = &summary.output_uses;
 
     assert!(
         outputs.iter().any(|output| {

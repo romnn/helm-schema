@@ -1,10 +1,10 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashSet};
 
 use crate::abstract_value::AbstractValue;
-use crate::fragment_assignment::merge_fragment_locals;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta, HelperSummary};
+use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
 use crate::predicate::Predicate;
+use crate::symbolic_local_state::SymbolicLocalState;
 
 #[derive(Clone)]
 pub(crate) struct HelperRangeIteration {
@@ -17,28 +17,6 @@ pub(crate) struct HelperRangeIteration {
 pub(crate) struct RangeFrame {
     pub(crate) definitely_nonempty: bool,
     pub(crate) iterations: Option<Vec<HelperRangeIteration>>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub(crate) struct HelperRuntimeLocals {
-    pub(crate) bindings: HashMap<String, AbstractValue>,
-    pub(crate) default_paths: HashMap<String, BTreeSet<String>>,
-}
-
-impl HelperRuntimeLocals {
-    pub(crate) fn merge(mut self, other: Self) -> Self {
-        self.bindings = merge_fragment_locals(self.bindings, other.bindings);
-        self.default_paths = merge_default_paths(self.default_paths, other.default_paths);
-        self
-    }
-
-    pub(crate) fn set_default_paths(&mut self, variable: &str, paths: BTreeSet<String>) {
-        if paths.is_empty() {
-            self.default_paths.remove(variable);
-        } else {
-            self.default_paths.insert(variable.to_string(), paths);
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -174,7 +152,7 @@ impl HelperRuntimeControlState {
             .unwrap_or(1)
     }
 
-    pub(crate) fn enter_range_iteration(&mut self, index: usize, locals: &mut HelperRuntimeLocals) {
+    pub(crate) fn enter_range_iteration(&mut self, index: usize, locals: &mut SymbolicLocalState) {
         let Some(iteration) = self
             .range_frames
             .last()
@@ -185,7 +163,7 @@ impl HelperRuntimeControlState {
             return;
         };
         if let Some((variable, binding)) = iteration.variable_binding {
-            locals.bindings.insert(variable, binding);
+            locals.fragment_values.insert(variable, binding);
         }
         self.helper_dot_stack.push(iteration.helper_dot_binding);
         if let Some(fragment_dot_stack) = &mut self.fragment_dot_stack {
@@ -220,32 +198,17 @@ impl HelperRuntimeControlState {
 }
 
 pub(crate) struct HelperValuesWalkState<'context, 'state> {
-    pub(crate) locals: &'state mut HelperRuntimeLocals,
-    pub(crate) local_output_meta: &'state mut HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    pub(crate) locals: &'state mut SymbolicLocalState,
     pub(crate) context: FragmentEvalContext<'context>,
     pub(crate) seen: &'state mut HashSet<String>,
     pub(crate) analysis: &'state mut HelperSummary,
 }
 
 pub(crate) struct FragmentOutputWalkState<'context, 'state> {
-    pub(crate) locals: &'state mut HelperRuntimeLocals,
+    pub(crate) locals: &'state mut SymbolicLocalState,
     pub(crate) context: FragmentEvalContext<'context>,
     pub(crate) seen: &'state mut HashSet<String>,
     pub(crate) outputs: &'state mut Vec<HelperFragmentOutputUse>,
-}
-
-fn merge_default_paths(
-    mut base: HashMap<String, BTreeSet<String>>,
-    other: HashMap<String, BTreeSet<String>>,
-) -> HashMap<String, BTreeSet<String>> {
-    base.retain(|key, base_paths| {
-        let Some(other_paths) = other.get(key) else {
-            return false;
-        };
-        base_paths.extend(other_paths.iter().cloned());
-        true
-    });
-    base
 }
 
 #[cfg(test)]

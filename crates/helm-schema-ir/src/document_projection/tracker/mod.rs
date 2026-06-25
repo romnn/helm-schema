@@ -4,7 +4,6 @@ use crate::resource_identity::ResourceIdentityIndex;
 use crate::{ResourceRef, ValueKind, YamlPath};
 
 mod attribution;
-mod yaml_tree;
 
 use attribution::{AttributionIndex, build_attribution_index};
 
