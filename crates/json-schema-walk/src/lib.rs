@@ -35,9 +35,8 @@ pub enum SchemaTraversalContext {
 
 pub fn schema_child_context_for_keyword(key: &str) -> SchemaTraversalContext {
     match key {
-        "properties" | "patternProperties" | "$defs" | "definitions" | "dependentSchemas" => {
-            SchemaTraversalContext::SchemaMapValues
-        }
+        "properties" | "patternProperties" | "$defs" | "definitions" | "dependencies"
+        | "dependentSchemas" => SchemaTraversalContext::SchemaMapValues,
         "allOf" | "anyOf" | "oneOf" | "prefixItems" => SchemaTraversalContext::SchemaArray,
         "additionalItems"
         | "additionalProperties"
@@ -257,31 +256,31 @@ pub fn visit_subschemas(schema: &Value, visitor: &mut impl FnMut(&Value)) {
         return;
     }
 
-    for key in DIRECT_SCHEMA_KEYS {
-        if let Some(value) = object.get(*key) {
-            visit_schema_or_schema_array(value, visitor);
-        }
-    }
-
-    for key in MAP_OF_SCHEMAS_KEYS {
-        if let Some(Value::Object(values)) = object.get(*key) {
-            for value in values.values() {
-                visit_schema_value(value, visitor);
+    for (key, value) in object {
+        match schema_child_context_for_keyword(key) {
+            SchemaTraversalContext::Schema => match value {
+                Value::Array(values) => {
+                    for value in values {
+                        visit_schema_value(value, visitor);
+                    }
+                }
+                _ => visit_schema_value(value, visitor),
+            },
+            SchemaTraversalContext::SchemaArray => {
+                if let Value::Array(values) = value {
+                    for value in values {
+                        visit_schema_value(value, visitor);
+                    }
+                }
             }
-        }
-    }
-
-    for key in ARRAY_OF_SCHEMAS_KEYS {
-        if let Some(Value::Array(values)) = object.get(*key) {
-            for value in values {
-                visit_schema_value(value, visitor);
+            SchemaTraversalContext::SchemaMapValues => {
+                if let Value::Object(values) = value {
+                    for value in values.values() {
+                        visit_schema_value(value, visitor);
+                    }
+                }
             }
-        }
-    }
-
-    if let Some(Value::Object(values)) = object.get("dependencies") {
-        for value in values.values() {
-            visit_schema_value(value, visitor);
+            SchemaTraversalContext::Data => {}
         }
     }
 }
@@ -313,31 +312,31 @@ pub fn try_visit_subschemas_mut<E>(
         return Ok(());
     }
 
-    for key in DIRECT_SCHEMA_KEYS {
-        if let Some(value) = object.get_mut(*key) {
-            visit_schema_or_schema_array_mut(value, visitor)?;
-        }
-    }
-
-    for key in MAP_OF_SCHEMAS_KEYS {
-        if let Some(Value::Object(values)) = object.get_mut(*key) {
-            for value in values.values_mut() {
-                visit_schema_value_mut(value, visitor)?;
+    for (key, value) in object {
+        match schema_child_context_for_keyword(key) {
+            SchemaTraversalContext::Schema => match value {
+                Value::Array(values) => {
+                    for value in values {
+                        visit_schema_value_mut(value, visitor)?;
+                    }
+                }
+                _ => visit_schema_value_mut(value, visitor)?,
+            },
+            SchemaTraversalContext::SchemaArray => {
+                if let Value::Array(values) = value {
+                    for value in values {
+                        visit_schema_value_mut(value, visitor)?;
+                    }
+                }
             }
-        }
-    }
-
-    for key in ARRAY_OF_SCHEMAS_KEYS {
-        if let Some(Value::Array(values)) = object.get_mut(*key) {
-            for value in values {
-                visit_schema_value_mut(value, visitor)?;
+            SchemaTraversalContext::SchemaMapValues => {
+                if let Value::Object(values) = value {
+                    for value in values.values_mut() {
+                        visit_schema_value_mut(value, visitor)?;
+                    }
+                }
             }
-        }
-    }
-
-    if let Some(Value::Object(values)) = object.get_mut("dependencies") {
-        for value in values.values_mut() {
-            visit_schema_value_mut(value, visitor)?;
+            SchemaTraversalContext::Data => {}
         }
     }
 
@@ -348,32 +347,6 @@ pub fn try_visit_subschemas_mut<E>(
 #[must_use]
 pub fn is_schema_position(value: &Value) -> bool {
     matches!(value, Value::Object(_) | Value::Bool(_))
-}
-
-fn visit_schema_or_schema_array(value: &Value, visitor: &mut impl FnMut(&Value)) {
-    match value {
-        Value::Array(values) => {
-            for value in values {
-                visit_schema_value(value, visitor);
-            }
-        }
-        _ => visit_schema_value(value, visitor),
-    }
-}
-
-fn visit_schema_or_schema_array_mut<E>(
-    value: &mut Value,
-    visitor: &mut impl FnMut(&mut Value) -> Result<(), E>,
-) -> Result<(), E> {
-    match value {
-        Value::Array(values) => {
-            for value in values {
-                visit_schema_value_mut(value, visitor)?;
-            }
-            Ok(())
-        }
-        _ => visit_schema_value_mut(value, visitor),
-    }
 }
 
 fn visit_schema_value(value: &Value, visitor: &mut impl FnMut(&Value)) {
@@ -391,28 +364,3 @@ fn visit_schema_value_mut<E>(
     }
     Ok(())
 }
-
-const DIRECT_SCHEMA_KEYS: &[&str] = &[
-    "additionalItems",
-    "additionalProperties",
-    "contains",
-    "contentSchema",
-    "else",
-    "if",
-    "items",
-    "not",
-    "propertyNames",
-    "then",
-    "unevaluatedItems",
-    "unevaluatedProperties",
-];
-
-const MAP_OF_SCHEMAS_KEYS: &[&str] = &[
-    "$defs",
-    "definitions",
-    "dependentSchemas",
-    "patternProperties",
-    "properties",
-];
-
-const ARRAY_OF_SCHEMAS_KEYS: &[&str] = &["allOf", "anyOf", "oneOf", "prefixItems"];

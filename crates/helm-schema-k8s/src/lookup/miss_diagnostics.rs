@@ -3,7 +3,7 @@ use helm_schema_core::{CapabilityOracle, ProviderOrigin, ResourceRef};
 use crate::diagnostic::Diagnostic;
 use crate::filename::candidate_filenames_for_resource;
 
-use super::resource_lookup_plan::MissingSchemaAttributionPlan;
+use super::resource_lookup_plan::missing_schema_attribution_candidates;
 use super::trace::{LookupTrace, LookupTraceEntry, LookupTraceOutcome};
 use super::trait_def::K8sSchemaProvider;
 
@@ -24,20 +24,15 @@ impl<'a> MissingLookupDiagnostics<'a> {
         }
     }
 
-    pub(crate) fn project(&self, trace: &LookupTrace) -> Vec<Diagnostic> {
-        let Some(resource) = trace.resource() else {
-            return Vec::new();
-        };
+    pub(crate) fn project(&self, resource: &ResourceRef, trace: &LookupTrace) -> Vec<Diagnostic> {
         if let Some(diagnostic) = local_override_unreadable(trace) {
             return vec![diagnostic];
         }
-        let attribution_plan =
-            MissingSchemaAttributionPlan::for_resource(resource, self.capability_oracle);
         let mut diagnostics = Vec::new();
-        for attribution in attribution_plan.candidates() {
-            diagnostics.push(self.missing_schema_diagnostic(attribution));
+        for attribution in missing_schema_attribution_candidates(resource, self.capability_oracle) {
+            diagnostics.push(self.missing_schema_diagnostic(&attribution));
             for provider in self.providers {
-                diagnostics.extend(provider.missing_schema_provider_diagnostics(attribution));
+                diagnostics.extend(provider.missing_schema_provider_diagnostics(&attribution));
             }
         }
         diagnostics

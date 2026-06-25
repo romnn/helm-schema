@@ -4,7 +4,7 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::doc_backed_schema::{
     LocalSchemaLeaf, descend_schema_path_expanding_leaf_with_root_metadata_source,
-    descend_schema_path_expanding_leaf_with_source, expand_local_refs,
+    descend_schema_path_expanding_leaf_with_source,
 };
 
 use super::*;
@@ -120,8 +120,8 @@ fn lazy_local_path_descent_matches_full_expansion_for_array_ref() {
         "env".to_string(),
     ];
 
-    let mut stack = std::collections::HashSet::new();
-    let expanded = expand_local_refs(&root, &root, 0, &mut stack);
+    let expanded =
+        descend_schema_path_expanding_leaf(&root, &[]).expect("expanded root should be available");
     let expected =
         descend_schema_path(&expanded, &path).expect("expanded root should contain path");
     let actual =
@@ -155,7 +155,7 @@ fn source_aware_local_path_descent_reports_ref_target_pointer() {
     )
     .expect("lazy descent should resolve ref-backed path");
 
-    sim_assert_eq!(have: leaf.schema(), want: &json!({ "type": "integer" }));
+    sim_assert_eq!(have: leaf.clone().into_schema(), want: json!({ "type": "integer" }));
     sim_assert_eq!(have: leaf.source_schema(), want: Some(&json!({ "type": "integer" })));
     sim_assert_eq!(have: leaf.pointer(), want: Some("/definitions/Spec/properties/size"));
 }
@@ -194,8 +194,8 @@ fn source_aware_local_path_descent_preserves_raw_leaf_before_expansion() {
         want: Some(&json!({ "$ref": "#/definitions/StringMap" }))
     );
     sim_assert_eq!(
-        have: leaf.schema(),
-        want: &json!({
+        have: leaf.clone().into_schema(),
+        want: json!({
             "type": "object",
             "additionalProperties": { "type": "string" }
         })

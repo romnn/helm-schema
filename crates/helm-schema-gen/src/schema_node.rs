@@ -50,14 +50,11 @@ pub(crate) enum SchemaNode {
         additional_properties: Option<Box<SchemaNode>>,
         min_properties: Option<u64>,
         max_properties: Option<u64>,
-        all_of: Vec<SchemaNode>,
     },
     Array {
         items: Option<Box<SchemaNode>>,
         min_items: Option<u64>,
     },
-    AllOf(Vec<SchemaNode>),
-    AnyOf(Vec<SchemaNode>),
     Foreign(Value),
 }
 
@@ -111,7 +108,6 @@ impl SchemaNode {
             additional_properties: None,
             min_properties: None,
             max_properties: None,
-            all_of: Vec::new(),
         }
     }
 
@@ -177,16 +173,13 @@ impl SchemaNode {
 
     pub(crate) fn push_all_of(&mut self, value: SchemaNode) {
         match self {
-            Self::Object { all_of, .. } => {
-                all_of.push(value);
+            Self::Object { .. } => {
+                let mut schema = std::mem::replace(self, Self::Empty).into_value();
+                push_all_of_value(&mut schema, value);
+                *self = Self::Foreign(schema);
             }
-            Self::Foreign(Value::Object(object)) => {
-                let all_of = object
-                    .entry("allOf".to_string())
-                    .or_insert_with(|| Value::Array(Vec::new()));
-                if let Value::Array(entries) = all_of {
-                    entries.push(value.into_value());
-                }
+            Self::Foreign(schema) => {
+                push_all_of_value(schema, value);
             }
             _ => {}
         }
@@ -239,7 +232,14 @@ impl SchemaNode {
         match values.len() {
             0 => Self::empty(),
             1 => values.into_iter().next().expect("single allOf value"),
-            _ => Self::AllOf(values),
+            _ => Self::foreign(Value::Object(
+                [(
+                    "allOf".to_string(),
+                    Value::Array(values.into_iter().map(Self::into_value).collect()),
+                )]
+                .into_iter()
+                .collect(),
+            )),
         }
     }
 
@@ -247,7 +247,14 @@ impl SchemaNode {
         match values.len() {
             0 => Self::empty(),
             1 => values.into_iter().next().expect("single anyOf value"),
-            _ => Self::AnyOf(values),
+            _ => Self::foreign(Value::Object(
+                [(
+                    "anyOf".to_string(),
+                    Value::Array(values.into_iter().map(Self::into_value).collect()),
+                )]
+                .into_iter()
+                .collect(),
+            )),
         }
     }
 
@@ -291,19 +298,10 @@ impl SchemaNode {
         }
     }
 
-    pub(crate) fn is_object_like(&self) -> bool {
-        match self {
-            Self::Object { .. } => true,
-            Self::Array { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
-            Self::Foreign(value) => foreign_is_object_like(value),
-            _ => false,
-        }
-    }
-
     pub(crate) fn is_array_like(&self) -> bool {
         match self {
             Self::Array { .. } => true,
-            Self::Object { .. } | Self::AnyOf(_) | Self::AllOf(_) => false,
+            Self::Object { .. } => false,
             Self::Foreign(value) => foreign_is_array_like(value),
             _ => false,
         }
@@ -334,9 +332,7 @@ impl SchemaNode {
 
     pub(crate) fn has_object_descendants(&self) -> bool {
         match self {
-            Self::Object {
-                properties, all_of, ..
-            } => !properties.is_empty() || !all_of.is_empty(),
+            Self::Object { properties, .. } => !properties.is_empty(),
             Self::Foreign(Value::Object(object)) => foreign_has_object_descendants(object),
             _ => false,
         }
@@ -346,14 +342,9 @@ impl SchemaNode {
         match self {
             Self::Object {
                 additional_properties: Some(additional_properties),
-                all_of,
                 max_properties,
                 ..
-            } => {
-                additional_properties.is_false_schema()
-                    && all_of.is_empty()
-                    && *max_properties != Some(0)
-            }
+            } => additional_properties.is_false_schema() && *max_properties != Some(0),
             Self::Foreign(Value::Object(object)) => foreign_is_plain_closed_values_object(object),
             _ => false,
         }
@@ -426,9 +417,6 @@ impl SchemaNode {
             Self::Array { items, .. } if head == "*" => items
                 .as_deref()
                 .is_some_and(|child| child.path_exists(tail, map_wildcard_segment)),
-            Self::AnyOf(variants) | Self::AllOf(variants) => variants
-                .iter()
-                .any(|variant| variant.path_exists(path_segments, map_wildcard_segment)),
             Self::Foreign(value) => foreign_path_exists(value, path_segments, map_wildcard_segment),
             _ => false,
         }
@@ -453,7 +441,6 @@ impl SchemaNode {
                 additional_properties,
                 min_properties,
                 max_properties,
-                all_of,
             } => {
                 let mut object = type_map(JsonSchemaType::Object);
                 if include_empty_properties || !properties.is_empty() {
@@ -491,12 +478,6 @@ impl SchemaNode {
                         Value::Number(Number::from(max_properties)),
                     );
                 }
-                if !all_of.is_empty() {
-                    object.insert(
-                        "allOf".to_string(),
-                        Value::Array(all_of.into_iter().map(Self::into_value).collect()),
-                    );
-                }
                 Value::Object(object)
             }
             Self::Array { items, min_items } => {
@@ -512,24 +493,20 @@ impl SchemaNode {
                 }
                 Value::Object(object)
             }
-            Self::AllOf(values) => Value::Object(
-                [(
-                    "allOf".to_string(),
-                    Value::Array(values.into_iter().map(Self::into_value).collect()),
-                )]
-                .into_iter()
-                .collect(),
-            ),
-            Self::AnyOf(values) => Value::Object(
-                [(
-                    "anyOf".to_string(),
-                    Value::Array(values.into_iter().map(Self::into_value).collect()),
-                )]
-                .into_iter()
-                .collect(),
-            ),
             Self::Foreign(value) => value,
         }
+    }
+}
+
+fn push_all_of_value(schema: &mut Value, value: SchemaNode) {
+    let Value::Object(object) = schema else {
+        return;
+    };
+    let all_of = object
+        .entry("allOf".to_string())
+        .or_insert_with(|| Value::Array(Vec::new()));
+    if let Value::Array(entries) = all_of {
+        entries.push(value.into_value());
     }
 }
 
@@ -557,19 +534,6 @@ fn foreign_property_entries(value: &Value) -> Vec<(String, SchemaNode)> {
 
 fn foreign_schema_type(value: &Value) -> Option<&str> {
     value.as_object()?.get("type")?.as_str()
-}
-
-fn foreign_is_object_like(value: &Value) -> bool {
-    match foreign_schema_type(value) {
-        Some("object") => true,
-        Some(_) => false,
-        None => value.as_object().is_some_and(|object| {
-            object.contains_key("properties")
-                || object.contains_key("additionalProperties")
-                || object.contains_key("patternProperties")
-                || object.contains_key("required")
-        }),
-    }
 }
 
 fn foreign_is_array_like(value: &Value) -> bool {
@@ -638,6 +602,16 @@ fn foreign_path_exists(
     let Some(object) = value.as_object() else {
         return false;
     };
+
+    for composition_key in ["anyOf", "allOf", "oneOf"] {
+        if let Some(entries) = object.get(composition_key).and_then(Value::as_array)
+            && entries
+                .iter()
+                .any(|entry| foreign_path_exists(entry, path_segments, map_wildcard_segment))
+        {
+            return true;
+        }
+    }
 
     if head == "*" {
         return object

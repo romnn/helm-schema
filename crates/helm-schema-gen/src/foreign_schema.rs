@@ -58,13 +58,6 @@ enum ForeignSchemaTypeField {
     Unsupported,
 }
 
-#[derive(Debug, Clone, Copy)]
-enum ForeignSchemaUnionKind {
-    Any,
-    One,
-    All,
-}
-
 impl ForeignSchemaObject {
     fn from_value(value: Value) -> Result<Self, Value> {
         match value {
@@ -73,19 +66,13 @@ impl ForeignSchemaObject {
         }
     }
 
-    fn first_union(&self) -> Option<(ForeignSchemaUnionKind, Vec<Value>)> {
-        [
-            ForeignSchemaUnionKind::Any,
-            ForeignSchemaUnionKind::One,
-            ForeignSchemaUnionKind::All,
-        ]
-        .into_iter()
-        .find_map(|kind| {
+    fn first_union(&self) -> Option<(&'static str, Vec<Value>)> {
+        ["anyOf", "oneOf", "allOf"].into_iter().find_map(|keyword| {
             self.raw
-                .get(kind.keyword())
+                .get(keyword)
                 .and_then(Value::as_array)
                 .cloned()
-                .map(|variants| (kind, variants))
+                .map(|variants| (keyword, variants))
         })
     }
 
@@ -202,17 +189,15 @@ impl ForeignSchemaRestriction {
     fn apply_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
         if let Some((kind, variants)) = schema.first_union() {
             return match kind {
-                ForeignSchemaUnionKind::All => {
+                "allOf" => {
                     let restricted = variants
                         .into_iter()
                         .map(|variant| self.apply(variant))
                         .collect::<Option<Vec<_>>>()?;
-                    schema.set_keyword(kind.keyword(), Value::Array(restricted));
+                    schema.set_keyword(kind, Value::Array(restricted));
                     Some(schema.into_value())
                 }
-                ForeignSchemaUnionKind::Any | ForeignSchemaUnionKind::One => {
-                    restrict_schema_union(schema, kind, variants, |variant| self.apply(variant))
-                }
+                _ => restrict_schema_union(schema, kind, variants, |variant| self.apply(variant)),
             };
         }
 
@@ -261,16 +246,6 @@ impl ForeignSchemaRestriction {
     }
 }
 
-impl ForeignSchemaUnionKind {
-    fn keyword(self) -> &'static str {
-        match self {
-            Self::Any => "anyOf",
-            Self::One => "oneOf",
-            Self::All => "allOf",
-        }
-    }
-}
-
 fn is_schema_annotation_keyword(key: &str) -> bool {
     matches!(
         key,
@@ -292,7 +267,7 @@ fn rewrite_array_schema(
 
 fn restrict_schema_union(
     schema: ForeignSchemaObject,
-    keyword: ForeignSchemaUnionKind,
+    keyword: &'static str,
     variants: Vec<Value>,
     restrict: impl FnMut(Value) -> Option<Value>,
 ) -> Option<Value> {
@@ -302,7 +277,7 @@ fn restrict_schema_union(
     }
 
     let mut annotations = schema.into_annotations_only();
-    annotations.set_keyword(keyword.keyword(), Value::Array(retained_variants));
+    annotations.set_keyword(keyword, Value::Array(retained_variants));
     Some(annotations.into_value())
 }
 

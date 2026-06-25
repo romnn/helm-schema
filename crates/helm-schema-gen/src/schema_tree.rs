@@ -487,46 +487,11 @@ fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
     }
 }
 
-fn insert_schema_into_union_variants(
-    variants: &mut [SchemaNode],
-    path_segments: &[String],
-    leaf: &SchemaNode,
-) -> bool {
-    let head = path_segments[0].as_str();
-    let mut touched = false;
-    for variant in variants {
-        let compatible = if head == "*" {
-            variant.is_array_like()
-        } else {
-            variant.is_object_like()
-        };
-
-        if compatible {
-            insert_schema_at_parts(variant, path_segments, leaf.clone());
-            touched = true;
-        }
-    }
-    touched
-}
-
 fn new_union_variant_for_head(head: &str) -> SchemaNode {
     if head == "*" {
         SchemaNode::array().items(SchemaNode::foreign(Value::Null))
     } else {
         SchemaNode::closed_object()
-    }
-}
-
-fn insert_schema_at_union(
-    variants: &mut Vec<SchemaNode>,
-    path_segments: &[String],
-    leaf: SchemaNode,
-) {
-    let touched = insert_schema_into_union_variants(variants, path_segments, &leaf);
-    if !touched {
-        let mut new_variant = new_union_variant_for_head(path_segments[0].as_str());
-        insert_schema_at_parts(&mut new_variant, path_segments, leaf);
-        variants.push(new_variant);
     }
 }
 
@@ -564,21 +529,6 @@ fn replace_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf
             } else {
                 false
             }
-        }
-        SchemaNode::AnyOf(variants) | SchemaNode::AllOf(variants) => {
-            let mut replaced = false;
-            for variant in variants {
-                let compatible = if head == "*" {
-                    variant.is_array_like()
-                } else {
-                    variant.is_object_like()
-                };
-                if compatible {
-                    replace_schema_at_parts(variant, path_segments, leaf.clone());
-                    replaced = true;
-                }
-            }
-            replaced
         }
         SchemaNode::Foreign(value) => {
             replace_schema_value_at_path(value, path_segments, &leaf.clone().into_value())
@@ -654,11 +604,6 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         let mut fragment = SchemaNode::empty();
         insert_schema_at_parts(&mut fragment, path_segments, leaf);
         merge_into_schema_slot(node, fragment);
-        return;
-    }
-
-    if let SchemaNode::AnyOf(variants) = node {
-        insert_schema_at_union(variants, path_segments, leaf);
         return;
     }
 

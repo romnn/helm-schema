@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
 use serde_json::{Map, Value};
 
 use crate::schema_doc::SchemaDoc;
@@ -284,79 +285,84 @@ fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
         None => return node,
     };
 
-    for prop_key in &["properties", "patternProperties", "definitions", "$defs"] {
-        if let Some(props) = obj.get(*prop_key).and_then(|v| v.as_object()) {
-            let mut new_props = Map::new();
-            for (k, v) in props {
-                new_props.insert(
-                    k.clone(),
-                    expand_schema_node_at(
-                        ctx,
-                        node.nested_child(*prop_key, k, v.clone()),
-                        depth + 1,
-                    )
-                    .into_schema(),
-                );
+    for (key, value) in node.schema.as_object().into_iter().flat_map(Map::iter) {
+        let expanded = match schema_child_context_for_keyword(key) {
+            SchemaTraversalContext::Schema if value.is_boolean() => continue,
+            SchemaTraversalContext::Schema => {
+                expand_schema_value_at(ctx, &node, key, value, depth + 1)
             }
-            obj.insert((*prop_key).to_string(), Value::Object(new_props));
-        }
-    }
-
-    for single_key in &["items", "contains", "not", "if", "then", "else"] {
-        if let Some(sub) = obj.get(*single_key) {
-            let sub = sub.clone();
-            obj.insert(
-                (*single_key).to_string(),
-                expand_schema_node_at(ctx, node.child(*single_key, sub), depth + 1).into_schema(),
-            );
-        }
-    }
-
-    for array_key in &["prefixItems"] {
-        if let Some(arr) = obj.get(*array_key).and_then(|v| v.as_array()) {
-            let mut out = Vec::new();
-            for (index, schema) in arr.iter().enumerate() {
-                out.push(
-                    expand_schema_node_at(
-                        ctx,
-                        node.nested_child(*array_key, index.to_string(), schema.clone()),
-                        depth + 1,
-                    )
-                    .into_schema(),
-                );
-            }
-            obj.insert((*array_key).to_string(), Value::Array(out));
-        }
-    }
-
-    if let Some(ds) = obj.get("dependentSchemas").and_then(|v| v.as_object()) {
-        let mut out = Map::new();
-        for (k, v) in ds {
-            out.insert(
-                k.clone(),
-                expand_schema_node_at(
-                    ctx,
-                    node.nested_child("dependentSchemas", k, v.clone()),
-                    depth + 1,
+            SchemaTraversalContext::SchemaArray => {
+                let Some(values) = value.as_array() else {
+                    continue;
+                };
+                Value::Array(
+                    values
+                        .iter()
+                        .enumerate()
+                        .map(|(index, schema)| {
+                            expand_schema_node_at(
+                                ctx,
+                                node.nested_child(key, index.to_string(), schema.clone()),
+                                depth + 1,
+                            )
+                            .into_schema()
+                        })
+                        .collect(),
                 )
-                .into_schema(),
-            );
-        }
-        obj.insert("dependentSchemas".to_string(), Value::Object(out));
-    }
-
-    if let Some(ap) = obj.get("additionalProperties")
-        && !ap.is_boolean()
-    {
-        let ap = ap.clone();
-        obj.insert(
-            "additionalProperties".to_string(),
-            expand_schema_node_at(ctx, node.child("additionalProperties", ap), depth + 1)
-                .into_schema(),
-        );
+            }
+            SchemaTraversalContext::SchemaMapValues => {
+                let Some(values) = value.as_object() else {
+                    continue;
+                };
+                Value::Object(
+                    values
+                        .iter()
+                        .map(|(entry_key, schema)| {
+                            (
+                                entry_key.clone(),
+                                expand_schema_node_at(
+                                    ctx,
+                                    node.nested_child(key, entry_key, schema.clone()),
+                                    depth + 1,
+                                )
+                                .into_schema(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
+            SchemaTraversalContext::Data => continue,
+        };
+        obj.insert(key.clone(), expanded);
     }
 
     ResolvedSchemaNode::at(node.location, Value::Object(obj))
+}
+
+fn expand_schema_value_at<F: FnMut(&str) -> Option<SchemaDoc>>(
+    ctx: &mut ResolveCtx<F>,
+    node: &ResolvedSchemaNode,
+    key: &str,
+    value: &Value,
+    depth: usize,
+) -> Value {
+    match value {
+        Value::Array(values) => Value::Array(
+            values
+                .iter()
+                .enumerate()
+                .map(|(index, schema)| {
+                    expand_schema_node_at(
+                        ctx,
+                        node.nested_child(key, index.to_string(), schema.clone()),
+                        depth,
+                    )
+                    .into_schema()
+                })
+                .collect(),
+        ),
+        _ => expand_schema_node_at(ctx, node.child(key, value.clone()), depth).into_schema(),
+    }
 }
 
 pub fn descend_schema_path_expanding_leaf_with_location<F: FnMut(&str) -> Option<SchemaDoc>>(

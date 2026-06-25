@@ -3,12 +3,6 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
-fn options() -> MinimizeOptions {
-    MinimizeOptions {
-        min_subtree_bytes: 1,
-    }
-}
-
 #[test]
 fn repeated_property_schemas_move_to_defs() {
     let repeated = json!({
@@ -28,10 +22,10 @@ fn repeated_property_schemas_move_to_defs() {
         }
     });
 
-    let result = minimize_schema(schema, &options());
+    let result = minimize_schema(schema);
 
     sim_assert_eq!(
-        have: result.schema,
+        have: result,
         want: json!({
             "$defs": {
                 "schema1": {
@@ -51,9 +45,6 @@ fn repeated_property_schemas_move_to_defs() {
             }
         })
     );
-    sim_assert_eq!(have: result.stats.definitions_added, want: 1);
-    sim_assert_eq!(have: result.stats.replacements, want: 2);
-    assert!(result.stats.bytes_after < result.stats.bytes_before);
 }
 
 #[test]
@@ -74,10 +65,9 @@ fn non_schema_keyword_payloads_are_not_replaced() {
         }
     });
 
-    let result = minimize_schema(schema, &options());
+    let result = minimize_schema(schema);
     sim_assert_eq!(
         have: result
-            .schema
             .pointer("/$defs/schema1/required")
             .and_then(Value::as_array)
             .map(Vec::len),
@@ -85,7 +75,6 @@ fn non_schema_keyword_payloads_are_not_replaced() {
     );
     sim_assert_eq!(
         have: result
-            .schema
             .pointer("/$defs/schema1/enum")
             .and_then(Value::as_array)
             .map(Vec::len),
@@ -117,9 +106,8 @@ fn schemas_containing_refs_are_not_extracted() {
         }
     });
 
-    let result = minimize_schema(schema.clone(), &options());
-    sim_assert_eq!(have: result.schema, want: schema);
-    sim_assert_eq!(have: result.stats.replacements, want: 0);
+    let result = minimize_schema(schema.clone());
+    sim_assert_eq!(have: result, want: schema);
 }
 
 #[test]
@@ -143,13 +131,13 @@ fn property_names_that_look_like_ref_keywords_do_not_block_extraction() {
         }
     });
 
-    let result = minimize_schema(schema, &options());
+    let result = minimize_schema(schema);
     sim_assert_eq!(
-        have: result.schema.pointer("/properties/left/$ref"),
+        have: result.pointer("/properties/left/$ref"),
         want: Some(&Value::String("#/$defs/schema1".to_string()))
     );
     sim_assert_eq!(
-        have: result.schema.pointer("/properties/right/$ref"),
+        have: result.pointer("/properties/right/$ref"),
         want: Some(&Value::String("#/$defs/schema1".to_string()))
     );
 }
@@ -164,10 +152,8 @@ fn repeated_tiny_schemas_are_not_replaced_without_size_win() {
         }
     });
 
-    let result = minimize_schema(schema.clone(), &options());
-    sim_assert_eq!(have: result.schema, want: schema);
-    sim_assert_eq!(have: result.stats.definitions_added, want: 0);
-    sim_assert_eq!(have: result.stats.replacements, want: 0);
+    let result = minimize_schema(schema.clone());
+    sim_assert_eq!(have: result, want: schema);
 }
 
 #[test]
@@ -189,11 +175,11 @@ fn existing_defs_names_are_not_reused() {
         }
     });
 
-    let result = minimize_schema(schema, &options());
-    assert!(result.schema.pointer("/$defs/schema1").is_some());
-    assert!(result.schema.pointer("/$defs/schema2").is_some());
+    let result = minimize_schema(schema);
+    assert!(result.pointer("/$defs/schema1").is_some());
+    assert!(result.pointer("/$defs/schema2").is_some());
     sim_assert_eq!(
-        have: result.schema.pointer("/properties/left/$ref"),
+        have: result.pointer("/properties/left/$ref"),
         want: Some(&Value::String("#/$defs/schema2".to_string()))
     );
 }

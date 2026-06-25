@@ -9,66 +9,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use json_schema_walk::{visit_subschemas, visit_subschemas_mut};
 use serde_json::{Map, Value};
 
-const DEFAULT_MIN_SUBTREE_BYTES: usize = 1;
 const DEFINITIONS_KEY: &str = "$defs";
 const DEFINITION_NAME_PREFIX: &str = "schema";
-
-/// Options for [`minimize_schema`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MinimizeOptions {
-    /// Smallest compact serialized subschema size considered for extraction.
-    ///
-    /// The minimizer still requires an estimated output-size win before adding
-    /// a definition, so the default considers every object subschema.
-    pub min_subtree_bytes: usize,
-}
-
-impl Default for MinimizeOptions {
-    fn default() -> Self {
-        Self {
-            min_subtree_bytes: DEFAULT_MIN_SUBTREE_BYTES,
-        }
-    }
-}
-
-/// Summary of a minimization run.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct MinimizeStats {
-    /// Number of generated `$defs` entries inserted into the root schema.
-    pub definitions_added: usize,
-    /// Number of subschema occurrences replaced by a `$ref`.
-    pub replacements: usize,
-    /// Compact JSON byte size before minimization.
-    pub bytes_before: usize,
-    /// Compact JSON byte size after minimization.
-    pub bytes_after: usize,
-}
-
-/// Result of [`minimize_schema`].
-#[derive(Debug, Clone, PartialEq)]
-pub struct MinimizeResult {
-    /// The minimized schema document.
-    pub schema: Value,
-    /// Statistics describing what changed.
-    pub stats: MinimizeStats,
-}
-
-#[derive(Debug, Clone)]
-struct Candidate {
-    occurrences: usize,
-    bytes: usize,
-}
-
-#[derive(Debug)]
-struct CandidateFingerprint {
-    canonical: String,
-    bytes: usize,
-}
-
-#[derive(Debug, Clone)]
-struct PlannedDefinition {
-    name: String,
-}
 
 /// Deduplicate repeated JSON Schema subtrees into root-level `$defs`.
 ///
@@ -76,61 +18,28 @@ struct PlannedDefinition {
 /// keyword payloads, such as `required`, `enum`, `type`, or Kubernetes
 /// extension metadata, are never replaced with `$ref`.
 #[must_use]
-#[tracing::instrument(skip_all, fields(min_subtree_bytes = options.min_subtree_bytes))]
-pub fn minimize_schema(schema: Value, options: &MinimizeOptions) -> MinimizeResult {
-    let bytes_before = compact_json_len(&schema);
+#[tracing::instrument(skip_all)]
+pub fn minimize_schema(schema: Value) -> Value {
     if !can_insert_generated_definitions(&schema) {
-        return MinimizeResult {
-            schema,
-            stats: MinimizeStats {
-                bytes_before,
-                bytes_after: bytes_before,
-                ..MinimizeStats::default()
-            },
-        };
+        return schema;
     }
 
     let mut candidates = BTreeMap::new();
-    collect_candidates(&schema, true, options.min_subtree_bytes, &mut candidates);
+    collect_candidates(&schema, true, &mut candidates);
     let planned = plan_definitions(&schema, candidates);
     if planned.is_empty() {
-        return MinimizeResult {
-            schema,
-            stats: MinimizeStats {
-                bytes_before,
-                bytes_after: bytes_before,
-                ..MinimizeStats::default()
-            },
-        };
+        return schema;
     }
 
     let mut schema = schema;
     let mut definitions = BTreeMap::new();
-    let mut replacements = 0;
-    rewrite_schema(
-        &mut schema,
-        true,
-        &planned,
-        options.min_subtree_bytes,
-        &mut definitions,
-        &mut replacements,
-    );
+    rewrite_schema(&mut schema, true, &planned, &mut definitions);
 
-    let definitions_added = definitions.len();
-    if definitions_added > 0 {
+    if !definitions.is_empty() {
         insert_definitions(&mut schema, definitions);
     }
 
-    let bytes_after = compact_json_len(&schema);
-    MinimizeResult {
-        schema,
-        stats: MinimizeStats {
-            definitions_added,
-            replacements,
-            bytes_before,
-            bytes_after,
-        },
-    }
+    schema
 }
 
 fn can_insert_generated_definitions(schema: &Value) -> bool {
@@ -145,51 +54,47 @@ fn can_insert_generated_definitions(schema: &Value) -> bool {
 fn collect_candidates(
     schema: &Value,
     is_root: bool,
-    min_subtree_bytes: usize,
-    candidates: &mut BTreeMap<String, Candidate>,
+    candidates: &mut BTreeMap<String, (usize, usize)>,
 ) {
-    if !is_root && let Some(fingerprint) = candidate_fingerprint(schema, min_subtree_bytes) {
+    if !is_root && let Some((canonical, bytes)) = candidate_fingerprint(schema) {
         candidates
-            .entry(fingerprint.canonical)
-            .and_modify(|candidate| candidate.occurrences += 1)
-            .or_insert_with(|| Candidate {
-                occurrences: 1,
-                bytes: fingerprint.bytes,
-            });
+            .entry(canonical)
+            .and_modify(|candidate| candidate.0 += 1)
+            .or_insert((1, bytes));
     }
 
     visit_subschemas(schema, &mut |subschema| {
-        collect_candidates(subschema, false, min_subtree_bytes, candidates);
+        collect_candidates(subschema, false, candidates);
     });
 }
 
 fn plan_definitions(
     schema: &Value,
-    candidates: BTreeMap<String, Candidate>,
-) -> BTreeMap<String, PlannedDefinition> {
+    candidates: BTreeMap<String, (usize, usize)>,
+) -> BTreeMap<String, String> {
     let mut existing_names = existing_definition_names(schema);
-    let mut repeated: Vec<(String, Candidate)> = candidates
+    let mut repeated: Vec<(String, (usize, usize))> = candidates
         .into_iter()
-        .filter(|(_, candidate)| candidate.occurrences > 1)
+        .filter(|(_, (occurrences, _bytes))| *occurrences > 1)
         .collect();
     repeated.sort_by(|(left_key, left), (right_key, right)| {
         right
-            .bytes
-            .cmp(&left.bytes)
-            .then_with(|| right.occurrences.cmp(&left.occurrences))
+            .1
+            .cmp(&left.1)
+            .then_with(|| right.0.cmp(&left.0))
             .then_with(|| left_key.cmp(right_key))
     });
 
     let mut planned = BTreeMap::new();
     let mut next_id = 1usize;
-    for (canonical, candidate) in repeated {
+    for (canonical, (occurrences, bytes)) in repeated {
         let (name, following_id) = next_definition_name(&existing_names, next_id);
-        if estimated_savings(candidate.bytes, candidate.occurrences, &name) <= 0 {
+        if estimated_savings(bytes, occurrences, &name) <= 0 {
             continue;
         }
         existing_names.insert(name.clone());
         next_id = following_id;
-        planned.insert(canonical, PlannedDefinition { name });
+        planned.insert(canonical, name);
     }
     planned
 }
@@ -206,7 +111,7 @@ fn next_definition_name(existing_names: &BTreeSet<String>, next_id: usize) -> (S
 }
 
 fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> isize {
-    let ref_bytes = compact_json_len(&reference_schema(name));
+    let ref_bytes = json_schema_walk::canonical_json_string(&reference_schema(name)).len();
     let original = schema_bytes.saturating_mul(occurrences);
     let rewritten = schema_bytes
         .saturating_add(ref_bytes.saturating_mul(occurrences))
@@ -219,32 +124,22 @@ fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> isi
 fn rewrite_schema(
     schema: &mut Value,
     is_root: bool,
-    planned: &BTreeMap<String, PlannedDefinition>,
-    min_subtree_bytes: usize,
+    planned: &BTreeMap<String, String>,
     definitions: &mut BTreeMap<String, Value>,
-    replacements: &mut usize,
 ) {
     if !is_root
-        && let Some(fingerprint) = candidate_fingerprint(schema, min_subtree_bytes)
-        && let Some(definition) = planned.get(&fingerprint.canonical)
+        && let Some((canonical, _bytes)) = candidate_fingerprint(schema)
+        && let Some(definition_name) = planned.get(&canonical)
     {
         definitions
-            .entry(definition.name.clone())
+            .entry(definition_name.clone())
             .or_insert_with(|| schema.clone());
-        *schema = reference_schema(&definition.name);
-        *replacements += 1;
+        *schema = reference_schema(definition_name);
         return;
     }
 
     visit_subschemas_mut(schema, &mut |subschema| {
-        rewrite_schema(
-            subschema,
-            false,
-            planned,
-            min_subtree_bytes,
-            definitions,
-            replacements,
-        );
+        rewrite_schema(subschema, false, planned, definitions);
     });
 }
 
@@ -263,13 +158,13 @@ fn insert_definitions(schema: &mut Value, definitions: BTreeMap<String, Value>) 
     }
 }
 
-fn candidate_fingerprint(schema: &Value, min_subtree_bytes: usize) -> Option<CandidateFingerprint> {
+fn candidate_fingerprint(schema: &Value) -> Option<(String, usize)> {
     if !matches!(schema, Value::Object(_)) || contains_reference_scope_keyword(schema) {
         return None;
     }
-    let canonical = canonical_compact_json_string(schema);
+    let canonical = json_schema_walk::canonical_json_string(schema);
     let bytes = canonical.len();
-    (bytes >= min_subtree_bytes).then_some(CandidateFingerprint { canonical, bytes })
+    Some((canonical, bytes))
 }
 
 fn contains_reference_scope_keyword(value: &Value) -> bool {
@@ -314,14 +209,6 @@ fn reference_schema(name: &str) -> Value {
         "$ref".to_string(),
         Value::String(format!("#/{DEFINITIONS_KEY}/{name}")),
     )]))
-}
-
-fn compact_json_len(value: &Value) -> usize {
-    canonical_compact_json_string(value).len()
-}
-
-fn canonical_compact_json_string(value: &Value) -> String {
-    json_schema_walk::canonical_json_string(value)
 }
 
 #[cfg(test)]

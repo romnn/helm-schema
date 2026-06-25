@@ -6,8 +6,8 @@ use serde_json::{Map, Value};
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct SourceBundleLocation {
-    document: String,
-    pointer: String,
+    pub(crate) document: String,
+    pub(crate) pointer: String,
 }
 
 impl SourceBundleLocation {
@@ -17,20 +17,12 @@ impl SourceBundleLocation {
             pointer: pointer.into(),
         }
     }
-
-    pub(crate) fn document(&self) -> &str {
-        &self.document
-    }
-
-    pub(crate) fn pointer(&self) -> &str {
-        &self.pointer
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct SourceBundleNode {
-    location: SourceBundleLocation,
-    schema: Value,
+    pub(crate) location: SourceBundleLocation,
+    pub(crate) schema: Value,
 }
 
 impl SourceBundleNode {
@@ -44,25 +36,36 @@ impl SourceBundleNode {
             schema,
         }
     }
-
-    fn location(&self) -> &SourceBundleLocation {
-        &self.location
-    }
-
-    fn schema(&self) -> &Value {
-        &self.schema
-    }
 }
 
-pub(crate) fn schema_refs_point_inside(root: &Value, schema: &Value) -> bool {
-    json_schema_walk::schema_refs_point_inside(root, schema)
+pub(crate) fn bundle_source_definition(
+    document: &str,
+    pointer: &str,
+    source_schema: &Value,
+    mut resolve_external_ref: impl FnMut(&SourceBundleLocation, &str) -> Option<SourceBundleNode>,
+) -> Value {
+    if json_schema_walk::schema_refs_point_inside(source_schema, source_schema) {
+        return source_schema.clone();
+    }
+
+    bundle_source_schema(
+        SourceBundleNode::new(document, pointer, source_schema.clone()),
+        |current_location, reference| {
+            if let Some(pointer) = reference.strip_prefix('#')
+                && source_schema.pointer(pointer).is_some()
+            {
+                return None;
+            }
+            resolve_external_ref(current_location, reference)
+        },
+    )
 }
 
 pub(crate) fn bundle_source_schema(
     root: SourceBundleNode,
     resolve_external_ref: impl FnMut(&SourceBundleLocation, &str) -> Option<SourceBundleNode>,
 ) -> Value {
-    let mut bundler = SourceSchemaBundler::new(root.schema().clone(), resolve_external_ref);
+    let mut bundler = SourceSchemaBundler::new(root.schema.clone(), resolve_external_ref);
     bundler.bundle_root(root)
 }
 
@@ -91,8 +94,8 @@ where
     }
 
     fn bundle_root(&mut self, root: SourceBundleNode) -> Value {
-        self.seed_existing_definition_names(root.schema());
-        self.root_location = Some(root.location().clone());
+        self.seed_existing_definition_names(&root.schema);
+        self.root_location = Some(root.location.clone());
         let mut schema = self.bundle_root_node(root, 0);
         if !self.definitions_by_name.is_empty() {
             let definitions = schema.as_object_mut().and_then(|object| {
@@ -125,17 +128,17 @@ where
             return node.schema;
         }
 
-        if let Some(reference) = node.schema().get("$ref").and_then(Value::as_str) {
+        if let Some(reference) = node.schema.get("$ref").and_then(Value::as_str) {
             if ref_points_inside(&self.root_schema, reference) {
                 return self.bundle_schema_value(
-                    node.schema(),
+                    &node.schema,
                     SchemaTraversalContext::Schema,
-                    node.location(),
+                    &node.location,
                     depth,
                 );
             }
-            if let Some(target) = (self.resolve_external_ref)(node.location(), reference) {
-                if self.root_location.as_ref() == Some(target.location()) {
+            if let Some(target) = (self.resolve_external_ref)(&node.location, reference) {
+                if self.root_location.as_ref() == Some(&target.location) {
                     return Value::Object(
                         [("$ref".to_string(), Value::String("#".to_string()))]
                             .into_iter()
@@ -144,13 +147,13 @@ where
                 }
                 return self.bundle_root_node(target, depth + 1);
             }
-            return strip_ref(node.schema());
+            return strip_ref(&node.schema);
         }
 
         self.bundle_schema_value(
-            node.schema(),
+            &node.schema,
             SchemaTraversalContext::Schema,
-            node.location(),
+            &node.location,
             depth,
         )
     }
@@ -198,7 +201,7 @@ where
             return strip_ref(schema);
         };
 
-        if self.root_location.as_ref() == Some(target.location()) {
+        if self.root_location.as_ref() == Some(&target.location) {
             return Value::Object(
                 [("$ref".to_string(), Value::String("#".to_string()))]
                     .into_iter()
@@ -218,13 +221,13 @@ where
     }
 
     fn definition_name_for_target(&mut self, target: SourceBundleNode, depth: usize) -> String {
-        if let Some(name) = self.definition_names_by_location.get(target.location()) {
+        if let Some(name) = self.definition_names_by_location.get(&target.location) {
             return name.clone();
         }
 
-        let name = self.next_definition_name(target.location());
+        let name = self.next_definition_name(&target.location);
         self.definition_names_by_location
-            .insert(target.location().clone(), name.clone());
+            .insert(target.location.clone(), name.clone());
 
         let definition_schema = self.bundle_root_node(target, depth);
         self.definitions_by_name
@@ -233,7 +236,7 @@ where
     }
 
     fn next_definition_name(&mut self, location: &SourceBundleLocation) -> String {
-        let base_name = definition_base_name(location.pointer());
+        let base_name = definition_base_name(&location.pointer);
         if self.used_definition_names.insert(base_name.clone()) {
             return base_name;
         }

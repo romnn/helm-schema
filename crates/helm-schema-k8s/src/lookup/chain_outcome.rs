@@ -1,5 +1,4 @@
 use super::provider_schema_fragment::ProviderSchemaFragment;
-use helm_schema_core::ProviderOrigin;
 
 /// Outcome of resolving a known `(apiVersion, kind)` against the full
 /// provider chain. Missing diagnostics are projected from the corresponding
@@ -9,29 +8,20 @@ use helm_schema_core::ProviderOrigin;
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum ChainLookupOutcome {
-    Resolved {
-        /// `None` when the resolving provider returned `PathUnresolved`
-        /// (intentional silent path-coverage gap).
-        schema: Option<ProviderSchemaFragment>,
-        resolving_provider: ProviderOrigin,
-        resolved_k8s_version: Option<String>,
-    },
+    /// `None` when the resolving provider returned `PathUnresolved`
+    /// (intentional silent path-coverage gap).
+    Resolved(Option<ProviderSchemaFragment>),
     /// No provider in the chain owns the resource (every provider
-    /// returned `NotOwned` or `ResourceDocMissing`). Chain layer emits
-    /// `Diagnostic::MissingSchema` with the union of K8s versions and
-    /// filenames tried.
-    MissingSchema {
-        k8s_versions_tried: Vec<String>,
-        tried_filenames: Vec<String>,
-    },
+    /// returned `NotOwned` or `ResourceDocMissing`).
+    MissingSchema,
 }
 
 impl ChainLookupOutcome {
     /// Return the resolved schema, intentionally discarding chain metadata.
     pub(crate) fn into_schema_fragment(self) -> Option<ProviderSchemaFragment> {
         match self {
-            Self::Resolved { schema, .. } => schema,
-            Self::MissingSchema { .. } => None,
+            Self::Resolved(schema) => schema,
+            Self::MissingSchema => None,
         }
     }
 }

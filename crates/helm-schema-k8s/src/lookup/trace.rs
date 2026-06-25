@@ -1,37 +1,15 @@
-use helm_schema_core::{ApiPresenceQuery, ProviderOrigin, ResourceRef, YamlPath};
+use helm_schema_core::{ProviderOrigin, ResourceRef};
 
 use super::chain_outcome::ChainLookupOutcome;
 use super::provider_result::ProviderLookupResult;
 
 /// Executed lookup trace for one concrete schema-knowledge query.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct LookupTrace {
-    subject: LookupTraceSubject,
     entries: Vec<LookupTraceEntry>,
 }
 
 impl LookupTrace {
-    #[must_use]
-    pub fn new(resource: &ResourceRef, path: &YamlPath) -> Self {
-        Self {
-            subject: LookupTraceSubject::ResourcePath {
-                resource: resource.clone(),
-                path: path.clone(),
-            },
-            entries: Vec::new(),
-        }
-    }
-
-    #[must_use]
-    pub fn new_api_presence(query: &ApiPresenceQuery) -> Self {
-        Self {
-            subject: LookupTraceSubject::ApiPresence {
-                query: query.clone(),
-            },
-            entries: Vec::new(),
-        }
-    }
-
     pub(crate) fn record_provider(
         &mut self,
         resource: &ResourceRef,
@@ -80,41 +58,9 @@ impl LookupTrace {
     }
 
     #[must_use]
-    pub fn subject(&self) -> &LookupTraceSubject {
-        &self.subject
-    }
-
-    #[must_use]
-    pub fn resource(&self) -> Option<&ResourceRef> {
-        match &self.subject {
-            LookupTraceSubject::ResourcePath { resource, .. } => Some(resource),
-            LookupTraceSubject::ApiPresence { .. } => None,
-        }
-    }
-
-    #[must_use]
-    pub fn path(&self) -> Option<&YamlPath> {
-        match &self.subject {
-            LookupTraceSubject::ResourcePath { path, .. } => Some(path),
-            LookupTraceSubject::ApiPresence { .. } => None,
-        }
-    }
-
-    #[must_use]
     pub fn entries(&self) -> &[LookupTraceEntry] {
         &self.entries
     }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum LookupTraceSubject {
-    ResourcePath {
-        resource: ResourceRef,
-        path: YamlPath,
-    },
-    ApiPresence {
-        query: ApiPresenceQuery,
-    },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -185,20 +131,8 @@ pub struct TracedLookupOutcome {
     pub trace: LookupTrace,
 }
 
-impl TracedLookupOutcome {
-    pub(crate) fn into_outcome(self) -> ChainLookupOutcome {
-        self.outcome
-    }
-}
-
 #[derive(Debug)]
 pub struct TracedApiPresenceOutcome {
     pub answer: Option<bool>,
     pub trace: LookupTrace,
-}
-
-impl TracedApiPresenceOutcome {
-    pub(crate) fn into_answer(self) -> Option<bool> {
-        self.answer
-    }
 }

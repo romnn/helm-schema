@@ -2,46 +2,20 @@ use helm_schema_core::{CapabilityOracle, ResourceRef, live_literals};
 
 use crate::ordered_api_versions_for_resource;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct ResourceLookupPlan {
-    candidates: Vec<ResourceRef>,
+pub(crate) fn resource_lookup_candidates<O: CapabilityOracle + ?Sized>(
+    resource: &ResourceRef,
+    oracle: &O,
+) -> Vec<ResourceRef> {
+    let api_versions = candidate_api_versions(resource, oracle);
+    resource_candidates_with_api_versions(resource, api_versions)
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct MissingSchemaAttributionPlan {
-    candidates: Vec<ResourceRef>,
-}
-
-impl ResourceLookupPlan {
-    pub(crate) fn for_resource<O: CapabilityOracle + ?Sized>(
-        resource: &ResourceRef,
-        oracle: &O,
-    ) -> Self {
-        let api_versions = candidate_api_versions(resource, oracle);
-        let candidates = resource_candidates_with_api_versions(resource, api_versions);
-
-        Self { candidates }
-    }
-
-    pub(crate) fn candidates(&self) -> &[ResourceRef] {
-        &self.candidates
-    }
-}
-
-impl MissingSchemaAttributionPlan {
-    pub(crate) fn for_resource<O: CapabilityOracle + ?Sized>(
-        resource: &ResourceRef,
-        oracle: &O,
-    ) -> Self {
-        let api_versions = missing_schema_attribution_api_versions(resource, oracle);
-        let candidates = resource_candidates_with_api_versions(resource, api_versions);
-
-        Self { candidates }
-    }
-
-    pub(crate) fn candidates(&self) -> &[ResourceRef] {
-        &self.candidates
-    }
+pub(crate) fn missing_schema_attribution_candidates<O: CapabilityOracle + ?Sized>(
+    resource: &ResourceRef,
+    oracle: &O,
+) -> Vec<ResourceRef> {
+    let api_versions = missing_schema_attribution_api_versions(resource, oracle);
+    resource_candidates_with_api_versions(resource, api_versions)
 }
 
 fn candidate_api_versions<O: CapabilityOracle + ?Sized>(

@@ -15,9 +15,7 @@ use crate::filename::{candidate_filenames_for_resource, filename_for_resource};
 use crate::inference::cache_scan::scan_k8s_cache;
 use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
-use crate::lookup::source_bundle::{
-    SourceBundleNode, bundle_source_schema, schema_refs_point_inside,
-};
+use crate::lookup::source_bundle::{SourceBundleNode, bundle_source_definition};
 use crate::lookup::{
     K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
     ProviderSchemaSource, SourceProbeTraceOutcome, TracedApiPresenceOutcome,
@@ -323,7 +321,7 @@ impl KubernetesJsonSchemaProvider {
         query: &ApiPresenceQuery,
     ) -> Option<bool> {
         self.capability_has_query_at_primary_version_traced(query)
-            .into_answer()
+            .answer
     }
 
     /// Traced form of [`Self::capability_has_query_at_primary_version`].
@@ -332,7 +330,7 @@ impl KubernetesJsonSchemaProvider {
         &self,
         query: &ApiPresenceQuery,
     ) -> TracedApiPresenceOutcome {
-        let mut trace = LookupTrace::new_api_presence(query);
+        let mut trace = LookupTrace::default();
         let Some(primary) = self.versions.primary() else {
             trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
             return TracedApiPresenceOutcome {
@@ -579,23 +577,12 @@ fn bundled_definition_schema_for_source_leaf<F: FnMut(&str) -> Option<SchemaDoc>
     schema_leaf: &super::resolve_ctx::ResolvedSchemaLeaf,
 ) -> Value {
     let source_schema = schema_leaf.source_schema();
-    if schema_refs_point_inside(source_schema, source_schema) {
-        return source_schema.clone();
-    }
-
-    bundle_source_schema(
-        SourceBundleNode::new(
-            schema_leaf.location().filename(),
-            schema_leaf.location().pointer(),
-            source_schema.clone(),
-        ),
+    bundle_source_definition(
+        schema_leaf.location().filename(),
+        schema_leaf.location().pointer(),
+        source_schema,
         |current_location, reference| {
-            if let Some(pointer) = reference.strip_prefix('#')
-                && source_schema.pointer(pointer).is_some()
-            {
-                return None;
-            }
-            ctx.resolve_schema_reference(current_location.document(), reference)
+            ctx.resolve_schema_reference(&current_location.document, reference)
                 .map(|target| {
                     let filename = target.location().filename().to_string();
                     let pointer = target.location().pointer().to_string();

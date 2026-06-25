@@ -1,4 +1,3 @@
-use helm_schema_core::YamlPath;
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -15,9 +14,8 @@ fn resource(api_version: &str) -> ResourceRef {
 
 #[test]
 fn local_override_unreadable_uses_attempted_resource_from_trace_entry() {
-    let subject = resource("example.com/v1beta1");
     let attempted = resource("example.com/v1");
-    let mut trace = LookupTrace::new(&subject, &YamlPath(Vec::new()));
+    let mut trace = LookupTrace::default();
     trace.record_provider(
         &attempted,
         ProviderOrigin::LocalOverride,

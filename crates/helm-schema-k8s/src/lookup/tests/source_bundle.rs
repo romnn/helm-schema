@@ -16,7 +16,7 @@ fn bundles_provider_document_refs_into_local_definitions() {
             root_leaf,
         ),
         |current_location, reference| {
-            sim_assert_eq!(have: current_location.document(), want: "source.json");
+            sim_assert_eq!(have: current_location.document.as_str(), want: "source.json");
             (reference == "#/definitions/StringMap").then(|| {
                 SourceBundleNode::new(
                     "source.json",
@@ -60,7 +60,10 @@ fn keeps_leaf_local_definitions_intact() {
         }
     });
 
-    assert!(schema_refs_point_inside(&source_schema, &source_schema));
+    assert!(json_schema_walk::schema_refs_point_inside(
+        &source_schema,
+        &source_schema
+    ));
 }
 
 #[test]

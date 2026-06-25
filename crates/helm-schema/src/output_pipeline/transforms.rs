@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use json_schema_minify::{MinimizeOptions, minimize_schema};
+use json_schema_minify::minimize_schema;
 use serde_json::Value;
 
 use crate::error::CliResult;
@@ -64,7 +64,7 @@ fn apply_output_transforms(
     }
 
     if options.minimize {
-        schema = minimize_schema(schema, &MinimizeOptions::default()).schema;
+        schema = minimize_schema(schema);
     }
 
     Ok(schema)

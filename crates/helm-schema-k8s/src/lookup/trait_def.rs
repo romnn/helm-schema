@@ -103,7 +103,7 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
         query: &ApiPresenceQuery,
     ) -> TracedApiPresenceOutcome {
         let answer = self.capability_has_query_at_primary_version(query);
-        let mut trace = LookupTrace::new_api_presence(query);
+        let mut trace = LookupTrace::default();
         trace.record_api_presence_provider(self.origin(), answer);
         TracedApiPresenceOutcome { answer, trace }
     }

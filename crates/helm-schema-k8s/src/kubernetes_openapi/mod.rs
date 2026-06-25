@@ -2,7 +2,7 @@ mod capability_probe;
 mod mirror_chain;
 mod missing_schema_hint;
 mod provider;
-mod resolve_ctx;
+pub(crate) mod resolve_ctx;
 mod version_chain;
 
 pub use mirror_chain::{K8sMirrorChain, K8sSource};
