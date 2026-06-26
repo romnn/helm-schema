@@ -12,7 +12,6 @@ fn activate_range_plan_installs_predicates_binding_and_frame() {
     let plan = HelperRangeRuntimePlan {
         guard_paths: BTreeSet::from(["serviceAccount.create".to_string()]),
         dot_binding: None,
-        apply_dot_binding: true,
         frame: RangeFrame {
             definitely_nonempty: false,
             iterations: None,
@@ -23,7 +22,7 @@ fn activate_range_plan_installs_predicates_binding_and_frame() {
         )),
         range_fragment_value: Some(AbstractValue::ValuesPath("serviceAccount".to_string())),
     };
-    let mut control = HelperRuntimeControlState::for_value(None);
+    let mut control = HelperRuntimeControlState::for_fragment(None, None);
     let mut locals = SymbolicLocalState::default();
 
     plan.activate(&mut control, &mut locals);

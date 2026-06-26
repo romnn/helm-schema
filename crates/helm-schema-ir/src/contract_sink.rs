@@ -91,7 +91,6 @@ impl<'a> ContractUseContext<'a> {
             };
             merge_guards(&mut guards, std::slice::from_ref(&default_guard));
         }
-
         ContractUse::with_provenances(
             source_expr,
             path,
@@ -126,6 +125,10 @@ impl<'a> ContractUseContext<'a> {
             None,
             extra_provenance,
         )
+    }
+
+    pub(crate) fn has_ambient_guards(&self) -> bool {
+        !self.guards.is_empty()
     }
 
     fn guards_with(&self, extra_guards: &[Guard]) -> Vec<Guard> {

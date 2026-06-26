@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
+use crate::abstract_value::AbstractValue;
 use crate::{Guard, GuardValue};
 use helm_schema_ast::type_is_schema_type;
 use helm_schema_core::Predicate;
@@ -34,6 +35,7 @@ impl ValuePathContext<'_> {
             "and" => self.and_predicate(args),
             "not" => self.not_predicate(args),
             "empty" => self.empty_predicate(args),
+            "hasKey" => self.has_key_predicate(args),
             "or" => self.or_predicate(args),
             "eq" => self.value_comparison_predicate(args, false),
             "ne" => self.value_comparison_predicate(args, true),
@@ -98,6 +100,18 @@ impl ValuePathContext<'_> {
         };
         self.single_truthy_predicate(arg)
             .map(|predicate| predicate.negated())
+    }
+
+    fn has_key_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [map, key] = args else {
+            return None;
+        };
+        let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) = key.deparen()
+        else {
+            return None;
+        };
+        self.with_body_fragment_value_expr(map)
+            .and_then(|value| value_has_key(&value, key))
     }
 
     fn or_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -213,6 +227,43 @@ impl ValuePathContext<'_> {
             (guard_value_literal(left), guard_value_literal(right)),
             (Some(_), None) | (None, Some(_))
         )
+    }
+}
+
+fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
+    match value {
+        AbstractValue::Dict(entries) => Some(bool_predicate(entries.contains_key(key))),
+        AbstractValue::Overlay { entries, fallback } => entries
+            .contains_key(key)
+            .then_some(Predicate::True)
+            .or_else(|| value_has_key(fallback, key)),
+        AbstractValue::Choice(choices) => {
+            let mut resolved = choices
+                .iter()
+                .map(|choice| value_has_key(choice, key))
+                .collect::<Option<Vec<_>>>()?;
+            resolved.sort();
+            resolved.dedup();
+            match resolved.as_slice() {
+                [predicate] => Some(predicate.clone()),
+                _ => None,
+            }
+        }
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::ValuesPath(_)
+        | AbstractValue::OutputPath(_, _)
+        | AbstractValue::RootContext
+        | AbstractValue::StringSet(_)
+        | AbstractValue::List(_) => None,
+    }
+}
+
+fn bool_predicate(value: bool) -> Predicate {
+    if value {
+        Predicate::True
+    } else {
+        Predicate::False
     }
 }
 

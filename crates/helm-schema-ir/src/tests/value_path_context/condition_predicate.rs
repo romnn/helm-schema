@@ -371,6 +371,28 @@ fn condition_without_values_reference_returns_empty() {
 }
 
 #[test]
+fn has_key_on_known_dict_is_structural_not_value_truthy() {
+    let template_bindings = HashMap::from([(
+        "arg".to_string(),
+        AbstractValue::Dict(BTreeMap::from([
+            (
+                "customLabels".to_string(),
+                AbstractValue::ValuesPath("commonLabels".to_string()),
+            ),
+            ("context".to_string(), AbstractValue::RootContext),
+        ])),
+    )]);
+
+    sim_assert_eq!(
+        have: parse_condition_with_template_bindings(
+            r#"and (hasKey $arg "customLabels") (hasKey $arg "context")"#,
+            template_bindings,
+        ),
+        want: Vec::<Guard>::new(),
+    );
+}
+
+#[test]
 fn eq_value_preserves_literal_dot_star_substring() {
     sim_assert_eq!(
         have: parse_condition(r#"eq .Values.X "match.*foo""#),

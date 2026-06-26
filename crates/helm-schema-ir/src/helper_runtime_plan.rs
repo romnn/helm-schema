@@ -18,15 +18,14 @@ use helm_schema_core::Predicate;
 pub(crate) struct HelperConditionPlan {
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) predicate: Predicate,
+    pub(crate) source_relations: Vec<BTreeSet<String>>,
     pub(crate) dot_binding: Option<AbstractValue>,
-    pub(crate) apply_alternative_predicate: bool,
 }
 
 #[derive(Clone)]
 pub(crate) struct HelperRangeRuntimePlan {
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) dot_binding: Option<AbstractValue>,
-    pub(crate) apply_dot_binding: bool,
     pub(crate) frame: RangeFrame,
     pub(crate) non_exact_variable_binding: Option<(String, AbstractValue)>,
     pub(crate) range_fragment_value: Option<AbstractValue>,
@@ -44,17 +43,11 @@ impl HelperRangeRuntimePlan {
                 .fragment_values
                 .insert(variable.clone(), binding.clone());
         }
-        if self.apply_dot_binding {
+        if self.frame.iterations.is_none() {
             control.push_effect_dot_binding(self.dot_binding.clone());
         }
         control.push_range_frame(self.frame.clone());
     }
-}
-
-#[derive(Clone, Copy)]
-pub(crate) enum NonExactRangeVariableBinding {
-    Bind,
-    Skip,
 }
 
 pub(crate) fn helper_if_condition_plan(
@@ -66,7 +59,6 @@ pub(crate) fn helper_if_condition_plan(
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    apply_alternative_predicate: bool,
 ) -> HelperConditionPlan {
     let facts = branch_condition_facts_for_expr(
         header.expr(),
@@ -81,8 +73,8 @@ pub(crate) fn helper_if_condition_plan(
     HelperConditionPlan {
         guard_paths: facts.guard_paths,
         predicate: facts.predicate,
+        source_relations: facts.source_relations,
         dot_binding: None,
-        apply_alternative_predicate,
     }
 }
 
@@ -96,7 +88,6 @@ pub(crate) fn helper_with_condition_plan(
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    apply_alternative_predicate: bool,
 ) -> HelperConditionPlan {
     let facts = branch_condition_facts_for_expr(
         header.expr(),
@@ -119,8 +110,8 @@ pub(crate) fn helper_with_condition_plan(
     HelperConditionPlan {
         guard_paths: facts.guard_paths,
         predicate: facts.predicate,
+        source_relations: facts.source_relations,
         dot_binding: body_dot,
-        apply_alternative_predicate,
     }
 }
 
@@ -132,14 +123,11 @@ pub(crate) fn helper_range_runtime_plan(
     local_bindings: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-    non_exact_range_variable_binding: NonExactRangeVariableBinding,
-    use_fragment_dot: bool,
 ) -> HelperRangeRuntimePlan {
     let Some(header) = header else {
         return HelperRangeRuntimePlan {
             guard_paths: BTreeSet::new(),
             dot_binding: None,
-            apply_dot_binding: true,
             frame: RangeFrame {
                 definitely_nonempty: false,
                 iterations: None,
@@ -164,9 +152,6 @@ pub(crate) fn helper_range_runtime_plan(
         context,
         seen,
     );
-    let range_helper_value = range_fragment_value
-        .as_ref()
-        .map(AbstractValue::to_context_value);
     let range_variable = range_variable_name_expr(header.expr());
     let exact_iterations = if let Some(AbstractValue::List(items)) = &range_fragment_value {
         Some(
@@ -184,11 +169,7 @@ pub(crate) fn helper_range_runtime_plan(
     } else {
         None
     };
-    let bind_non_exact_variable = matches!(
-        non_exact_range_variable_binding,
-        NonExactRangeVariableBinding::Bind
-    );
-    let non_exact_variable_binding = if exact_iterations.is_none() && bind_non_exact_variable {
+    let non_exact_variable_binding = if exact_iterations.is_none() {
         range_variable.zip(
             range_fragment_value
                 .as_ref()
@@ -198,26 +179,12 @@ pub(crate) fn helper_range_runtime_plan(
     } else {
         None
     };
-    let (frame_value, dot_binding) = if use_fragment_dot {
-        (
-            &range_fragment_value,
-            range_fragment_value
-                .as_ref()
-                .and_then(AbstractValue::fragment_range_item)
-                .map(|binding| binding.to_context_value()),
-        )
-    } else {
-        (
-            &range_helper_value,
-            range_helper_value
-                .as_ref()
-                .and_then(AbstractValue::helper_range_item)
-                .map(|binding| binding.to_context_value()),
-        )
-    };
-    let apply_dot_binding = exact_iterations.is_none();
+    let dot_binding = range_fragment_value
+        .as_ref()
+        .and_then(AbstractValue::fragment_range_item)
+        .map(|binding| binding.to_context_value());
     let frame = RangeFrame {
-        definitely_nonempty: frame_value
+        definitely_nonempty: range_fragment_value
             .as_ref()
             .is_some_and(AbstractValue::definitely_nonempty_iterable),
         iterations: exact_iterations,
@@ -225,7 +192,6 @@ pub(crate) fn helper_range_runtime_plan(
 
     HelperRangeRuntimePlan {
         dot_binding,
-        apply_dot_binding,
         frame,
         guard_paths,
         non_exact_variable_binding,
@@ -236,6 +202,7 @@ pub(crate) fn helper_range_runtime_plan(
 struct BranchConditionFacts {
     guard_paths: BTreeSet<String>,
     predicate: Predicate,
+    source_relations: Vec<BTreeSet<String>>,
 }
 
 fn branch_condition_facts_for_expr(
@@ -278,6 +245,37 @@ fn branch_condition_facts_for_expr(
     BranchConditionFacts {
         guard_paths,
         predicate,
+        source_relations: condition_source_relations(expr, local_bindings, local_output_meta),
+    }
+}
+
+fn condition_source_relations(
+    expr: &TemplateExpr,
+    local_bindings: &HashMap<String, AbstractValue>,
+    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+) -> Vec<BTreeSet<String>> {
+    let Some(variable) = condition_local_variable(expr) else {
+        return Vec::new();
+    };
+    let mut sources = local_bindings
+        .get(variable)
+        .map(AbstractValue::fragment_source_paths)
+        .unwrap_or_default();
+    if let Some(meta_by_path) = local_output_meta.get(variable) {
+        sources.extend(meta_by_path.keys().cloned());
+    }
+    if sources.len() > 1 {
+        vec![sources]
+    } else {
+        Vec::new()
+    }
+}
+
+fn condition_local_variable(expr: &TemplateExpr) -> Option<&str> {
+    match expr.deparen() {
+        TemplateExpr::Variable(name) if !name.is_empty() => Some(name.as_str()),
+        TemplateExpr::Pipeline(stages) => stages.first().and_then(condition_local_variable),
+        _ => None,
     }
 }
 

@@ -1,7 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::{ContractDocument, FinalizedContract};
-use crate::contract_normalization::normalize_contract_uses;
+use crate::contract_normalization::{
+    canonicalize_contract_uses, drop_default_guard_subsumed_duplicates, normalize_contract_uses,
+};
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 use helm_schema_core::ContractSchemaSignals;
 
@@ -12,6 +14,7 @@ use helm_schema_core::ContractSchemaSignals;
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractIr {
     uses: Vec<ContractUse>,
+    dependency_uses: Vec<ContractUse>,
     type_hints: BTreeMap<String, BTreeSet<String>>,
     dependency_values_root_fragments: BTreeSet<String>,
 }
@@ -33,6 +36,10 @@ impl ContractIr {
 
     pub(crate) fn push(&mut self, contract_use: ContractUse) {
         self.uses.push(contract_use);
+    }
+
+    pub(crate) fn push_dependency_use(&mut self, contract_use: ContractUse) {
+        self.dependency_uses.push(contract_use);
     }
 
     /// Add a pathless scalar claim for a value path.
@@ -57,6 +64,7 @@ impl ContractIr {
     /// Move all claims from another contract graph into this graph.
     pub fn append(&mut self, mut other: Self) {
         self.uses.append(&mut other.uses);
+        self.dependency_uses.append(&mut other.dependency_uses);
         self.dependency_values_root_fragments
             .append(&mut other.dependency_values_root_fragments);
         for (path, schema_types) in other.type_hints {
@@ -84,6 +92,13 @@ impl ContractIr {
                 }
             }
         }
+        for contract_use in &mut self.dependency_uses {
+            for guard in guards {
+                if !contract_use.guards.contains(guard) {
+                    contract_use.guards.push(guard.clone());
+                }
+            }
+        }
     }
 
     /// Rewrite all referenced values paths while preserving rendered YAML paths.
@@ -96,6 +111,9 @@ impl ContractIr {
         F: FnMut(&str) -> String,
     {
         for contract_use in &mut self.uses {
+            contract_use.map_value_paths(&mut map);
+        }
+        for contract_use in &mut self.dependency_uses {
             contract_use.map_value_paths(&mut map);
         }
         self.dependency_values_root_fragments =
@@ -167,11 +185,12 @@ impl ContractIr {
     pub fn finalize(self) -> FinalizedContract {
         let Self {
             mut uses,
+            mut dependency_uses,
             type_hints,
             dependency_values_root_fragments,
         } = self;
         for source_expr in &dependency_values_root_fragments {
-            uses.push(ContractUse::new(
+            dependency_uses.push(ContractUse::new(
                 source_expr.clone(),
                 YamlPath(Vec::new()),
                 ValueKind::Fragment,
@@ -180,6 +199,10 @@ impl ContractIr {
             ));
         }
         normalize_contract_uses(&mut uses);
+        canonicalize_contract_uses(&mut dependency_uses);
+        uses.append(&mut dependency_uses);
+        drop_default_guard_subsumed_duplicates(&mut uses);
+        canonicalize_contract_uses(&mut uses);
         FinalizedContract::new(uses, type_hints, dependency_values_root_fragments)
     }
 }

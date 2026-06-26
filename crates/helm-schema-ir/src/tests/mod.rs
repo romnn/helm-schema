@@ -191,6 +191,85 @@ metadata:
 }
 
 #[test]
+fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() {
+    let src = r#"
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
+{{- end }}
+"#;
+    let mut idx = DefineIndex::new();
+    let loaded = test_util::DefineSourceSpec {
+        helper_templates: &[],
+        helper_template_dirs: &[("charts/common/templates", "tpl")],
+        file_sources: &[],
+    }
+    .load();
+    for (idx_num, source) in loaded.helper_templates.into_iter().enumerate() {
+        idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
+    }
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src, &idx)
+        .finalize();
+
+    let name_override_uses = ir
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == "nameOverride")
+        .collect::<Vec<_>>();
+
+    let pathless_name_override_uses = name_override_uses
+        .iter()
+        .filter(|use_| use_.path.0.is_empty())
+        .collect::<Vec<_>>();
+    assert!(
+        pathless_name_override_uses.iter().all(|use_| !use_
+            .guards
+            .iter()
+            .any(|guard| matches!(guard, Guard::Truthy { path } if path == "commonLabels"))),
+        "commonLabels is the custom-label source, not a guard for the pathless common.names.name dependency: {pathless_name_override_uses:#?}"
+    );
+    let own_default_branch = [
+        Guard::Truthy {
+            path: "nameOverride".to_string(),
+        },
+        Guard::Truthy {
+            path: "networkPolicy.enabled".to_string(),
+        },
+        Guard::Default {
+            path: "nameOverride".to_string(),
+        },
+    ];
+    assert!(
+        name_override_uses
+            .iter()
+            .any(|use_| { use_.path == YamlPath(Vec::new()) && use_.guards == own_default_branch }),
+        "expected pathless nameOverride dependency to keep its own branch guards: {name_override_uses:#?}"
+    );
+    let app_name_path = YamlPath(vec![
+        "metadata".to_string(),
+        "labels".to_string(),
+        "app.kubernetes.io/name".to_string(),
+    ]);
+    assert!(
+        name_override_uses
+            .iter()
+            .filter(|use_| use_.path == app_name_path)
+            .all(|use_| !use_
+                .guards
+                .iter()
+                .any(|guard| matches!(guard, Guard::Not { path } if path == "nameOverride"))),
+        "a customLabels branch should not keep nameOverride=false after common.names.name is projected: {name_override_uses:#?}"
+    );
+}
+
+#[test]
 fn transitive_scalar_helper_default_projects_default_guard() {
     let helpers = r#"
 {{- define "liba.fullname" -}}

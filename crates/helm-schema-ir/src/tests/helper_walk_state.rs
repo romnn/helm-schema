@@ -67,20 +67,6 @@ fn merge_unions_fragment_local_bindings() {
 }
 
 #[test]
-fn value_control_state_pushes_helper_context_dot_only() {
-    let mut state =
-        HelperRuntimeControlState::for_value(Some(&AbstractValue::ValuesPath("root".to_string())));
-
-    state.push_effect_dot_binding(Some(AbstractValue::ValuesPath("child".to_string())));
-
-    sim_assert_eq!(
-        have: state.current_helper_dot().cloned(),
-        want: Some(AbstractValue::ValuesPath("child".to_string()))
-    );
-    assert!(state.current_fragment_dot().is_none());
-}
-
-#[test]
 fn fragment_control_state_tracks_fragment_and_helper_dot() {
     let mut state = HelperRuntimeControlState::for_fragment(
         Some(&AbstractValue::ValuesPath("root".to_string())),
@@ -101,7 +87,7 @@ fn fragment_control_state_tracks_fragment_and_helper_dot() {
 
 #[test]
 fn prepare_range_join_promotes_body_for_definitely_nonempty_frame() {
-    let mut state = HelperRuntimeControlState::for_value(None);
+    let mut state = HelperRuntimeControlState::for_fragment(None, None);
     state.push_range_frame(RangeFrame {
         definitely_nonempty: true,
         iterations: None,
@@ -115,7 +101,7 @@ fn prepare_range_join_promotes_body_for_definitely_nonempty_frame() {
 
 #[test]
 fn prepare_range_join_merges_when_frame_is_not_definitely_nonempty() {
-    let mut state = HelperRuntimeControlState::for_value(None);
+    let mut state = HelperRuntimeControlState::for_fragment(None, None);
     state.push_range_frame(RangeFrame {
         definitely_nonempty: false,
         iterations: None,

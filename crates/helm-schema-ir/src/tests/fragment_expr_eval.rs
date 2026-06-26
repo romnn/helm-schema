@@ -186,7 +186,10 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
         .find(|output| output.source_expr == "nameOverride")
         .expect("nameOverride output use should be present");
     let meta = &output.meta;
-    assert!(meta.predicates.is_empty());
+    sim_assert_eq!(
+        have: meta.contract_guard_sets("nameOverride"),
+        want: vec![Vec::new()]
+    );
     assert!(!meta.defaulted);
     assert!(
         meta.provenance.iter().any(|provenance| {

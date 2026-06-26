@@ -11,6 +11,9 @@ pub(crate) struct HelperOutputMeta {
     pub(crate) defaulted: bool,
     pub(crate) provenance: Vec<ContractProvenance>,
     pub(crate) suppress_predicate_paths: BTreeSet<String>,
+    pub(crate) related_sources: BTreeSet<String>,
+    pub(crate) sibling_sources: BTreeSet<String>,
+    pub(crate) require_sibling_guards: bool,
 }
 
 impl HelperOutputMeta {
@@ -24,6 +27,9 @@ impl HelperOutputMeta {
             defaulted,
             provenance: Vec::new(),
             suppress_predicate_paths: BTreeSet::new(),
+            related_sources: BTreeSet::new(),
+            sibling_sources: BTreeSet::new(),
+            require_sibling_guards: false,
         }
     }
 
@@ -32,6 +38,9 @@ impl HelperOutputMeta {
         _source_expr: &str,
         predicates: &BTreeSet<Predicate>,
     ) -> Self {
+        if predicates.is_empty() {
+            return self;
+        }
         let active_predicates = predicates.iter().cloned().collect::<Vec<_>>();
         let base_branches = if self.predicates.is_empty() {
             vec![BTreeSet::new()]
@@ -50,19 +59,27 @@ impl HelperOutputMeta {
     }
 
     pub(crate) fn merge(&mut self, other: Self) {
-        self.predicates.extend(other.predicates);
+        self.merge_predicate_branches(&other);
         self.defaulted |= other.defaulted;
         self.merge_provenance(other.provenance);
         self.suppress_predicate_paths
             .extend(other.suppress_predicate_paths);
+        self.related_sources.extend(other.related_sources);
+        self.sibling_sources.extend(other.sibling_sources);
+        self.require_sibling_guards |= other.require_sibling_guards;
     }
 
     pub(crate) fn merge_ref(&mut self, other: &Self) {
-        self.predicates.extend(other.predicates.iter().cloned());
+        self.merge_predicate_branches(other);
         self.defaulted |= other.defaulted;
         self.merge_provenance(other.provenance.iter().cloned());
         self.suppress_predicate_paths
             .extend(other.suppress_predicate_paths.iter().cloned());
+        self.related_sources
+            .extend(other.related_sources.iter().cloned());
+        self.sibling_sources
+            .extend(other.sibling_sources.iter().cloned());
+        self.require_sibling_guards |= other.require_sibling_guards;
     }
 
     pub(crate) fn suppress_predicate_path(&mut self, path: impl Into<String>) {
@@ -76,12 +93,89 @@ impl HelperOutputMeta {
         self.merge_provenance(std::iter::once(provenance));
     }
 
+    pub(crate) fn relate_sources(&mut self, sources: &BTreeSet<String>) {
+        self.related_sources
+            .extend(sources.iter().filter(|source| !source.is_empty()).cloned());
+    }
+
+    pub(crate) fn note_sibling_sources(&mut self, source_expr: &str, sources: &BTreeSet<String>) {
+        if self.predicates.is_empty() && !self.defaulted {
+            return;
+        }
+        self.sibling_sources.extend(
+            sources
+                .iter()
+                .filter(|source| source.as_str() != source_expr && !source.is_empty())
+                .cloned(),
+        );
+    }
+
+    pub(crate) fn require_sibling_guards(&mut self) {
+        self.require_sibling_guards = true;
+    }
+
+    pub(crate) fn prune_source_not_for_sibling_truthy(
+        &mut self,
+        source_expr: &str,
+        sources: &BTreeSet<String>,
+    ) {
+        let predicate_branches = std::mem::take(&mut self.predicates);
+        self.predicates = predicate_branches
+            .into_iter()
+            .map(|mut predicate_branch| {
+                let has_truthy_sibling = predicate_branch.iter().any(|predicate| {
+                    predicate_truthy_path(predicate).is_some_and(|path| {
+                        unrelated_source_sibling(source_expr, path, self, sources)
+                    })
+                });
+                if has_truthy_sibling {
+                    predicate_branch.retain(|predicate| {
+                        !predicate_not_truthy_path(predicate)
+                            .is_some_and(|path| path == source_expr)
+                    });
+                }
+                predicate_branch
+            })
+            .collect();
+    }
+
+    pub(crate) fn prune_truthy_ancestors_of_source(&mut self, source_expr: &str) {
+        let predicate_branches = std::mem::take(&mut self.predicates);
+        self.predicates = predicate_branches
+            .into_iter()
+            .map(|mut predicate_branch| {
+                let has_source_truthy = predicate_branch.iter().any(|predicate| {
+                    predicate_truthy_path(predicate).is_some_and(|path| path == source_expr)
+                });
+                if has_source_truthy {
+                    predicate_branch.retain(|predicate| {
+                        !predicate_truthy_path(predicate).is_some_and(|path| {
+                            path != source_expr
+                                && output_path::values_path_is_descendant(source_expr, path)
+                        })
+                    });
+                }
+                predicate_branch
+            })
+            .collect();
+    }
+
+    fn record_unconditional_branch(&mut self) {
+        if self.predicates.is_empty() {
+            self.predicates.insert(BTreeSet::new());
+        }
+    }
+
     fn merge_provenance(&mut self, incoming: impl IntoIterator<Item = ContractProvenance>) {
         for provenance in incoming {
             if !self.provenance.contains(&provenance) {
                 self.provenance.push(provenance);
             }
         }
+    }
+
+    fn merge_predicate_branches(&mut self, other: &Self) {
+        self.predicates.extend(other.predicates.iter().cloned());
     }
 
     pub(crate) fn contract_guard_sets(&self, source_expr: &str) -> Vec<Vec<Guard>> {
@@ -95,6 +189,7 @@ impl HelperOutputMeta {
             let predicate_branch = self.prune_suppressed_predicates(predicate_branch, source_expr);
             let mut guards =
                 Predicate::contract_guard_stack(&predicate_branch.into_iter().collect::<Vec<_>>());
+            drop_redundant_not_eq_guards(&mut guards);
             if self.defaulted {
                 let default_guard = Guard::Default {
                     path: source_expr.to_string(),
@@ -102,6 +197,12 @@ impl HelperOutputMeta {
                 if !guards.contains(&default_guard) {
                     guards.push(default_guard);
                 }
+                prune_defaulted_sibling_guards(
+                    &mut guards,
+                    source_expr,
+                    &self.sibling_sources,
+                    &self.related_sources,
+                );
             }
             if !guard_sets.contains(&guards) {
                 guard_sets.push(guards);
@@ -135,10 +236,76 @@ impl HelperOutputMeta {
 }
 
 fn truthy_guard_path(predicate: &Predicate) -> Option<&str> {
+    predicate_truthy_path(predicate)
+}
+
+fn predicate_truthy_path(predicate: &Predicate) -> Option<&str> {
     match predicate {
         Predicate::Guard(Guard::Truthy { path }) => Some(path),
         _ => None,
     }
+}
+
+fn predicate_not_truthy_path(predicate: &Predicate) -> Option<&str> {
+    match predicate {
+        Predicate::Guard(Guard::Not { path }) => Some(path),
+        Predicate::Not(inner) => predicate_truthy_path(inner),
+        _ => None,
+    }
+}
+
+fn prune_defaulted_sibling_guards(
+    guards: &mut Vec<Guard>,
+    source_expr: &str,
+    sibling_sources: &BTreeSet<String>,
+    related_sources: &BTreeSet<String>,
+) {
+    let has_source_truthy = guards
+        .iter()
+        .any(|guard| matches!(guard, Guard::Truthy { path } if path == source_expr));
+    let has_unrelated_sibling_truthy = guards.iter().any(|guard| {
+        let Guard::Truthy { path } = guard else {
+            return false;
+        };
+        path != source_expr
+            && sibling_sources.contains(path)
+            && !related_sources.contains(path)
+            && !values_paths_are_related(path, source_expr)
+    });
+    if has_source_truthy {
+        guards.retain(|guard| {
+            !matches!(
+                guard,
+                Guard::Truthy { path }
+                    if path != source_expr
+                        && sibling_sources.contains(path)
+                        && !related_sources.contains(path)
+                        && !values_paths_are_related(path, source_expr)
+            )
+        });
+    }
+    if has_source_truthy || has_unrelated_sibling_truthy {
+        guards.retain(|guard| !matches!(guard, Guard::Not { path } if path == source_expr));
+    }
+}
+
+fn drop_redundant_not_eq_guards(guards: &mut Vec<Guard>) {
+    let eq_guards = guards
+        .iter()
+        .filter_map(|guard| match guard {
+            Guard::Eq { path, value } => Some((path.clone(), value.clone())),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+    if eq_guards.is_empty() {
+        return;
+    }
+    guards.retain(|guard| match guard {
+        Guard::NotEq { path, value } => !eq_guards
+            .iter()
+            .any(|(eq_path, eq_value)| eq_path == path && eq_value != value),
+        _ => true,
+    });
 }
 
 pub(crate) fn insert_type_hint(
@@ -161,6 +328,7 @@ pub(crate) struct HelperFragmentOutputUse {
     pub(crate) relative_path: YamlPath,
     pub(crate) kind: ValueKind,
     pub(crate) encoded: bool,
+    pub(crate) rendered: bool,
     pub(crate) meta: HelperOutputMeta,
 }
 
@@ -169,13 +337,15 @@ impl HelperFragmentOutputUse {
         source_expr: String,
         relative_path: YamlPath,
         kind: ValueKind,
-        meta: HelperOutputMeta,
+        mut meta: HelperOutputMeta,
     ) -> Self {
+        meta.record_unconditional_branch();
         Self {
             source_expr,
             relative_path,
             kind,
             encoded: false,
+            rendered: true,
             meta,
         }
     }
@@ -185,31 +355,67 @@ impl HelperFragmentOutputUse {
         relative_path: YamlPath,
         kind: ValueKind,
         encoded: bool,
-        meta: HelperOutputMeta,
+        mut meta: HelperOutputMeta,
     ) -> Self {
+        meta.record_unconditional_branch();
         Self {
             source_expr,
             relative_path,
             kind,
             encoded,
+            rendered: true,
             meta,
         }
     }
 
+    pub(crate) fn dependency(source_expr: String, meta: HelperOutputMeta) -> Self {
+        Self {
+            source_expr,
+            relative_path: YamlPath(Vec::new()),
+            kind: ValueKind::Scalar,
+            encoded: false,
+            rendered: false,
+            meta,
+        }
+    }
+
+    pub(crate) fn is_rendered(&self) -> bool {
+        self.rendered
+    }
+
+    pub(crate) fn is_dependency(&self) -> bool {
+        !self.rendered
+    }
+
     pub(crate) fn is_scalar_summary_output(&self) -> bool {
-        self.relative_path.0.is_empty() && self.kind == ValueKind::Scalar && !self.encoded
+        self.rendered
+            && self.relative_path.0.is_empty()
+            && self.kind == ValueKind::Scalar
+            && !self.encoded
     }
 
     pub(crate) fn is_structured_output(&self) -> bool {
-        !self.is_scalar_summary_output()
+        self.rendered && !self.is_scalar_summary_output()
+    }
+}
+
+pub(crate) fn relate_outputs_to_sources(
+    outputs: &mut [HelperFragmentOutputUse],
+    sources: &BTreeSet<String>,
+) {
+    if sources.len() < 2 {
+        return;
+    }
+    for output in outputs.iter_mut().filter(|output| output.is_rendered()) {
+        output.meta.relate_sources(&sources);
     }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct HelperSummary {
     pub(crate) string_output: BTreeSet<String>,
-    pub(crate) dependency_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) guard_paths: BTreeSet<String>,
+    pub(crate) guard_path_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) output_uses: Vec<HelperFragmentOutputUse>,
     pub(crate) suppress_roots: BTreeSet<String>,
@@ -226,10 +432,10 @@ pub(crate) struct HelperSummary {
 
 impl HelperSummary {
     pub(crate) fn extend(&mut self, other: Self) {
-        for (path, meta) in other.dependency_meta {
-            self.merge_dependency_meta(path, meta);
-        }
         self.guard_paths.extend(other.guard_paths);
+        for (path, meta) in other.guard_path_meta {
+            self.merge_guard_path_meta(path, meta);
+        }
         for (path, hints) in other.type_hints {
             self.merge_type_hints(path, hints);
         }
@@ -239,49 +445,101 @@ impl HelperSummary {
         self.chart_defaults.extend(other.chart_defaults);
     }
 
-    pub(crate) fn merge_output_meta(&mut self, path: String, meta: HelperOutputMeta) {
-        if path.trim().is_empty() {
-            return;
-        }
-        self.add_output_use(HelperFragmentOutputUse::new(
-            path,
-            YamlPath(Vec::new()),
-            ValueKind::Scalar,
-            meta,
-        ));
-    }
-
     pub(crate) fn merge_dependency_meta(&mut self, path: String, meta: HelperOutputMeta) {
         if path.trim().is_empty() {
             return;
         }
-        self.dependency_meta.entry(path).or_default().merge(meta);
+        self.add_output_use(HelperFragmentOutputUse::dependency(path, meta));
     }
 
     pub(crate) fn add_guard_path(&mut self, path: String) {
         if !path.trim().is_empty() {
-            self.guard_paths.insert(path);
+            self.guard_paths.insert(path.clone());
+            self.guard_path_meta.entry(path).or_default();
         }
     }
 
-    pub(crate) fn add_output_use(&mut self, output: HelperFragmentOutputUse) {
+    pub(crate) fn merge_guard_path_meta(&mut self, path: String, meta: HelperOutputMeta) {
+        if path.trim().is_empty() {
+            return;
+        }
+        self.guard_paths.insert(path.clone());
+        self.guard_path_meta.entry(path).or_default().merge(meta);
+    }
+
+    pub(crate) fn add_output_use(&mut self, mut output: HelperFragmentOutputUse) {
         if output.source_expr.trim().is_empty() {
             return;
         }
-        if output.is_scalar_summary_output()
-            && let Some(existing) = self.output_uses.iter_mut().find(|existing| {
-                existing.is_scalar_summary_output() && existing.source_expr == output.source_expr
-            })
+        if output.is_structured_output()
+            && output.meta.defaulted
+            && !output.meta.sibling_sources.is_empty()
+        {
+            output.meta.require_sibling_guards();
+        }
+        if self
+            .output_uses
+            .iter()
+            .any(|existing| sibling_required_output_covers(existing, &output))
+        {
+            return;
+        }
+        if output.meta.require_sibling_guards {
+            self.output_uses
+                .retain(|existing| !sibling_required_output_covers(&output, existing));
+        }
+        if let Some(existing) = self
+            .output_uses
+            .iter_mut()
+            .find(|existing| helper_output_use_identity_matches(existing, &output))
         {
             existing.meta.merge(output.meta);
+            self.prune_pathless_summary_sibling_predicates();
             return;
         }
         self.output_uses.push(output);
+        self.prune_pathless_summary_sibling_predicates();
     }
 
     pub(crate) fn add_output_uses(&mut self, outputs: Vec<HelperFragmentOutputUse>) {
         for output in outputs {
             self.add_output_use(output);
+        }
+    }
+
+    fn prune_pathless_summary_sibling_predicates(&mut self) {
+        let pathless_sources: BTreeSet<String> = self
+            .output_uses
+            .iter()
+            .filter(|output| output.is_scalar_summary_output() || output.is_dependency())
+            .map(|output| output.source_expr.clone())
+            .collect();
+        if pathless_sources.len() < 2 {
+            return;
+        }
+        for output in &mut self.output_uses {
+            if !pathless_sources.contains(&output.source_expr) {
+                continue;
+            }
+            let record_sibling_sources = !output.is_structured_output();
+            prune_pathless_sibling_predicates_for_meta(
+                &output.source_expr,
+                output.relative_path.0.is_empty(),
+                &mut output.meta,
+                &pathless_sources,
+                record_sibling_sources,
+            );
+        }
+        for (source_expr, meta) in &mut self.guard_path_meta {
+            if pathless_sources.contains(source_expr) {
+                prune_pathless_sibling_predicates_for_meta(
+                    source_expr,
+                    true,
+                    meta,
+                    &pathless_sources,
+                    true,
+                );
+            }
         }
     }
 
@@ -302,18 +560,15 @@ impl HelperSummary {
     }
 
     pub(crate) fn has_document_value_facts(&self) -> bool {
-        !self.output_uses.is_empty()
-            || !self.dependency_meta.is_empty()
-            || !self.guard_paths.is_empty()
-            || !self.type_hints.is_empty()
+        !self.output_uses.is_empty() || !self.guard_paths.is_empty() || !self.type_hints.is_empty()
     }
 
     pub(crate) fn add_provenance(&mut self, provenance: ContractProvenance) {
-        for meta in self.dependency_meta.values_mut() {
-            meta.add_provenance_site(provenance.clone());
-        }
         for output in &mut self.output_uses {
             output.meta.add_provenance_site(provenance.clone());
+        }
+        for meta in self.guard_path_meta.values_mut() {
+            meta.add_provenance_site(provenance.clone());
         }
     }
 
@@ -329,14 +584,14 @@ impl HelperSummary {
     }
 
     pub(crate) fn has_rendered_source_descendant(&self, path: &str) -> bool {
-        self.output_uses
-            .iter()
-            .any(|output| output_path::values_path_is_descendant(&output.source_expr, path))
+        self.output_uses.iter().any(|output| {
+            output.is_rendered()
+                && output_path::values_path_is_descendant(&output.source_expr, path)
+        })
     }
 
     pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
-        paths.extend(self.dependency_meta.keys().cloned());
         paths.extend(self.guard_paths.iter().cloned());
         paths.extend(self.type_hints.keys().cloned());
         paths.extend(
@@ -381,7 +636,12 @@ impl HelperSummary {
         if !self.string_output.is_empty() {
             values.push(AbstractValue::StringSet(self.string_output.clone()));
         }
-        for output in self.output_uses.iter().cloned() {
+        for output in self
+            .output_uses
+            .iter()
+            .filter(|output| output.is_rendered())
+            .cloned()
+        {
             if output.is_scalar_summary_output()
                 && (self.has_structured_fragment_source(&output.source_expr)
                     || self.has_rendered_source_descendant(&output.source_expr))
@@ -391,13 +651,133 @@ impl HelperSummary {
             values.push(AbstractValue::for_output_path(
                 output.source_expr,
                 &output.relative_path,
-                output.meta,
+                projected_output_meta(output.meta),
             ));
         }
         AbstractValue::merge_all(values)
             .map(|value| value.to_context_value())
             .and_then(|value| AbstractValue::merge_context_values(vec![value]))
     }
+}
+
+fn projected_output_meta(mut meta: HelperOutputMeta) -> HelperOutputMeta {
+    if meta.predicates.len() == 1
+        && meta
+            .predicates
+            .iter()
+            .next()
+            .is_some_and(BTreeSet::is_empty)
+    {
+        meta.predicates.clear();
+    }
+    if meta.predicates.is_empty() && !meta.defaulted && !meta.require_sibling_guards {
+        meta.related_sources.clear();
+        meta.sibling_sources.clear();
+    }
+    meta
+}
+
+fn helper_output_use_identity_matches(
+    existing: &HelperFragmentOutputUse,
+    output: &HelperFragmentOutputUse,
+) -> bool {
+    existing.rendered == output.rendered
+        && existing.source_expr == output.source_expr
+        && existing.meta.sibling_sources == output.meta.sibling_sources
+        && existing.meta.require_sibling_guards == output.meta.require_sibling_guards
+        && (!existing.is_structured_output() || existing.meta.provenance == output.meta.provenance)
+        && (!existing.rendered
+            || (existing.relative_path == output.relative_path
+                && existing.kind == output.kind
+                && existing.encoded == output.encoded))
+}
+
+fn sibling_required_output_covers(
+    required: &HelperFragmentOutputUse,
+    candidate: &HelperFragmentOutputUse,
+) -> bool {
+    required.rendered
+        && candidate.rendered
+        && required.source_expr == candidate.source_expr
+        && required.relative_path == candidate.relative_path
+        && required.kind == candidate.kind
+        && required.encoded == candidate.encoded
+        && required.meta.require_sibling_guards
+        && !candidate.meta.require_sibling_guards
+        && required.meta.sibling_sources == candidate.meta.sibling_sources
+        && required.meta.provenance == candidate.meta.provenance
+}
+
+fn prune_pathless_sibling_predicates_for_meta(
+    source_expr: &str,
+    relative_path_empty: bool,
+    meta: &mut HelperOutputMeta,
+    pathless_sources: &BTreeSet<String>,
+    record_sibling_sources: bool,
+) {
+    if record_sibling_sources {
+        meta.note_sibling_sources(source_expr, pathless_sources);
+    }
+    let predicate_branches = std::mem::take(&mut meta.predicates);
+    meta.predicates = predicate_branches
+        .into_iter()
+        .map(|mut predicate_branch| {
+            let has_truthy_sibling = predicate_branch.iter().any(|predicate| {
+                predicate_truthy_path(predicate).is_some_and(|path| {
+                    unrelated_pathless_sibling(source_expr, path, meta, pathless_sources)
+                })
+            });
+            if !meta.defaulted || relative_path_empty {
+                predicate_branch.retain(|predicate| {
+                    !predicate_truthy_path(predicate).is_some_and(|path| {
+                        unrelated_pathless_sibling(source_expr, path, meta, pathless_sources)
+                    })
+                });
+            }
+            let has_source_truthy = predicate_branch.iter().any(|predicate| {
+                predicate_truthy_path(predicate).is_some_and(|path| path == source_expr)
+            });
+            if meta.defaulted && (has_source_truthy || has_truthy_sibling || !relative_path_empty) {
+                predicate_branch.retain(|predicate| {
+                    !predicate_not_truthy_path(predicate).is_some_and(|path| path == source_expr)
+                });
+            }
+            predicate_branch
+        })
+        .collect();
+}
+
+fn unrelated_pathless_sibling(
+    source_expr: &str,
+    predicate_path: &str,
+    meta: &HelperOutputMeta,
+    pathless_sources: &BTreeSet<String>,
+) -> bool {
+    unrelated_source_sibling(source_expr, predicate_path, meta, pathless_sources)
+}
+
+fn unrelated_source_sibling(
+    source_expr: &str,
+    predicate_path: &str,
+    meta: &HelperOutputMeta,
+    sibling_sources: &BTreeSet<String>,
+) -> bool {
+    if meta.related_sources.contains(predicate_path) {
+        return false;
+    }
+    predicate_path != source_expr
+        && sibling_sources.contains(predicate_path)
+        && !values_paths_are_related(predicate_path, source_expr)
+}
+
+pub(crate) fn values_paths_are_related(left: &str, right: &str) -> bool {
+    values_path_root(left) == values_path_root(right)
+        || output_path::values_path_is_descendant(left, right)
+        || output_path::values_path_is_descendant(right, left)
+}
+
+fn values_path_root(path: &str) -> &str {
+    path.split('.').next().unwrap_or(path)
 }
 
 #[cfg(test)]

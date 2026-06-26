@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
+use helm_schema_core as output_path;
 
 /// Apply semantic finalization to claims produced by the interpreter.
 ///
@@ -12,7 +13,9 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
     canonicalize_contract_use_inputs(uses);
     drop_default_guard_subsumed_duplicates(uses);
     drop_values_list_envelope_duplicates(uses);
+    drop_self_truthy_subsumed_duplicates(uses);
     merge_pathless_resource_variants(uses);
+    drop_self_truthy_subsumed_duplicates(uses);
     canonicalize_contract_uses(uses);
 }
 
@@ -77,7 +80,7 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
     *uses = merged;
 }
 
-fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
+pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
     let defaulted_render_sites: BTreeSet<_> = uses
         .iter()
         .filter(|contract_use| has_self_default_guard(contract_use))
@@ -108,6 +111,56 @@ fn drop_values_list_envelope_duplicates(uses: &mut Vec<ContractUse>) {
         site.1.0.remove(index);
         !render_sites.contains(&site)
     });
+}
+
+fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
+    let all_uses = uses.clone();
+    uses.retain(|contract_use| {
+        let has_self_truthy = contract_use.guards.iter().any(
+            |guard| matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr),
+        );
+        if contract_use.guards.iter().any(
+            |guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr),
+        ) {
+            return true;
+        }
+        !all_uses.iter().any(|other| {
+            other.source_expr == contract_use.source_expr
+                && render_site(other) == render_site(contract_use)
+                && !other.provenance.is_empty()
+                && ((contract_use.provenance.is_empty() && contract_use.resource.is_some())
+                    || other.provenance == contract_use.provenance)
+                && other.guards.len() > contract_use.guards.len()
+                && contract_use
+                    .guards
+                    .iter()
+                    .all(|guard| other.guards.contains(guard))
+                && ((!has_self_truthy
+                    && other.guards.iter().any(|guard| {
+                        matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr)
+                    }))
+                    || extra_guards_are_truthy_parents(contract_use, other))
+        })
+    });
+}
+
+fn extra_guards_are_truthy_parents(contract_use: &ContractUse, other: &ContractUse) -> bool {
+    other
+        .guards
+        .iter()
+        .filter(|guard| !contract_use.guards.contains(guard))
+        .all(|guard| {
+            let Guard::Truthy { path: parent } = guard else {
+                return false;
+            };
+            contract_use.guards.iter().any(|existing| {
+                matches!(
+                    existing,
+                    Guard::Truthy { path: child }
+                        if output_path::values_path_is_descendant(child, parent)
+                )
+            })
+        })
 }
 
 type RenderSite = (String, YamlPath, ValueKind, Option<ResourceRef>);

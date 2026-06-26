@@ -182,8 +182,18 @@ fn helper_summary_projection_preserves_structured_output_path() {
 #[test]
 fn helper_summary_projection_merges_scalar_outputs_into_one_choice() {
     let mut summary = HelperSummary::default();
-    summary.merge_output_meta("image.repository".to_string(), HelperOutputMeta::default());
-    summary.merge_output_meta("image.tag".to_string(), HelperOutputMeta::default());
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "image.repository".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta::default(),
+    ));
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "image.tag".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta::default(),
+    ));
 
     sim_assert_eq!(
         have: summary.project_value(),
@@ -195,12 +205,119 @@ fn helper_summary_projection_merges_scalar_outputs_into_one_choice() {
 }
 
 #[test]
+fn pathless_summary_prunes_independent_sibling_predicates() {
+    let mut summary = HelperSummary::default();
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "nameOverride".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta {
+            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path("commonLabels")])]),
+            ..HelperOutputMeta::default()
+        },
+    ));
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "commonLabels".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta::default(),
+    ));
+
+    let output = summary
+        .output_uses
+        .iter()
+        .find(|output| output.source_expr == "nameOverride")
+        .expect("nameOverride output");
+
+    sim_assert_eq!(
+        have: output.meta.contract_guard_sets("nameOverride"),
+        want: vec![Vec::new()]
+    );
+}
+
+#[test]
+fn pathless_summary_keeps_local_global_sibling_predicates() {
+    let mut summary = HelperSummary::default();
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "auth.password".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta {
+            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+                "global.postgresql.auth.password",
+            )])]),
+            related_sources: BTreeSet::from(["global.postgresql.auth.password".to_string()]),
+            ..HelperOutputMeta::default()
+        },
+    ));
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "global.postgresql.auth.password".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta::default(),
+    ));
+
+    let output = summary
+        .output_uses
+        .iter()
+        .find(|output| output.source_expr == "auth.password")
+        .expect("auth.password output");
+
+    sim_assert_eq!(
+        have: output.meta.contract_guard_sets("auth.password"),
+        want: vec![vec![Guard::Truthy {
+            path: "global.postgresql.auth.password".to_string(),
+        }]]
+    );
+}
+
+#[test]
+fn pathless_summary_keeps_local_global_scope_sibling_predicates() {
+    let mut summary = HelperSummary::default();
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "auth.password".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta {
+            predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+                "global.postgresql.auth.postgresPassword",
+            )])]),
+            related_sources: BTreeSet::from(
+                ["global.postgresql.auth.postgresPassword".to_string()],
+            ),
+            ..HelperOutputMeta::default()
+        },
+    ));
+    summary.add_output_use(HelperFragmentOutputUse::new(
+        "global.postgresql.auth.postgresPassword".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta::default(),
+    ));
+
+    let output = summary
+        .output_uses
+        .iter()
+        .find(|output| output.source_expr == "auth.password")
+        .expect("auth.password output");
+
+    sim_assert_eq!(
+        have: output.meta.contract_guard_sets("auth.password"),
+        want: vec![vec![Guard::Truthy {
+            path: "global.postgresql.auth.postgresPassword".to_string(),
+        }]]
+    );
+}
+
+#[test]
 fn suppresses_bound_root_when_helper_outputs_descendant_path() {
     let mut analysis = HelperSummary::default();
-    analysis.merge_output_meta(
+    analysis.add_output_use(HelperFragmentOutputUse::new(
         "serviceAccount.name".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
         HelperOutputMeta::default(),
-    );
+    ));
     let bindings = HashMap::from([(
         "config".to_string(),
         AbstractValue::ValuesPath("serviceAccount".to_string()),
@@ -217,7 +334,12 @@ fn suppresses_bound_root_when_helper_outputs_descendant_path() {
 #[test]
 fn does_not_suppress_bound_root_for_exact_root_output() {
     let mut analysis = HelperSummary::default();
-    analysis.merge_output_meta("serviceAccount".to_string(), HelperOutputMeta::default());
+    analysis.add_output_use(HelperFragmentOutputUse::new(
+        "serviceAccount".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        HelperOutputMeta::default(),
+    ));
     let bindings = HashMap::from([(
         "config".to_string(),
         AbstractValue::ValuesPath("serviceAccount".to_string()),

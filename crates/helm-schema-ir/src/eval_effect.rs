@@ -106,13 +106,6 @@ impl Effects {
         paths
     }
 
-    pub(crate) fn local_output_sources(&self) -> BTreeSet<String> {
-        let mut paths = self.local_rendered_paths();
-        paths.extend(self.local_output_meta.keys().cloned());
-        paths.retain(|path| !path.trim().is_empty());
-        paths
-    }
-
     pub(crate) fn local_source_paths(&self) -> BTreeSet<String> {
         self.local_output_values
             .iter()
@@ -164,12 +157,13 @@ impl Effects {
         kind: ValueKind,
         active_output_predicates: &BTreeSet<Predicate>,
     ) -> Vec<HelperFragmentOutputUse> {
+        let empty_predicates = BTreeSet::new();
         let mut outputs = output_uses_from_values(
             &self.local_output_values,
             output_path,
             kind,
             &BTreeSet::new(),
-            active_output_predicates,
+            &empty_predicates,
             &self.local_default_paths,
             true,
         );
@@ -177,6 +171,10 @@ impl Effects {
             if let Some(meta) = self.local_output_meta.get(&output.source_expr) {
                 output.meta.merge_ref(meta);
             }
+            output.meta = output
+                .meta
+                .clone()
+                .with_output_site_predicates(&output.source_expr, active_output_predicates);
         }
         outputs
     }

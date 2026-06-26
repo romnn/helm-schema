@@ -85,10 +85,6 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn helper_range_item(&self) -> Option<Self> {
-        self.range_item(true)
-    }
-
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
         self.range_item(false)
     }

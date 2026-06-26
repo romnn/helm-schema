@@ -1,4 +1,7 @@
-use crate::{ContractIr, ContractUse, Guard, ResourceRef, ValueKind, YamlPath};
+use crate::{
+    ContractIr, ContractProvenance, ContractUse, Guard, GuardValue, ResourceRef, SourceSpan,
+    ValueKind, YamlPath,
+};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -66,6 +69,57 @@ fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
             .and_then(|value_use| value_use.resource.as_ref())
             .map(|resource| (resource.api_version.as_str(), resource.kind.as_str())),
         want: Some(("v1", "Service"))
+    );
+}
+
+#[test]
+fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
+    let resource = ResourceRef {
+        api_version: "v1".to_string(),
+        kind: "Secret".to_string(),
+        api_version_candidates: Vec::new(),
+        api_version_branches: Vec::new(),
+    };
+    let guards = vec![Guard::NotEq {
+        path: "auth.username".to_string(),
+        value: GuardValue::string("postgres"),
+    }];
+    let mut contract = ContractIr::default();
+    contract.push_dependency_use(ContractUse::with_provenances(
+        "auth.password".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        guards.clone(),
+        None,
+        vec![ContractProvenance::new(
+            "<inline:utils>",
+            SourceSpan::new(1844, 2122),
+            vec!["common.utils.getKeyFromList".to_string()],
+        )],
+    ));
+    contract.push(ContractUse::new(
+        "auth.password".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        guards,
+        Some(resource),
+    ));
+
+    let value_uses = contract.finalize();
+    let value_uses = value_uses.uses();
+
+    sim_assert_eq!(have: value_uses.len(), want: 2);
+    assert!(value_uses.iter().any(|value_use| {
+        value_use.resource.is_none()
+            && value_use
+                .provenance
+                .iter()
+                .any(|site| site.helper_chain == vec!["common.utils.getKeyFromList".to_string()])
+    }));
+    assert!(
+        value_uses
+            .iter()
+            .any(|value_use| value_use.resource.is_some())
     );
 }
 

@@ -136,15 +136,11 @@ fn fragment_paths_stay_shallow_while_rendered_paths_descend_structures() {
 }
 
 #[test]
-fn helper_and_fragment_range_items_keep_distinct_structural_policy() {
+fn fragment_range_item_does_not_iterate_map_values() {
     let value = AbstractValue::Dict(BTreeMap::from([(
         "name".to_string(),
         AbstractValue::ValuesPath("containers.name".to_string()),
     )]));
 
     sim_assert_eq!(have: value.fragment_range_item(), want: None);
-    sim_assert_eq!(
-        have: value.helper_range_item(),
-        want: Some(AbstractValue::ValuesPath("containers.name".to_string()))
-    );
 }

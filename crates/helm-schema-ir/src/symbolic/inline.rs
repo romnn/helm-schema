@@ -121,29 +121,35 @@ impl SymbolicWalker<'_> {
         let helper_renders_output = helper_summary.has_document_value_facts();
         let suppress_roots = helper_summary.suppress_roots;
         let helper_type_hints = helper_summary.type_hints;
-        let inline_dependency_meta = helper_summary.dependency_meta;
+        let inline_dependency_outputs = helper_summary
+            .output_uses
+            .into_iter()
+            .filter(|output| output.is_dependency())
+            .collect::<Vec<_>>();
         if helper_renders_output {
             contract.extend_type_hints(helper_type_hints);
         }
         self.contract.append(contract);
         let outer_guards = self.contract_guards();
-        for (value, meta) in inline_dependency_meta {
+        for output in inline_dependency_outputs {
+            let value = output.source_expr;
             if suppress_roots.contains(&value) {
                 continue;
             }
-            for extra_guards in meta.contract_guard_sets(&value) {
+            for extra_guards in output.meta.contract_guard_sets(&value) {
                 let mut guards = outer_guards.clone();
                 for guard in extra_guards {
                     if !guards.contains(&guard) {
                         guards.push(guard);
                     }
                 }
-                self.contract.push(ContractUse::new(
+                self.contract.push(ContractUse::with_provenances(
                     value.clone(),
                     YamlPath(Vec::new()),
                     ValueKind::Scalar,
                     guards,
                     None,
+                    output.meta.provenance.clone(),
                 ));
             }
         }

@@ -16,7 +16,6 @@ mod helper_body_analysis;
 mod helper_fragment_output_uses;
 mod helper_runtime_plan;
 mod helper_summary;
-mod helper_value_expression;
 mod helper_walk_state;
 mod node_eval;
 mod range_action_plan;
