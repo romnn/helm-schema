@@ -34,8 +34,8 @@ pub(crate) fn eval_call_with_helper_calls(
         "append" => eval_append(args, env, resolver),
         "omit" if !args.is_empty() => eval_omit(args, env, resolver),
         function if is_merge_function(function) => eval_merge(args, env, resolver),
-        "coalesce" => eval_choice(args, env, resolver),
-        "ternary" => eval_ternary(args, env, resolver),
+        "coalesce" => eval_all_args(args, env, resolver),
+        "ternary" => eval_first_arg_values(args, 2, env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
         "index" => eval_index(args, env, resolver),
@@ -90,17 +90,9 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 EvalResult::with_effects(AbstractValue::merge_all(values), effects)
             }
             "ternary" => {
-                let mut effects = current.effects;
                 let mut values = Vec::new();
-                for (index, arg) in args.iter().enumerate() {
-                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
-                    effects.merge(arg_result.effects);
-                    if index < 2
-                        && let Some(value) = arg_result.value
-                    {
-                        values.push(value);
-                    }
-                }
+                let mut effects = current.effects;
+                merge_first_arg_values(args, 2, env, resolver, &mut values, &mut effects);
                 EvalResult::with_effects(AbstractValue::choice(values), effects)
             }
             function if is_string_transform_function(function) => {
@@ -637,31 +629,35 @@ fn eval_merge(
     EvalResult::with_effects(AbstractValue::merge_all(values), result.effects)
 }
 
-fn eval_choice(
+fn eval_first_arg_values(
     args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    eval_all_args(args, env, resolver)
-}
-
-fn eval_ternary(
-    args: &[TemplateExpr],
+    value_count: usize,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut values = Vec::new();
     let mut effects = Effects::default();
+    merge_first_arg_values(args, value_count, env, resolver, &mut values, &mut effects);
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn merge_first_arg_values(
+    args: &[TemplateExpr],
+    value_count: usize,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    values: &mut Vec<AbstractValue>,
+    effects: &mut Effects,
+) {
     for (index, arg) in args.iter().enumerate() {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
-        if index < 2
+        if index < value_count
             && let Some(value) = result.value
         {
             values.push(value);
         }
     }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
 fn eval_type_is(

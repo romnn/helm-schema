@@ -1,11 +1,11 @@
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use helm_schema_core::{ResourceRef, YamlPath};
 
 use crate::cache::{
-    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, crd_cache_path,
+    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, cache_root_has_legacy_layout,
+    crd_cache_path, default_cache_dir,
 };
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
@@ -332,44 +332,14 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
 }
 
 fn crd_root_has_legacy_layout(root: &Path) -> bool {
-    let Ok(entries) = fs::read_dir(root) else {
-        return false;
-    };
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if name == crate::cache::LAYOUT_MARKER_FILENAME {
-            continue;
-        }
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
-        // Legacy layout: group dirs (e.g. `monitoring.coreos.com`) sit
-        // directly under the root. The new layout always has a
-        // `<source_id>` directory in between.
-        if name.contains('.') {
-            return true;
-        }
-    }
-    false
+    // Legacy layout: group dirs (e.g. `monitoring.coreos.com`) sit
+    // directly under the root. The new layout always has a
+    // `<source_id>` directory in between.
+    cache_root_has_legacy_layout(root, |name| name.contains('.'))
 }
 
 fn default_crd_schema_cache_dir() -> PathBuf {
-    if let Ok(p) = std::env::var("HELM_SCHEMA_CRD_SCHEMA_CACHE") {
-        return PathBuf::from(p);
-    }
-    if let Ok(xdg) = std::env::var("XDG_CACHE_HOME") {
-        return PathBuf::from(xdg).join("helm-schema").join("crds-catalog");
-    }
-    if let Ok(home) = std::env::var("HOME") {
-        return PathBuf::from(home)
-            .join(".cache")
-            .join("helm-schema")
-            .join("crds-catalog");
-    }
-    PathBuf::from(".cache")
-        .join("helm-schema")
-        .join("crds-catalog")
+    default_cache_dir("HELM_SCHEMA_CRD_SCHEMA_CACHE", "crds-catalog")
 }
 
 #[cfg(test)]

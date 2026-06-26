@@ -6,8 +6,8 @@ use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
-    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, k8s_cache_path,
-    not_found_marker_exists,
+    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, cache_root_has_legacy_layout,
+    default_cache_dir, k8s_cache_path, not_found_marker_exists,
 };
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
@@ -682,26 +682,10 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
 /// True if the cache root contains a "legacy" K8s layout (i.e. version
 /// dirs sitting directly under the root, no `<source_id>` layer).
 fn k8s_root_has_legacy_layout(root: &Path) -> bool {
-    let Ok(entries) = fs::read_dir(root) else {
-        return false;
-    };
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if name == crate::cache::LAYOUT_MARKER_FILENAME {
-            continue;
-        }
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
-        // A directory named like `v1.35.0` (legacy) vs a per-source dir
-        // (`default`, `<hash>`). The legacy layout puts version dirs at
-        // the top.
-        if looks_like_k8s_version_dir(&name) {
-            return true;
-        }
-    }
-    false
+    // A directory named like `v1.35.0` (legacy) vs a per-source dir
+    // (`default`, `<hash>`). The legacy layout puts version dirs at
+    // the top.
+    cache_root_has_legacy_layout(root, looks_like_k8s_version_dir)
 }
 
 fn looks_like_k8s_version_dir(name: &str) -> bool {
@@ -717,21 +701,5 @@ fn looks_like_k8s_version_dir(name: &str) -> bool {
 }
 
 fn default_k8s_schema_cache_dir() -> PathBuf {
-    if let Ok(p) = std::env::var("HELM_SCHEMA_K8S_SCHEMA_CACHE") {
-        return PathBuf::from(p);
-    }
-    if let Ok(xdg) = std::env::var("XDG_CACHE_HOME") {
-        return PathBuf::from(xdg)
-            .join("helm-schema")
-            .join("kubernetes-json-schema");
-    }
-    if let Ok(home) = std::env::var("HOME") {
-        return PathBuf::from(home)
-            .join(".cache")
-            .join("helm-schema")
-            .join("kubernetes-json-schema");
-    }
-    PathBuf::from(".cache")
-        .join("helm-schema")
-        .join("kubernetes-json-schema")
+    default_cache_dir("HELM_SCHEMA_K8S_SCHEMA_CACHE", "kubernetes-json-schema")
 }

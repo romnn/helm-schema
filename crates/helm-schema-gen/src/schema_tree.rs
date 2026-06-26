@@ -332,81 +332,76 @@ fn schema_node_from_yaml_default(
 
 pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMap<String, String>) {
     for (path, description) in descriptions {
+        if description.trim().is_empty() {
+            continue;
+        }
         let path_segments: Vec<String> = path
             .split('.')
             .filter(|segment| !segment.is_empty())
             .map(std::string::ToString::to_string)
             .collect();
-        apply_description_at_path_segments(root, &path_segments, description);
+        visit_schema_values_at_path_mut(root, &path_segments, &mut |node| {
+            set_schema_description(node, description);
+        });
     }
 }
 
-fn apply_description_at_path_segments(
+fn visit_schema_values_at_path_mut(
     node: &mut Value,
     path_segments: &[String],
-    description: &str,
-) {
+    visit: &mut impl FnMut(&mut Value),
+) -> bool {
     if path_segments.is_empty() {
-        set_schema_description(node, description);
-        return;
+        visit(node);
+        return true;
     }
 
-    let Some((head, tail)) = path_segments.split_first() else {
-        return;
+    let Some(obj) = node.as_object_mut() else {
+        return false;
     };
 
-    let Value::Object(obj) = node else {
-        return;
-    };
-
-    for key in ["anyOf", "oneOf"] {
+    let mut visited = false;
+    for key in ["anyOf", "allOf", "oneOf"] {
         if let Some(Value::Array(variants)) = obj.get_mut(key) {
             for variant in variants {
-                apply_description_at_path_segments(variant, path_segments, description);
+                visited |= visit_schema_values_at_path_mut(variant, path_segments, visit);
             }
         }
     }
-
-    if let Some(Value::Array(variants)) = obj.get_mut("allOf") {
-        for variant in variants {
-            apply_description_at_path_segments(variant, path_segments, description);
-        }
-    }
-
     for key in ["then", "else"] {
         if let Some(child) = obj.get_mut(key) {
-            apply_description_at_path_segments(child, path_segments, description);
+            visited |= visit_schema_values_at_path_mut(child, path_segments, visit);
         }
     }
 
+    let Some((head, tail)) = path_segments.split_first() else {
+        return visited;
+    };
     if head == "*" {
         if let Some(items) = obj.get_mut("items") {
-            apply_description_at_path_segments(items, tail, description);
+            visited |= visit_schema_values_at_path_mut(items, tail, visit);
         }
-        return;
+        return visited;
     }
 
     if head == MAP_WILDCARD_SEGMENT {
         if let Some(additional_properties) = obj.get_mut("additionalProperties") {
-            apply_description_at_path_segments(additional_properties, tail, description);
+            visited |= visit_schema_values_at_path_mut(additional_properties, tail, visit);
         }
-        return;
+        return visited;
     }
 
-    let Some(properties) = obj.get_mut("properties").and_then(Value::as_object_mut) else {
-        return;
-    };
-    let Some(child) = properties.get_mut(head) else {
-        return;
-    };
-    apply_description_at_path_segments(child, tail, description);
+    if let Some(child) = obj
+        .get_mut("properties")
+        .and_then(Value::as_object_mut)
+        .and_then(|properties| properties.get_mut(head))
+    {
+        visited |= visit_schema_values_at_path_mut(child, tail, visit);
+    }
+    visited
 }
 
 fn set_schema_description(node: &mut Value, description: &str) {
-    if description.trim().is_empty() {
-        return;
-    }
-
     if let Value::Object(obj) = node {
         obj.insert(
             "description".to_string(),
@@ -546,53 +541,9 @@ fn replace_schema_value_at_path(
     path_segments: &[String],
     replacement: &Value,
 ) -> bool {
-    if path_segments.is_empty() {
-        *value = replacement.clone();
-        return true;
-    }
-
-    let Some(object) = value.as_object_mut() else {
-        return false;
-    };
-
-    let mut replaced = false;
-    for composition_key in ["anyOf", "allOf", "oneOf"] {
-        if let Some(entries) = object
-            .get_mut(composition_key)
-            .and_then(Value::as_array_mut)
-        {
-            for entry in entries {
-                replaced |= replace_schema_value_at_path(entry, path_segments, replacement);
-            }
-        }
-    }
-
-    let head = path_segments[0].as_str();
-    if head == "*" {
-        if let Some(items) = object.get_mut("items") {
-            replaced |= replace_schema_value_at_path(items, &path_segments[1..], replacement);
-        }
-        return replaced;
-    }
-    if head == MAP_WILDCARD_SEGMENT {
-        if let Some(additional_properties) = object.get_mut("additionalProperties") {
-            replaced |= replace_schema_value_at_path(
-                additional_properties,
-                &path_segments[1..],
-                replacement,
-            );
-        }
-        return replaced;
-    }
-
-    if let Some(child) = object
-        .get_mut("properties")
-        .and_then(Value::as_object_mut)
-        .and_then(|properties| properties.get_mut(head))
-    {
-        replaced |= replace_schema_value_at_path(child, &path_segments[1..], replacement);
-    }
-    replaced
+    visit_schema_values_at_path_mut(value, path_segments, &mut |node| {
+        *node = replacement.clone();
+    })
 }
 
 fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf: SchemaNode) {
