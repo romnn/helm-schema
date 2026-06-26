@@ -2,14 +2,14 @@ use std::collections::HashSet;
 
 use helm_schema_ast::{
     ResourceSpan, TemplateExpr, TemplateHeader, decode_guard, decode_guard_expr, parse_expr_text,
-    parse_helm_template, parse_yaml_key,
+    parse_go_template, parse_helm_template,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, literal_helper_call_callee};
-use crate::node_eval::{NodeAction, node_action};
+use crate::node_eval::{NodeAction, else_if_pairs, node_action};
 
 const MAX_RECURSION_DEPTH: usize = 12;
 
@@ -31,8 +31,22 @@ pub(crate) fn collect_resource_spans(
             analysis_db,
         ));
     }
-    if spans.is_empty() {
-        spans.extend(resource_spans_from_source_keys(source));
+    let mut source_split_spans = Vec::new();
+    for (start, end) in source_document_spans(source) {
+        let Some(document_source) = source.get(start..end) else {
+            continue;
+        };
+        source_split_spans.extend(resource_spans_for_manifest_source(
+            document_source,
+            start,
+            start,
+            end,
+            Vec::new(),
+            analysis_db,
+        ));
+    }
+    if source_split_spans.len() > spans.len() {
+        spans = source_split_spans;
     }
     spans.sort_by(|left, right| {
         left.start
@@ -80,6 +94,15 @@ impl ResourceState {
 
     fn record_api_version_branches(&mut self, branches: Vec<HelperBranch>) {
         if branches.is_empty() {
+            return;
+        }
+        if branches.len() == 1 {
+            match branches.into_iter().next().expect("single branch").body {
+                HelperBranchBody::Literals { values } => {
+                    self.record_api_version_output(HelperBranchBody::Literals { values });
+                }
+                HelperBranchBody::Nested { branches } => self.record_api_version_branches(branches),
+            }
             return;
         }
         self.record_api_version_branch_literals(&branches);
@@ -147,24 +170,6 @@ impl OutputEvaluator {
             &mut branches,
         );
         body_from_helper_parts(literals, branches)
-    }
-
-    fn evaluate_value_node(
-        &mut self,
-        node: tree_sitter::Node<'_>,
-        source: &str,
-        analysis_db: &IrAnalysisDb,
-    ) -> HelperBranchBody {
-        let node = unwrap_yaml_value_node(node);
-        if let Some(literal) = literal_yaml_scalar(node, source) {
-            return HelperBranchBody::literals(vec![literal.to_string()]);
-        }
-        let Ok(text) = node.utf8_text(source.as_bytes()) else {
-            return HelperBranchBody::literals(Vec::new());
-        };
-        let exprs = parse_expr_text(text.trim());
-        self.action_body(&exprs, analysis_db, 0)
-            .unwrap_or_else(|| HelperBranchBody::literals(Vec::new()))
     }
 
     fn collect_node(
@@ -238,10 +243,13 @@ impl OutputEvaluator {
         }];
 
         for (header, children) in else_if_pairs(node, source) {
+            let Some(header) = header else {
+                continue;
+            };
             let body = self.evaluate_nodes(source, &children, analysis_db, depth + 1);
             if !body.is_empty() {
                 branches.push(HelperBranch {
-                    guard: Some(guard_from_header(&header)),
+                    guard: Some(guard_from_branch_header(&header, "else if")),
                     body,
                 });
             }
@@ -377,86 +385,258 @@ fn detect_manifest_resource(source: &str, analysis_db: &IrAnalysisDb) -> Option<
     detect_resource_in_source(&normalized, analysis_db)
 }
 
-fn resource_spans_from_source_keys(source: &str) -> Vec<ResourceSpan> {
-    let mut starts = Vec::new();
-    let mut pending_start = None;
-    let mut pending_api_versions = Vec::new();
-    let mut pending_kind = None;
-    let mut byte = 0usize;
-
-    for line in source.split_inclusive('\n') {
-        let line_without_newline = line.trim_end_matches(['\r', '\n']);
-        let indent = line_without_newline
-            .chars()
-            .take_while(|ch| *ch == ' ')
-            .count();
-        let trimmed = &line_without_newline[indent..];
-        if indent == 0 && trimmed == "---" {
-            pending_start = None;
-            pending_api_versions.clear();
-            pending_kind = None;
-            byte += line.len();
-            continue;
-        }
-        if indent == 0
-            && let Some(key) = parse_yaml_key(trimmed).map(helm_schema_ast::ParsedYamlKey::into_key)
-        {
-            match key.as_str() {
-                "apiVersion" => {
-                    pending_start.get_or_insert(byte);
-                    if let Some(value) = literal_mapping_value(trimmed) {
-                        pending_api_versions
-                            .push((byte, HelperBranchBody::literals(vec![value.to_string()])));
-                    }
-                }
-                "kind" => {
-                    pending_start.get_or_insert(byte);
-                    pending_kind = literal_mapping_value(trimmed).map(str::to_string);
-                }
-                _ => {}
-            }
-        }
-        if pending_start.is_some() && !pending_api_versions.is_empty() && pending_kind.is_some() {
-            let start = pending_start.expect("checked pending start");
-            let kind = pending_kind.take().expect("checked kind");
-            let mut state = ResourceState::default();
-            state.set_kind_if_empty(&kind);
-            record_api_version_events(
-                &mut state,
-                source,
-                std::mem::take(&mut pending_api_versions),
-            );
-            if let Some(resource) = state.into_resource() {
-                starts.push((start, resource));
-            }
-            pending_start = None;
-        }
-        byte += line.len();
-    }
-
-    starts.sort_by_key(|(start, _)| *start);
-    starts.dedup_by(|left, right| left.0 == right.0);
-    let mut spans = Vec::new();
-    for index in 0..starts.len() {
-        spans.push(ResourceSpan {
-            start: if index == 0 { 0 } else { starts[index].0 },
-            end: starts
-                .get(index + 1)
-                .map(|(next_start, _)| *next_start)
-                .unwrap_or(source.len()),
-            resource: starts[index].1.clone(),
-            path_prefix: Vec::new(),
-        });
-    }
-    spans
+fn detect_resource_in_source(source: &str, analysis_db: &IrAnalysisDb) -> Option<ResourceRef> {
+    let mut state = ResourceState::default();
+    collect_go_template_resource_fields(source, analysis_db, &mut state);
+    state.into_resource()
 }
 
-fn literal_mapping_value(line: &str) -> Option<&str> {
-    let colon = helm_schema_ast::first_mapping_colon_offset(line)?;
-    let value = line[colon + 1..].trim();
-    if value.is_empty() || value.contains("{{") || value.contains("}}") {
+fn collect_go_template_resource_fields(
+    source: &str,
+    analysis_db: &IrAnalysisDb,
+    state: &mut ResourceState,
+) {
+    let Some(tree) = parse_go_template(source) else {
+        return;
+    };
+    collect_go_template_resource_fields_from_node(source, tree.root_node(), analysis_db, state);
+}
+
+fn collect_go_template_resource_fields_from_node(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    analysis_db: &IrAnalysisDb,
+    state: &mut ResourceState,
+) {
+    match node_action(source, node) {
+        NodeAction::If(Some(header)) => {
+            let branches =
+                go_template_api_version_branches_from_if(source, node, &header, analysis_db);
+            if !branches.is_empty() {
+                state.record_api_version_branches(branches);
+            }
+            collect_go_template_kind_from_children(source, node, state);
+        }
+        NodeAction::Range(_) | NodeAction::With(_) => {
+            for field in ["body", "alternative"] {
+                for child in helm_schema_ast::children_with_field(node, field) {
+                    collect_go_template_resource_fields_from_node(
+                        source,
+                        child,
+                        analysis_db,
+                        state,
+                    );
+                }
+            }
+        }
+        NodeAction::Text => {
+            for body in
+                api_version_outputs_in_span(source, node.start_byte(), node.end_byte(), analysis_db)
+            {
+                state.record_api_version_output(body);
+            }
+            if let Some(kind) = header_lines_in_span(source, node.start_byte(), node.end_byte())
+                .find_map(|line| header_line_value(line, "kind"))
+            {
+                state.set_kind_if_empty(unquote_yaml_scalar(kind));
+            }
+        }
+        NodeAction::Suppressed => {}
+        _ => {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                collect_go_template_resource_fields_from_node(source, child, analysis_db, state);
+            }
+        }
+    }
+}
+
+fn collect_go_template_kind_from_children(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    state: &mut ResourceState,
+) {
+    if state.kind.is_some() {
+        return;
+    }
+    match node_action(source, node) {
+        NodeAction::Range(_) | NodeAction::With(_) => {
+            for field in ["body", "alternative"] {
+                for child in helm_schema_ast::children_with_field(node, field) {
+                    collect_go_template_kind_from_children(source, child, state);
+                }
+            }
+        }
+        NodeAction::Text => {
+            if let Some(kind) = header_lines_in_span(source, node.start_byte(), node.end_byte())
+                .find_map(|line| header_line_value(line, "kind"))
+            {
+                state.set_kind_if_empty(unquote_yaml_scalar(kind));
+            }
+        }
+        NodeAction::Suppressed => {}
+        _ => {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                collect_go_template_kind_from_children(source, child, state);
+            }
+        }
+    }
+}
+
+fn go_template_api_version_body_from_nodes(
+    source: &str,
+    nodes: &[tree_sitter::Node<'_>],
+    analysis_db: &IrAnalysisDb,
+) -> HelperBranchBody {
+    let mut literals = Vec::new();
+    let mut branches = Vec::new();
+    for node in nodes {
+        collect_go_template_api_version_body_node(
+            source,
+            *node,
+            analysis_db,
+            &mut literals,
+            &mut branches,
+        );
+    }
+    body_from_parts(literals, branches)
+}
+
+fn collect_go_template_api_version_body_node(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    analysis_db: &IrAnalysisDb,
+    literals: &mut Vec<String>,
+    branches: &mut Vec<HelperBranch>,
+) {
+    match node_action(source, node) {
+        NodeAction::If(Some(header)) => {
+            branches.extend(go_template_api_version_branches_from_if(
+                source,
+                node,
+                &header,
+                analysis_db,
+            ));
+        }
+        NodeAction::Range(_) | NodeAction::With(_) => {
+            for field in ["body", "alternative"] {
+                for child in helm_schema_ast::children_with_field(node, field) {
+                    collect_go_template_api_version_body_node(
+                        source,
+                        child,
+                        analysis_db,
+                        literals,
+                        branches,
+                    );
+                }
+            }
+        }
+        NodeAction::Text => {
+            for body in
+                api_version_outputs_in_span(source, node.start_byte(), node.end_byte(), analysis_db)
+            {
+                append_body(body, literals, branches);
+            }
+        }
+        NodeAction::Suppressed | NodeAction::Output(_) | NodeAction::Assignment(_) => {}
+        NodeAction::Descend | NodeAction::If(None) => {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                collect_go_template_api_version_body_node(
+                    source,
+                    child,
+                    analysis_db,
+                    literals,
+                    branches,
+                );
+            }
+        }
+    }
+}
+
+fn go_template_api_version_branches_from_if(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    header: &TemplateHeader,
+    analysis_db: &IrAnalysisDb,
+) -> Vec<HelperBranch> {
+    let mut branches = Vec::new();
+    let consequence = helm_schema_ast::children_with_field(node, "consequence");
+    let body = go_template_api_version_body_from_nodes(source, &consequence, analysis_db);
+    if !body.is_empty() {
+        branches.push(HelperBranch {
+            guard: Some(guard_from_branch_header(header, "if")),
+            body,
+        });
+    }
+
+    for (header, children) in else_if_pairs(node, source) {
+        let Some(header) = header else {
+            continue;
+        };
+        let body = go_template_api_version_body_from_nodes(source, &children, analysis_db);
+        if !body.is_empty() {
+            branches.push(HelperBranch {
+                guard: Some(guard_from_branch_header(&header, "else if")),
+                body,
+            });
+        }
+    }
+
+    let alternatives = helm_schema_ast::children_with_field(node, "alternative");
+    let body = go_template_api_version_body_from_nodes(source, &alternatives, analysis_db);
+    if !body.is_empty() {
+        branches.push(HelperBranch { guard: None, body });
+    }
+    branches
+}
+
+fn api_version_outputs_in_span(
+    source: &str,
+    start: usize,
+    end: usize,
+    analysis_db: &IrAnalysisDb,
+) -> Vec<HelperBranchBody> {
+    header_lines_in_span(source, start, end)
+        .filter_map(|line| {
+            let value = header_line_value(line, "apiVersion")?;
+            Some(api_version_body_from_header_value(value, analysis_db))
+        })
+        .collect()
+}
+
+fn api_version_body_from_header_value(value: &str, analysis_db: &IrAnalysisDb) -> HelperBranchBody {
+    if value.contains("{{") || value.contains("}}") {
+        let exprs = parse_expr_text(value);
+        return OutputEvaluator::default()
+            .action_body(&exprs, analysis_db, 0)
+            .unwrap_or_else(|| HelperBranchBody::literals(Vec::new()));
+    }
+    HelperBranchBody::literals(vec![unquote_yaml_scalar(value).to_string()])
+}
+
+fn header_lines_in_span(source: &str, start: usize, end: usize) -> impl Iterator<Item = &str> {
+    let mut byte = 0usize;
+    source.split_inclusive('\n').filter_map(move |line| {
+        let line_start = byte;
+        byte += line.len();
+        (start <= line_start && line_start < end).then_some(line.trim_end_matches(['\r', '\n']))
+    })
+}
+
+fn header_line_value<'source>(line: &'source str, key: &str) -> Option<&'source str> {
+    let trimmed = line.trim_start();
+    if line.len() != trimmed.len() || trimmed.starts_with('#') {
         return None;
     }
+    let colon = helm_schema_ast::first_mapping_colon_offset(trimmed)?;
+    (trimmed[..colon].trim() == key)
+        .then(|| trimmed[colon + 1..].trim())
+        .filter(|value| !value.is_empty())
+}
+
+fn unquote_yaml_scalar(value: &str) -> &str {
     value
         .strip_prefix('"')
         .and_then(|value| value.strip_suffix('"'))
@@ -465,85 +645,7 @@ fn literal_mapping_value(line: &str) -> Option<&str> {
                 .strip_prefix('\'')
                 .and_then(|value| value.strip_suffix('\''))
         })
-        .or(Some(value))
-}
-
-fn detect_resource_in_source(source: &str, analysis_db: &IrAnalysisDb) -> Option<ResourceRef> {
-    let tree = parse_helm_template(source)?;
-    let document = first_document_node(tree.root_node()).unwrap_or_else(|| tree.root_node());
-    let mapping = top_level_mapping_node(document)?;
-    let pair_kind = match mapping.kind() {
-        "block_mapping" => "block_mapping_pair",
-        "flow_mapping" => "flow_pair",
-        "ERROR" => "block_mapping_pair",
-        _ => return None,
-    };
-
-    let mut state = ResourceState::default();
-    let mut api_version_events = Vec::new();
-    let mut cursor = mapping.walk();
-    for pair in mapping.children(&mut cursor) {
-        if !pair.is_named() || pair.kind() != pair_kind {
-            continue;
-        }
-        let Some(key) = pair.child_by_field_name("key") else {
-            continue;
-        };
-        let Some(key) = yaml_scalar_text(key, source) else {
-            continue;
-        };
-        let value = pair
-            .child_by_field_name("value")
-            .map(unwrap_yaml_value_node);
-        match key {
-            "apiVersion" => {
-                let Some(value) = value else {
-                    continue;
-                };
-                let output =
-                    OutputEvaluator::default().evaluate_value_node(value, source, analysis_db);
-                api_version_events.push((pair.start_byte(), output));
-            }
-            "kind" => {
-                let Some(value) = value else {
-                    continue;
-                };
-                if let Some(kind) = literal_yaml_scalar(value, source) {
-                    state.set_kind_if_empty(kind);
-                }
-            }
-            _ => {}
-        }
-    }
-    append_literal_api_version_source_events(source, &mut api_version_events);
-    record_api_version_events(&mut state, source, api_version_events);
-    state.into_resource()
-}
-
-fn append_literal_api_version_source_events(
-    source: &str,
-    events: &mut Vec<(usize, HelperBranchBody)>,
-) {
-    let mut byte = 0usize;
-    for line in source.split_inclusive('\n') {
-        let line_without_newline = line.trim_end_matches(['\r', '\n']);
-        let indent = line_without_newline
-            .chars()
-            .take_while(|ch| *ch == ' ')
-            .count();
-        let trimmed = &line_without_newline[indent..];
-        if indent == 0
-            && parse_yaml_key(trimmed)
-                .map(helm_schema_ast::ParsedYamlKey::into_key)
-                .as_deref()
-                == Some("apiVersion")
-            && !events.iter().any(|(event_byte, _)| *event_byte == byte)
-            && let Some(value) = literal_mapping_value(trimmed)
-        {
-            events.push((byte, HelperBranchBody::literals(vec![value.to_string()])));
-        }
-        byte += line.len();
-    }
+        .unwrap_or(value)
 }
 
 fn is_kubernetes_list_envelope(resource: &ResourceRef) -> bool {
@@ -624,6 +726,25 @@ fn document_spans(source: &str) -> Vec<(usize, usize)> {
             .unwrap_or(source.len());
     }
     docs
+}
+
+fn source_document_spans(source: &str) -> Vec<(usize, usize)> {
+    let mut spans = Vec::new();
+    let mut start = 0usize;
+    let mut byte = 0usize;
+    for line in source.split_inclusive('\n') {
+        if line.trim() == "---" {
+            if start < byte {
+                spans.push((start, byte));
+            }
+            start = byte + line.len();
+        }
+        byte += line.len();
+    }
+    if start < source.len() {
+        spans.push((start, source.len()));
+    }
+    spans
 }
 
 fn whole_source_span(source: &str) -> Vec<(usize, usize)> {
@@ -730,17 +851,6 @@ fn yaml_scalar_text<'source>(
         .or(Some(text))
 }
 
-fn literal_yaml_scalar<'source>(
-    node: tree_sitter::Node<'_>,
-    source: &'source str,
-) -> Option<&'source str> {
-    if matches!(node.kind(), "helm_template") {
-        return None;
-    }
-    let text = yaml_scalar_text(node, source)?;
-    (!text.contains("{{") && !text.contains("}}")).then_some(text)
-}
-
 fn normalize_sequence_item_source(source: &str) -> String {
     let mut lines = source.lines();
     let Some(first) = lines.next() else {
@@ -835,249 +945,13 @@ fn guard_from_header(header: &TemplateHeader) -> CapabilityGuard {
     decode_guard_expr(header.expr(), header.raw()).unwrap_or_else(|| decode_guard(header.raw()))
 }
 
-enum ApiVersionEvent {
-    Control(ControlEvent),
-    Output(HelperBranchBody),
-}
-
-enum ControlEvent {
-    If(CapabilityGuard),
-    ElseIf(CapabilityGuard),
-    Else,
-    End,
-}
-
-enum ControlKind {
-    If,
-    Other,
-}
-
-struct IfFrame {
-    branches: Vec<HelperBranch>,
-    current_guard: Option<CapabilityGuard>,
-    current_literals: Vec<String>,
-    current_branches: Vec<HelperBranch>,
-}
-
-impl IfFrame {
-    fn new(guard: CapabilityGuard) -> Self {
-        Self {
-            branches: Vec::new(),
-            current_guard: Some(guard),
-            current_literals: Vec::new(),
-            current_branches: Vec::new(),
-        }
+fn guard_from_branch_header(header: &TemplateHeader, prefix: &str) -> CapabilityGuard {
+    let raw = header.raw().trim();
+    if raw.starts_with("if ") || raw.starts_with("else if ") {
+        return guard_from_header(header);
     }
-
-    fn start_branch(&mut self, guard: Option<CapabilityGuard>) {
-        self.finish_current_branch();
-        self.current_guard = guard;
-    }
-
-    fn append(&mut self, body: HelperBranchBody) {
-        append_body(body, &mut self.current_literals, &mut self.current_branches);
-    }
-
-    fn finish_current_branch(&mut self) {
-        if !self.current_literals.is_empty() || !self.current_branches.is_empty() {
-            self.branches.push(HelperBranch {
-                guard: self.current_guard.clone(),
-                body: body_from_parts(
-                    std::mem::take(&mut self.current_literals),
-                    std::mem::take(&mut self.current_branches),
-                ),
-            });
-        }
-    }
-
-    fn finish(mut self) -> Option<HelperBranchBody> {
-        self.finish_current_branch();
-        match self.branches.len() {
-            0 => None,
-            1 => self.branches.into_iter().next().map(|branch| branch.body),
-            _ => Some(HelperBranchBody::Nested {
-                branches: self.branches,
-            }),
-        }
-    }
-}
-
-fn record_api_version_events(
-    state: &mut ResourceState,
-    source: &str,
-    api_versions: Vec<(usize, HelperBranchBody)>,
-) {
-    if api_versions.is_empty() {
-        return;
-    }
-
-    let mut events = control_events(source);
-    events.extend(
-        api_versions
-            .into_iter()
-            .map(|(byte, body)| (byte, ApiVersionEvent::Output(body))),
-    );
-    events.sort_by_key(|(byte, event)| {
-        let rank = match event {
-            ApiVersionEvent::Control(_) => 0,
-            ApiVersionEvent::Output(_) => 1,
-        };
-        (*byte, rank)
-    });
-    let mut stack: Vec<IfFrame> = Vec::new();
-    for (_byte, event) in events {
-        match event {
-            ApiVersionEvent::Output(body) => append_api_version_body(state, &mut stack, body),
-            ApiVersionEvent::Control(ControlEvent::If(guard)) => stack.push(IfFrame::new(guard)),
-            ApiVersionEvent::Control(ControlEvent::ElseIf(guard)) => {
-                if let Some(frame) = stack.last_mut() {
-                    frame.start_branch(Some(guard));
-                }
-            }
-            ApiVersionEvent::Control(ControlEvent::Else) => {
-                if let Some(frame) = stack.last_mut() {
-                    frame.start_branch(None);
-                }
-            }
-            ApiVersionEvent::Control(ControlEvent::End) => {
-                if let Some(frame) = stack.pop()
-                    && let Some(body) = frame.finish()
-                {
-                    append_control_frame_body(state, &mut stack, body);
-                }
-            }
-        }
-    }
-
-    while let Some(frame) = stack.pop() {
-        if let Some(body) = frame.finish() {
-            append_control_frame_body(state, &mut stack, body);
-        }
-    }
-}
-
-fn append_api_version_body(
-    state: &mut ResourceState,
-    stack: &mut [IfFrame],
-    body: HelperBranchBody,
-) {
-    if let Some(frame) = stack.last_mut() {
-        frame.append(body);
-    } else {
-        state.record_api_version_output(body);
-    }
-}
-
-fn append_control_frame_body(
-    state: &mut ResourceState,
-    stack: &mut [IfFrame],
-    body: HelperBranchBody,
-) {
-    if let Some(frame) = stack.last_mut() {
-        frame.append(body);
-        return;
-    }
-
-    match body {
-        HelperBranchBody::Literals { values } => {
-            state.record_api_version_output(HelperBranchBody::Literals { values });
-        }
-        HelperBranchBody::Nested { branches } => state.record_api_version_branches(branches),
-    }
-}
-
-fn control_events(source: &str) -> Vec<(usize, ApiVersionEvent)> {
-    let mut events = Vec::new();
-    let mut controls = Vec::new();
-    let mut cursor = 0usize;
-    while let Some(open_rel) = source[cursor..].find("{{") {
-        let open = cursor + open_rel;
-        let Some(close_rel) = source[open + 2..].find("}}") else {
-            break;
-        };
-        let close = open + 2 + close_rel;
-        let text = normalize_action_text(&source[open + 2..close]);
-        match text.as_str() {
-            "else" if matches!(controls.last(), Some(ControlKind::If)) => {
-                events.push((open, ApiVersionEvent::Control(ControlEvent::Else)));
-            }
-            "end" => {
-                if let Some(ControlKind::If) = controls.pop() {
-                    events.push((open, ApiVersionEvent::Control(ControlEvent::End)));
-                }
-            }
-            _ if text.starts_with("else if ")
-                && matches!(controls.last(), Some(ControlKind::If)) =>
-            {
-                let header = TemplateHeader::parse_control(text);
-                events.push((
-                    open,
-                    ApiVersionEvent::Control(ControlEvent::ElseIf(guard_from_header(&header))),
-                ));
-            }
-            _ if text.starts_with("if ") => {
-                let header = TemplateHeader::parse_control(text);
-                controls.push(ControlKind::If);
-                events.push((
-                    open,
-                    ApiVersionEvent::Control(ControlEvent::If(guard_from_header(&header))),
-                ));
-            }
-            _ if text.starts_with("with ") || text.starts_with("range ") => {
-                controls.push(ControlKind::Other);
-            }
-            _ => {}
-        }
-        cursor = close + 2;
-    }
-    events
-}
-
-fn normalize_action_text(raw: &str) -> String {
-    raw.trim()
-        .trim_start_matches('-')
-        .trim()
-        .trim_end_matches('-')
-        .trim()
-        .to_string()
-}
-
-fn else_if_pairs<'node>(
-    node: tree_sitter::Node<'node>,
-    source: &str,
-) -> Vec<(TemplateHeader, Vec<tree_sitter::Node<'node>>)> {
-    let mut pairs = Vec::new();
-    let mut seen_main_condition = false;
-    let mut walker = node.walk();
-    if !walker.goto_first_child() {
-        return pairs;
-    }
-
-    loop {
-        let child = walker.node();
-        match walker.field_name() {
-            Some("condition") => {
-                if seen_main_condition {
-                    if let Ok(text) = child.utf8_text(source.as_bytes()) {
-                        pairs.push((TemplateHeader::parse_control(text.trim()), Vec::new()));
-                    }
-                } else {
-                    seen_main_condition = true;
-                }
-            }
-            Some("option") => {
-                if let Some((_condition, option_children)) = pairs.last_mut() {
-                    option_children.push(child);
-                }
-            }
-            _ => {}
-        }
-        if !walker.goto_next_sibling() {
-            break;
-        }
-    }
-
-    pairs
+    let display = format!("{prefix} {raw}");
+    decode_guard_expr(header.expr(), &display).unwrap_or_else(|| decode_guard(&display))
 }
 
 fn helper_call_names(exprs: &[TemplateExpr]) -> Vec<String> {

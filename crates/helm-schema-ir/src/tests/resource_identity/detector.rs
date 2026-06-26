@@ -241,3 +241,32 @@ fn capability_guard_without_api_version_does_not_create_empty_branch_resource() 
     assert!(resource.api_version_candidates.is_empty());
     assert!(resource.api_version_branches.is_empty());
 }
+
+#[test]
+fn helper_output_under_guarded_resource_does_not_become_api_version_candidate() {
+    let helpers = indoc! {r#"
+        {{- define "x.labels" -}}
+        app.kubernetes.io/name: example
+        app.kubernetes.io/instance: test
+        {{- end -}}
+    "#};
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("<inline:0>", helpers);
+    let resource = detect(
+        indoc! {r#"
+            {{- if .Values.networkPolicy.enabled }}
+            apiVersion: networking.k8s.io/v1
+            kind: NetworkPolicy
+            metadata:
+              labels:
+                {{- include "x.labels" . | nindent 4 }}
+            {{- end }}
+        "#},
+        &defines,
+    )
+    .expect("resource");
+
+    sim_assert_eq!(have: resource.api_version, want: "networking.k8s.io/v1");
+    assert!(resource.api_version_candidates.is_empty());
+    assert!(resource.api_version_branches.is_empty());
+}

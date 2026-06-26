@@ -118,7 +118,7 @@ struct SymbolicWalker<'a> {
     seed_predicates: Vec<Predicate>,
     seed_dot: Option<AbstractValue>,
     no_output_depth: usize,
-    control_resource_fallback_depth: usize,
+    control_resource_context_depth: usize,
     attribution: AttributionIndex,
     current_source_span: Option<crate::SourceSpan>,
 
@@ -147,7 +147,7 @@ impl<'a> SymbolicWalker<'a> {
             seed_predicates: Vec::new(),
             seed_dot: None,
             no_output_depth: 0,
-            control_resource_fallback_depth: 0,
+            control_resource_context_depth: 0,
             attribution: AttributionIndex::default(),
             current_source_span: None,
 

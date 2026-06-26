@@ -86,7 +86,7 @@ fn eval_condition_node<R, F>(
     runtime.join_branch_scopes(&entry, vec![consequence_outcome, alternative_outcome]);
 }
 
-fn else_if_pairs<'node>(
+pub(crate) fn else_if_pairs<'node>(
     node: tree_sitter::Node<'node>,
     source: &str,
 ) -> Vec<(Option<TemplateHeader>, Vec<tree_sitter::Node<'node>>)> {

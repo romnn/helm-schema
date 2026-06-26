@@ -73,6 +73,24 @@ fn commented_out_values_do_not_become_description_paths() {
 }
 
 #[test]
+fn forward_description_without_value_does_not_attach_to_previous_key() {
+    let yaml = indoc! {"
+        # -- Root enabled docs
+        enabled: true
+        # -- Comment-only docs
+        # commentedOnly: true
+    "};
+
+    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+
+    sim_assert_eq!(
+        have: descriptions.get("enabled").map(String::as_str),
+        want: Some("Root enabled docs")
+    );
+    assert!(!descriptions.contains_key("commentedOnly"));
+}
+
+#[test]
 fn helm_docs_marker_splits_previous_examples_from_next_description() {
     let yaml = indoc! {"
         ingress:
