@@ -5,7 +5,7 @@ mod expr_function_catalog;
 mod literal_schema_type;
 mod printf_eval;
 mod range_structure;
-mod tree_sitter_parser;
+mod template_action;
 mod tree_sitter_utils;
 mod values_comments;
 mod yaml_syntax;
@@ -29,14 +29,14 @@ pub use range_structure::{
     range_has_destructured_variable_definition, range_header_from_source,
     range_header_text_from_source, range_variable_name_expr,
 };
-pub use tree_sitter_parser::{TreeSitterParser, contains_template_action};
+pub use template_action::contains_template_action;
 pub use tree_sitter_utils::{
     children_with_field, parse_expr_text, parse_go_template, parse_helm_template,
 };
 pub use values_comments::extract_values_yaml_descriptions;
 pub use yaml_syntax::{ParsedYamlKey, first_mapping_colon_offset, parse_yaml_key};
 
-use std::collections::{HashMap, hash_map::Entry};
+use std::collections::HashMap;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
@@ -44,7 +44,6 @@ pub enum ParseError {
     TreeSitterParseFailed,
 }
 
-/// Shared AST for Helm+YAML templates.
 /// Parsed control-flow header from a Helm template node.
 ///
 /// Helm control-flow remains source-preserving for rendering/inspection while
@@ -128,190 +127,9 @@ fn normalized_control_condition(raw: &str) -> Option<&str> {
         .or_else(|| text.strip_prefix("with "))
 }
 
-/// Parsed Helm action/output node.
-///
-/// Like [`TemplateHeader`], this preserves the original unwrapped action text
-/// while also storing the typed top-level expressions produced by the action.
-#[derive(Debug, Clone, PartialEq)]
-pub struct TemplateAction {
-    raw: String,
-    exprs: Vec<TemplateExpr>,
-}
-
-impl TemplateAction {
-    #[must_use]
-    pub fn new(raw: impl Into<String>, exprs: Vec<TemplateExpr>) -> Self {
-        Self {
-            raw: raw.into(),
-            exprs,
-        }
-    }
-
-    #[must_use]
-    pub fn parse(raw: impl Into<String>) -> Self {
-        let raw = raw.into();
-        let wrapped = format!("{{{{ {raw} }}}}");
-        let exprs = parse_action_expressions(&wrapped);
-        Self::new(raw, exprs)
-    }
-
-    #[must_use]
-    pub fn raw(&self) -> &str {
-        &self.raw
-    }
-
-    #[must_use]
-    pub fn exprs(&self) -> &[TemplateExpr] {
-        &self.exprs
-    }
-
-    #[must_use]
-    pub fn may_inject_yaml_structure(&self) -> bool {
-        self.exprs
-            .iter()
-            .any(TemplateExpr::may_inject_yaml_structure)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum HelmAst {
-    Document {
-        items: Vec<HelmAst>,
-    },
-
-    Mapping {
-        items: Vec<HelmAst>,
-    },
-    Pair {
-        key: Box<HelmAst>,
-        value: Option<Box<HelmAst>>,
-    },
-
-    Sequence {
-        items: Vec<HelmAst>,
-    },
-
-    Scalar {
-        text: String,
-    },
-
-    HelmExpr {
-        action: TemplateAction,
-    },
-    HelmComment {
-        text: String,
-    },
-
-    If {
-        condition: TemplateHeader,
-        then_branch: Vec<HelmAst>,
-        else_branch: Vec<HelmAst>,
-    },
-    Range {
-        header: TemplateHeader,
-        body: Vec<HelmAst>,
-        else_branch: Vec<HelmAst>,
-    },
-    With {
-        header: TemplateHeader,
-        body: Vec<HelmAst>,
-        else_branch: Vec<HelmAst>,
-    },
-    Define {
-        name: String,
-        body: Vec<HelmAst>,
-    },
-    Block {
-        name: String,
-        body: Vec<HelmAst>,
-    },
-}
-
-impl HelmAst {
-    /// Visit every typed template expression reachable from this AST node,
-    /// including actions embedded inside scalar text fragments.
-    pub fn walk_template_exprs(&self, visit: &mut impl FnMut(&TemplateExpr)) {
-        match self {
-            HelmAst::Document { items }
-            | HelmAst::Mapping { items }
-            | HelmAst::Sequence { items } => {
-                for item in items {
-                    item.walk_template_exprs(visit);
-                }
-            }
-            HelmAst::Pair { key, value } => {
-                key.walk_template_exprs(visit);
-                if let Some(value) = value.as_deref() {
-                    value.walk_template_exprs(visit);
-                }
-            }
-            HelmAst::Scalar { text } => {
-                for expr in parse_action_expressions(text) {
-                    visit(&expr);
-                }
-            }
-            HelmAst::HelmExpr { action } => {
-                for expr in action.exprs() {
-                    visit(expr);
-                }
-            }
-            HelmAst::If {
-                condition,
-                then_branch,
-                else_branch,
-            } => {
-                visit(condition.expr());
-                for item in then_branch {
-                    item.walk_template_exprs(visit);
-                }
-                for item in else_branch {
-                    item.walk_template_exprs(visit);
-                }
-            }
-            HelmAst::Range {
-                header,
-                body,
-                else_branch,
-            }
-            | HelmAst::With {
-                header,
-                body,
-                else_branch,
-            } => {
-                visit(header.expr());
-                for item in body {
-                    item.walk_template_exprs(visit);
-                }
-                for item in else_branch {
-                    item.walk_template_exprs(visit);
-                }
-            }
-            HelmAst::Define { body, .. } | HelmAst::Block { body, .. } => {
-                for item in body {
-                    item.walk_template_exprs(visit);
-                }
-            }
-            HelmAst::HelmComment { .. } => {}
-        }
-    }
-}
-
-/// Trait for parsing Helm+YAML templates into a shared [`HelmAst`].
-pub trait HelmParser {
-    /// Parse Helm+YAML template source into a [`HelmAst`].
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`ParseError`] if the input cannot be parsed.
-    fn parse(&self, src: &str) -> Result<HelmAst, ParseError>;
-}
-
-/// Index of named template definitions (`{{ define "name" }}...{{ end }}`).
-///
-/// Populated by feeding helper files through [`DefineIndex::add_source`].
+/// Index of helper/template file sources.
 #[derive(Default, Debug, Clone)]
 pub struct DefineIndex {
-    defines: HashMap<String, Vec<HelmAst>>,
     files: HashMap<String, String>,
 }
 
@@ -339,85 +157,6 @@ impl DefineIndex {
         entries
             .into_iter()
             .map(|(path, src)| (path.as_str(), src.as_str()))
-    }
-
-    /// Parse `src` with `parser` and collect all `Define` blocks into the index.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`ParseError`] if `parser` fails to parse `src`.
-    pub fn add_source(&mut self, parser: &dyn HelmParser, src: &str) -> Result<(), ParseError> {
-        let tree = parser.parse(src)?;
-        self.collect_defines(&tree);
-        if !self.files.values().any(|existing| existing == src) {
-            let mut index = self.files.len();
-            loop {
-                let path = format!("<inline:{index}>");
-                if let Entry::Vacant(entry) = self.files.entry(path) {
-                    entry.insert(src.to_string());
-                    break;
-                }
-                index += 1;
-            }
-        }
-        Ok(())
-    }
-
-    /// Look up a named template definition.
-    #[must_use]
-    pub fn get(&self, name: &str) -> Option<&[HelmAst]> {
-        self.defines.get(name).map(std::vec::Vec::as_slice)
-    }
-
-    fn collect_defines(&mut self, node: &HelmAst) {
-        match node {
-            HelmAst::Document { items }
-            | HelmAst::Mapping { items }
-            | HelmAst::Sequence { items } => {
-                for item in items {
-                    self.collect_defines(item);
-                }
-            }
-            HelmAst::Define { name, body } => {
-                self.defines.insert(name.clone(), body.clone());
-            }
-            HelmAst::If {
-                then_branch,
-                else_branch,
-                ..
-            } => {
-                for item in then_branch {
-                    self.collect_defines(item);
-                }
-                for item in else_branch {
-                    self.collect_defines(item);
-                }
-            }
-            HelmAst::Range {
-                body, else_branch, ..
-            }
-            | HelmAst::With {
-                body, else_branch, ..
-            } => {
-                for item in body {
-                    self.collect_defines(item);
-                }
-                for item in else_branch {
-                    self.collect_defines(item);
-                }
-            }
-            HelmAst::Block { body, .. } => {
-                for item in body {
-                    self.collect_defines(item);
-                }
-            }
-            HelmAst::Pair { value, .. } => {
-                if let Some(v) = value {
-                    self.collect_defines(v);
-                }
-            }
-            HelmAst::Scalar { .. } | HelmAst::HelmExpr { .. } | HelmAst::HelmComment { .. } => {}
-        }
     }
 }
 

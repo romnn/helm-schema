@@ -26,6 +26,33 @@ impl SymbolicWalker<'_> {
             .and_then(|span| span.start.checked_sub(self.source_offset))
     }
 
+    fn current_resource(&self, current_byte: Option<usize>) -> Option<crate::ResourceRef> {
+        let direct = current_byte
+            .and_then(|byte| self.attribution.resource_at(byte))
+            .cloned();
+        if self.control_resource_fallback_depth == 0 {
+            return direct;
+        }
+
+        let Some(span) = self.current_source_span else {
+            return direct;
+        };
+        let Some(start) = span.start.checked_sub(self.source_offset) else {
+            return direct;
+        };
+        let Some(end) = span.end.checked_sub(self.source_offset) else {
+            return direct;
+        };
+        match self
+            .attribution
+            .single_resource_in_span(start, end)
+            .cloned()
+        {
+            Some(resource) => Some(resource),
+            None => None,
+        }
+    }
+
     fn push_contract_use(
         &mut self,
         source_expr: String,
@@ -38,9 +65,7 @@ impl SymbolicWalker<'_> {
             Some(byte) => self.attribution.rebase_path_at(byte, path),
             None => path,
         };
-        let resource = current_byte
-            .and_then(|byte| self.attribution.resource_at(byte))
-            .cloned();
+        let resource = self.current_resource(current_byte);
         let guards = self.contract_guards();
         let context = ContractUseContext::new(
             &guards,
@@ -182,7 +207,10 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn activate_if_condition(&mut self, plan: &ConditionActionPlan) {
+        self.control_resource_fallback_depth += 1;
         activate_if_condition_plan(self, plan);
+        self.control_resource_fallback_depth =
+            self.control_resource_fallback_depth.saturating_sub(1);
     }
 
     fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
@@ -191,7 +219,10 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn activate_with_condition(&mut self, plan: &ConditionActionPlan) {
+        self.control_resource_fallback_depth += 1;
         activate_with_condition_plan(self, plan);
+        self.control_resource_fallback_depth =
+            self.control_resource_fallback_depth.saturating_sub(1);
     }
 
     fn activate_condition_alternative(&mut self, plan: &ConditionActionPlan) {
@@ -222,7 +253,10 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         plan: &RangeActionPlan,
         current_path: &YamlPath,
     ) {
+        self.control_resource_fallback_depth += 1;
         activate_range_action_plan(self, plan, current_path);
+        self.control_resource_fallback_depth =
+            self.control_resource_fallback_depth.saturating_sub(1);
     }
 }
 

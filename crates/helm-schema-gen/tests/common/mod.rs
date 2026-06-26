@@ -1,6 +1,6 @@
 pub mod cases;
 
-use helm_schema_ast::{DefineIndex, HelmParser};
+use helm_schema_ast::DefineIndex;
 use helm_schema_core::{ResourceSchemaOracle, YamlPath};
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::{ContractIr, ResourceRef};
@@ -14,17 +14,13 @@ use std::process::Command;
 use test_util::prelude::sim_assert_eq;
 
 pub fn build_define_index(
-    parser: &dyn HelmParser,
     spec: test_util::DefineSourceSpec<'_>,
-    helper_parse_mode: HelperParseMode,
+    _helper_parse_mode: HelperParseMode,
 ) -> DefineIndex {
     let loaded = spec.load();
     let mut idx = DefineIndex::new();
-    for source in loaded.helper_templates {
-        let result = idx.add_source(parser, &source);
-        if helper_parse_mode == HelperParseMode::Strict {
-            result.expect("helper source should parse");
-        }
+    for (idx_num, source) in loaded.helper_templates.into_iter().enumerate() {
+        idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
     }
     for (name, source) in loaded.file_sources {
         idx.add_file_source(&name, &source);
@@ -169,11 +165,7 @@ pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> Value {
 
 pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: &str) -> Value {
     let src = test_util::read_testdata(case.template_path);
-    let idx = build_define_index(
-        &helm_schema_ast::TreeSitterParser,
-        case.define_sources,
-        case.helper_parse_mode,
-    );
+    let idx = build_define_index(case.define_sources, case.helper_parse_mode);
     let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let provider = match case.provider {
         ProviderKind::K8s(version) => production_k8s_chain(version),

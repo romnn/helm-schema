@@ -1,22 +1,18 @@
 use std::collections::{HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, TemplateExpr};
+use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 
 #[derive(Clone, Copy)]
 pub(crate) struct FragmentEvalContext<'a> {
-    pub(crate) defines: &'a DefineIndex,
     pub(crate) analysis_db: &'a IrAnalysisDb,
 }
 
 impl<'a> FragmentEvalContext<'a> {
-    pub(crate) fn new(defines: &'a DefineIndex, analysis_db: &'a IrAnalysisDb) -> Self {
-        Self {
-            defines,
-            analysis_db,
-        }
+    pub(crate) fn new(analysis_db: &'a IrAnalysisDb) -> Self {
+        Self { analysis_db }
     }
 
     pub(crate) fn fragment_value_from_expr(

@@ -21,7 +21,7 @@ fn branch_guard_paths_include_direct_values_condition() {
         &HashMap::<String, AbstractValue>::new(),
         None,
         &HashMap::new(),
-        FragmentEvalContext::new(&defines, &analysis_db),
+        FragmentEvalContext::new(&analysis_db),
         &mut seen,
     );
 

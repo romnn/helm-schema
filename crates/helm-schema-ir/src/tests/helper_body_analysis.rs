@@ -1,7 +1,7 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 use test_util::prelude::sim_assert_eq;
 
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 
 use crate::Guard;
 use crate::analysis_db::IrAnalysisDb;
@@ -21,11 +21,9 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
         {{- end -}}
     "#;
     let mut defines = DefineIndex::new();
-    defines
-        .add_source(&TreeSitterParser, source)
-        .expect("define source");
+    defines.add_file_source("<inline:0>", source);
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = FragmentEvalContext::new(&defines, &analysis_db);
+    let context = FragmentEvalContext::new(&analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::new(),
         helper_body_dot: None,
@@ -90,11 +88,9 @@ fn helper_body_summary_resolves_string_hints_through_local_aliases() {
         {{- end -}}
     "#;
     let mut defines = DefineIndex::new();
-    defines
-        .add_source(&TreeSitterParser, source)
-        .expect("define source");
+    defines.add_file_source("<inline:0>", source);
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = FragmentEvalContext::new(&defines, &analysis_db);
+    let context = FragmentEvalContext::new(&analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::from([(
             "imageRoot".to_string(),
@@ -124,11 +120,9 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
         "../../../../testdata/charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_storage.tpl"
     );
     let mut defines = DefineIndex::new();
-    defines
-        .add_source(&TreeSitterParser, source)
-        .expect("define source");
+    defines.add_file_source("<inline:0>", source);
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = FragmentEvalContext::new(&defines, &analysis_db);
+    let context = FragmentEvalContext::new(&analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::from([
             (

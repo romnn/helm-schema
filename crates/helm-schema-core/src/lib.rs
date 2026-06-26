@@ -12,12 +12,8 @@ mod provider_schema_use;
 mod schema_provider;
 mod types;
 
-pub use capability::{
-    ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate, HelperBranch, HelperBranchBody,
-};
-pub use capability_liveness::{
-    CapabilityOracle, StaticOracle, evaluate_guard, live_literals, select_live_branch,
-};
+pub use capability::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBranchBody};
+pub use capability_liveness::{CapabilityOracle, live_literals};
 pub use contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
@@ -36,4 +32,4 @@ pub use provider_schema_fragment::{
 };
 pub use provider_schema_use::ProviderSchemaUse;
 pub use schema_provider::ResourceSchemaOracle;
-pub use types::{ResourceRef, ValueKind, YamlPath, ordered_api_versions_for_resource};
+pub use types::{ResourceRef, ValueKind, YamlPath};

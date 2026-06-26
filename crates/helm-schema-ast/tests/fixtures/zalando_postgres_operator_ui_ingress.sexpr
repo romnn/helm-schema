@@ -1,139 +1,260 @@
-(Document
-  (If ".Values.ingress.enabled"
-    (then
-      (HelmExpr "$fullName := include \"postgres-operator-ui.fullname\" .")
-      (HelmExpr "$svcPort := .Values.service.port")
-      (If "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "apiVersion")
-              (Scalar "networking.k8s.io/v1"))))
-        (else
-          (If "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion"
-            (then
-              (Mapping
-                (Pair
-                  (Scalar "apiVersion")
-                  (Scalar "networking.k8s.io/v1beta1"))))
-            (else
-              (Mapping
-                (Pair
-                  (Scalar "apiVersion")
-                  (Scalar "extensions/v1beta1")))))))
-      (Mapping
-        (Pair
-          (Scalar "kind")
-          (Scalar "Ingress"))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (HelmExpr "$fullName"))
-            (Pair
-              (Scalar "namespace")
-              (HelmExpr ".Release.Namespace"))
-            (Pair
-              (Scalar "labels")
-              (Mapping
-                (Pair
-                  (Scalar "app.kubernetes.io/name")
-                  (HelmExpr "template \"postgres-operator-ui.name\" ."))
-                (Pair
-                  (Scalar "helm.sh/chart")
-                  (HelmExpr "template \"postgres-operator-ui.chart\" ."))
-                (Pair
-                  (Scalar "app.kubernetes.io/managed-by")
-                  (HelmExpr ".Release.Service"))
-                (Pair
-                  (Scalar "app.kubernetes.io/instance")
-                  (HelmExpr ".Release.Name")))))))
-      (With ".Values.ingress.annotations"
-        (body
-          (Mapping
-            (Pair
-              (Scalar "annotations")
-              (HelmExpr "toYaml . | nindent 4")))))
-      (Mapping
-        (Pair
-          (Scalar "spec")))
-      (If ".Values.ingress.ingressClassName"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "ingressClassName")
-              (HelmExpr ".Values.ingress.ingressClassName")))))
-      (If ".Values.ingress.tls"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "tls")))
-          (Range ".Values.ingress.tls"
-            (body
-              (Sequence
-                (Mapping
-                  (Pair
-                    (Scalar "hosts"))))
-              (Range ".hosts"
-                (body
-                  (Sequence
-                    (HelmExpr ". | quote"))))
-              (Mapping
-                (Pair
-                  (Scalar "secretName")
-                  (HelmExpr ".secretName")))))))
-      (Mapping
-        (Pair
-          (Scalar "rules")))
-      (Range ".Values.ingress.hosts"
-        (body
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "host")
-                (HelmExpr ".host | quote"))
-              (Pair
-                (Scalar "http")
-                (Mapping
-                  (Pair
-                    (Scalar "paths"))))))
-          (Range ".paths"
-            (body
-              (Sequence
-                (Mapping
-                  (Pair
-                    (Scalar "path")
-                    (HelmExpr "."))))
-              (If "semverCompare \">=1.19-0\" $.Capabilities.KubeVersion.GitVersion"
-                (then
-                  (Mapping
-                    (Pair
-                      (Scalar "pathType")
-                      (Scalar "Prefix"))
-                    (Pair
-                      (Scalar "backend")
-                      (Mapping
-                        (Pair
-                          (Scalar "service")
-                          (Mapping
-                            (Pair
-                              (Scalar "name")
-                              (HelmExpr "$fullName"))
-                            (Pair
-                              (Scalar "port")
-                              (Mapping
-                                (Pair
-                                  (Scalar "number")
-                                  (HelmExpr "$svcPort"))))))))))
-                (else
-                  (Mapping
-                    (Pair
-                      (Scalar "backend")
-                      (Mapping
-                        (Pair
-                          (Scalar "serviceName")
-                          (HelmExpr "$fullName"))
-                        (Pair
-                          (Scalar "servicePort")
-                          (HelmExpr "$svcPort"))))))))))))))
+(template
+  (if_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "ingress")
+      )
+      field: (field_identifier :text "enabled")
+    )
+    consequence: (variable_definition
+      variable: (variable
+        name: (identifier :text "fullName")
+      )
+      value: (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"postgres-operator-ui.fullname\"")
+          (dot :text ".")
+        )
+      )
+    )
+    consequence: (variable_definition
+      variable: (variable
+        name: (identifier :text "svcPort")
+      )
+      value: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "service")
+        )
+        field: (field_identifier :text "port")
+      )
+    )
+    consequence: (if_action
+      condition: (function_call
+        function: (identifier :text "semverCompare")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\">=1.19-0\"")
+          (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Capabilities")
+              )
+              field: (field_identifier :text "KubeVersion")
+            )
+            field: (field_identifier :text "GitVersion")
+          )
+        )
+      )
+      consequence: (text :text "apiVersion: networking.k8s.io/v1")
+      condition: (function_call
+        function: (identifier :text "semverCompare")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\">=1.14-0\"")
+          (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Capabilities")
+              )
+              field: (field_identifier :text "KubeVersion")
+            )
+            field: (field_identifier :text "GitVersion")
+          )
+        )
+      )
+      option: (text :text "apiVersion: networking.k8s.io/v1beta1")
+      alternative: (text :text "apiVersion: extensions/v1beta1")
+    )
+    consequence: (text :text "kind: Ingress\nmetadata:\n  name:")
+    consequence: (variable
+      name: (identifier :text "fullName")
+    )
+    consequence: (text :text "namespace:")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Release")
+      )
+      field: (field_identifier :text "Namespace")
+    )
+    consequence: (text :text "labels:\n    app.kubernetes.io/name:")
+    consequence: (template_action
+      name: (interpreted_string_literal :text "\"postgres-operator-ui.name\"")
+      argument: (dot :text ".")
+    )
+    consequence: (text :text "helm.sh/chart:")
+    consequence: (template_action
+      name: (interpreted_string_literal :text "\"postgres-operator-ui.chart\"")
+      argument: (dot :text ".")
+    )
+    consequence: (text :text "app.kubernetes.io/managed-by:")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Release")
+      )
+      field: (field_identifier :text "Service")
+    )
+    consequence: (text :text "app.kubernetes.io/instance:")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Release")
+      )
+      field: (field_identifier :text "Name")
+    )
+    consequence: (with_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "ingress")
+        )
+        field: (field_identifier :text "annotations")
+      )
+      consequence: (text :text "annotations:")
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "toYaml")
+          arguments: (argument_list
+            (dot :text ".")
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+    consequence: (text :text "spec:")
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "ingress")
+        )
+        field: (field_identifier :text "ingressClassName")
+      )
+      consequence: (text :text "ingressClassName:")
+      consequence: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "ingress")
+        )
+        field: (field_identifier :text "ingressClassName")
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "ingress")
+        )
+        field: (field_identifier :text "tls")
+      )
+      consequence: (text :text "tls:")
+      consequence: (range_action
+        range: (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "ingress")
+          )
+          field: (field_identifier :text "tls")
+        )
+        body: (text :text "- hosts:")
+        body: (range_action
+          range: (field
+            name: (identifier :text "hosts")
+          )
+          body: (text :text "-")
+          body: (chained_pipeline
+            (dot :text ".")
+            (function_call
+              function: (identifier :text "quote")
+            )
+          )
+        )
+        body: (text :text "secretName:")
+        body: (field
+          name: (identifier :text "secretName")
+        )
+      )
+    )
+    consequence: (text :text "rules:")
+    consequence: (range_action
+      range: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "ingress")
+        )
+        field: (field_identifier :text "hosts")
+      )
+      body: (text :text "- host:")
+      body: (chained_pipeline
+        (field
+          name: (identifier :text "host")
+        )
+        (function_call
+          function: (identifier :text "quote")
+        )
+      )
+      body: (text :text "http:\n        paths:")
+      body: (range_action
+        range: (field
+          name: (identifier :text "paths")
+        )
+        body: (text :text "- path:")
+        body: (dot :text ".")
+        body: (if_action
+          condition: (function_call
+            function: (identifier :text "semverCompare")
+            arguments: (argument_list
+              (interpreted_string_literal :text "\">=1.19-0\"")
+              (selector_expression
+                operand: (selector_expression
+                  operand: (selector_expression
+                    operand: (variable :text "$")
+                    field: (field_identifier :text "Capabilities")
+                  )
+                  field: (field_identifier :text "KubeVersion")
+                )
+                field: (field_identifier :text "GitVersion")
+              )
+            )
+          )
+          consequence: (text :text "pathType: Prefix\n            backend:\n              service:\n                name:")
+          consequence: (variable
+            name: (identifier :text "fullName")
+          )
+          consequence: (text :text "port:\n                  number:")
+          consequence: (variable
+            name: (identifier :text "svcPort")
+          )
+          alternative: (text :text "backend:\n              serviceName:")
+          alternative: (variable
+            name: (identifier :text "fullName")
+          )
+          alternative: (text :text "servicePort:")
+          alternative: (variable
+            name: (identifier :text "svcPort")
+          )
+        )
+      )
+    )
+  )
+)

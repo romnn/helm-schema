@@ -1,277 +1,1097 @@
-(Document
-  (If ".Values.rbacEnabled"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "rbac.authorization.k8s.io/v1"))
-        (Pair
-          (Scalar "kind")
-          (Scalar "ClusterRole"))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (Scalar "nats-io-nats-operator-crd"))))
-        (Pair
-          (Scalar "rules")
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "apiextensions.k8s.io")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "customresourcedefinitions")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "get")
-                  (Scalar "list")
-                  (Scalar "create")
-                  (Scalar "update")
-                  (Scalar "watch"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "nats.io")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "natsclusters")
-                  (Scalar "natsserviceroles")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "*"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "pods")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "watch")
-                  (Scalar "get")
-                  (Scalar "patch")
-                  (Scalar "update")
-                  (Scalar "delete")
-                  (Scalar "list")))))))
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "rbac.authorization.k8s.io/v1"))
-        (Pair
-          (Scalar "kind")
-          (Scalar "ClusterRoleBinding"))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (Scalar "nats-io-nats-operator-crd-binding"))))
-        (Pair
-          (Scalar "roleRef")
-          (Mapping
-            (Pair
-              (Scalar "apiGroup")
-              (Scalar "rbac.authorization.k8s.io"))
-            (Pair
-              (Scalar "kind")
-              (Scalar "ClusterRole"))
-            (Pair
-              (Scalar "name")
-              (Scalar "nats-io-nats-operator-crd"))))
-        (Pair
-          (Scalar "subjects")
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "kind")
-                (Scalar "ServiceAccount"))
-              (Pair
-                (Scalar "name")
-                (Scalar "nats-operator"))
-              (Pair
-                (Scalar "namespace")
-                (HelmExpr ".Release.Namespace"))))))
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "rbac.authorization.k8s.io/v1")))
-      (If ".Values.clusterScoped"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "kind")
-              (Scalar "ClusterRole"))))
-        (else
-          (Mapping
-            (Pair
-              (Scalar "kind")
-              (Scalar "Role")))))
-      (Mapping
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (Scalar "nats-io-nats-operator"))))
-        (Pair
-          (Scalar "rules")
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "pods")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "watch")
-                  (Scalar "get")
-                  (Scalar "patch")
-                  (Scalar "update")
-                  (Scalar "delete")
-                  (Scalar "list"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "services")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "watch")
-                  (Scalar "get")
-                  (Scalar "patch")
-                  (Scalar "update")
-                  (Scalar "delete")
-                  (Scalar "list"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "secrets")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "watch")
-                  (Scalar "get")
-                  (Scalar "update")
-                  (Scalar "delete")
-                  (Scalar "list"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "pods/exec")
-                  (Scalar "pods/log")
-                  (Scalar "serviceaccounts/token")
-                  (Scalar "events")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "*"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "namespaces")
-                  (Scalar "serviceaccounts")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "list")
-                  (Scalar "get")
-                  (Scalar "watch"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "endpoints")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "watch")
-                  (Scalar "get")
-                  (Scalar "update")
-                  (Scalar "delete")
-                  (Scalar "list")))))))
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "rbac.authorization.k8s.io/v1")))
-      (If ".Values.clusterScoped"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "kind")
-              (Scalar "ClusterRoleBinding"))))
-        (else
-          (Mapping
-            (Pair
-              (Scalar "kind")
-              (Scalar "RoleBinding")))))
-      (Mapping
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (Scalar "nats-io-nats-operator-binding"))))
-        (Pair
-          (Scalar "roleRef")
-          (Mapping
-            (Pair
-              (Scalar "apiGroup")
-              (Scalar "rbac.authorization.k8s.io")))))
-      (If ".Values.clusterScoped"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "kind")
-              (Scalar "ClusterRole"))))
-        (else
-          (Mapping
-            (Pair
-              (Scalar "kind")
-              (Scalar "Role"))))))))
+(stream
+  (comment :text "{{- if .Values.rbacEnabled }}")
+  (document
+    (block_node
+      (block_mapping
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "rbac.authorization.k8s.io/v1")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "ClusterRole")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "metadata")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "nats-io-nats-operator-crd")
+                  )
+                )
+              )
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "rules")
+            )
+          )
+          (comment :text "# Allow creating CRDs")
+          value: (block_node
+            (block_sequence
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "apiextensions.k8s.io")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "customresourcedefinitions")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"get\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"list\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"create\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"update\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"watch\"")
+                          )
+                        )
+                      )
+                    )
+                    (comment :text "# Allow all actions on NatsClusters")
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "nats.io")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "natsclusters")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "natsserviceroles")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"*\"")
+                          )
+                        )
+                      )
+                    )
+                    (comment :text "# Allowed actions on Pods")
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"\"")
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "pods")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"create\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"watch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"get\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"patch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"update\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"delete\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"list\"")
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  (document
+    (block_node
+      (block_mapping
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "rbac.authorization.k8s.io/v1")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "ClusterRoleBinding")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "metadata")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "nats-io-nats-operator-crd-binding")
+                  )
+                )
+              )
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "roleRef")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "apiGroup")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "rbac.authorization.k8s.io")
+                  )
+                )
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "kind")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "ClusterRole")
+                  )
+                )
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "nats-io-nats-operator-crd")
+                  )
+                )
+              )
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "subjects")
+            )
+          )
+          value: (block_node
+            (block_sequence
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "kind")
+                        )
+                      )
+                      value: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "ServiceAccount")
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "name")
+                        )
+                      )
+                      value: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "nats-operator")
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "namespace")
+                        )
+                      )
+                      value: (helm_template :text "{{ .Release.Namespace }}")
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  (document
+    (block_node
+      (block_mapping
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "rbac.authorization.k8s.io/v1")
+            )
+          )
+        )
+        (comment :text "{{- if .Values.clusterScoped }}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "ClusterRole")
+            )
+          )
+        )
+        (comment :text "{{- else }}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "Role")
+            )
+          )
+        )
+        (comment :text "{{- end }}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "metadata")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "nats-io-nats-operator")
+                  )
+                )
+              )
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "rules")
+            )
+          )
+          (comment :text "# Allowed actions on Pods")
+          value: (block_node
+            (block_sequence
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"\"")
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "pods")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"create\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"watch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"get\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"patch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"update\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"delete\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"list\"")
+                          )
+                        )
+                      )
+                    )
+                    (comment :text "# Allowed actions on Services")
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"\"")
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "services")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"create\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"watch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"get\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"patch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"update\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"delete\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"list\"")
+                          )
+                        )
+                      )
+                    )
+                    (comment :text "# Allowed actions on Secrets")
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"\"")
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "secrets")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"create\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"watch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"get\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"update\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"delete\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"list\"")
+                          )
+                        )
+                      )
+                    )
+                    (comment :text "# Allow all actions on some special subresources")
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"\"")
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "pods/exec")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "pods/log")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "serviceaccounts/token")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "events")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"*\"")
+                          )
+                        )
+                      )
+                    )
+                    (comment :text "# Allow listing Namespaces and ServiceAccounts")
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"\"")
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "namespaces")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "serviceaccounts")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"list\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"get\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"watch\"")
+                          )
+                        )
+                      )
+                    )
+                    (comment :text "# Allow actions on Endpoints")
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"\"")
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "endpoints")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (flow_node
+                        (flow_sequence
+                          (flow_node
+                            (double_quote_scalar :text "\"create\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"watch\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"get\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"update\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"delete\"")
+                          )
+                          (flow_node
+                            (double_quote_scalar :text "\"list\"")
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  (document
+    (block_node
+      (block_mapping
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "rbac.authorization.k8s.io/v1")
+            )
+          )
+        )
+        (comment :text "{{- if .Values.clusterScoped }}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "ClusterRoleBinding")
+            )
+          )
+        )
+        (comment :text "{{- else }}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "RoleBinding")
+            )
+          )
+        )
+        (comment :text "{{- end }}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "metadata")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "nats-io-nats-operator-binding")
+                  )
+                )
+              )
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "roleRef")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "apiGroup")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "rbac.authorization.k8s.io")
+                  )
+                )
+              )
+              (comment :text "{{- if .Values.clusterScoped }}")
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "kind")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "ClusterRole")
+                  )
+                )
+              )
+              (comment :text "{{- else }}")
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "kind")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "Role")
+                  )
+                )
+              )
+              (comment :text "{{- end }}")
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "nats-io-nats-operator")
+                  )
+                )
+              )
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "subjects")
+            )
+          )
+          value: (block_node
+            (block_sequence
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "kind")
+                        )
+                      )
+                      value: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "ServiceAccount")
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "name")
+                        )
+                      )
+                      value: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "nats-operator")
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "namespace")
+                        )
+                      )
+                      value: (helm_template :text "{{ .Release.Namespace }}")
+                    )
+                    (comment :text "{{- end }}")
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)

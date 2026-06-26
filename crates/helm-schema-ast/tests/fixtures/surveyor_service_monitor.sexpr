@@ -1,73 +1,184 @@
-(Document
-  (If ".Values.serviceMonitor.enabled"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "monitoring.coreos.com/v1"))
-        (Pair
-          (Scalar "kind")
-          (Scalar "ServiceMonitor"))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (HelmExpr "template \"surveyor.fullname\" ."))
-            (Pair
-              (Scalar "labels")
-              (HelmExpr "include \"surveyor.labels\" . | nindent 4")))))
-      (With ".Values.serviceMonitor.labels"
-        (body
-          (HelmExpr "toYaml . | nindent 4")))
-      (With ".Values.serviceMonitor.annotations"
-        (body
-          (Mapping
-            (Pair
-              (Scalar "annotations")
-              (HelmExpr "toYaml . | nindent 4")))))
-      (Mapping
-        (Pair
-          (Scalar "spec")
-          (Mapping
-            (Pair
-              (Scalar "endpoints")
-              (Sequence
-                (Mapping
-                  (Pair
-                    (Scalar "port")
-                    (Scalar "http"))
-                  (Pair
-                    (Scalar "path")
-                    (Scalar "/metrics"))))))))
-      (If ".Values.serviceMonitor.interval"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "interval")
-              (HelmExpr ".Values.serviceMonitor.interval")))))
-      (If ".Values.serviceMonitor.scrapeTimeout"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "scrapeTimeout")
-              (HelmExpr ".Values.serviceMonitor.scrapeTimeout")))))
-      (With ".Values.serviceMonitor.relabelings"
-        (body
-          (Mapping
-            (Pair
-              (Scalar "relabelings")))
-          (HelmExpr "toYaml . | nindent 4")))
-      (With ".Values.serviceMonitor.metricRelabelings"
-        (body
-          (Mapping
-            (Pair
-              (Scalar "metricRelabelings")))
-          (HelmExpr "toYaml . | nindent 4")))
-      (Mapping
-        (Pair
-          (Scalar "selector")
-          (Mapping
-            (Pair
-              (Scalar "matchLabels")
-              (HelmExpr "include \"surveyor.selectorLabels\" . | nindent 6"))))))))
+(stream
+  (comment :text "{{ if .Values.serviceMonitor.enabled }}")
+  (document
+    (block_node
+      (block_mapping
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "monitoring.coreos.com/v1")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "ServiceMonitor")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "metadata")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (helm_template :text "{{ template \"surveyor.fullname\" . }}")
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "labels")
+                  )
+                )
+                value: (helm_template :text "{{- include \"surveyor.labels\" . | nindent 4 }}")
+              )
+              (comment :text "{{- with .Values.serviceMonitor.labels }}")
+              (comment :text "{{- end }}")
+              (comment :text "{{- with .Values.serviceMonitor.annotations }}")
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "annotations")
+                  )
+                )
+                value: (helm_template :text "{{- toYaml . | nindent 4 }}")
+              )
+              (comment :text "{{- end }}")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "spec")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "endpoints")
+                  )
+                )
+                value: (block_node
+                  (block_sequence
+                    (block_sequence_item
+                      (block_node
+                        (block_mapping
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "port")
+                              )
+                            )
+                            value: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "http")
+                              )
+                            )
+                          )
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "path")
+                              )
+                            )
+                            value: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "/metrics")
+                              )
+                            )
+                          )
+                          (comment :text "{{- if .Values.serviceMonitor.interval }}")
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "interval")
+                              )
+                            )
+                            value: (helm_template :text "{{ .Values.serviceMonitor.interval }}")
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "{{- if .Values.serviceMonitor.scrapeTimeout }}")
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "scrapeTimeout")
+                              )
+                            )
+                            value: (helm_template :text "{{ .Values.serviceMonitor.scrapeTimeout }}")
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "{{- with .Values.serviceMonitor.relabelings }}")
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "relabelings")
+                              )
+                            )
+                          )
+                          (helm_template :text "{{- toYaml . | nindent 4 }}")
+                          (comment :text "{{- end }}")
+                          (comment :text "{{- with .Values.serviceMonitor.metricRelabelings }}")
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "metricRelabelings")
+                              )
+                            )
+                          )
+                          (helm_template :text "{{- toYaml . | nindent 4 }}")
+                          (comment :text "{{- end }}")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "selector")
+                  )
+                )
+                value: (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "matchLabels")
+                        )
+                      )
+                      value: (helm_template :text "{{- include \"surveyor.selectorLabels\" . | nindent 6 }}")
+                    )
+                    (comment :text "{{- end }}")
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)

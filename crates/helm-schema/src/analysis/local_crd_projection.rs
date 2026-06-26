@@ -1,4 +1,4 @@
-use helm_schema_ast::{HelmAst, HelmParser as _, TreeSitterParser};
+use helm_schema_ast::{ParseError, parse_helm_template};
 use helm_schema_k8s::{LocalResourceSchema, resource_schemas_from_crd_document_with_source};
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -16,8 +16,12 @@ pub(crate) fn local_resource_schemas_from_template_source(
         return local_resource_schemas_from_literal_template(source, filename);
     }
 
-    let ast = TreeSitterParser.parse(source)?;
-    Ok(local_resource_schemas_from_template_ast(&ast, filename))
+    let tree = parse_helm_template(source).ok_or(ParseError::TreeSitterParseFailed)?;
+    Ok(local_resource_schemas_from_template_tree(
+        tree.root_node(),
+        source,
+        filename,
+    ))
 }
 
 fn local_resource_schemas_from_literal_template(
@@ -39,73 +43,39 @@ fn local_resource_schemas_from_literal_template(
     Ok(resource_schemas)
 }
 
-fn local_resource_schemas_from_template_ast(
-    ast: &HelmAst,
+fn local_resource_schemas_from_template_tree(
+    root: tree_sitter::Node<'_>,
+    source: &str,
     filename: &str,
 ) -> Vec<LocalResourceSchema> {
     let mut resource_schemas = Vec::new();
-    collect_template_crd_schemas(ast, false, filename, &mut resource_schemas);
+    collect_template_crd_schemas(root, source, filename, &mut resource_schemas);
     resource_schemas
 }
 
 fn collect_template_crd_schemas(
-    node: &HelmAst,
-    in_control_flow: bool,
+    node: tree_sitter::Node<'_>,
+    source: &str,
     filename: &str,
     resource_schemas: &mut Vec<LocalResourceSchema>,
 ) {
-    if !in_control_flow && let Some(extracted) = crd_resource_schemas_from_ast(node, filename) {
+    if let Some(extracted) = crd_resource_schemas_from_node(node, source, filename) {
         resource_schemas.extend(extracted);
         return;
     }
 
-    match node {
-        HelmAst::Document { items } | HelmAst::Mapping { items } | HelmAst::Sequence { items } => {
-            for item in items {
-                collect_template_crd_schemas(item, in_control_flow, filename, resource_schemas);
-            }
-        }
-        HelmAst::Pair { value, .. } => {
-            if let Some(value) = value.as_deref() {
-                collect_template_crd_schemas(value, in_control_flow, filename, resource_schemas);
-            }
-        }
-        HelmAst::If {
-            then_branch,
-            else_branch,
-            ..
-        }
-        | HelmAst::Range {
-            body: then_branch,
-            else_branch,
-            ..
-        }
-        | HelmAst::With {
-            body: then_branch,
-            else_branch,
-            ..
-        } => {
-            for item in then_branch {
-                collect_template_crd_schemas(item, true, filename, resource_schemas);
-            }
-            for item in else_branch {
-                collect_template_crd_schemas(item, true, filename, resource_schemas);
-            }
-        }
-        HelmAst::Define { body, .. } | HelmAst::Block { body, .. } => {
-            for item in body {
-                collect_template_crd_schemas(item, true, filename, resource_schemas);
-            }
-        }
-        HelmAst::Scalar { .. } | HelmAst::HelmExpr { .. } | HelmAst::HelmComment { .. } => {}
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        collect_template_crd_schemas(child, source, filename, resource_schemas);
     }
 }
 
-fn crd_resource_schemas_from_ast(
-    node: &HelmAst,
+fn crd_resource_schemas_from_node(
+    node: tree_sitter::Node<'_>,
+    source: &str,
     filename: &str,
 ) -> Option<Vec<LocalResourceSchema>> {
-    let document = crd_document_from_ast(node)?;
+    let document = crd_document_from_node(node, source)?;
     let schemas = resource_schemas_from_crd_document_with_source(
         document,
         TEMPLATE_CRD_SOURCE_ID,
@@ -114,133 +84,181 @@ fn crd_resource_schemas_from_ast(
     (!schemas.is_empty()).then_some(schemas)
 }
 
-fn crd_document_from_ast(node: &HelmAst) -> Option<Value> {
-    let spec = mapping_value(node, "spec")?;
-    let names = mapping_value(spec, "names")?;
+fn crd_document_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<Value> {
+    let spec = mapping_value(node, source, "spec")?;
+    let names = mapping_value(spec, source, "names")?;
     let mut spec_json = json!({
-        "group": literal_string_for_key(spec, "group")?,
-        "names": { "kind": literal_string_for_key(names, "kind")? },
+        "group": literal_string_for_key(spec, source, "group")?,
+        "names": { "kind": literal_string_for_key(names, source, "kind")? },
     });
 
-    if let Some(version_nodes) = mapping_value(spec, "versions").and_then(sequence_items) {
+    if let Some(version_nodes) = mapping_value(spec, source, "versions").and_then(sequence_items) {
         let versions = version_nodes
             .iter()
             .map(|version| {
-                let schema = mapping_value(version, "schema")
-                    .and_then(|schema| mapping_value(schema, "openAPIV3Schema"))
-                    .and_then(literal_json_from_ast)?;
+                let schema = mapping_value(*version, source, "schema")
+                    .and_then(|schema| mapping_value(schema, source, "openAPIV3Schema"))
+                    .and_then(|schema| literal_json_from_node(schema, source))?;
                 Some(json!({
-                    "name": literal_string_for_key(version, "name")?,
-                    "served": literal_bool_for_key(version, "served"),
+                    "name": literal_string_for_key(*version, source, "name")?,
+                    "served": literal_bool_for_key(*version, source, "served"),
                     "schema": { "openAPIV3Schema": schema },
                 }))
             })
             .collect::<Option<Vec<_>>>()?;
         spec_json["versions"] = Value::Array(versions);
     } else {
-        let validation = mapping_value(spec, "validation")?;
-        spec_json["version"] = Value::String(literal_string_for_key(spec, "version")?);
+        let validation = mapping_value(spec, source, "validation")?;
+        spec_json["version"] = Value::String(literal_string_for_key(spec, source, "version")?);
         spec_json["validation"] = json!({
-            "openAPIV3Schema": mapping_value(validation, "openAPIV3Schema")
-                .and_then(literal_json_from_ast)?,
+            "openAPIV3Schema": mapping_value(validation, source, "openAPIV3Schema")
+                .and_then(|schema| literal_json_from_node(schema, source))?,
         });
     }
 
     Some(json!({
-        "apiVersion": literal_string_for_key(node, "apiVersion")?,
-        "kind": literal_string_for_key(node, "kind")?,
+        "apiVersion": literal_string_for_key(node, source, "apiVersion")?,
+        "kind": literal_string_for_key(node, source, "kind")?,
         "spec": spec_json,
     }))
 }
 
-fn mapping_value<'a>(node: &'a HelmAst, key: &str) -> Option<&'a HelmAst> {
-    let items = match node {
-        HelmAst::Document { items } if items.len() == 1 => return mapping_value(&items[0], key),
-        HelmAst::Mapping { items } => items,
+fn mapping_value<'tree>(
+    node: tree_sitter::Node<'tree>,
+    source: &str,
+    key: &str,
+) -> Option<tree_sitter::Node<'tree>> {
+    let mapping = mapping_node(node)?;
+    let pair_kind = match mapping.kind() {
+        "block_mapping" => "block_mapping_pair",
+        "flow_mapping" => "flow_pair",
         _ => return None,
     };
-
-    for item in items {
-        let HelmAst::Pair {
-            key: pair_key,
-            value,
-        } = item
-        else {
+    let mut cursor = mapping.walk();
+    for pair in mapping.children(&mut cursor) {
+        if !pair.is_named() || pair.kind() != pair_kind {
             continue;
-        };
-        if literal_string_from_ast(pair_key.as_ref()).as_deref() == Some(key) {
-            return value.as_deref();
+        }
+        let pair_key = pair.child_by_field_name("key")?;
+        if literal_string_from_node(pair_key, source).as_deref() == Some(key) {
+            return pair
+                .child_by_field_name("value")
+                .map(unwrap_yaml_value_node);
         }
     }
     None
 }
 
-fn sequence_items(node: &HelmAst) -> Option<&[HelmAst]> {
-    match node {
-        HelmAst::Sequence { items } => Some(items),
-        HelmAst::Document { items } if items.len() == 1 => sequence_items(&items[0]),
-        _ => None,
+fn sequence_items(node: tree_sitter::Node<'_>) -> Option<Vec<tree_sitter::Node<'_>>> {
+    let node = unwrap_yaml_value_node(node);
+    if !matches!(node.kind(), "block_sequence" | "flow_sequence") {
+        return None;
     }
+    let mut items = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        if matches!(
+            child.kind(),
+            "block_sequence_item" | "flow_node" | "flow_pair"
+        ) {
+            items.push(unwrap_yaml_value_node(child));
+        }
+    }
+    Some(items)
 }
 
-fn literal_string_for_key(node: &HelmAst, key: &str) -> Option<String> {
-    mapping_value(node, key).and_then(literal_string_from_ast)
+fn literal_string_for_key(node: tree_sitter::Node<'_>, source: &str, key: &str) -> Option<String> {
+    mapping_value(node, source, key).and_then(|value| literal_string_from_node(value, source))
 }
 
-fn literal_bool_for_key(node: &HelmAst, key: &str) -> Option<bool> {
-    mapping_value(node, key)
-        .and_then(literal_json_from_ast)?
+fn literal_bool_for_key(node: tree_sitter::Node<'_>, source: &str, key: &str) -> Option<bool> {
+    mapping_value(node, source, key)
+        .and_then(|value| literal_json_from_node(value, source))?
         .as_bool()
 }
 
-fn literal_string_from_ast(node: &HelmAst) -> Option<String> {
-    literal_json_from_ast(node)?
+fn literal_string_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
+    literal_json_from_node(node, source)?
         .as_str()
         .map(std::string::ToString::to_string)
 }
 
-fn literal_json_from_ast(node: &HelmAst) -> Option<Value> {
-    match node {
-        HelmAst::Document { items } => {
-            if items.len() == 1 {
-                literal_json_from_ast(&items[0])
+fn literal_json_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<Value> {
+    let node = unwrap_yaml_value_node(node);
+    match node.kind() {
+        "stream" | "document" | "block_node" | "flow_node" => {
+            let mut cursor = node.walk();
+            let children = node
+                .named_children(&mut cursor)
+                .filter(|child| {
+                    !matches!(
+                        child.kind(),
+                        "reserved_directive" | "tag_directive" | "yaml_directive" | "comment"
+                    )
+                })
+                .collect::<Vec<_>>();
+            if children.len() == 1 {
+                literal_json_from_node(children[0], source)
             } else {
                 None
             }
         }
-        HelmAst::Mapping { items } => {
+        "block_mapping" | "flow_mapping" => {
             let mut object = serde_json::Map::new();
-            for item in items {
-                let HelmAst::Pair { key, value } = item else {
-                    return None;
-                };
-                let key = literal_string_from_ast(key.as_ref())?;
-                let value = match value.as_deref() {
-                    Some(value) => literal_json_from_ast(value)?,
-                    None => Value::Null,
-                };
+            let pair_kind = if node.kind() == "block_mapping" {
+                "block_mapping_pair"
+            } else {
+                "flow_pair"
+            };
+            let mut cursor = node.walk();
+            for pair in node.children(&mut cursor) {
+                if !pair.is_named() || pair.kind() != pair_kind {
+                    continue;
+                }
+                let key = literal_string_from_node(pair.child_by_field_name("key")?, source)?;
+                let value = pair
+                    .child_by_field_name("value")
+                    .map(|value| literal_json_from_node(value, source))
+                    .unwrap_or(Some(Value::Null))?;
                 object.insert(key, value);
             }
             Some(Value::Object(object))
         }
-        HelmAst::Sequence { items } => items
-            .iter()
-            .map(literal_json_from_ast)
+        "block_sequence" | "flow_sequence" => sequence_items(node)?
+            .into_iter()
+            .map(|item| literal_json_from_node(item, source))
             .collect::<Option<Vec<_>>>()
             .map(Value::Array),
-        HelmAst::Scalar { text } => {
+        "helm_template" => None,
+        _ => {
+            let text = node.utf8_text(source.as_bytes()).ok()?.trim();
+            if text.contains("{{") || text.contains("}}") {
+                return None;
+            }
             let yaml_value = serde_yaml::from_str::<serde_yaml::Value>(text).ok()?;
             serde_json::to_value(yaml_value).ok()
         }
-        HelmAst::HelmComment { .. } => None,
-        HelmAst::HelmExpr { .. }
-        | HelmAst::If { .. }
-        | HelmAst::Range { .. }
-        | HelmAst::With { .. }
-        | HelmAst::Define { .. }
-        | HelmAst::Block { .. }
-        | HelmAst::Pair { .. } => None,
     }
+}
+
+fn mapping_node(node: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
+    let node = unwrap_yaml_value_node(node);
+    match node.kind() {
+        "block_mapping" | "flow_mapping" => Some(node),
+        "stream" | "document" => node.named_child(0).and_then(mapping_node),
+        _ => None,
+    }
+}
+
+fn unwrap_yaml_value_node(node: tree_sitter::Node<'_>) -> tree_sitter::Node<'_> {
+    if matches!(
+        node.kind(),
+        "block_node" | "flow_node" | "block_sequence_item"
+    ) && let Some(child) = node.named_child(0)
+    {
+        return unwrap_yaml_value_node(child);
+    }
+    node
 }
 
 #[cfg(test)]

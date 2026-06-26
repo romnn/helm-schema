@@ -1,475 +1,1267 @@
-(Document
-  (Mapping
-    (Pair
-      (Scalar "apiVersion")
-      (Scalar "apps/v1"))
-    (Pair
-      (Scalar "kind")
-      (Scalar "Deployment"))
-    (Pair
-      (Scalar "metadata")
-      (Mapping
-        (Pair
-          (Scalar "name")
-          (HelmExpr "template \"cert-manager.fullname\" ."))
-        (Pair
-          (Scalar "namespace")
-          (HelmExpr "include \"cert-manager.namespace\" ."))
-        (Pair
-          (Scalar "labels")
-          (Mapping
-            (Pair
-              (Scalar "app")
-              (HelmExpr "template \"cert-manager.name\" ."))
-            (Pair
-              (Scalar "app.kubernetes.io/name")
-              (HelmExpr "template \"cert-manager.name\" ."))
-            (Pair
-              (Scalar "app.kubernetes.io/instance")
-              (HelmExpr ".Release.Name"))
-            (Pair
-              (Scalar "app.kubernetes.io/component")
-              (Scalar "controller")))))))
-  (With ".Values.deploymentAnnotations"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "annotations")
-          (HelmExpr "toYaml . | nindent 4")))))
-  (Mapping
-    (Pair
-      (Scalar "spec")
-      (Mapping
-        (Pair
-          (Scalar "replicas")
-          (HelmExpr ".Values.replicaCount")))))
-  (HelmComment "/* The if statement below is equivalent to {{- if $value }} but will also return true for 0. */")
-  (If "not (has (quote .Values.global.revisionHistoryLimit) (list \"\" (quote \"\")))"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "revisionHistoryLimit")
-          (HelmExpr ".Values.global.revisionHistoryLimit")))))
-  (Mapping
-    (Pair
-      (Scalar "selector")
-      (Mapping
-        (Pair
-          (Scalar "matchLabels")
-          (Mapping
-            (Pair
-              (Scalar "app.kubernetes.io/name")
-              (HelmExpr "template \"cert-manager.name\" ."))
-            (Pair
-              (Scalar "app.kubernetes.io/instance")
-              (HelmExpr ".Release.Name"))
-            (Pair
-              (Scalar "app.kubernetes.io/component")
-              (Scalar "controller")))))))
-  (With ".Values.strategy"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "strategy")
-          (HelmExpr "toYaml . | nindent 4")))))
-  (Mapping
-    (Pair
-      (Scalar "template")
-      (Mapping
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "labels")
-              (Mapping
-                (Pair
-                  (Scalar "app")
-                  (HelmExpr "template \"cert-manager.name\" ."))
-                (Pair
-                  (Scalar "app.kubernetes.io/name")
-                  (HelmExpr "template \"cert-manager.name\" ."))
-                (Pair
-                  (Scalar "app.kubernetes.io/instance")
-                  (HelmExpr ".Release.Name"))
-                (Pair
-                  (Scalar "app.kubernetes.io/component")
-                  (Scalar "controller")))))))))
-  (With ".Values.podLabels"
-    (body
-      (HelmExpr "toYaml . | nindent 8")))
-  (With ".Values.podAnnotations"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "annotations")
-          (HelmExpr "toYaml . | nindent 8")))))
-  (If "and .Values.prometheus.enabled (not (or .Values.prometheus.servicemonitor.enabled .Values.prometheus.podmonitor.enabled))"
-    (then
-      (If "not .Values.podAnnotations"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "annotations")))))
-      (Mapping
-        (Pair
-          (Scalar "prometheus.io/path")
-          (Scalar "/metrics"))
-        (Pair
-          (Scalar "prometheus.io/scrape")
-          (Scalar "true"))
-        (Pair
-          (Scalar "prometheus.io/port")
-          (Scalar "9402")))))
-  (Mapping
-    (Pair
-      (Scalar "spec")))
-  (If "not .Values.serviceAccount.create"
-    (then
-      (With ".Values.global.imagePullSecrets"
-        (body
-          (Mapping
-            (Pair
-              (Scalar "imagePullSecrets")
-              (HelmExpr "toYaml . | nindent 8")))))))
-  (Mapping
-    (Pair
-      (Scalar "serviceAccountName")
-      (HelmExpr "template \"cert-manager.serviceAccountName\" .")))
-  (If "hasKey .Values \"automountServiceAccountToken\""
-    (then
-      (Mapping
-        (Pair
-          (Scalar "automountServiceAccountToken")
-          (HelmExpr ".Values.automountServiceAccountToken")))))
-  (Mapping
-    (Pair
-      (Scalar "enableServiceLinks")
-      (HelmExpr ".Values.enableServiceLinks")))
-  (With ".Values.global.priorityClassName"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "priorityClassName")
-          (HelmExpr ". | quote")))))
-  (If "(hasKey .Values.global \"hostUsers\")"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "hostUsers")
-          (HelmExpr ".Values.global.hostUsers")))))
-  (With ".Values.securityContext"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "securityContext")
-          (HelmExpr "toYaml . | nindent 8")))))
-  (If "or .Values.volumes .Values.config"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "volumes")))
-      (If ".Values.config"
-        (then
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "name")
-                (Scalar "config"))
-              (Pair
-                (Scalar "configMap")
-                (Mapping
-                  (Pair
-                    (Scalar "name")
-                    (HelmExpr "include \"cert-manager.fullname\" ."))))))))
-      (With ".Values.volumes"
-        (body
-          (HelmExpr "toYaml . | nindent 8")))))
-  (Mapping
-    (Pair
-      (Scalar "containers")
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "name")
-            (Scalar "{{.Chart.Name}}-controller"))
-          (Pair
-            (Scalar "image")
-            (Scalar "{{ template \"image\" (tuple .Values.image $.Chart.AppVersion) }}"))
-          (Pair
-            (Scalar "imagePullPolicy")
-            (HelmExpr ".Values.image.pullPolicy"))
-          (Pair
-            (Scalar "args"))))))
-  (HelmComment "/* The if statement below is equivalent to {{- if $value }} but will also return true for 0. */")
-  (If "not (has (quote .Values.global.logLevel) (list \"\" (quote \"\")))"
-    (then
-      (Sequence
-        (Scalar "--v={{.Values.global.logLevel}}"))))
-  (If ".Values.config"
-    (then
-      (Sequence
-        (Scalar "--config=/var/cert-manager/config/config.yaml"))))
-  (HelmExpr "$config := default .Values.config \"\"")
-  (If ".Values.clusterResourceNamespace"
-    (then
-      (Sequence
-        (Scalar "--cluster-resource-namespace={{.Values.clusterResourceNamespace}}")))
-    (else
-      (Sequence
-        (Scalar "--cluster-resource-namespace=$(POD_NAMESPACE)"))))
-  (With ".Values.global.leaderElection"
-    (body
-      (Sequence
-        (Scalar "--leader-election-namespace={{.namespace}}"))
-      (If ".leaseDuration"
-        (then
-          (Sequence
-            (Scalar "--leader-election-lease-duration={{.leaseDuration}}"))))
-      (If ".renewDeadline"
-        (then
-          (Sequence
-            (Scalar "--leader-election-renew-deadline={{.renewDeadline}}"))))
-      (If ".retryPeriod"
-        (then
-          (Sequence
-            (Scalar "--leader-election-retry-period={{.retryPeriod}}"))))))
-  (With ".Values.acmesolver.image"
-    (body
-      (Sequence
-        (Scalar "--acme-http01-solver-image="))
-      (If ".registry"
-        (then
-          (Scalar "{{.registry}}/")))
-      (HelmExpr ".repository")
-      (If "(.digest)"
-        (else
-          (Scalar ":{{default $.Chart.AppVersion .tag }}")))))
-  (With ".Values.extraArgs"
-    (body
-      (HelmExpr "toYaml . | nindent 10")))
-  (With ".Values.ingressShim"
-    (body
-      (If ".defaultIssuerName"
-        (then
-          (Sequence
-            (Scalar "--default-issuer-name={{.defaultIssuerName}}"))))
-      (If ".defaultIssuerKind"
-        (then
-          (Sequence
-            (Scalar "--default-issuer-kind={{.defaultIssuerKind}}"))))
-      (If ".defaultIssuerGroup"
-        (then
-          (Sequence
-            (Scalar "--default-issuer-group={{.defaultIssuerGroup}}"))))))
-  (If ".Values.featureGates"
-    (then
-      (Sequence
-        (Scalar "--feature-gates={{.Values.featureGates}}"))))
-  (If ".Values.maxConcurrentChallenges"
-    (then
-      (Sequence
-        (Scalar "--max-concurrent-challenges={{.Values.maxConcurrentChallenges}}"))))
-  (If ".Values.enableCertificateOwnerRef"
-    (then
-      (Sequence
-        (Scalar "--enable-certificate-owner-ref=true"))))
-  (If ".Values.dns01RecursiveNameserversOnly"
-    (then
-      (Sequence
-        (Scalar "--dns01-recursive-nameservers-only=true"))))
-  (With ".Values.dns01RecursiveNameservers"
-    (body
-      (Sequence
-        (Scalar "--dns01-recursive-nameservers={{.}}"))))
-  (If ".Values.disableAutoApproval"
-    (then
-      (Sequence
-        (Scalar "--controllers=-certificaterequests-approver"))))
-  (Mapping
-    (Pair
-      (Scalar "ports")
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "containerPort")
-            (Scalar "9402"))
-          (Pair
-            (Scalar "name")
-            (Scalar "http-metrics"))
-          (Pair
-            (Scalar "protocol")
-            (Scalar "TCP")))
-        (Mapping
-          (Pair
-            (Scalar "containerPort")
-            (Scalar "9403"))
-          (Pair
-            (Scalar "name")
-            (Scalar "http-healthz"))
-          (Pair
-            (Scalar "protocol")
-            (Scalar "TCP"))))))
-  (With ".Values.containerSecurityContext"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "securityContext")
-          (HelmExpr "toYaml . | nindent 12")))))
-  (If "or .Values.config .Values.volumeMounts"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "volumeMounts")))
-      (If ".Values.config"
-        (then
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "name")
-                (Scalar "config"))
-              (Pair
-                (Scalar "mountPath")
-                (Scalar "/var/cert-manager/config"))))))
-      (With ".Values.volumeMounts"
-        (body
-          (HelmExpr "toYaml . | nindent 12")))))
-  (Mapping
-    (Pair
-      (Scalar "env")
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "name")
-            (Scalar "POD_NAMESPACE"))
-          (Pair
-            (Scalar "valueFrom")
-            (Mapping
-              (Pair
-                (Scalar "fieldRef")
-                (Mapping
-                  (Pair
-                    (Scalar "fieldPath")
-                    (Scalar "metadata.namespace"))))))))))
-  (With ".Values.extraEnv"
-    (body
-      (HelmExpr "toYaml . | nindent 10")))
-  (With ".Values.http_proxy"
-    (body
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "name")
-            (Scalar "HTTP_PROXY"))
-          (Pair
-            (Scalar "value")
-            (HelmExpr "."))))))
-  (With ".Values.https_proxy"
-    (body
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "name")
-            (Scalar "HTTPS_PROXY"))
-          (Pair
-            (Scalar "value")
-            (HelmExpr "."))))))
-  (With ".Values.no_proxy"
-    (body
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "name")
-            (Scalar "NO_PROXY"))
-          (Pair
-            (Scalar "value")
-            (HelmExpr "."))))))
-  (With ".Values.resources"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "resources")
-          (HelmExpr "toYaml . | nindent 12")))))
-  (With ".Values.livenessProbe"
-    (body
-      (If ".enabled"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "livenessProbe")
-              (Mapping
-                (Pair
-                  (Scalar "httpGet")
-                  (Mapping
-                    (Pair
-                      (Scalar "port")
-                      (Scalar "http-healthz"))
-                    (Pair
-                      (Scalar "path")
-                      (Scalar "/livez"))
-                    (Pair
-                      (Scalar "scheme")
-                      (Scalar "HTTP"))))
-                (Pair
-                  (Scalar "initialDelaySeconds")
-                  (HelmExpr ".initialDelaySeconds"))
-                (Pair
-                  (Scalar "periodSeconds")
-                  (HelmExpr ".periodSeconds"))
-                (Pair
-                  (Scalar "timeoutSeconds")
-                  (HelmExpr ".timeoutSeconds"))
-                (Pair
-                  (Scalar "successThreshold")
-                  (HelmExpr ".successThreshold"))
-                (Pair
-                  (Scalar "failureThreshold")
-                  (HelmExpr ".failureThreshold")))))))))
-  (HelmExpr "$nodeSelector := .Values.global.nodeSelector | default dict")
-  (HelmExpr "$nodeSelector = merge $nodeSelector (.Values.nodeSelector | default dict)")
-  (With "$nodeSelector"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "nodeSelector")))
-      (Range "$key, $value := ."
-        (body
-          (Mapping
-            (Pair
-              (HelmExpr "$key")
-              (HelmExpr "$value | quote")))))))
-  (With ".Values.affinity"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "affinity")
-          (HelmExpr "toYaml . | nindent 8")))))
-  (With ".Values.tolerations"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "tolerations")
-          (HelmExpr "toYaml . | nindent 8")))))
-  (With ".Values.topologySpreadConstraints"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "topologySpreadConstraints")
-          (HelmExpr "toYaml . | nindent 8")))))
-  (With ".Values.podDnsPolicy"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "dnsPolicy")
-          (HelmExpr ".")))))
-  (With ".Values.podDnsConfig"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "dnsConfig")
-          (HelmExpr "toYaml . | nindent 8")))))
-  (With ".Values.hostAliases"
-    (body
-      (Mapping
-        (Pair
-          (Scalar "hostAliases")
-          (HelmExpr "toYaml . | nindent 8"))))))
+(template
+  (text :text "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name:")
+  (template_action
+    name: (interpreted_string_literal :text "\"cert-manager.fullname\"")
+    argument: (dot :text ".")
+  )
+  (text :text "namespace:")
+  (function_call
+    function: (identifier :text "include")
+    arguments: (argument_list
+      (interpreted_string_literal :text "\"cert-manager.namespace\"")
+      (dot :text ".")
+    )
+  )
+  (text :text "labels:\n    app:")
+  (template_action
+    name: (interpreted_string_literal :text "\"cert-manager.name\"")
+    argument: (dot :text ".")
+  )
+  (text :text "app.kubernetes.io/name:")
+  (template_action
+    name: (interpreted_string_literal :text "\"cert-manager.name\"")
+    argument: (dot :text ".")
+  )
+  (text :text "app.kubernetes.io/instance:")
+  (selector_expression
+    operand: (field
+      name: (identifier :text "Release")
+    )
+    field: (field_identifier :text "Name")
+  )
+  (text :text "app.kubernetes.io/component: \"controller\"")
+  (chained_pipeline
+    (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"labels\"")
+        (dot :text ".")
+      )
+    )
+    (function_call
+      function: (identifier :text "nindent")
+      arguments: (argument_list
+        (int_literal :text "4")
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "deploymentAnnotations")
+    )
+    consequence: (text :text "annotations:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+  )
+  (text :text "spec:\n  replicas:")
+  (selector_expression
+    operand: (field
+      name: (identifier :text "Values")
+    )
+    field: (field_identifier :text "replicaCount")
+  )
+  (comment :text "/* The if statement below is equivalent to {{- if $value }} but will also return true for 0. */")
+  (if_action
+    condition: (function_call
+      function: (identifier :text "not")
+      arguments: (argument_list
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "has")
+            arguments: (argument_list
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "quote")
+                  arguments: (argument_list
+                    (selector_expression
+                      operand: (selector_expression
+                        operand: (field
+                          name: (identifier :text "Values")
+                        )
+                        field: (field_identifier :text "global")
+                      )
+                      field: (field_identifier :text "revisionHistoryLimit")
+                    )
+                  )
+                )
+              )
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "list")
+                  arguments: (argument_list
+                    (interpreted_string_literal :text "\"\"")
+                    (parenthesized_pipeline
+                      (function_call
+                        function: (identifier :text "quote")
+                        arguments: (argument_list
+                          (interpreted_string_literal :text "\"\"")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "revisionHistoryLimit:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "global")
+      )
+      field: (field_identifier :text "revisionHistoryLimit")
+    )
+  )
+  (text :text "selector:\n    matchLabels:\n      app.kubernetes.io/name:")
+  (template_action
+    name: (interpreted_string_literal :text "\"cert-manager.name\"")
+    argument: (dot :text ".")
+  )
+  (text :text "app.kubernetes.io/instance:")
+  (selector_expression
+    operand: (field
+      name: (identifier :text "Release")
+    )
+    field: (field_identifier :text "Name")
+  )
+  (text :text "app.kubernetes.io/component: \"controller\"")
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "strategy")
+    )
+    consequence: (text :text "strategy:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+  )
+  (text :text "template:\n    metadata:\n      labels:\n        app:")
+  (template_action
+    name: (interpreted_string_literal :text "\"cert-manager.name\"")
+    argument: (dot :text ".")
+  )
+  (text :text "app.kubernetes.io/name:")
+  (template_action
+    name: (interpreted_string_literal :text "\"cert-manager.name\"")
+    argument: (dot :text ".")
+  )
+  (text :text "app.kubernetes.io/instance:")
+  (selector_expression
+    operand: (field
+      name: (identifier :text "Release")
+    )
+    field: (field_identifier :text "Name")
+  )
+  (text :text "app.kubernetes.io/component: \"controller\"")
+  (chained_pipeline
+    (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"labels\"")
+        (dot :text ".")
+      )
+    )
+    (function_call
+      function: (identifier :text "nindent")
+      arguments: (argument_list
+        (int_literal :text "8")
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "podLabels")
+    )
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "podAnnotations")
+    )
+    consequence: (text :text "annotations:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "and")
+      arguments: (argument_list
+        (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "prometheus")
+          )
+          field: (field_identifier :text "enabled")
+        )
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "not")
+            arguments: (argument_list
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "or")
+                  arguments: (argument_list
+                    (selector_expression
+                      operand: (selector_expression
+                        operand: (selector_expression
+                          operand: (field
+                            name: (identifier :text "Values")
+                          )
+                          field: (field_identifier :text "prometheus")
+                        )
+                        field: (field_identifier :text "servicemonitor")
+                      )
+                      field: (field_identifier :text "enabled")
+                    )
+                    (selector_expression
+                      operand: (selector_expression
+                        operand: (selector_expression
+                          operand: (field
+                            name: (identifier :text "Values")
+                          )
+                          field: (field_identifier :text "prometheus")
+                        )
+                        field: (field_identifier :text "podmonitor")
+                      )
+                      field: (field_identifier :text "enabled")
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (if_action
+      condition: (function_call
+        function: (identifier :text "not")
+        arguments: (argument_list
+          (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "podAnnotations")
+          )
+        )
+      )
+      consequence: (text :text "annotations:")
+    )
+    consequence: (text :text "prometheus.io/path: \"/metrics\"\n        prometheus.io/scrape: 'true'\n        prometheus.io/port: '9402'")
+  )
+  (text :text "spec:")
+  (if_action
+    condition: (function_call
+      function: (identifier :text "not")
+      arguments: (argument_list
+        (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "serviceAccount")
+          )
+          field: (field_identifier :text "create")
+        )
+      )
+    )
+    consequence: (with_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "global")
+        )
+        field: (field_identifier :text "imagePullSecrets")
+      )
+      consequence: (text :text "imagePullSecrets:")
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "toYaml")
+          arguments: (argument_list
+            (dot :text ".")
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "8")
+          )
+        )
+      )
+    )
+  )
+  (text :text "serviceAccountName:")
+  (template_action
+    name: (interpreted_string_literal :text "\"cert-manager.serviceAccountName\"")
+    argument: (dot :text ".")
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "hasKey")
+      arguments: (argument_list
+        (field
+          name: (identifier :text "Values")
+        )
+        (interpreted_string_literal :text "\"automountServiceAccountToken\"")
+      )
+    )
+    consequence: (text :text "automountServiceAccountToken:")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "automountServiceAccountToken")
+    )
+  )
+  (text :text "enableServiceLinks:")
+  (selector_expression
+    operand: (field
+      name: (identifier :text "Values")
+    )
+    field: (field_identifier :text "enableServiceLinks")
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "global")
+      )
+      field: (field_identifier :text "priorityClassName")
+    )
+    consequence: (text :text "priorityClassName:")
+    consequence: (chained_pipeline
+      (dot :text ".")
+      (function_call
+        function: (identifier :text "quote")
+      )
+    )
+  )
+  (if_action
+    condition: (parenthesized_pipeline
+      (function_call
+        function: (identifier :text "hasKey")
+        arguments: (argument_list
+          (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "global")
+          )
+          (interpreted_string_literal :text "\"hostUsers\"")
+        )
+      )
+    )
+    consequence: (text :text "hostUsers:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "global")
+      )
+      field: (field_identifier :text "hostUsers")
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "securityContext")
+    )
+    consequence: (text :text "securityContext:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "or")
+      arguments: (argument_list
+        (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "volumes")
+        )
+        (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "config")
+        )
+      )
+    )
+    consequence: (text :text "volumes:")
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "config")
+      )
+      consequence: (text :text "- name: config \n          configMap: \n            name:")
+      consequence: (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"cert-manager.fullname\"")
+          (dot :text ".")
+        )
+      )
+    )
+    consequence: (with_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "volumes")
+      )
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "toYaml")
+          arguments: (argument_list
+            (dot :text ".")
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "8")
+          )
+        )
+      )
+    )
+  )
+  (text :text "containers:\n        - name:")
+  (selector_expression
+    operand: (field
+      name: (identifier :text "Chart")
+    )
+    field: (field_identifier :text "Name")
+  )
+  (text :text "-controller\n          image: \"")
+  (template_action
+    name: (interpreted_string_literal :text "\"image\"")
+    argument: (parenthesized_pipeline
+      (function_call
+        function: (identifier :text "tuple")
+        arguments: (argument_list
+          (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "image")
+          )
+          (selector_expression
+            operand: (selector_expression
+              operand: (variable :text "$")
+              field: (field_identifier :text "Chart")
+            )
+            field: (field_identifier :text "AppVersion")
+          )
+        )
+      )
+    )
+  )
+  (text :text "\"\n          imagePullPolicy:")
+  (selector_expression
+    operand: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "image")
+    )
+    field: (field_identifier :text "pullPolicy")
+  )
+  (text :text "args:")
+  (comment :text "/* The if statement below is equivalent to {{- if $value }} but will also return true for 0. */")
+  (if_action
+    condition: (function_call
+      function: (identifier :text "not")
+      arguments: (argument_list
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "has")
+            arguments: (argument_list
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "quote")
+                  arguments: (argument_list
+                    (selector_expression
+                      operand: (selector_expression
+                        operand: (field
+                          name: (identifier :text "Values")
+                        )
+                        field: (field_identifier :text "global")
+                      )
+                      field: (field_identifier :text "logLevel")
+                    )
+                  )
+                )
+              )
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "list")
+                  arguments: (argument_list
+                    (interpreted_string_literal :text "\"\"")
+                    (parenthesized_pipeline
+                      (function_call
+                        function: (identifier :text "quote")
+                        arguments: (argument_list
+                          (interpreted_string_literal :text "\"\"")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "- --v=")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "global")
+      )
+      field: (field_identifier :text "logLevel")
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "config")
+    )
+    consequence: (text :text "- --config=/var/cert-manager/config/config.yaml")
+  )
+  (variable_definition
+    variable: (variable
+      name: (identifier :text "config")
+    )
+    value: (function_call
+      function: (identifier :text "default")
+      arguments: (argument_list
+        (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "config")
+        )
+        (interpreted_string_literal :text "\"\"")
+      )
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "clusterResourceNamespace")
+    )
+    consequence: (text :text "- --cluster-resource-namespace=")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "clusterResourceNamespace")
+    )
+    alternative: (text :text "- --cluster-resource-namespace=$(POD_NAMESPACE)")
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "global")
+      )
+      field: (field_identifier :text "leaderElection")
+    )
+    consequence: (text :text "- --leader-election-namespace=")
+    consequence: (field
+      name: (identifier :text "namespace")
+    )
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "leaseDuration")
+      )
+      consequence: (text :text "- --leader-election-lease-duration=")
+      consequence: (field
+        name: (identifier :text "leaseDuration")
+      )
+    )
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "renewDeadline")
+      )
+      consequence: (text :text "- --leader-election-renew-deadline=")
+      consequence: (field
+        name: (identifier :text "renewDeadline")
+      )
+    )
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "retryPeriod")
+      )
+      consequence: (text :text "- --leader-election-retry-period=")
+      consequence: (field
+        name: (identifier :text "retryPeriod")
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "acmesolver")
+      )
+      field: (field_identifier :text "image")
+    )
+    consequence: (text :text "- --acme-http01-solver-image=")
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "registry")
+      )
+      consequence: (field
+        name: (identifier :text "registry")
+      )
+      consequence: (text :text "/")
+    )
+    consequence: (field
+      name: (identifier :text "repository")
+    )
+    consequence: (if_action
+      condition: (parenthesized_pipeline
+        (field
+          name: (identifier :text "digest")
+        )
+      )
+      consequence: (text :text "@")
+      consequence: (field
+        name: (identifier :text "digest")
+      )
+      alternative: (text :text ":")
+      alternative: (function_call
+        function: (identifier :text "default")
+        arguments: (argument_list
+          (selector_expression
+            operand: (selector_expression
+              operand: (variable :text "$")
+              field: (field_identifier :text "Chart")
+            )
+            field: (field_identifier :text "AppVersion")
+          )
+          (field
+            name: (identifier :text "tag")
+          )
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "extraArgs")
+    )
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "10")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "ingressShim")
+    )
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "defaultIssuerName")
+      )
+      consequence: (text :text "- --default-issuer-name=")
+      consequence: (field
+        name: (identifier :text "defaultIssuerName")
+      )
+    )
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "defaultIssuerKind")
+      )
+      consequence: (text :text "- --default-issuer-kind=")
+      consequence: (field
+        name: (identifier :text "defaultIssuerKind")
+      )
+    )
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "defaultIssuerGroup")
+      )
+      consequence: (text :text "- --default-issuer-group=")
+      consequence: (field
+        name: (identifier :text "defaultIssuerGroup")
+      )
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "featureGates")
+    )
+    consequence: (text :text "- --feature-gates=")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "featureGates")
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "maxConcurrentChallenges")
+    )
+    consequence: (text :text "- --max-concurrent-challenges=")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "maxConcurrentChallenges")
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "enableCertificateOwnerRef")
+    )
+    consequence: (text :text "- --enable-certificate-owner-ref=true")
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "dns01RecursiveNameserversOnly")
+    )
+    consequence: (text :text "- --dns01-recursive-nameservers-only=true")
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "dns01RecursiveNameservers")
+    )
+    consequence: (text :text "- --dns01-recursive-nameservers=")
+    consequence: (dot :text ".")
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "disableAutoApproval")
+    )
+    consequence: (text :text "- --controllers=-certificaterequests-approver")
+  )
+  (text :text "ports:\n          - containerPort: 9402\n            name: http-metrics\n            protocol: TCP\n          - containerPort: 9403\n            name: http-healthz\n            protocol: TCP")
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "containerSecurityContext")
+    )
+    consequence: (text :text "securityContext:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "12")
+        )
+      )
+    )
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "or")
+      arguments: (argument_list
+        (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "config")
+        )
+        (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "volumeMounts")
+        )
+      )
+    )
+    consequence: (text :text "volumeMounts:")
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "config")
+      )
+      consequence: (text :text "- name: config \n              mountPath: /var/cert-manager/config")
+    )
+    consequence: (with_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "volumeMounts")
+      )
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "toYaml")
+          arguments: (argument_list
+            (dot :text ".")
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "12")
+          )
+        )
+      )
+    )
+  )
+  (text :text "env:\n          - name: POD_NAMESPACE\n            valueFrom:\n              fieldRef:\n                fieldPath: metadata.namespace")
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "extraEnv")
+    )
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "10")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "http_proxy")
+    )
+    consequence: (text :text "- name: HTTP_PROXY\n            value:")
+    consequence: (dot :text ".")
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "https_proxy")
+    )
+    consequence: (text :text "- name: HTTPS_PROXY\n            value:")
+    consequence: (dot :text ".")
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "no_proxy")
+    )
+    consequence: (text :text "- name: NO_PROXY\n            value:")
+    consequence: (dot :text ".")
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "resources")
+    )
+    consequence: (text :text "resources:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "12")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "livenessProbe")
+    )
+    consequence: (if_action
+      condition: (field
+        name: (identifier :text "enabled")
+      )
+      consequence: (text :text "# LivenessProbe settings are based on those used for the Kubernetes\n          # controller-manager. See:\n          # https://github.com/kubernetes/kubernetes/blob/806b30170c61a38fedd54cc9ede4cd6275a1ad3b/cmd/kubeadm/app/util/staticpod/utils.go#L241-L245\n          livenessProbe:\n            httpGet:\n              port: http-healthz\n              path: /livez\n              scheme: HTTP\n            initialDelaySeconds:")
+      consequence: (field
+        name: (identifier :text "initialDelaySeconds")
+      )
+      consequence: (text :text "periodSeconds:")
+      consequence: (field
+        name: (identifier :text "periodSeconds")
+      )
+      consequence: (text :text "timeoutSeconds:")
+      consequence: (field
+        name: (identifier :text "timeoutSeconds")
+      )
+      consequence: (text :text "successThreshold:")
+      consequence: (field
+        name: (identifier :text "successThreshold")
+      )
+      consequence: (text :text "failureThreshold:")
+      consequence: (field
+        name: (identifier :text "failureThreshold")
+      )
+    )
+  )
+  (variable_definition
+    variable: (variable
+      name: (identifier :text "nodeSelector")
+    )
+    value: (chained_pipeline
+      (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "global")
+        )
+        field: (field_identifier :text "nodeSelector")
+      )
+      (function_call
+        function: (identifier :text "default")
+        arguments: (argument_list
+          (function_call
+            function: (identifier :text "dict")
+          )
+        )
+      )
+    )
+  )
+  (assignment
+    variable: (variable
+      name: (identifier :text "nodeSelector")
+    )
+    value: (function_call
+      function: (identifier :text "merge")
+      arguments: (argument_list
+        (variable
+          name: (identifier :text "nodeSelector")
+        )
+        (parenthesized_pipeline
+          (chained_pipeline
+            (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "nodeSelector")
+            )
+            (function_call
+              function: (identifier :text "default")
+              arguments: (argument_list
+                (function_call
+                  function: (identifier :text "dict")
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (variable
+      name: (identifier :text "nodeSelector")
+    )
+    consequence: (text :text "nodeSelector:")
+    consequence: (range_action
+      (range_variable_definition
+        index: (variable
+          name: (identifier :text "key")
+        )
+        element: (variable
+          name: (identifier :text "value")
+        )
+        range: (dot :text ".")
+      )
+      body: (variable
+        name: (identifier :text "key")
+      )
+      body: (text :text ":")
+      body: (chained_pipeline
+        (variable
+          name: (identifier :text "value")
+        )
+        (function_call
+          function: (identifier :text "quote")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "affinity")
+    )
+    consequence: (text :text "affinity:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "tolerations")
+    )
+    consequence: (text :text "tolerations:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "topologySpreadConstraints")
+    )
+    consequence: (text :text "topologySpreadConstraints:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "podDnsPolicy")
+    )
+    consequence: (text :text "dnsPolicy:")
+    consequence: (dot :text ".")
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "podDnsConfig")
+    )
+    consequence: (text :text "dnsConfig:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+  (with_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "hostAliases")
+    )
+    consequence: (text :text "hostAliases:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "toYaml")
+        arguments: (argument_list
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+)

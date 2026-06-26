@@ -1,5 +1,5 @@
 use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -16,14 +16,21 @@ fn literals_of(b: &HelperBranch) -> &[String] {
 
 fn index_with(src: &str) -> DefineIndex {
     let mut idx = DefineIndex::new();
-    idx.add_source(&TreeSitterParser, src)
-        .expect("parse helpers");
+    idx.add_file_source("<inline:0>", src);
     idx
 }
 
 fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperBranchBody {
-    let body = helpers.get(name).unwrap_or(&[]);
-    crate::resource_identity::OutputEvaluator::new().evaluate_body(body, None, helpers, 0)
+    let analysis_db = crate::analysis_db::IrAnalysisDb::new(helpers);
+    let Some(body) = analysis_db.parsed_helper_body(name) else {
+        return HelperBranchBody::literals(Vec::new());
+    };
+    crate::resource_identity::OutputEvaluator::default().evaluate_body(
+        body.source,
+        body.tree.root_node(),
+        &analysis_db,
+        0,
+    )
 }
 
 #[test]

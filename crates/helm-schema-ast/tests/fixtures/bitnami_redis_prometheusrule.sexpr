@@ -1,46 +1,233 @@
-(Document
-  (HelmComment "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
-  (If "and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "monitoring.coreos.com/v1"))
-        (Pair
-          (Scalar "kind")
-          (Scalar "PrometheusRule"))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (HelmExpr "template \"common.names.fullname\" ."))
-            (Pair
-              (Scalar "namespace")
-              (HelmExpr "default (include \"common.names.namespace\" .) .Values.metrics.prometheusRule.namespace | quote"))
-            (Pair
-              (Scalar "labels")
-              (HelmExpr "include \"common.labels.standard\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 4")))))
-      (If ".Values.metrics.prometheusRule.additionalLabels"
-        (then
-          (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.metrics.prometheusRule.additionalLabels \"context\" $) | nindent 4")))
-      (If ".Values.commonAnnotations"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "annotations")
-              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4")))))
-      (Mapping
-        (Pair
-          (Scalar "spec")
-          (Mapping
-            (Pair
-              (Scalar "groups")
-              (Sequence
-                (Mapping
-                  (Pair
-                    (Scalar "name")
-                    (HelmExpr "include \"common.names.fullname\" ."))
-                  (Pair
-                    (Scalar "rules")
-                    (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.metrics.prometheusRule.rules \"context\" $ ) | nindent 8")))))))))))
+(template
+  (comment :text "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
+  (if_action
+    condition: (function_call
+      function: (identifier :text "and")
+      arguments: (argument_list
+        (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "metrics")
+          )
+          field: (field_identifier :text "enabled")
+        )
+        (selector_expression
+          operand: (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "metrics")
+            )
+            field: (field_identifier :text "prometheusRule")
+          )
+          field: (field_identifier :text "enabled")
+        )
+      )
+    )
+    consequence: (text :text "apiVersion: monitoring.coreos.com/v1\nkind: PrometheusRule\nmetadata:\n  name:")
+    consequence: (template_action
+      name: (interpreted_string_literal :text "\"common.names.fullname\"")
+      argument: (dot :text ".")
+    )
+    consequence: (text :text "namespace:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "default")
+        arguments: (argument_list
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "include")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"common.names.namespace\"")
+                (dot :text ".")
+              )
+            )
+          )
+          (selector_expression
+            operand: (selector_expression
+              operand: (selector_expression
+                operand: (field
+                  name: (identifier :text "Values")
+                )
+                field: (field_identifier :text "metrics")
+              )
+              field: (field_identifier :text "prometheusRule")
+            )
+            field: (field_identifier :text "namespace")
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "quote")
+      )
+    )
+    consequence: (text :text "labels:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.labels.standard\"")
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "dict")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"customLabels\"")
+                (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "commonLabels")
+                )
+                (interpreted_string_literal :text "\"context\"")
+                (variable :text "$")
+              )
+            )
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "metrics")
+          )
+          field: (field_identifier :text "prometheusRule")
+        )
+        field: (field_identifier :text "additionalLabels")
+      )
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "include")
+          arguments: (argument_list
+            (interpreted_string_literal :text "\"common.tplvalues.render\"")
+            (parenthesized_pipeline
+              (function_call
+                function: (identifier :text "dict")
+                arguments: (argument_list
+                  (interpreted_string_literal :text "\"value\"")
+                  (selector_expression
+                    operand: (selector_expression
+                      operand: (selector_expression
+                        operand: (field
+                          name: (identifier :text "Values")
+                        )
+                        field: (field_identifier :text "metrics")
+                      )
+                      field: (field_identifier :text "prometheusRule")
+                    )
+                    field: (field_identifier :text "additionalLabels")
+                  )
+                  (interpreted_string_literal :text "\"context\"")
+                  (variable :text "$")
+                )
+              )
+            )
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "commonAnnotations")
+      )
+      consequence: (text :text "annotations:")
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "include")
+          arguments: (argument_list
+            (interpreted_string_literal :text "\"common.tplvalues.render\"")
+            (parenthesized_pipeline
+              (function_call
+                function: (identifier :text "dict")
+                arguments: (argument_list
+                  (interpreted_string_literal :text "\"value\"")
+                  (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "commonAnnotations")
+                  )
+                  (interpreted_string_literal :text "\"context\"")
+                  (variable :text "$")
+                )
+              )
+            )
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+    consequence: (text :text "spec:\n  groups:\n    - name:")
+    consequence: (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"common.names.fullname\"")
+        (dot :text ".")
+      )
+    )
+    consequence: (text :text "rules:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.tplvalues.render\"")
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "dict")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"value\"")
+                (selector_expression
+                  operand: (selector_expression
+                    operand: (selector_expression
+                      operand: (field
+                        name: (identifier :text "Values")
+                      )
+                      field: (field_identifier :text "metrics")
+                    )
+                    field: (field_identifier :text "prometheusRule")
+                  )
+                  field: (field_identifier :text "rules")
+                )
+                (interpreted_string_literal :text "\"context\"")
+                (variable :text "$")
+              )
+            )
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "8")
+        )
+      )
+    )
+  )
+)

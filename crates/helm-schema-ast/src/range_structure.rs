@@ -1,6 +1,6 @@
 use crate::{
-    HelmAst, HelmParser as _, TemplateExpr, TemplateHeader, TreeSitterParser, children_with_field,
-    first_mapping_colon_offset, parse_expr_text, parse_yaml_key,
+    TemplateExpr, TemplateHeader, children_with_field, first_mapping_colon_offset, parse_expr_text,
+    parse_yaml_key,
 };
 
 pub fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
@@ -60,21 +60,10 @@ pub fn range_body_renders_mapping_entries_from_ast(
     node: tree_sitter::Node<'_>,
     source: &str,
 ) -> bool {
-    let Some(key_variable) = range_destructured_key_variable(node, source) else {
+    let Some(entry_indent) = range_body_mapping_entry_indent_from_source(node, source) else {
         return false;
     };
-    let mut body_text = String::new();
-    for body_node in children_with_field(node, "body") {
-        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
-            continue;
-        };
-        body_text.push_str(text);
-    }
-
-    let Ok(ast) = TreeSitterParser.parse(&body_text) else {
-        return false;
-    };
-    ast_directly_renders_templated_mapping_key(&ast, &key_variable)
+    range_body_min_content_indent(node, source) == Some(entry_indent)
 }
 
 pub fn range_body_mapping_entry_indent_from_source(
@@ -122,48 +111,6 @@ fn expr_refs_range_key_variable(expr: &TemplateExpr, key_variable: &str) -> bool
         }
     });
     refs_variable
-}
-
-fn ast_directly_renders_templated_mapping_key(ast: &HelmAst, key_variable: &str) -> bool {
-    match ast {
-        HelmAst::Pair { key, .. } => ast_key_refs_range_key_variable(key, key_variable),
-        HelmAst::Document { items } | HelmAst::Mapping { items } => items
-            .iter()
-            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
-        HelmAst::Sequence { .. } => false,
-        HelmAst::If {
-            then_branch,
-            else_branch,
-            ..
-        } => then_branch
-            .iter()
-            .chain(else_branch)
-            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
-        HelmAst::With {
-            body, else_branch, ..
-        } => body
-            .iter()
-            .chain(else_branch)
-            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
-        HelmAst::Range { .. } => false,
-        HelmAst::Block { body, .. } | HelmAst::Define { body, .. } => body
-            .iter()
-            .any(|item| ast_directly_renders_templated_mapping_key(item, key_variable)),
-        HelmAst::Scalar { .. } | HelmAst::HelmExpr { .. } | HelmAst::HelmComment { .. } => false,
-    }
-}
-
-fn ast_key_refs_range_key_variable(key: &HelmAst, key_variable: &str) -> bool {
-    match key {
-        HelmAst::HelmExpr { action } => action
-            .exprs()
-            .iter()
-            .any(|expr| expr_refs_range_key_variable(expr, key_variable)),
-        HelmAst::Scalar { text } => parse_expr_text(text)
-            .iter()
-            .any(|expr| expr_refs_range_key_variable(expr, key_variable)),
-        _ => false,
-    }
 }
 
 pub fn range_body_renders_scalar_sequence_items_from_source(
@@ -229,4 +176,28 @@ fn range_destructured_key_variable(node: tree_sitter::Node<'_>, source: &str) ->
         .utf8_text(source.as_bytes())
         .ok()
         .map(|text| text.trim_start_matches('$').to_string())
+}
+
+fn range_body_min_content_indent(node: tree_sitter::Node<'_>, source: &str) -> Option<usize> {
+    let mut min_indent = None;
+    let mut body_text = String::new();
+    for body_node in children_with_field(node, "body") {
+        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
+            continue;
+        };
+        body_text.push_str(text);
+    }
+
+    for line in body_text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if trimmed.starts_with("{{") && first_mapping_colon_offset(trimmed).is_none() {
+            continue;
+        }
+        let indent = line.chars().take_while(|&ch| ch == ' ').count();
+        min_indent = Some(min_indent.map_or(indent, |current: usize| current.min(indent)));
+    }
+    min_indent
 }

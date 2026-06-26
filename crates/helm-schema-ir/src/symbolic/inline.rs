@@ -80,7 +80,10 @@ impl SymbolicWalker<'_> {
         let Some(name) = expr_literal_helper_call_callee(expr) else {
             return false;
         };
-        if !crate::resource_identity::helper_body_defines_resource(name, self.defines) {
+        if !crate::resource_identity::helper_body_defines_resource(
+            name,
+            &self.ir_context.inner.analysis_db,
+        ) {
             return false;
         }
         let Some(body) = self.ir_context.inner.analysis_db.parsed_helper_body(name) else {

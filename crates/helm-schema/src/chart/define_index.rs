@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use tracing::instrument;
 use vfs::VfsPath;
 
@@ -42,7 +42,6 @@ fn add_template_source(
 ) -> CliResult<()> {
     let mut source = String::new();
     path.open_file()?.read_to_string(&mut source)?;
-    index.add_source(&TreeSitterParser, &source)?;
     index.add_file_source(&define_source_logical_path(chart, path), &source);
     Ok(())
 }

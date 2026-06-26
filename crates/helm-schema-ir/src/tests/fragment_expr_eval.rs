@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, TemplateExpr, TreeSitterParser, parse_action_expressions};
+use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
@@ -17,11 +17,8 @@ fn single_expr(action: &str) -> TemplateExpr {
     exprs.into_iter().next().expect("expression exists")
 }
 
-fn empty_context<'a>(
-    defines: &'a DefineIndex,
-    analysis_db: &'a IrAnalysisDb,
-) -> FragmentEvalContext<'a> {
-    FragmentEvalContext::new(defines, analysis_db)
+fn empty_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
+    FragmentEvalContext::new(analysis_db)
 }
 
 fn helper_value_from_fragment_locals(
@@ -31,7 +28,7 @@ fn helper_value_from_fragment_locals(
     let expr = single_expr(action);
     let defines = DefineIndex::new();
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = empty_context(&defines, &analysis_db);
+    let context = empty_context(&analysis_db);
     let mut seen = HashSet::new();
     helper_result_from_expr_with_fragment_locals(
         &expr,
@@ -54,11 +51,8 @@ fn context_local() -> HashMap<String, AbstractValue> {
     )])
 }
 
-fn helper_context<'a>(
-    defines: &'a DefineIndex,
-    analysis_db: &'a IrAnalysisDb,
-) -> FragmentEvalContext<'a> {
-    empty_context(defines, analysis_db)
+fn helper_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
+    empty_context(analysis_db)
 }
 
 #[test]
@@ -150,14 +144,12 @@ fn helper_value_fragment_local_index_uses_shared_expression_eval() {
 #[test]
 fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     let mut defines = DefineIndex::new();
-    defines
-        .add_source(
-            &TreeSitterParser,
-            r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
-        )
-        .expect("parse helper source");
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
+    );
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = helper_context(&defines, &analysis_db);
+    let context = helper_context(&analysis_db);
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
@@ -209,14 +201,12 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
 #[test]
 fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     let mut defines = DefineIndex::new();
-    defines
-        .add_source(
-            &TreeSitterParser,
-            r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
-        )
-        .expect("parse helper source");
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "common.name" -}}{{ .Values.nameOverride }}{{- end -}}"#,
+    );
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = helper_context(&defines, &analysis_db);
+    let context = helper_context(&analysis_db);
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 

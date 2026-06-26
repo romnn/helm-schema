@@ -8,7 +8,7 @@ use crate::contract_sink::ContractUseContext;
 use crate::eval_effect::Effects;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
 use crate::{Guard, ValueKind, YamlPath};
-use helm_schema_ast::OutputSlot;
+use helm_schema_ast::{OutputSlot, OutputSlotKind};
 use helm_schema_core as output_path;
 
 use super::SymbolicWalker;
@@ -22,19 +22,11 @@ impl SymbolicWalker<'_> {
     ) {
         self.inline_static_file_templates_from_helper_calls(exprs);
 
-        let mut output_slot = self
+        let output_slot = self
             .attribution
             .output_slot_for_node(node)
             .unwrap_or_default();
-        if output_slot.resource.is_none()
-            && let Some(resource) = self.attribution.resource_at(node.start_byte()).cloned()
-        {
-            output_slot.path = self
-                .attribution
-                .rebase_path_at(node.start_byte(), output_slot.path);
-            output_slot.resource = Some(resource);
-        }
-        if output_slot.is_yaml_comment() {
+        if output_slot.slot == OutputSlotKind::YamlComment {
             return;
         }
 

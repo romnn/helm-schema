@@ -1,7 +1,35 @@
-use helm_schema_core::{CapabilityGuard, HelperBranch, StaticOracle};
+use std::collections::BTreeMap;
+
+use helm_schema_core::{
+    ApiPresenceQuery, CapabilityGuard, CapabilityOracle, HelperBranch, HelperBranchBody,
+};
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
+
+#[derive(Default)]
+struct StaticOracle {
+    answers: BTreeMap<String, bool>,
+}
+
+impl StaticOracle {
+    fn new() -> Self {
+        Self::default()
+    }
+
+    fn with(mut self, api: &str, has: bool) -> Self {
+        if let Some(query) = ApiPresenceQuery::parse_helm_literal(api) {
+            self.answers.insert(query.canonical_helm_literal(), has);
+        }
+        self
+    }
+}
+
+impl CapabilityOracle for StaticOracle {
+    fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {
+        self.answers.get(&query.canonical_helm_literal()).copied()
+    }
+}
 
 fn resource(api_version: &str, candidates: &[&str], branches: Vec<HelperBranch>) -> ResourceRef {
     ResourceRef {
@@ -16,25 +44,28 @@ fn resource(api_version: &str, candidates: &[&str], branches: Vec<HelperBranch>)
 }
 
 fn branch_has(api: &str, literals: &[&str]) -> HelperBranch {
-    HelperBranch::with_literals(
-        Some(CapabilityGuard::Has {
+    HelperBranch {
+        guard: Some(CapabilityGuard::Has {
             api: api.to_string(),
         }),
-        literals
-            .iter()
-            .map(|literal| (*literal).to_string())
-            .collect(),
-    )
+        body: literal_body(literals),
+    }
 }
 
 fn branch_else(literals: &[&str]) -> HelperBranch {
-    HelperBranch::with_literals(
-        None,
-        literals
+    HelperBranch {
+        guard: None,
+        body: literal_body(literals),
+    }
+}
+
+fn literal_body(literals: &[&str]) -> HelperBranchBody {
+    HelperBranchBody::Literals {
+        values: literals
             .iter()
             .map(|literal| (*literal).to_string())
             .collect(),
-    )
+    }
 }
 
 fn planned_api_versions(candidates: &[ResourceRef]) -> Vec<String> {

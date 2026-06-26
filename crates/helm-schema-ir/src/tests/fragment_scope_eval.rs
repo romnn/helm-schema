@@ -75,11 +75,8 @@ fn apply_local_set_mutations(
     )
 }
 
-fn empty_context<'a>(
-    defines: &'a DefineIndex,
-    analysis_db: &'a IrAnalysisDb,
-) -> FragmentEvalContext<'a> {
-    FragmentEvalContext::new(defines, analysis_db)
+fn empty_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
+    FragmentEvalContext::new(analysis_db)
 }
 
 #[test]
@@ -139,7 +136,7 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
     )]);
     let defines = DefineIndex::new();
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = empty_context(&defines, &analysis_db);
+    let context = empty_context(&analysis_db);
     let mut seen = HashSet::new();
 
     assert!(apply_local_set_mutations(
@@ -176,6 +173,19 @@ fn range_body_mapping_entry_detection_sees_dynamic_template_key() {
     let source = indoc::indoc! {r#"
         {{- range $key, $value := .Values.annotations }}
         {{ $key }}: {{ $value | quote }}
+        {{- end }}
+    "#};
+    let tree = parse_raw_template_tree(source);
+    let range = find_first_node(tree.root_node(), "range_action").expect("range action");
+
+    assert!(range_body_renders_mapping_entries_from_ast(range, source));
+}
+
+#[test]
+fn range_body_mapping_entry_detection_sees_fused_parser_pipeline_key() {
+    let source = indoc::indoc! {r#"
+        {{- range $key, $value := .Values.annotations }}
+        {{ $key | quote }}: {{ $value | quote }}
         {{- end }}
     "#};
     let tree = parse_raw_template_tree(source);

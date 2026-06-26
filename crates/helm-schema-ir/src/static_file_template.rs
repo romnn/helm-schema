@@ -5,6 +5,7 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::node_eval::{NodeAction, node_action};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct StaticFileTemplate {
@@ -73,23 +74,51 @@ pub(crate) fn collect_template_requests_from_helper(
     helper_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
 ) -> BTreeSet<StaticFileTemplate> {
-    let Some(body) = context.defines.get(name) else {
+    let Some(body) = context.analysis_db.parsed_helper_body(name) else {
         return BTreeSet::new();
     };
 
     let locals = HashMap::new();
     let mut requests = BTreeSet::new();
-    for node in body {
-        node.walk_template_exprs(&mut |expr| {
-            let mut seen = HashSet::new();
-            collect_template_requests(
-                expr,
-                &mut |expr| context.fragment_value_from_expr(expr, &locals, helper_dot, &mut seen),
-                &mut requests,
-            );
-        });
-    }
+    walk_template_exprs(body.source, body.tree.root_node(), &mut |expr| {
+        let mut seen = HashSet::new();
+        collect_template_requests(
+            expr,
+            &mut |expr| context.fragment_value_from_expr(expr, &locals, helper_dot, &mut seen),
+            &mut requests,
+        );
+    });
     requests
+}
+
+fn walk_template_exprs(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    visit: &mut impl FnMut(&TemplateExpr),
+) {
+    match node_action(source, node) {
+        NodeAction::Assignment(Some(exprs)) | NodeAction::Output(Some(exprs)) => {
+            for expr in &exprs {
+                visit(expr);
+            }
+        }
+        NodeAction::If(Some(header))
+        | NodeAction::With(Some(header))
+        | NodeAction::Range(Some(header)) => visit(header.expr()),
+        NodeAction::Text
+        | NodeAction::Suppressed
+        | NodeAction::Assignment(None)
+        | NodeAction::If(None)
+        | NodeAction::With(None)
+        | NodeAction::Range(None)
+        | NodeAction::Output(None)
+        | NodeAction::Descend => {}
+    }
+
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        walk_template_exprs(source, child, visit);
+    }
 }
 
 fn collect_files_get_paths<F>(

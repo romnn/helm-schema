@@ -14,7 +14,7 @@
 //!     helper) emit a value use for `X` even though `Values` is the
 //!     second selector segment, not the root.
 
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
@@ -23,8 +23,6 @@ fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
     let mut idx = DefineIndex::new();
     if !helpers.is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
-        idx.add_source(&TreeSitterParser, helpers)
-            .expect("helpers parse");
     }
     SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)

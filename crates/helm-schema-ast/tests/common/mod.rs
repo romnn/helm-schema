@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use helm_schema_ast::{HelmAst, HelmParser, TreeSitterParser};
+use helm_schema_ast::{parse_go_template, parse_helm_template};
 use test_util::prelude::sim_assert_eq;
 
 pub mod cases;
@@ -13,126 +13,102 @@ pub struct AstCorpusCase<'a> {
 
 pub fn assert_ast_fixture(case: AstCorpusCase<'_>) {
     let src = test_util::read_testdata(case.template_path);
-    let ast = TreeSitterParser.parse(&src).expect("parse");
-    sim_assert_eq!(have: ast_to_sexpr(&ast), want: case.expected_fixture.trim_end());
+    let tree = template_tree_for_fixture(&src, case.template_path);
+    let have = tree_sitter_sexpr(tree.root_node(), &src);
+    sim_assert_eq!(have: have, want: case.expected_fixture.trim_end());
 }
 
-fn ast_to_sexpr(ast: &HelmAst) -> String {
+pub fn template_tree_for_fixture(src: &str, label: &str) -> tree_sitter::Tree {
+    let tree = parse_helm_template(src).expect("parse template");
+    assert!(
+        tree.root_node().child_count() > 0,
+        "expected non-empty parse tree for {}",
+        label
+    );
+
+    if tree.root_node().has_error() {
+        let go_template_tree = parse_go_template(src).expect("parse go template");
+        assert!(
+            !go_template_tree.root_node().has_error(),
+            "fused Helm/YAML parse recovered with errors, and go-template parse also has errors for {}\nhelm_sexpr={}\ngo_template_sexpr={}",
+            label,
+            tree.root_node().to_sexp(),
+            go_template_tree.root_node().to_sexp(),
+        );
+        return go_template_tree;
+    }
+
+    tree
+}
+
+pub fn tree_sitter_sexpr(root: tree_sitter::Node<'_>, src: &str) -> String {
     let mut out = String::new();
-    write_ast_sexpr(ast, &mut out, 0);
+    write_tree_sitter_node(root, src, None, 0, &mut out);
     out
 }
 
-fn write_ast_sexpr(ast: &HelmAst, out: &mut String, indent: usize) {
-    let pad = "  ".repeat(indent);
-    match ast {
-        HelmAst::Document { items } => write_list_sexpr("Document", None, items, out, indent),
-        HelmAst::Mapping { items } => write_list_sexpr("Mapping", None, items, out, indent),
-        HelmAst::Sequence { items } => write_list_sexpr("Sequence", None, items, out, indent),
-        HelmAst::Pair { key, value } => {
-            let _ = write!(out, "{pad}(Pair\n");
-            write_ast_sexpr(key, out, indent + 1);
-            if let Some(value) = value {
-                out.push('\n');
-                write_ast_sexpr(value, out, indent + 1);
-            }
-            out.push(')');
-        }
-        HelmAst::Scalar { text } => {
-            let _ = write!(out, "{pad}(Scalar {text:?})");
-        }
-        HelmAst::HelmExpr { action } => {
-            let _ = write!(out, "{pad}(HelmExpr {:?})", action.raw());
-        }
-        HelmAst::HelmComment { text } => {
-            let _ = write!(out, "{pad}(HelmComment {text:?})");
-        }
-        HelmAst::If {
-            condition,
-            then_branch,
-            else_branch,
-        } => write_branch_sexpr(
-            "If",
-            condition.raw(),
-            "then",
-            then_branch,
-            else_branch,
-            out,
-            indent,
-        ),
-        HelmAst::Range {
-            header,
-            body,
-            else_branch,
-        } => write_branch_sexpr(
-            "Range",
-            header.raw(),
-            "body",
-            body,
-            else_branch,
-            out,
-            indent,
-        ),
-        HelmAst::With {
-            header,
-            body,
-            else_branch,
-        } => write_branch_sexpr("With", header.raw(), "body", body, else_branch, out, indent),
-        HelmAst::Define { name, body } => {
-            write_list_sexpr("Define", Some(name), body, out, indent);
-        }
-        HelmAst::Block { name, body } => {
-            write_list_sexpr("Block", Some(name), body, out, indent);
-        }
-    }
-}
-
-fn write_list_sexpr(
-    kind: &str,
-    name: Option<&str>,
-    items: &[HelmAst],
-    out: &mut String,
+fn write_tree_sitter_node(
+    node: tree_sitter::Node<'_>,
+    src: &str,
+    field: Option<&str>,
     indent: usize,
+    out: &mut String,
 ) {
-    let pad = "  ".repeat(indent);
-    if let Some(name) = name {
-        let _ = write!(out, "{pad}({kind} {name:?}");
+    let pad = " ".repeat(indent);
+    if let Some(field) = field {
+        let _ = write!(out, "{pad}{field}: ");
     } else {
-        let _ = write!(out, "{pad}({kind}");
+        out.push_str(&pad);
     }
-    for item in items {
+
+    let children = named_children_for_sexpr(node, src);
+    if children.is_empty() {
+        let _ = write!(out, "({}", node.kind());
+        if let Ok(text) = node.utf8_text(src.as_bytes()) {
+            let text = text.trim();
+            if !text.is_empty() {
+                let quoted = serde_json::to_string(text).expect("string quoting cannot fail");
+                let _ = write!(out, " :text {quoted}");
+            }
+        }
+        out.push(')');
+        return;
+    }
+
+    let _ = write!(out, "({}", node.kind());
+    for (field, child) in children {
         out.push('\n');
-        write_ast_sexpr(item, out, indent + 1);
+        write_tree_sitter_node(child, src, field, indent + 2, out);
     }
-    out.push(')');
+    let _ = write!(out, "\n{pad})");
 }
 
-fn write_branch_sexpr(
-    kind: &str,
-    header: &str,
-    body_label: &str,
-    body: &[HelmAst],
-    else_branch: &[HelmAst],
-    out: &mut String,
-    indent: usize,
-) {
-    let pad = "  ".repeat(indent);
-    let _ = write!(out, "{pad}({kind} {header:?}");
-    if !body.is_empty() {
-        let _ = write!(out, "\n{pad}  ({body_label}");
-        for item in body {
-            out.push('\n');
-            write_ast_sexpr(item, out, indent + 2);
-        }
-        out.push(')');
+fn named_children_for_sexpr<'a>(
+    node: tree_sitter::Node<'a>,
+    src: &str,
+) -> Vec<(Option<&'a str>, tree_sitter::Node<'a>)> {
+    let mut children = Vec::new();
+    let mut cursor = node.walk();
+    if !cursor.goto_first_child() {
+        return children;
     }
-    if !else_branch.is_empty() {
-        let _ = write!(out, "\n{pad}  (else");
-        for item in else_branch {
-            out.push('\n');
-            write_ast_sexpr(item, out, indent + 2);
+
+    loop {
+        let child = cursor.node();
+        if child.is_named() && should_include_sexpr_node(child, src) {
+            children.push((cursor.field_name(), child));
         }
-        out.push(')');
+        if !cursor.goto_next_sibling() {
+            break;
+        }
     }
-    out.push(')');
+    children
+}
+
+fn should_include_sexpr_node(node: tree_sitter::Node<'_>, src: &str) -> bool {
+    if node.kind() != "text" {
+        return true;
+    }
+    node.utf8_text(src.as_bytes())
+        .is_ok_and(|text| !text.trim().is_empty())
 }

@@ -1,4 +1,4 @@
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use helm_schema_ir::SymbolicIrContext;
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
@@ -13,15 +13,11 @@ pub struct IrCorpusCase<'a> {
     pub dump_env: &'a str,
 }
 
-pub fn build_define_index(
-    parser: &dyn HelmParser,
-    spec: test_util::DefineSourceSpec<'_>,
-) -> DefineIndex {
+pub fn build_define_index(spec: test_util::DefineSourceSpec<'_>) -> DefineIndex {
     let loaded = spec.load();
     let mut idx = DefineIndex::new();
-    for source in loaded.helper_templates {
-        idx.add_source(parser, &source)
-            .expect("helper source should parse");
+    for (idx_num, source) in loaded.helper_templates.into_iter().enumerate() {
+        idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
     }
     for (name, source) in loaded.file_sources {
         idx.add_file_source(&name, &source);
@@ -31,7 +27,7 @@ pub fn build_define_index(
 
 pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
     let src = test_util::read_testdata(case.template_path);
-    let idx = build_define_index(&TreeSitterParser, case.define_sources);
+    let idx = build_define_index(case.define_sources);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(&src, &idx)
         .document();

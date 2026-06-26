@@ -1,13 +1,16 @@
-use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use indoc::indoc;
 
-use crate::resource_identity::ResourceIdentityDetector;
+use crate::analysis_db::IrAnalysisDb;
 use crate::{CapabilityGuard, HelperBranchBody};
 use test_util::prelude::sim_assert_eq;
 
 fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
-    let ast = TreeSitterParser.parse(src).expect("parse template");
-    ResourceIdentityDetector::new(defines).detect(&ast)
+    let analysis_db = IrAnalysisDb::new(defines);
+    crate::resource_identity::collect_resource_spans(src, &analysis_db)
+        .into_iter()
+        .next()
+        .map(|span| span.resource)
 }
 
 #[test]
@@ -28,6 +31,47 @@ fn detects_kind_before_api_version() {
 }
 
 #[test]
+fn detects_resources_inside_template_control_bodies_after_preamble() {
+    let source = indoc! {r#"
+        {{- $name := include "x.name" . }}
+        {{- if .Values.create }}
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: {{ $name }}
+        {{- end }}
+        {{- if .Values.extra }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ $name }}-extra
+        {{- end }}
+    "#};
+    let defines = DefineIndex::new();
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let spans = crate::resource_identity::collect_resource_spans(source, &analysis_db);
+
+    sim_assert_eq!(have: spans.len(), want: 2);
+    sim_assert_eq!(have: spans[0].start, want: 0);
+    sim_assert_eq!(have: spans[0].resource.kind.as_str(), want: "Secret");
+    sim_assert_eq!(have: spans[1].resource.kind.as_str(), want: "ConfigMap");
+}
+
+#[test]
+fn detects_resources_in_signoz_postgresql_secrets_template() {
+    let source = include_str!(
+        "../../../../../testdata/charts/signoz-signoz/charts/signoz-otel-gateway/charts/postgresql/templates/secrets.yaml"
+    );
+    let defines = DefineIndex::new();
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let spans = crate::resource_identity::collect_resource_spans(source, &analysis_db);
+
+    sim_assert_eq!(have: spans.len(), want: 3);
+    assert!(spans.iter().all(|span| span.resource.kind == "Secret"));
+}
+
+#[test]
 fn resolves_helper_returned_api_version() {
     let helpers = indoc! {r#"
         {{- define "x.apiVersion" -}}
@@ -35,9 +79,7 @@ fn resolves_helper_returned_api_version() {
         {{- end -}}
     "#};
     let mut defines = DefineIndex::new();
-    defines
-        .add_source(&TreeSitterParser, helpers)
-        .expect("helpers");
+    defines.add_file_source("<inline:0>", helpers);
     let resource = detect(
         indoc! {r#"
             apiVersion: {{ template "x.apiVersion" . }}
@@ -72,10 +114,10 @@ fn preserves_inline_capability_branches() {
     .expect("resource");
 
     sim_assert_eq!(have: resource.kind, want: "PodDisruptionBudget");
-    sim_assert_eq!(have: resource.api_version, want: "");
+    sim_assert_eq!(have: resource.api_version, want: "policy/v1");
     sim_assert_eq!(
         have: resource.api_version_candidates,
-        want: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()]
+        want: vec!["policy/v1beta1".to_string()]
     );
     sim_assert_eq!(have: resource.api_version_branches.len(), want: 2);
     sim_assert_eq!(
@@ -87,6 +129,54 @@ fn preserves_inline_capability_branches() {
     sim_assert_eq!(
         have: resource.api_version_branches[1].body,
         want: HelperBranchBody::literals(vec!["policy/v1beta1".to_string()])
+    );
+}
+
+#[test]
+fn preserves_semver_gated_api_version_branches() {
+    let resource = detect(
+        indoc! {r#"
+            {{- if .Values.ingress.enabled -}}
+            {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+            apiVersion: networking.k8s.io/v1
+            {{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+            apiVersion: networking.k8s.io/v1beta1
+            {{- else -}}
+            apiVersion: extensions/v1beta1
+            {{- end }}
+            kind: Ingress
+            {{- end }}
+        "#},
+        &DefineIndex::new(),
+    )
+    .expect("resource");
+
+    sim_assert_eq!(have: resource.kind, want: "Ingress");
+    sim_assert_eq!(have: resource.api_version, want: "networking.k8s.io/v1");
+    sim_assert_eq!(
+        have: resource.api_version_candidates,
+        want: vec![
+            "networking.k8s.io/v1beta1".to_string(),
+            "extensions/v1beta1".to_string(),
+        ]
+    );
+}
+
+#[test]
+fn preserves_zalando_ingress_api_version_branches_with_later_ranges() {
+    let source = include_str!(
+        "../../../../../testdata/charts/zalando-postgres-operator-ui/templates/ingress.yaml"
+    );
+    let resource = detect(source, &DefineIndex::new()).expect("resource");
+
+    sim_assert_eq!(have: resource.kind, want: "Ingress");
+    sim_assert_eq!(have: resource.api_version, want: "networking.k8s.io/v1");
+    sim_assert_eq!(
+        have: resource.api_version_candidates,
+        want: vec![
+            "networking.k8s.io/v1beta1".to_string(),
+            "extensions/v1beta1".to_string(),
+        ]
     );
 }
 

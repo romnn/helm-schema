@@ -8,7 +8,7 @@ use crate::{
     resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs},
     values_yaml::ValuesYamlPathFacts,
 };
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use helm_schema_core::{ProviderSchemaFragment, ResourceSchemaOracle};
 use helm_schema_ir::{
     ContractIr, ContractSchemaSignals, ContractUse, ContractValuePathFacts, Guard, GuardValue,
@@ -39,8 +39,6 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
     let mut idx = DefineIndex::new();
     if !helpers.trim().is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
-        idx.add_source(&TreeSitterParser, helpers)
-            .expect("helpers parse");
     }
     SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
 }
@@ -416,11 +414,10 @@ impl ResourceSchemaOracle for NoopProvider {
 fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
     let src = test_util::read_testdata("charts/surveyor/templates/serviceMonitor.yaml");
     let mut idx = DefineIndex::new();
-    idx.add_source(
-        &TreeSitterParser,
+    idx.add_file_source(
+        "charts/surveyor/templates/_helpers.tpl",
         &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
-    )
-    .expect("helpers parse");
+    );
     let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let schema_signals = contract.into_schema_signals();
     let values_yaml: serde_yaml::Value =
@@ -530,11 +527,10 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
     let src =
         test_util::read_testdata("charts/zalando-postgres-operator/templates/deployment.yaml");
     let mut idx = DefineIndex::new();
-    idx.add_source(
-        &TreeSitterParser,
+    idx.add_file_source(
+        "charts/zalando-postgres-operator/templates/_helpers.tpl",
         &test_util::read_testdata("charts/zalando-postgres-operator/templates/_helpers.tpl"),
-    )
-    .expect("helpers parse");
+    );
     let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
     let schema_signals = contract.into_schema_signals();
     let values_yaml: serde_yaml::Value = serde_yaml::from_str(&test_util::read_testdata(
@@ -2183,9 +2179,7 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
     "};
 
     let mut define_index = DefineIndex::new();
-    define_index
-        .add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
         .finalize();
@@ -2335,9 +2329,7 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
     "};
 
     let mut define_index = DefineIndex::new();
-    define_index
-        .add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
         .finalize();
@@ -2435,9 +2427,7 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
     "};
 
     let mut define_index = DefineIndex::new();
-    define_index
-        .add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
         .finalize();
@@ -2495,9 +2485,7 @@ fn wrapper_helper_digest_branch_keeps_explicit_null_nullable() {
     "};
 
     let mut define_index = DefineIndex::new();
-    define_index
-        .add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index).generate_contract_ir(src, &define_index);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
@@ -3183,9 +3171,7 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
     "};
 
     let mut define_index = DefineIndex::new();
-    define_index
-        .add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
         .finalize();
@@ -4001,9 +3987,6 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
 
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
-    define_index
-        .add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
     let schema_signals = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
         .into_schema_signals();

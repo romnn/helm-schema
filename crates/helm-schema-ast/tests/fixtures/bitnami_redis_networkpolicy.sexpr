@@ -1,225 +1,721 @@
-(Document
-  (HelmComment "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
-  (If ".Values.networkPolicy.enabled"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "kind")
-          (Scalar "NetworkPolicy"))
-        (Pair
-          (Scalar "apiVersion")
-          (HelmExpr "template \"common.capabilities.networkPolicy.apiVersion\" ."))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (HelmExpr "template \"common.names.fullname\" ."))
-            (Pair
-              (Scalar "namespace")
-              (HelmExpr "include \"common.names.namespace\" . | quote"))
-            (Pair
-              (Scalar "labels")
-              (HelmExpr "include \"common.labels.standard\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 4")))))
-      (If ".Values.commonAnnotations"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "annotations")
-              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4")))))
-      (Mapping
-        (Pair
-          (Scalar "spec")
-          (Mapping
-            (Pair
-              (Scalar "podSelector")
-              (Mapping
-                (Pair
-                  (Scalar "matchLabels")
-                  (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 6"))))
-            (Pair
-              (Scalar "policyTypes")
-              (Sequence
-                (Scalar "Ingress")
-                (Scalar "Egress"))))))
-      (If ".Values.networkPolicy.allowExternalEgress"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "egress")
-              (Sequence
-                (Mapping)))))
-        (else
-          (Mapping
-            (Pair
-              (Scalar "egress")))
-          (If "eq .Values.architecture \"replication\""
-            (then
-              (Sequence
-                (Mapping
-                  (Pair
-                    (Scalar "ports")
-                    (Sequence
-                      (Mapping
-                        (Pair
-                          (Scalar "port")
-                          (Scalar "53"))
-                        (Pair
-                          (Scalar "protocol")
-                          (Scalar "UDP"))))))
-                (Mapping
-                  (Pair
-                    (Scalar "ports")
-                    (Sequence
-                      (Mapping
-                        (Pair
-                          (Scalar "port")
-                          (HelmExpr ".Values.master.containerPorts.redis")))))))
-              (If ".Values.sentinel.enabled"
-                (then
-                  (Sequence
-                    (Mapping
-                      (Pair
-                        (Scalar "port")
-                        (HelmExpr ".Values.sentinel.containerPorts.sentinel"))))))
-              (Mapping
-                (Pair
-                  (Scalar "to")
-                  (Sequence
-                    (Mapping
-                      (Pair
-                        (Scalar "podSelector")
-                        (Mapping
-                          (Pair
-                            (Scalar "matchLabels")
-                            (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14"))))))))))
-          (If ".Values.networkPolicy.extraEgress"
-            (then
-              (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraEgress \"context\" $ ) | nindent 4")))))
-      (Mapping
-        (Pair
-          (Scalar "ingress")
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "ports")
-                (Sequence
-                  (Mapping
-                    (Pair
-                      (Scalar "port")
-                      (HelmExpr ".Values.master.containerPorts.redis")))))))))
-      (If ".Values.sentinel.enabled"
-        (then
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "port")
-                (HelmExpr ".Values.sentinel.containerPorts.sentinel"))))))
-      (If "not .Values.networkPolicy.allowExternal"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "from")
-              (Sequence
-                (Mapping
-                  (Pair
-                    (Scalar "podSelector")
-                    (Mapping
-                      (Pair
-                        (Scalar "matchLabels")
-                        (Mapping
-                          (Pair
-                            (Scalar "{{ template \"common.names.fullname\" . }}-client")
-                            (Scalar "true")))))))
-                (Mapping
-                  (Pair
-                    (Scalar "podSelector")
-                    (Mapping
-                      (Pair
-                        (Scalar "matchLabels")
-                        (HelmExpr "include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14"))))))))
-          (If "or .Values.networkPolicy.ingressNSMatchLabels .Values.networkPolicy.ingressNSPodMatchLabels"
-            (then
-              (Sequence
-                (Mapping
-                  (Pair
-                    (Scalar "namespaceSelector")
-                    (Mapping
-                      (Pair
-                        (Scalar "matchLabels"))))))
-              (If ".Values.networkPolicy.ingressNSMatchLabels"
-                (then
-                  (Range "$key, $value := .Values.networkPolicy.ingressNSMatchLabels"
-                    (body
-                      (Mapping
-                        (Pair
-                          (HelmExpr "$key | quote")
-                          (HelmExpr "$value | quote"))))))
-                (else
-                  (Mapping)))
-              (If ".Values.networkPolicy.ingressNSPodMatchLabels"
-                (then
-                  (Mapping
-                    (Pair
-                      (Scalar "podSelector")
-                      (Mapping
-                        (Pair
-                          (Scalar "matchLabels")))))
-                  (Range "$key, $value := .Values.networkPolicy.ingressNSPodMatchLabels"
-                    (body
-                      (Mapping
-                        (Pair
-                          (HelmExpr "$key | quote")
-                          (HelmExpr "$value | quote")))))))))))
-      (If ".Values.metrics.enabled"
-        (then
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "ports")
-                (Sequence
-                  (Mapping
-                    (Pair
-                      (Scalar "port")
-                      (HelmExpr ".Values.metrics.containerPorts.http")))))))
-          (If "not .Values.networkPolicy.metrics.allowExternal"
-            (then
-              (Mapping
-                (Pair
-                  (Scalar "from")))
-              (If "or .Values.networkPolicy.metrics.ingressNSMatchLabels .Values.networkPolicy.metrics.ingressNSPodMatchLabels"
-                (then
-                  (Sequence
-                    (Mapping
-                      (Pair
-                        (Scalar "namespaceSelector")
-                        (Mapping
-                          (Pair
-                            (Scalar "matchLabels"))))))
-                  (If ".Values.networkPolicy.metrics.ingressNSMatchLabels"
-                    (then
-                      (Range "$key, $value := .Values.networkPolicy.metrics.ingressNSMatchLabels"
-                        (body
-                          (Mapping
-                            (Pair
-                              (HelmExpr "$key | quote")
-                              (HelmExpr "$value | quote"))))))
-                    (else
-                      (Mapping)))
-                  (If ".Values.networkPolicy.metrics.ingressNSPodMatchLabels"
-                    (then
-                      (Mapping
-                        (Pair
-                          (Scalar "podSelector")
-                          (Mapping
-                            (Pair
-                              (Scalar "matchLabels")))))
-                      (Range "$key, $value := .Values.networkPolicy.metrics.ingressNSPodMatchLabels"
-                        (body
-                          (Mapping
-                            (Pair
-                              (HelmExpr "$key | quote")
-                              (HelmExpr "$value | quote")))))))))))))
-      (If ".Values.networkPolicy.extraIngress"
-        (then
-          (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraIngress \"context\" $ ) | nindent 4"))))))
+(template
+  (comment :text "/*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/")
+  (if_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "networkPolicy")
+      )
+      field: (field_identifier :text "enabled")
+    )
+    consequence: (text :text "kind: NetworkPolicy\napiVersion:")
+    consequence: (template_action
+      name: (interpreted_string_literal :text "\"common.capabilities.networkPolicy.apiVersion\"")
+      argument: (dot :text ".")
+    )
+    consequence: (text :text "metadata:\n  name:")
+    consequence: (template_action
+      name: (interpreted_string_literal :text "\"common.names.fullname\"")
+      argument: (dot :text ".")
+    )
+    consequence: (text :text "namespace:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.names.namespace\"")
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "quote")
+      )
+    )
+    consequence: (text :text "labels:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.labels.standard\"")
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "dict")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"customLabels\"")
+                (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "commonLabels")
+                )
+                (interpreted_string_literal :text "\"context\"")
+                (variable :text "$")
+              )
+            )
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "commonAnnotations")
+      )
+      consequence: (text :text "annotations:")
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "include")
+          arguments: (argument_list
+            (interpreted_string_literal :text "\"common.tplvalues.render\"")
+            (parenthesized_pipeline
+              (function_call
+                function: (identifier :text "dict")
+                arguments: (argument_list
+                  (interpreted_string_literal :text "\"value\"")
+                  (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "commonAnnotations")
+                  )
+                  (interpreted_string_literal :text "\"context\"")
+                  (variable :text "$")
+                )
+              )
+            )
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+    consequence: (text :text "spec:\n  podSelector:\n    matchLabels:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.labels.matchLabels\"")
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "dict")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"customLabels\"")
+                (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "commonLabels")
+                )
+                (interpreted_string_literal :text "\"context\"")
+                (variable :text "$")
+              )
+            )
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "6")
+        )
+      )
+    )
+    consequence: (text :text "policyTypes:\n    - Ingress\n    - Egress")
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "networkPolicy")
+        )
+        field: (field_identifier :text "allowExternalEgress")
+      )
+      consequence: (text :text "egress:\n    -")
+      consequence: (text :text "{")
+      consequence: (text :text "}")
+      alternative: (text :text "egress:")
+      alternative: (if_action
+        condition: (function_call
+          function: (identifier :text "eq")
+          arguments: (argument_list
+            (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "architecture")
+            )
+            (interpreted_string_literal :text "\"replication\"")
+          )
+        )
+        consequence: (text :text "# Allow dns resolution\n    - ports:\n        - port: 53\n          protocol: UDP\n    # Allow outbound connections to other cluster pods\n    - ports:\n        - port:")
+        consequence: (selector_expression
+          operand: (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "master")
+            )
+            field: (field_identifier :text "containerPorts")
+          )
+          field: (field_identifier :text "redis")
+        )
+        consequence: (if_action
+          condition: (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "sentinel")
+            )
+            field: (field_identifier :text "enabled")
+          )
+          consequence: (text :text "- port:")
+          consequence: (selector_expression
+            operand: (selector_expression
+              operand: (selector_expression
+                operand: (field
+                  name: (identifier :text "Values")
+                )
+                field: (field_identifier :text "sentinel")
+              )
+              field: (field_identifier :text "containerPorts")
+            )
+            field: (field_identifier :text "sentinel")
+          )
+        )
+        consequence: (text :text "to:\n        - podSelector:\n            matchLabels:")
+        consequence: (chained_pipeline
+          (function_call
+            function: (identifier :text "include")
+            arguments: (argument_list
+              (interpreted_string_literal :text "\"common.labels.matchLabels\"")
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "dict")
+                  arguments: (argument_list
+                    (interpreted_string_literal :text "\"customLabels\"")
+                    (selector_expression
+                      operand: (field
+                        name: (identifier :text "Values")
+                      )
+                      field: (field_identifier :text "commonLabels")
+                    )
+                    (interpreted_string_literal :text "\"context\"")
+                    (variable :text "$")
+                  )
+                )
+              )
+            )
+          )
+          (function_call
+            function: (identifier :text "nindent")
+            arguments: (argument_list
+              (int_literal :text "14")
+            )
+          )
+        )
+      )
+      alternative: (if_action
+        condition: (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "networkPolicy")
+          )
+          field: (field_identifier :text "extraEgress")
+        )
+        consequence: (chained_pipeline
+          (function_call
+            function: (identifier :text "include")
+            arguments: (argument_list
+              (interpreted_string_literal :text "\"common.tplvalues.render\"")
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "dict")
+                  arguments: (argument_list
+                    (interpreted_string_literal :text "\"value\"")
+                    (selector_expression
+                      operand: (selector_expression
+                        operand: (field
+                          name: (identifier :text "Values")
+                        )
+                        field: (field_identifier :text "networkPolicy")
+                      )
+                      field: (field_identifier :text "extraEgress")
+                    )
+                    (interpreted_string_literal :text "\"context\"")
+                    (variable :text "$")
+                  )
+                )
+              )
+            )
+          )
+          (function_call
+            function: (identifier :text "nindent")
+            arguments: (argument_list
+              (int_literal :text "4")
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "ingress:\n    # Allow inbound connections\n    - ports:\n        - port:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "master")
+        )
+        field: (field_identifier :text "containerPorts")
+      )
+      field: (field_identifier :text "redis")
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "sentinel")
+        )
+        field: (field_identifier :text "enabled")
+      )
+      consequence: (text :text "- port:")
+      consequence: (selector_expression
+        operand: (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "sentinel")
+          )
+          field: (field_identifier :text "containerPorts")
+        )
+        field: (field_identifier :text "sentinel")
+      )
+    )
+    consequence: (if_action
+      condition: (function_call
+        function: (identifier :text "not")
+        arguments: (argument_list
+          (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "networkPolicy")
+            )
+            field: (field_identifier :text "allowExternal")
+          )
+        )
+      )
+      consequence: (text :text "from:\n        - podSelector:\n            matchLabels:")
+      consequence: (template_action
+        name: (interpreted_string_literal :text "\"common.names.fullname\"")
+        argument: (dot :text ".")
+      )
+      consequence: (text :text "-client: \"true\"\n        - podSelector:\n            matchLabels:")
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "include")
+          arguments: (argument_list
+            (interpreted_string_literal :text "\"common.labels.matchLabels\"")
+            (parenthesized_pipeline
+              (function_call
+                function: (identifier :text "dict")
+                arguments: (argument_list
+                  (interpreted_string_literal :text "\"customLabels\"")
+                  (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "commonLabels")
+                  )
+                  (interpreted_string_literal :text "\"context\"")
+                  (variable :text "$")
+                )
+              )
+            )
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "14")
+          )
+        )
+      )
+      consequence: (if_action
+        condition: (function_call
+          function: (identifier :text "or")
+          arguments: (argument_list
+            (selector_expression
+              operand: (selector_expression
+                operand: (field
+                  name: (identifier :text "Values")
+                )
+                field: (field_identifier :text "networkPolicy")
+              )
+              field: (field_identifier :text "ingressNSMatchLabels")
+            )
+            (selector_expression
+              operand: (selector_expression
+                operand: (field
+                  name: (identifier :text "Values")
+                )
+                field: (field_identifier :text "networkPolicy")
+              )
+              field: (field_identifier :text "ingressNSPodMatchLabels")
+            )
+          )
+        )
+        consequence: (text :text "- namespaceSelector:\n            matchLabels:")
+        consequence: (if_action
+          condition: (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "networkPolicy")
+            )
+            field: (field_identifier :text "ingressNSMatchLabels")
+          )
+          consequence: (range_action
+            (range_variable_definition
+              index: (variable
+                name: (identifier :text "key")
+              )
+              element: (variable
+                name: (identifier :text "value")
+              )
+              range: (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "networkPolicy")
+                )
+                field: (field_identifier :text "ingressNSMatchLabels")
+              )
+            )
+            body: (chained_pipeline
+              (variable
+                name: (identifier :text "key")
+              )
+              (function_call
+                function: (identifier :text "quote")
+              )
+            )
+            body: (text :text ":")
+            body: (chained_pipeline
+              (variable
+                name: (identifier :text "value")
+              )
+              (function_call
+                function: (identifier :text "quote")
+              )
+            )
+          )
+          alternative: (text :text "{")
+          alternative: (text :text "}")
+        )
+        consequence: (if_action
+          condition: (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "networkPolicy")
+            )
+            field: (field_identifier :text "ingressNSPodMatchLabels")
+          )
+          consequence: (text :text "podSelector:\n            matchLabels:")
+          consequence: (range_action
+            (range_variable_definition
+              index: (variable
+                name: (identifier :text "key")
+              )
+              element: (variable
+                name: (identifier :text "value")
+              )
+              range: (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "networkPolicy")
+                )
+                field: (field_identifier :text "ingressNSPodMatchLabels")
+              )
+            )
+            body: (chained_pipeline
+              (variable
+                name: (identifier :text "key")
+              )
+              (function_call
+                function: (identifier :text "quote")
+              )
+            )
+            body: (text :text ":")
+            body: (chained_pipeline
+              (variable
+                name: (identifier :text "value")
+              )
+              (function_call
+                function: (identifier :text "quote")
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "metrics")
+        )
+        field: (field_identifier :text "enabled")
+      )
+      consequence: (text :text "# Allow prometheus scrapes for metrics\n    - ports:\n        - port:")
+      consequence: (selector_expression
+        operand: (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "metrics")
+          )
+          field: (field_identifier :text "containerPorts")
+        )
+        field: (field_identifier :text "http")
+      )
+      consequence: (if_action
+        condition: (function_call
+          function: (identifier :text "not")
+          arguments: (argument_list
+            (selector_expression
+              operand: (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "networkPolicy")
+                )
+                field: (field_identifier :text "metrics")
+              )
+              field: (field_identifier :text "allowExternal")
+            )
+          )
+        )
+        consequence: (text :text "from:")
+        consequence: (if_action
+          condition: (function_call
+            function: (identifier :text "or")
+            arguments: (argument_list
+              (selector_expression
+                operand: (selector_expression
+                  operand: (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "networkPolicy")
+                  )
+                  field: (field_identifier :text "metrics")
+                )
+                field: (field_identifier :text "ingressNSMatchLabels")
+              )
+              (selector_expression
+                operand: (selector_expression
+                  operand: (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "networkPolicy")
+                  )
+                  field: (field_identifier :text "metrics")
+                )
+                field: (field_identifier :text "ingressNSPodMatchLabels")
+              )
+            )
+          )
+          consequence: (text :text "- namespaceSelector:\n            matchLabels:")
+          consequence: (if_action
+            condition: (selector_expression
+              operand: (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "networkPolicy")
+                )
+                field: (field_identifier :text "metrics")
+              )
+              field: (field_identifier :text "ingressNSMatchLabels")
+            )
+            consequence: (range_action
+              (range_variable_definition
+                index: (variable
+                  name: (identifier :text "key")
+                )
+                element: (variable
+                  name: (identifier :text "value")
+                )
+                range: (selector_expression
+                  operand: (selector_expression
+                    operand: (selector_expression
+                      operand: (field
+                        name: (identifier :text "Values")
+                      )
+                      field: (field_identifier :text "networkPolicy")
+                    )
+                    field: (field_identifier :text "metrics")
+                  )
+                  field: (field_identifier :text "ingressNSMatchLabels")
+                )
+              )
+              body: (chained_pipeline
+                (variable
+                  name: (identifier :text "key")
+                )
+                (function_call
+                  function: (identifier :text "quote")
+                )
+              )
+              body: (text :text ":")
+              body: (chained_pipeline
+                (variable
+                  name: (identifier :text "value")
+                )
+                (function_call
+                  function: (identifier :text "quote")
+                )
+              )
+            )
+            alternative: (text :text "{")
+            alternative: (text :text "}")
+          )
+          consequence: (if_action
+            condition: (selector_expression
+              operand: (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "networkPolicy")
+                )
+                field: (field_identifier :text "metrics")
+              )
+              field: (field_identifier :text "ingressNSPodMatchLabels")
+            )
+            consequence: (text :text "podSelector:\n            matchLabels:")
+            consequence: (range_action
+              (range_variable_definition
+                index: (variable
+                  name: (identifier :text "key")
+                )
+                element: (variable
+                  name: (identifier :text "value")
+                )
+                range: (selector_expression
+                  operand: (selector_expression
+                    operand: (selector_expression
+                      operand: (field
+                        name: (identifier :text "Values")
+                      )
+                      field: (field_identifier :text "networkPolicy")
+                    )
+                    field: (field_identifier :text "metrics")
+                  )
+                  field: (field_identifier :text "ingressNSPodMatchLabels")
+                )
+              )
+              body: (chained_pipeline
+                (variable
+                  name: (identifier :text "key")
+                )
+                (function_call
+                  function: (identifier :text "quote")
+                )
+              )
+              body: (text :text ":")
+              body: (chained_pipeline
+                (variable
+                  name: (identifier :text "value")
+                )
+                (function_call
+                  function: (identifier :text "quote")
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "networkPolicy")
+        )
+        field: (field_identifier :text "extraIngress")
+      )
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "include")
+          arguments: (argument_list
+            (interpreted_string_literal :text "\"common.tplvalues.render\"")
+            (parenthesized_pipeline
+              (function_call
+                function: (identifier :text "dict")
+                arguments: (argument_list
+                  (interpreted_string_literal :text "\"value\"")
+                  (selector_expression
+                    operand: (selector_expression
+                      operand: (field
+                        name: (identifier :text "Values")
+                      )
+                      field: (field_identifier :text "networkPolicy")
+                    )
+                    field: (field_identifier :text "extraIngress")
+                  )
+                  (interpreted_string_literal :text "\"context\"")
+                  (variable :text "$")
+                )
+              )
+            )
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+  )
+)

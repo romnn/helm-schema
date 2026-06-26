@@ -1,160 +1,814 @@
-(Document
-  (Mapping
-    (Pair
-      (Scalar "apiVersion")
-      (Scalar "v1"))
-    (Pair
-      (Scalar "kind")
-      (Scalar "Service"))
-    (Pair
-      (Scalar "metadata")
-      (Mapping
-        (Pair
-          (Scalar "name")
-          (HelmExpr "template \"common.names.fullname\" ."))
-        (Pair
-          (Scalar "namespace")
-          (HelmExpr "template \"zookeeper.namespace\" ."))
-        (Pair
-          (Scalar "labels")
-          (HelmExpr "include \"common.labels.standard\" . | nindent 4")))))
-  (If ".Values.commonLabels"
-    (then
-      (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonLabels \"context\" $ ) | nindent 4")))
-  (If "or .Values.commonAnnotations .Values.service.annotations"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "annotations")))
-      (If ".Values.service.annotations"
-        (then
-          (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.service.annotations \"context\" $ ) | nindent 4")))
-      (If ".Values.commonAnnotations"
-        (then
-          (HelmExpr "include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4")))))
-  (Mapping
-    (Pair
-      (Scalar "spec")
-      (Mapping
-        (Pair
-          (Scalar "type")
-          (HelmExpr ".Values.service.type")))))
-  (If "and .Values.service.clusterIP (eq .Values.service.type \"ClusterIP\")"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "clusterIP")
-          (HelmExpr ".Values.service.clusterIP")))))
-  (If "or (eq .Values.service.type \"LoadBalancer\") (eq .Values.service.type \"NodePort\")"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "externalTrafficPolicy")
-          (HelmExpr ".Values.service.externalTrafficPolicy | quote")))))
-  (If "and (eq .Values.service.type \"LoadBalancer\") (not (empty .Values.service.loadBalancerSourceRanges))"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "loadBalancerSourceRanges")
-          (HelmExpr ".Values.service.loadBalancerSourceRanges")))))
-  (If "and (eq .Values.service.type \"LoadBalancer\") (not (empty .Values.service.loadBalancerIP))"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "loadBalancerIP")
-          (HelmExpr ".Values.service.loadBalancerIP")))))
-  (If ".Values.service.sessionAffinity"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "sessionAffinity")
-          (HelmExpr ".Values.service.sessionAffinity")))))
-  (If ".Values.service.sessionAffinityConfig"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "sessionAffinityConfig")
-          (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.service.sessionAffinityConfig \"context\" $) | nindent 4")))))
-  (Mapping
-    (Pair
-      (Scalar "ports")))
-  (If "not .Values.service.disableBaseClientPort"
-    (then
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "name")
-            (Scalar "tcp-client"))
-          (Pair
-            (Scalar "port")
-            (HelmExpr ".Values.service.ports.client"))
-          (Pair
-            (Scalar "targetPort")
-            (Scalar "client"))))
-      (If "and (or (eq .Values.service.type \"NodePort\") (eq .Values.service.type \"LoadBalancer\")) (not (empty .Values.service.nodePorts.client))"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "nodePort")
-              (HelmExpr ".Values.service.nodePorts.client"))))
-        (else
-          (If "eq .Values.service.type \"ClusterIP\""
-            (then
-              (Mapping
-                (Pair
-                  (Scalar "nodePort")
-                  (Scalar "")))))))))
-  (If ".Values.tls.client.enabled"
-    (then
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "name")
-            (Scalar "tcp-client-tls"))
-          (Pair
-            (Scalar "port")
-            (HelmExpr ".Values.service.ports.tls"))
-          (Pair
-            (Scalar "targetPort")
-            (Scalar "client-tls"))))
-      (If "and (or (eq .Values.service.type \"NodePort\") (eq .Values.service.type \"LoadBalancer\")) (not (empty .Values.service.nodePorts.tls))"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "nodePort")
-              (HelmExpr ".Values.service.nodePorts.tls"))))
-        (else
-          (If "eq .Values.service.type \"ClusterIP\""
-            (then
-              (Mapping
-                (Pair
-                  (Scalar "nodePort")
-                  (Scalar "")))))))))
-  (Sequence
-    (Mapping
-      (Pair
-        (Scalar "name")
-        (Scalar "tcp-follower"))
-      (Pair
-        (Scalar "port")
-        (HelmExpr ".Values.service.ports.follower"))
-      (Pair
-        (Scalar "targetPort")
-        (Scalar "follower")))
-    (Mapping
-      (Pair
-        (Scalar "name")
-        (Scalar "tcp-election"))
-      (Pair
-        (Scalar "port")
-        (HelmExpr ".Values.service.ports.election"))
-      (Pair
-        (Scalar "targetPort")
-        (Scalar "election"))))
-  (If ".Values.service.extraPorts"
-    (then
-      (HelmExpr "include \"common.tplvalues.render\" (dict \"value\" .Values.service.extraPorts \"context\" $) | nindent 4")))
-  (Mapping
-    (Pair
-      (Scalar "selector")
-      (HelmExpr "include \"common.labels.matchLabels\" . | nindent 4"))))
+(template
+  (text :text "apiVersion: v1\nkind: Service\nmetadata:\n  name:")
+  (template_action
+    name: (interpreted_string_literal :text "\"common.names.fullname\"")
+    argument: (dot :text ".")
+  )
+  (text :text "namespace:")
+  (template_action
+    name: (interpreted_string_literal :text "\"zookeeper.namespace\"")
+    argument: (dot :text ".")
+  )
+  (text :text "labels:")
+  (chained_pipeline
+    (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"common.labels.standard\"")
+        (dot :text ".")
+      )
+    )
+    (function_call
+      function: (identifier :text "nindent")
+      arguments: (argument_list
+        (int_literal :text "4")
+      )
+    )
+  )
+  (text :text "app.kubernetes.io/component: zookeeper")
+  (if_action
+    condition: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "commonLabels")
+    )
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.tplvalues.render\"")
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "dict")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"value\"")
+                (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "commonLabels")
+                )
+                (interpreted_string_literal :text "\"context\"")
+                (variable :text "$")
+              )
+            )
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "or")
+      arguments: (argument_list
+        (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "commonAnnotations")
+        )
+        (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "service")
+          )
+          field: (field_identifier :text "annotations")
+        )
+      )
+    )
+    consequence: (text :text "annotations:")
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "service")
+        )
+        field: (field_identifier :text "annotations")
+      )
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "include")
+          arguments: (argument_list
+            (interpreted_string_literal :text "\"common.tplvalues.render\"")
+            (parenthesized_pipeline
+              (function_call
+                function: (identifier :text "dict")
+                arguments: (argument_list
+                  (interpreted_string_literal :text "\"value\"")
+                  (selector_expression
+                    operand: (selector_expression
+                      operand: (field
+                        name: (identifier :text "Values")
+                      )
+                      field: (field_identifier :text "service")
+                    )
+                    field: (field_identifier :text "annotations")
+                  )
+                  (interpreted_string_literal :text "\"context\"")
+                  (variable :text "$")
+                )
+              )
+            )
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "commonAnnotations")
+      )
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "include")
+          arguments: (argument_list
+            (interpreted_string_literal :text "\"common.tplvalues.render\"")
+            (parenthesized_pipeline
+              (function_call
+                function: (identifier :text "dict")
+                arguments: (argument_list
+                  (interpreted_string_literal :text "\"value\"")
+                  (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "commonAnnotations")
+                  )
+                  (interpreted_string_literal :text "\"context\"")
+                  (variable :text "$")
+                )
+              )
+            )
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+  )
+  (text :text "spec:\n  type:")
+  (selector_expression
+    operand: (selector_expression
+      operand: (field
+        name: (identifier :text "Values")
+      )
+      field: (field_identifier :text "service")
+    )
+    field: (field_identifier :text "type")
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "and")
+      arguments: (argument_list
+        (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "service")
+          )
+          field: (field_identifier :text "clusterIP")
+        )
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "eq")
+            arguments: (argument_list
+              (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "service")
+                )
+                field: (field_identifier :text "type")
+              )
+              (interpreted_string_literal :text "\"ClusterIP\"")
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "clusterIP:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "clusterIP")
+    )
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "or")
+      arguments: (argument_list
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "eq")
+            arguments: (argument_list
+              (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "service")
+                )
+                field: (field_identifier :text "type")
+              )
+              (interpreted_string_literal :text "\"LoadBalancer\"")
+            )
+          )
+        )
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "eq")
+            arguments: (argument_list
+              (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "service")
+                )
+                field: (field_identifier :text "type")
+              )
+              (interpreted_string_literal :text "\"NodePort\"")
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "externalTrafficPolicy:")
+    consequence: (chained_pipeline
+      (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "service")
+        )
+        field: (field_identifier :text "externalTrafficPolicy")
+      )
+      (function_call
+        function: (identifier :text "quote")
+      )
+    )
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "and")
+      arguments: (argument_list
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "eq")
+            arguments: (argument_list
+              (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "service")
+                )
+                field: (field_identifier :text "type")
+              )
+              (interpreted_string_literal :text "\"LoadBalancer\"")
+            )
+          )
+        )
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "not")
+            arguments: (argument_list
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "empty")
+                  arguments: (argument_list
+                    (selector_expression
+                      operand: (selector_expression
+                        operand: (field
+                          name: (identifier :text "Values")
+                        )
+                        field: (field_identifier :text "service")
+                      )
+                      field: (field_identifier :text "loadBalancerSourceRanges")
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "loadBalancerSourceRanges:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "loadBalancerSourceRanges")
+    )
+  )
+  (if_action
+    condition: (function_call
+      function: (identifier :text "and")
+      arguments: (argument_list
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "eq")
+            arguments: (argument_list
+              (selector_expression
+                operand: (selector_expression
+                  operand: (field
+                    name: (identifier :text "Values")
+                  )
+                  field: (field_identifier :text "service")
+                )
+                field: (field_identifier :text "type")
+              )
+              (interpreted_string_literal :text "\"LoadBalancer\"")
+            )
+          )
+        )
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "not")
+            arguments: (argument_list
+              (parenthesized_pipeline
+                (function_call
+                  function: (identifier :text "empty")
+                  arguments: (argument_list
+                    (selector_expression
+                      operand: (selector_expression
+                        operand: (field
+                          name: (identifier :text "Values")
+                        )
+                        field: (field_identifier :text "service")
+                      )
+                      field: (field_identifier :text "loadBalancerIP")
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "loadBalancerIP:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "loadBalancerIP")
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "sessionAffinity")
+    )
+    consequence: (text :text "sessionAffinity:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "sessionAffinity")
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "sessionAffinityConfig")
+    )
+    consequence: (text :text "sessionAffinityConfig:")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.tplvalues.render\"")
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "dict")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"value\"")
+                (selector_expression
+                  operand: (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "service")
+                  )
+                  field: (field_identifier :text "sessionAffinityConfig")
+                )
+                (interpreted_string_literal :text "\"context\"")
+                (variable :text "$")
+              )
+            )
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+  )
+  (text :text "ports:")
+  (if_action
+    condition: (function_call
+      function: (identifier :text "not")
+      arguments: (argument_list
+        (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "service")
+          )
+          field: (field_identifier :text "disableBaseClientPort")
+        )
+      )
+    )
+    consequence: (text :text "- name: tcp-client\n      port:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "service")
+        )
+        field: (field_identifier :text "ports")
+      )
+      field: (field_identifier :text "client")
+    )
+    consequence: (text :text "targetPort: client")
+    consequence: (if_action
+      condition: (function_call
+        function: (identifier :text "and")
+        arguments: (argument_list
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "or")
+              arguments: (argument_list
+                (parenthesized_pipeline
+                  (function_call
+                    function: (identifier :text "eq")
+                    arguments: (argument_list
+                      (selector_expression
+                        operand: (selector_expression
+                          operand: (field
+                            name: (identifier :text "Values")
+                          )
+                          field: (field_identifier :text "service")
+                        )
+                        field: (field_identifier :text "type")
+                      )
+                      (interpreted_string_literal :text "\"NodePort\"")
+                    )
+                  )
+                )
+                (parenthesized_pipeline
+                  (function_call
+                    function: (identifier :text "eq")
+                    arguments: (argument_list
+                      (selector_expression
+                        operand: (selector_expression
+                          operand: (field
+                            name: (identifier :text "Values")
+                          )
+                          field: (field_identifier :text "service")
+                        )
+                        field: (field_identifier :text "type")
+                      )
+                      (interpreted_string_literal :text "\"LoadBalancer\"")
+                    )
+                  )
+                )
+              )
+            )
+          )
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "not")
+              arguments: (argument_list
+                (parenthesized_pipeline
+                  (function_call
+                    function: (identifier :text "empty")
+                    arguments: (argument_list
+                      (selector_expression
+                        operand: (selector_expression
+                          operand: (selector_expression
+                            operand: (field
+                              name: (identifier :text "Values")
+                            )
+                            field: (field_identifier :text "service")
+                          )
+                          field: (field_identifier :text "nodePorts")
+                        )
+                        field: (field_identifier :text "client")
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+      consequence: (text :text "nodePort:")
+      consequence: (selector_expression
+        operand: (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "service")
+          )
+          field: (field_identifier :text "nodePorts")
+        )
+        field: (field_identifier :text "client")
+      )
+      condition: (function_call
+        function: (identifier :text "eq")
+        arguments: (argument_list
+          (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "service")
+            )
+            field: (field_identifier :text "type")
+          )
+          (interpreted_string_literal :text "\"ClusterIP\"")
+        )
+      )
+      option: (text :text "nodePort: null")
+    )
+  )
+  (if_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "tls")
+        )
+        field: (field_identifier :text "client")
+      )
+      field: (field_identifier :text "enabled")
+    )
+    consequence: (text :text "- name: tcp-client-tls\n      port:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "service")
+        )
+        field: (field_identifier :text "ports")
+      )
+      field: (field_identifier :text "tls")
+    )
+    consequence: (text :text "targetPort: client-tls")
+    consequence: (if_action
+      condition: (function_call
+        function: (identifier :text "and")
+        arguments: (argument_list
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "or")
+              arguments: (argument_list
+                (parenthesized_pipeline
+                  (function_call
+                    function: (identifier :text "eq")
+                    arguments: (argument_list
+                      (selector_expression
+                        operand: (selector_expression
+                          operand: (field
+                            name: (identifier :text "Values")
+                          )
+                          field: (field_identifier :text "service")
+                        )
+                        field: (field_identifier :text "type")
+                      )
+                      (interpreted_string_literal :text "\"NodePort\"")
+                    )
+                  )
+                )
+                (parenthesized_pipeline
+                  (function_call
+                    function: (identifier :text "eq")
+                    arguments: (argument_list
+                      (selector_expression
+                        operand: (selector_expression
+                          operand: (field
+                            name: (identifier :text "Values")
+                          )
+                          field: (field_identifier :text "service")
+                        )
+                        field: (field_identifier :text "type")
+                      )
+                      (interpreted_string_literal :text "\"LoadBalancer\"")
+                    )
+                  )
+                )
+              )
+            )
+          )
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "not")
+              arguments: (argument_list
+                (parenthesized_pipeline
+                  (function_call
+                    function: (identifier :text "empty")
+                    arguments: (argument_list
+                      (selector_expression
+                        operand: (selector_expression
+                          operand: (selector_expression
+                            operand: (field
+                              name: (identifier :text "Values")
+                            )
+                            field: (field_identifier :text "service")
+                          )
+                          field: (field_identifier :text "nodePorts")
+                        )
+                        field: (field_identifier :text "tls")
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+      consequence: (text :text "nodePort:")
+      consequence: (selector_expression
+        operand: (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "service")
+          )
+          field: (field_identifier :text "nodePorts")
+        )
+        field: (field_identifier :text "tls")
+      )
+      condition: (function_call
+        function: (identifier :text "eq")
+        arguments: (argument_list
+          (selector_expression
+            operand: (selector_expression
+              operand: (field
+                name: (identifier :text "Values")
+              )
+              field: (field_identifier :text "service")
+            )
+            field: (field_identifier :text "type")
+          )
+          (interpreted_string_literal :text "\"ClusterIP\"")
+        )
+      )
+      option: (text :text "nodePort: null")
+    )
+  )
+  (text :text "- name: tcp-follower\n      port:")
+  (selector_expression
+    operand: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "ports")
+    )
+    field: (field_identifier :text "follower")
+  )
+  (text :text "targetPort: follower\n    - name: tcp-election\n      port:")
+  (selector_expression
+    operand: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "ports")
+    )
+    field: (field_identifier :text "election")
+  )
+  (text :text "targetPort: election")
+  (if_action
+    condition: (selector_expression
+      operand: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "service")
+      )
+      field: (field_identifier :text "extraPorts")
+    )
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"common.tplvalues.render\"")
+          (parenthesized_pipeline
+            (function_call
+              function: (identifier :text "dict")
+              arguments: (argument_list
+                (interpreted_string_literal :text "\"value\"")
+                (selector_expression
+                  operand: (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "service")
+                  )
+                  field: (field_identifier :text "extraPorts")
+                )
+                (interpreted_string_literal :text "\"context\"")
+                (variable :text "$")
+              )
+            )
+          )
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+  )
+  (text :text "selector:")
+  (chained_pipeline
+    (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"common.labels.matchLabels\"")
+        (dot :text ".")
+      )
+    )
+    (function_call
+      function: (identifier :text "nindent")
+      arguments: (argument_list
+        (int_literal :text "4")
+      )
+    )
+  )
+  (text :text "app.kubernetes.io/component: zookeeper")
+)

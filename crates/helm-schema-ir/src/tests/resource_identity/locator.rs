@@ -5,8 +5,10 @@ use test_util::prelude::sim_assert_eq;
 
 fn attribution_index(source: &str) -> AttributionIndex {
     let tree = helm_schema_ast::parse_go_template(source).expect("parse template");
+    let defines = DefineIndex::new();
+    let analysis_db = crate::analysis_db::IrAnalysisDb::new(&defines);
     build_attribution_index(source, tree.root_node()).with_resource_spans(
-        crate::resource_identity::collect_resource_spans(source, &DefineIndex::new()),
+        crate::resource_identity::collect_resource_spans(source, &analysis_db),
     )
 }
 
@@ -98,6 +100,36 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
         locator.resource_at(list_byte).is_none(),
         "the transparent list wrapper must not become the current resource"
     );
+}
+
+#[test]
+fn resource_locator_reports_only_single_resource_control_spans() {
+    let single = indoc! {r#"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          name: {{ .Values.name }}
+        {{- end }}
+    "#};
+    let locator = attribution_index(single);
+    let resource = locator
+        .single_resource_in_span(0, single.len())
+        .expect("single resource");
+    sim_assert_eq!(have: resource.kind.as_str(), want: "ConfigMap");
+    sim_assert_eq!(have: resource.api_version.as_str(), want: "v1");
+
+    let multiple = indoc! {r#"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        ---
+        apiVersion: v1
+        kind: Secret
+        {{- end }}
+    "#};
+    let locator = attribution_index(multiple);
+    assert!(locator.single_resource_in_span(0, multiple.len()).is_none());
 }
 
 #[test]

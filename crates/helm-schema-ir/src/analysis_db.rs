@@ -30,7 +30,6 @@ impl ParsedHelperBody<'_> {
 }
 
 pub(crate) struct IrAnalysisDb {
-    defines: DefineIndex,
     define_bodies: HashMap<String, CachedDefineBody>,
     define_trees: RefCell<HashMap<String, tree_sitter::Tree>>,
     define_attributions: RefCell<HashMap<String, AttributionIndex>>,
@@ -54,7 +53,6 @@ impl IrAnalysisDb {
             }
         }
         Self {
-            defines: defines.clone(),
             define_bodies,
             define_trees: RefCell::new(HashMap::new()),
             define_attributions: RefCell::new(HashMap::new()),
@@ -97,11 +95,10 @@ impl IrAnalysisDb {
 
         let body = self.define_bodies.get(name)?;
         let tree = self.define_tree(name)?;
-        let attribution = build_attribution_index(body.source.as_str(), tree.root_node())
-            .with_resource_spans(crate::resource_identity::collect_resource_spans(
-                body.source.as_str(),
-                &self.defines,
-            ));
+        let attribution =
+            build_attribution_index(body.source.as_str(), tree.root_node()).with_resource_spans(
+                crate::resource_identity::collect_resource_spans(body.source.as_str(), self),
+            );
         self.define_attributions
             .borrow_mut()
             .insert(name.to_string(), attribution.clone());

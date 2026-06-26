@@ -12,7 +12,7 @@
 //! detection must treat both header fields independently so source order never
 //! controls whether resource lookup can run.
 
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractUse, FinalizedContract, SymbolicIrContext};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
@@ -377,8 +377,7 @@ fn detector_resolves_helper_returned_api_version() {
     "#};
 
     let mut idx = DefineIndex::new();
-    idx.add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
         .finalize();
@@ -424,8 +423,7 @@ fn detector_resolves_helper_with_if_else_branches() {
     "#};
 
     let mut idx = DefineIndex::new();
-    idx.add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
         .finalize();
@@ -478,8 +476,7 @@ fn detector_resolves_include_returned_api_version() {
     "#};
 
     let mut idx = DefineIndex::new();
-    idx.add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(template, &idx)
         .finalize();

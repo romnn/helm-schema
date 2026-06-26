@@ -64,26 +64,6 @@ impl HelperBranchBody {
     }
 }
 
-impl HelperBranch {
-    /// Build a literal-bodied branch.
-    #[must_use]
-    pub fn with_literals(guard: Option<CapabilityGuard>, values: Vec<String>) -> Self {
-        Self {
-            guard,
-            body: HelperBranchBody::Literals { values },
-        }
-    }
-
-    /// Build a nested branch.
-    #[must_use]
-    pub fn with_nested(guard: Option<CapabilityGuard>, branches: Vec<HelperBranch>) -> Self {
-        Self {
-            guard,
-            body: HelperBranchBody::Nested { branches },
-        }
-    }
-}
-
 /// Structurally-decoded capability guard for an `if` action.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -94,28 +74,6 @@ pub enum CapabilityGuard {
     NotHas { api: String },
     /// Any guard the static decoder cannot structurally evaluate.
     Opaque { text: String },
-}
-
-/// Typed capability-presence predicate carried by a decoded guard.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum CapabilityPresencePredicate {
-    Has(ApiPresenceQuery),
-    NotHas(ApiPresenceQuery),
-}
-
-impl CapabilityGuard {
-    #[must_use]
-    pub fn presence_predicate(&self) -> Option<CapabilityPresencePredicate> {
-        match self {
-            Self::Has { api } => {
-                ApiPresenceQuery::parse_helm_literal(api).map(CapabilityPresencePredicate::Has)
-            }
-            Self::NotHas { api } => {
-                ApiPresenceQuery::parse_helm_literal(api).map(CapabilityPresencePredicate::NotHas)
-            }
-            Self::Opaque { .. } => None,
-        }
-    }
 }
 
 /// A typed `.Capabilities.APIVersions.Has ...` query.

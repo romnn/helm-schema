@@ -1,11 +1,9 @@
 //! Typed AST for Go template *expressions* — the inside of a `{{ ... }}`
-//! action. Sits alongside [`crate::HelmAst`], which models template
-//! *structure* (define blocks, control flow, action boundaries) but
-//! stores each action's interior as opaque text. This module
-//! re-parses that text with `tree-sitter-go-template` so callers can
-//! pattern-match on structured `Call` / `Pipeline` / `Literal` nodes
-//! instead of re-implementing a string-literal-aware tokenizer over
-//! raw bytes. Bytes inside a Go string literal can no longer
+//! action. Structural consumers parse Helm/YAML with the fused tree-sitter
+//! grammar and use this module to pattern-match on structured `Call` /
+//! `Pipeline` / `Literal` nodes instead of re-implementing a
+//! string-literal-aware tokenizer over raw bytes. Bytes inside a Go string
+//! literal can no longer
 //! masquerade as helper calls or `default …` patterns by accident.
 
 use tree_sitter::Node;

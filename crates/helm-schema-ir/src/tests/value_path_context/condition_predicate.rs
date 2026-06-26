@@ -69,7 +69,7 @@ fn condition_context_with_output_meta(
         get_bindings,
         template_default_paths,
         template_output_meta,
-        fragment_context: FragmentEvalContext::new(defines, analysis_db),
+        fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,
     }

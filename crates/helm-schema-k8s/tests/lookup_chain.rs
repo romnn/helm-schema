@@ -98,6 +98,16 @@ fn resource() -> ResourceRef {
     }
 }
 
+fn branch_literals(
+    guard: Option<helm_schema_core::CapabilityGuard>,
+    values: Vec<String>,
+) -> helm_schema_core::HelperBranch {
+    helm_schema_core::HelperBranch {
+        guard,
+        body: helm_schema_core::HelperBranchBody::Literals { values },
+    }
+}
+
 #[test]
 fn chain_precedence_local_over_crd_over_k8s() {
     let local = FakeProvider::new(
@@ -579,7 +589,7 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
 // attribution.
 #[test]
 fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
-    use helm_schema_core::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::CapabilityGuard;
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -595,13 +605,13 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
         kind: "PodSecurityPolicy".to_string(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
         api_version_branches: vec![
-            HelperBranch::with_literals(
+            branch_literals(
                 Some(CapabilityGuard::Has {
                     api: "policy/v1".to_string(),
                 }),
                 vec!["policy/v1".to_string()],
             ),
-            HelperBranch::with_literals(None, vec!["policy/v1beta1".to_string()]),
+            branch_literals(None, vec!["policy/v1beta1".to_string()]),
         ],
     };
     let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
@@ -637,7 +647,7 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
 // branch's policy/v1beta1.
 #[test]
 fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
-    use helm_schema_core::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::CapabilityGuard;
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -653,13 +663,13 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
         kind: "PodSecurityPolicy".to_string(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
         api_version_branches: vec![
-            HelperBranch::with_literals(
+            branch_literals(
                 Some(CapabilityGuard::Has {
                     api: "policy/v1".to_string(),
                 }),
                 vec!["policy/v1".to_string()],
             ),
-            HelperBranch::with_literals(None, vec!["policy/v1beta1".to_string()]),
+            branch_literals(None, vec!["policy/v1beta1".to_string()]),
         ],
     };
     let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
@@ -694,7 +704,7 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
 // uses live_literals (which recurses through Nested) for attribution.
 #[test]
 fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
-    use helm_schema_core::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::CapabilityGuard;
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -707,26 +717,26 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
     let nested = vec![
-        HelperBranch::with_literals(
+        branch_literals(
             Some(CapabilityGuard::Has {
                 api: "other.example.com/v1".to_string(),
             }),
             vec!["b".to_string()],
         ),
-        HelperBranch::with_literals(None, vec!["b_legacy".to_string()]),
+        branch_literals(None, vec!["b_legacy".to_string()]),
     ];
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "SomeKind".to_string(),
         api_version_candidates: vec![],
         api_version_branches: vec![
-            HelperBranch::with_nested(
-                Some(CapabilityGuard::Has {
+            helm_schema_core::HelperBranch {
+                guard: Some(CapabilityGuard::Has {
                     api: "example.com/v1".to_string(),
                 }),
-                nested,
-            ),
-            HelperBranch::with_literals(None, vec!["y".to_string()]),
+                body: helm_schema_core::HelperBranchBody::Nested { branches: nested },
+            },
+            branch_literals(None, vec!["y".to_string()]),
         ],
     };
     let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
@@ -758,7 +768,7 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
 // literal, not fall back to the outer else branch.
 #[test]
 fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
-    use helm_schema_core::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::CapabilityGuard;
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -771,26 +781,26 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
     let nested = vec![
-        HelperBranch::with_literals(
+        branch_literals(
             Some(CapabilityGuard::Has {
                 api: "other.example.com/v1".to_string(),
             }),
             vec!["b".to_string()],
         ),
-        HelperBranch::with_literals(None, vec!["b_legacy".to_string()]),
+        branch_literals(None, vec!["b_legacy".to_string()]),
     ];
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "SomeKind".to_string(),
         api_version_candidates: vec![],
         api_version_branches: vec![
-            HelperBranch::with_nested(
-                Some(CapabilityGuard::Has {
+            helm_schema_core::HelperBranch {
+                guard: Some(CapabilityGuard::Has {
                     api: "example.com/v1".to_string(),
                 }),
-                nested,
-            ),
-            HelperBranch::with_literals(None, vec!["y".to_string()]),
+                body: helm_schema_core::HelperBranchBody::Nested { branches: nested },
+            },
+            branch_literals(None, vec!["y".to_string()]),
         ],
     };
     let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
@@ -817,7 +827,7 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
 // considered rather than per-candidate flooding.
 #[test]
 fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
-    use helm_schema_core::{CapabilityGuard, HelperBranch};
+    use helm_schema_core::CapabilityGuard;
 
     let p = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
@@ -831,7 +841,7 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
         api_version: String::new(),
         kind: "PodSecurityPolicy".to_string(),
         api_version_candidates: vec!["policy/v1".to_string()],
-        api_version_branches: vec![HelperBranch::with_literals(
+        api_version_branches: vec![branch_literals(
             Some(CapabilityGuard::Has {
                 api: "policy/v1".to_string(),
             }),

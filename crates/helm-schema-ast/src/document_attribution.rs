@@ -76,10 +76,6 @@ impl OutputSlot {
                 || (self.kind == ValueKind::Scalar && self.slot == OutputSlotKind::WholeScalar))
     }
 
-    pub fn is_yaml_comment(&self) -> bool {
-        self.slot == OutputSlotKind::YamlComment
-    }
-
     fn in_sequence_item(&self) -> bool {
         self.path
             .0
@@ -123,12 +119,19 @@ impl AttributionIndex {
     }
 
     pub fn output_slot_for_node(&self, mut node: tree_sitter::Node<'_>) -> Option<OutputSlot> {
+        let output_byte = node.start_byte();
         loop {
             if let Some(slot) = self.output_slots.get(&(node.start_byte(), node.end_byte())) {
-                return Some(self.resource_scoped_slot(node.start_byte(), slot.clone()));
+                return Some(self.resource_scoped_slot(output_byte, slot.clone()));
             }
-            node = node.parent()?;
+            let Some(parent) = node.parent() else {
+                break;
+            };
+            node = parent;
         }
+        self.resource_at(output_byte)
+            .is_some()
+            .then(|| self.resource_scoped_slot(output_byte, OutputSlot::default()))
     }
 
     pub fn control_site_for_node(&self, mut node: tree_sitter::Node<'_>) -> Option<ControlSite> {
@@ -145,6 +148,21 @@ impl AttributionIndex {
 
     pub fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
         self.resource_span_at(byte).map(|span| &span.resource)
+    }
+
+    pub fn single_resource_in_span(&self, start: usize, end: usize) -> Option<&ResourceRef> {
+        let mut resource = None;
+        for span in &self.resource_spans {
+            if span.start >= end || start >= span.end {
+                continue;
+            }
+            match resource {
+                Some(existing) if existing != &span.resource => return None,
+                Some(_) => {}
+                None => resource = Some(&span.resource),
+            }
+        }
+        resource
     }
 
     pub fn rebase_path_at(&self, byte: usize, path: YamlPath) -> YamlPath {

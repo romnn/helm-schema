@@ -1,4 +1,4 @@
-use helm_schema_core::{ApiPresenceQuery, CapabilityGuard, CapabilityPresencePredicate};
+use helm_schema_core::{ApiPresenceQuery, CapabilityGuard};
 use test_util::prelude::sim_assert_eq;
 
 use super::decode_guard;
@@ -36,17 +36,12 @@ fn decode_guard_falls_back_to_opaque_for_values_refs() {
 }
 
 #[test]
-fn presence_predicate_uses_core_query_parser() {
-    let guard = CapabilityGuard::Has {
-        api: "policy/v1/PodDisruptionBudget".to_string(),
-    };
+fn core_query_parser_understands_resource_literals() {
     sim_assert_eq!(
-        have: guard.presence_predicate(),
-        want: Some(CapabilityPresencePredicate::Has(
-            ApiPresenceQuery::Resource {
-                api_version: "policy/v1".to_string(),
-                kind: "PodDisruptionBudget".to_string(),
-            }
-        ))
+        have: ApiPresenceQuery::parse_helm_literal("policy/v1/PodDisruptionBudget"),
+        want: Some(ApiPresenceQuery::Resource {
+            api_version: "policy/v1".to_string(),
+            kind: "PodDisruptionBudget".to_string(),
+        })
     );
 }

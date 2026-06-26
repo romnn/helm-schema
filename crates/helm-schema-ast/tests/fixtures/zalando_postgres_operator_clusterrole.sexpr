@@ -1,425 +1,1986 @@
-(Document
-  (If ".Values.rbac.create"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "rbac.authorization.k8s.io/v1"))
-        (Pair
-          (Scalar "kind")
-          (Scalar "ClusterRole"))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (HelmExpr "include \"postgres-operator.serviceAccountName\" ."))
-            (Pair
-              (Scalar "labels")
-              (Mapping
-                (Pair
-                  (Scalar "app.kubernetes.io/name")
-                  (HelmExpr "template \"postgres-operator.name\" ."))
-                (Pair
-                  (Scalar "helm.sh/chart")
-                  (HelmExpr "template \"postgres-operator.chart\" ."))
-                (Pair
-                  (Scalar "app.kubernetes.io/managed-by")
-                  (HelmExpr ".Release.Service"))
-                (Pair
-                  (Scalar "app.kubernetes.io/instance")
-                  (HelmExpr ".Release.Name"))))))
-        (Pair
-          (Scalar "rules")
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "acid.zalan.do")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "postgresqls")
-                  (Scalar "postgresqls/status")
-                  (Scalar "operatorconfigurations")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "delete")
-                  (Scalar "deletecollection")
-                  (Scalar "get")
-                  (Scalar "list")
-                  (Scalar "patch")
-                  (Scalar "update")
-                  (Scalar "watch"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "acid.zalan.do")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "postgresteams")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "get")
-                  (Scalar "list")
-                  (Scalar "watch")))))))
-      (If ".Values.enableStreams"
-        (then
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "zalando.org")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "fabriceventstreams")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "delete")
-                  (Scalar "deletecollection")
-                  (Scalar "get")
-                  (Scalar "list")
-                  (Scalar "patch")
-                  (Scalar "update")
-                  (Scalar "watch")))))))
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "apiextensions.k8s.io")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "customresourcedefinitions")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "get")))))
-      (If "toString .Values.configGeneral.enable_crd_registration | eq \"true\""
-        (then
-          (Sequence
-            (Scalar "create")
-            (Scalar "patch")
-            (Scalar "update"))))
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "events")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "create")
-              (Scalar "get")
-              (Scalar "list")
-              (Scalar "patch")
-              (Scalar "update")
-              (Scalar "watch")))))
-      (If "toString .Values.configGeneral.kubernetes_use_configmaps | eq \"true\""
-        (then
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "configmaps")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "delete")
-                  (Scalar "deletecollection")
-                  (Scalar "get")
-                  (Scalar "list")
-                  (Scalar "patch")
-                  (Scalar "update")
-                  (Scalar "watch"))))))
-        (else
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "configmaps")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "get"))))
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "endpoints")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "create")
-                  (Scalar "delete")
-                  (Scalar "deletecollection")
-                  (Scalar "get")
-                  (Scalar "list")
-                  (Scalar "patch")
-                  (Scalar "update")
-                  (Scalar "watch")))))))
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "secrets")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "create")
-              (Scalar "delete")
-              (Scalar "get")
-              (Scalar "patch")
-              (Scalar "update"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "nodes")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "get")
-              (Scalar "list")
-              (Scalar "watch"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "persistentvolumeclaims")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "delete")
-              (Scalar "get")
-              (Scalar "list")
-              (Scalar "patch")))))
-      (If "or (toString .Values.configKubernetes.storage_resize_mode | eq \"pvc\") (toString .Values.configKubernetes.storage_resize_mode | eq \"mixed\")"
-        (then
-          (Sequence
-            (Scalar "update"))))
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "persistentvolumes")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "get")
-              (Scalar "list")))))
-      (If "toString .Values.configKubernetes.storage_resize_mode | eq \"ebs\""
-        (then
-          (Sequence
-            (Scalar "update"))))
-      (Sequence
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "pods")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "delete")
-              (Scalar "get")
-              (Scalar "list")
-              (Scalar "patch")
-              (Scalar "update")
-              (Scalar "watch"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "pods/exec")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "create"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "services")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "create")
-              (Scalar "delete")
-              (Scalar "get")
-              (Scalar "patch")
-              (Scalar "update"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "apps")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "statefulsets")
-              (Scalar "deployments")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "create")
-              (Scalar "delete")
-              (Scalar "get")
-              (Scalar "list")
-              (Scalar "patch")
-              (Scalar "update"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "batch")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "cronjobs")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "create")
-              (Scalar "delete")
-              (Scalar "get")
-              (Scalar "list")
-              (Scalar "patch")
-              (Scalar "update"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "namespaces")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "get"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "policy")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "poddisruptionbudgets")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "create")
-              (Scalar "delete")
-              (Scalar "get"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "serviceaccounts")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "get")
-              (Scalar "create"))))
-        (Mapping
-          (Pair
-            (Scalar "apiGroups")
-            (Sequence
-              (Scalar "rbac.authorization.k8s.io")))
-          (Pair
-            (Scalar "resources")
-            (Sequence
-              (Scalar "rolebindings")))
-          (Pair
-            (Scalar "verbs")
-            (Sequence
-              (Scalar "get")
-              (Scalar "create")))))
-      (If "toString .Values.configKubernetes.spilo_privileged | eq \"true\""
-        (then
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "apiGroups")
-                (Sequence
-                  (Scalar "extensions")))
-              (Pair
-                (Scalar "resources")
-                (Sequence
-                  (Scalar "podsecuritypolicies")))
-              (Pair
-                (Scalar "resourceNames")
-                (Sequence
-                  (Scalar "privileged")))
-              (Pair
-                (Scalar "verbs")
-                (Sequence
-                  (Scalar "use"))))))))))
+(stream
+  (comment :text "{{ if .Values.rbac.create }}")
+  (document
+    (block_node
+      (block_mapping
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "rbac.authorization.k8s.io/v1")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "ClusterRole")
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "metadata")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
+                  )
+                )
+                value: (helm_template :text "{{ include \"postgres-operator.serviceAccountName\" . }}")
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "labels")
+                  )
+                )
+                value: (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "app.kubernetes.io/name")
+                        )
+                      )
+                      value: (helm_template :text "{{ template \"postgres-operator.name\" . }}")
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "helm.sh/chart")
+                        )
+                      )
+                      value: (helm_template :text "{{ template \"postgres-operator.chart\" . }}")
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "app.kubernetes.io/managed-by")
+                        )
+                      )
+                      value: (helm_template :text "{{ .Release.Service }}")
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "app.kubernetes.io/instance")
+                        )
+                      )
+                      value: (helm_template :text "{{ .Release.Name }}")
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "rules")
+            )
+          )
+          (comment :text "# all verbs allowed for custom operator resources")
+          value: (block_node
+            (block_sequence
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "acid.zalan.do")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "postgresqls")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "postgresqls/status")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "operatorconfigurations")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "deletecollection")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "# operator only reads PostgresTeams")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "acid.zalan.do")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "postgresteams")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "# all verbs allowed for event streams")
+                          (comment :text "{{- if .Values.enableStreams }}")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "zalando.org")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "fabriceventstreams")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "deletecollection")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "# to create or get/update CRDs when starting up")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "apiextensions.k8s.io")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "customresourcedefinitions")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (comment :text "{{- if toString .Values.configGeneral.enable_crd_registration | eq \"true\" }}")
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "# to send events to the CRs")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "events")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "# to manage endpoints/configmaps which are also used by Patroni")
+                          (comment :text "{{- if toString .Values.configGeneral.kubernetes_use_configmaps | eq \"true\" }}")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "configmaps")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "deletecollection")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "{{- else }}")
+                          (comment :text "# to read configuration from ConfigMaps")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "configmaps")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "endpoints")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "deletecollection")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "# to CRUD secrets for database access")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "secrets")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (comment :text "# to check nodes for node readiness label")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "nodes")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "# to read or delete existing PVCs. Creation via StatefulSet")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "persistentvolumeclaims")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (comment :text "{{- if or (toString .Values.configKubernetes.storage_resize_mode | eq \"pvc\") (toString .Values.configKubernetes.storage_resize_mode | eq \"mixed\") }}")
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "# to read existing PVs. Creation should be done via dynamic provisioning")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "persistentvolumes")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (comment :text "{{- if toString .Values.configKubernetes.storage_resize_mode | eq \"ebs\" }}")
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (comment :text "# only for resizing AWS volumes")
+                          (comment :text "{{- end }}")
+                          (comment :text "# to watch Spilo pods and do rolling updates. Creation via StatefulSet")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "pods")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "watch")
+                              )
+                            )
+                          )
+                          (comment :text "# to resize the filesystem in Spilo pods when increasing volume size")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "pods/exec")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (comment :text "# to CRUD services to point to Postgres cluster instances")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "services")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (comment :text "# to CRUD the StatefulSet which controls the Postgres cluster instances")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "apps")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "statefulsets")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "deployments")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (comment :text "# to CRUD cron jobs for logical backups")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "batch")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "cronjobs")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "list")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "patch")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "update")
+                              )
+                            )
+                          )
+                          (comment :text "# to get namespaces operator resources can run in")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "namespaces")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (comment :text "# to define PDBs. Update happens via delete/create")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "policy")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "poddisruptionbudgets")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "delete")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (comment :text "# to create ServiceAccounts in each namespace the operator watches")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (double_quote_scalar :text "\"\"")
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "serviceaccounts")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (comment :text "# to create role bindings to the postgres-pod service account")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "rbac.authorization.k8s.io")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "rolebindings")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "get")
+                              )
+                            )
+                          )
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "create")
+                              )
+                            )
+                          )
+                          (comment :text "{{- if toString .Values.configKubernetes.spilo_privileged | eq \"true\" }}")
+                          (comment :text "# to run privileged pods")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_sequence_item
+                (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "apiGroups")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "extensions")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resources")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "podsecuritypolicies")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "resourceNames")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "privileged")
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "verbs")
+                        )
+                      )
+                      value: (block_node
+                        (block_sequence
+                          (block_sequence_item
+                            (flow_node
+                              (plain_scalar
+                                (string_scalar :text "use")
+                              )
+                            )
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "{{ end }}")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)

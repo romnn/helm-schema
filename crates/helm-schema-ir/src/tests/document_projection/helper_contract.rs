@@ -9,11 +9,8 @@ use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::value_path_context::ValuePathContext;
 
-fn empty_fragment_context<'a>(
-    defines: &'a DefineIndex,
-    analysis_db: &'a IrAnalysisDb,
-) -> FragmentEvalContext<'a> {
-    FragmentEvalContext::new(defines, analysis_db)
+fn empty_fragment_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
+    FragmentEvalContext::new(analysis_db)
 }
 
 #[test]
@@ -41,7 +38,7 @@ fn document_type_hints_resolve_template_local_aliases() {
         get_bindings: &get_bindings,
         template_default_paths: &template_default_paths,
         template_output_meta: &template_output_meta,
-        fragment_context: empty_fragment_context(&defines, &analysis_db),
+        fragment_context: empty_fragment_context(&analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,
     };

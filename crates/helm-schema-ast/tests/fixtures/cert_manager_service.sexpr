@@ -1,93 +1,207 @@
-(Document
-  (If "and .Values.prometheus.enabled (not .Values.prometheus.podmonitor.enabled)"
-    (then
-      (Mapping
-        (Pair
-          (Scalar "apiVersion")
-          (Scalar "v1"))
-        (Pair
-          (Scalar "kind")
-          (Scalar "Service"))
-        (Pair
-          (Scalar "metadata")
-          (Mapping
-            (Pair
-              (Scalar "name")
-              (HelmExpr "template \"cert-manager.fullname\" ."))
-            (Pair
-              (Scalar "namespace")
-              (HelmExpr "include \"cert-manager.namespace\" .")))))
-      (With ".Values.serviceAnnotations"
-        (body
-          (Mapping
-            (Pair
-              (Scalar "annotations")))
-          (HelmExpr "toYaml . | indent 4")))
-      (Mapping
-        (Pair
-          (Scalar "labels")
-          (Mapping
-            (Pair
-              (Scalar "app")
-              (HelmExpr "include \"cert-manager.name\" ."))
-            (Pair
-              (Scalar "app.kubernetes.io/name")
-              (HelmExpr "include \"cert-manager.name\" ."))
-            (Pair
-              (Scalar "app.kubernetes.io/instance")
-              (HelmExpr ".Release.Name"))
-            (Pair
-              (Scalar "app.kubernetes.io/component")
-              (Scalar "controller")))))
-      (HelmExpr "include \"labels\" . | nindent 4")
-      (With ".Values.serviceLabels"
-        (body
-          (HelmExpr "toYaml . | nindent 4")))
-      (Mapping
-        (Pair
-          (Scalar "spec")
-          (Mapping
-            (Pair
-              (Scalar "type")
-              (Scalar "ClusterIP")))))
-      (If ".Values.serviceIPFamilyPolicy"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "ipFamilyPolicy")
-              (HelmExpr ".Values.serviceIPFamilyPolicy")))))
-      (If ".Values.serviceIPFamilies"
-        (then
-          (Mapping
-            (Pair
-              (Scalar "ipFamilies")
-              (HelmExpr ".Values.serviceIPFamilies | toYaml | nindent 2")))))
-      (Mapping
-        (Pair
-          (Scalar "ports")
-          (Sequence
-            (Mapping
-              (Pair
-                (Scalar "protocol")
-                (Scalar "TCP"))
-              (Pair
-                (Scalar "port")
-                (Scalar "9402"))
-              (Pair
-                (Scalar "name")
-                (Scalar "tcp-prometheus-servicemonitor"))
-              (Pair
-                (Scalar "targetPort")
-                (HelmExpr ".Values.prometheus.servicemonitor.targetPort")))))
-        (Pair
-          (Scalar "selector")
-          (Mapping
-            (Pair
-              (Scalar "app.kubernetes.io/name")
-              (HelmExpr "include \"cert-manager.name\" ."))
-            (Pair
-              (Scalar "app.kubernetes.io/instance")
-              (HelmExpr ".Release.Name"))
-            (Pair
-              (Scalar "app.kubernetes.io/component")
-              (Scalar "controller"))))))))
+(template
+  (if_action
+    condition: (function_call
+      function: (identifier :text "and")
+      arguments: (argument_list
+        (selector_expression
+          operand: (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "prometheus")
+          )
+          field: (field_identifier :text "enabled")
+        )
+        (parenthesized_pipeline
+          (function_call
+            function: (identifier :text "not")
+            arguments: (argument_list
+              (selector_expression
+                operand: (selector_expression
+                  operand: (selector_expression
+                    operand: (field
+                      name: (identifier :text "Values")
+                    )
+                    field: (field_identifier :text "prometheus")
+                  )
+                  field: (field_identifier :text "podmonitor")
+                )
+                field: (field_identifier :text "enabled")
+              )
+            )
+          )
+        )
+      )
+    )
+    consequence: (text :text "apiVersion: v1\nkind: Service\nmetadata:\n  name:")
+    consequence: (template_action
+      name: (interpreted_string_literal :text "\"cert-manager.fullname\"")
+      argument: (dot :text ".")
+    )
+    consequence: (text :text "namespace:")
+    consequence: (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"cert-manager.namespace\"")
+        (dot :text ".")
+      )
+    )
+    consequence: (with_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "serviceAnnotations")
+      )
+      consequence: (text :text "annotations:")
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "toYaml")
+          arguments: (argument_list
+            (dot :text ".")
+          )
+        )
+        (function_call
+          function: (identifier :text "indent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+    consequence: (text :text "labels:\n    app:")
+    consequence: (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"cert-manager.name\"")
+        (dot :text ".")
+      )
+    )
+    consequence: (text :text "app.kubernetes.io/name:")
+    consequence: (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"cert-manager.name\"")
+        (dot :text ".")
+      )
+    )
+    consequence: (text :text "app.kubernetes.io/instance:")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Release")
+      )
+      field: (field_identifier :text "Name")
+    )
+    consequence: (text :text "app.kubernetes.io/component: \"controller\"")
+    consequence: (chained_pipeline
+      (function_call
+        function: (identifier :text "include")
+        arguments: (argument_list
+          (interpreted_string_literal :text "\"labels\"")
+          (dot :text ".")
+        )
+      )
+      (function_call
+        function: (identifier :text "nindent")
+        arguments: (argument_list
+          (int_literal :text "4")
+        )
+      )
+    )
+    consequence: (with_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "serviceLabels")
+      )
+      consequence: (chained_pipeline
+        (function_call
+          function: (identifier :text "toYaml")
+          arguments: (argument_list
+            (dot :text ".")
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "4")
+          )
+        )
+      )
+    )
+    consequence: (text :text "spec:\n  type: ClusterIP")
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "serviceIPFamilyPolicy")
+      )
+      consequence: (text :text "ipFamilyPolicy:")
+      consequence: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "serviceIPFamilyPolicy")
+      )
+    )
+    consequence: (if_action
+      condition: (selector_expression
+        operand: (field
+          name: (identifier :text "Values")
+        )
+        field: (field_identifier :text "serviceIPFamilies")
+      )
+      consequence: (text :text "ipFamilies:")
+      consequence: (chained_pipeline
+        (chained_pipeline
+          (selector_expression
+            operand: (field
+              name: (identifier :text "Values")
+            )
+            field: (field_identifier :text "serviceIPFamilies")
+          )
+          (function_call
+            function: (identifier :text "toYaml")
+          )
+        )
+        (function_call
+          function: (identifier :text "nindent")
+          arguments: (argument_list
+            (int_literal :text "2")
+          )
+        )
+      )
+    )
+    consequence: (text :text "ports:\n  - protocol: TCP\n    port: 9402\n    name: tcp-prometheus-servicemonitor\n    targetPort:")
+    consequence: (selector_expression
+      operand: (selector_expression
+        operand: (selector_expression
+          operand: (field
+            name: (identifier :text "Values")
+          )
+          field: (field_identifier :text "prometheus")
+        )
+        field: (field_identifier :text "servicemonitor")
+      )
+      field: (field_identifier :text "targetPort")
+    )
+    consequence: (text :text "selector:\n    app.kubernetes.io/name:")
+    consequence: (function_call
+      function: (identifier :text "include")
+      arguments: (argument_list
+        (interpreted_string_literal :text "\"cert-manager.name\"")
+        (dot :text ".")
+      )
+    )
+    consequence: (text :text "app.kubernetes.io/instance:")
+    consequence: (selector_expression
+      operand: (field
+        name: (identifier :text "Release")
+      )
+      field: (field_identifier :text "Name")
+    )
+    consequence: (text :text "app.kubernetes.io/component: \"controller\"")
+  )
+)

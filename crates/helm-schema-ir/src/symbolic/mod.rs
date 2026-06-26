@@ -118,6 +118,7 @@ struct SymbolicWalker<'a> {
     seed_predicates: Vec<Predicate>,
     seed_dot: Option<AbstractValue>,
     no_output_depth: usize,
+    control_resource_fallback_depth: usize,
     attribution: AttributionIndex,
     current_source_span: Option<crate::SourceSpan>,
 
@@ -146,6 +147,7 @@ impl<'a> SymbolicWalker<'a> {
             seed_predicates: Vec::new(),
             seed_dot: None,
             no_output_depth: 0,
+            control_resource_fallback_depth: 0,
             attribution: AttributionIndex::default(),
             current_source_span: None,
 
@@ -186,7 +188,7 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn fragment_eval_context(&self) -> FragmentEvalContext<'_> {
-        FragmentEvalContext::new(self.defines, &self.ir_context.inner.analysis_db)
+        FragmentEvalContext::new(&self.ir_context.inner.analysis_db)
     }
 
     fn value_path_context(&self) -> ValuePathContext<'_> {
@@ -214,10 +216,11 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {
-        self.attribution =
-            build_attribution_index(self.source, tree.root_node()).with_resource_spans(
-                crate::resource_identity::collect_resource_spans(self.source, self.defines),
-            );
+        self.attribution = build_attribution_index(self.source, tree.root_node())
+            .with_resource_spans(crate::resource_identity::collect_resource_spans(
+                self.source,
+                &self.ir_context.inner.analysis_db,
+            ));
         self.scope
             .reset_control(&self.seed_predicates, self.seed_dot.clone());
         self.no_output_depth = 0;

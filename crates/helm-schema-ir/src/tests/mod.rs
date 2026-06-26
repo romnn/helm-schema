@@ -6,11 +6,11 @@ mod document_projection {
         AttributionIndex, DefineIndex, OutputSlot, OutputSlotKind, build_attribution_index,
     };
 
-    use crate::{ValueKind, YamlPath};
+    use crate::{ValueKind, YamlPath, analysis_db::IrAnalysisDb};
 
     struct DocumentTracker<'a> {
         source: &'a str,
-        defines: &'a DefineIndex,
+        analysis_db: IrAnalysisDb,
         attribution: AttributionIndex,
     }
 
@@ -18,16 +18,17 @@ mod document_projection {
         fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
             Self {
                 source,
-                defines,
+                analysis_db: IrAnalysisDb::new(defines),
                 attribution: AttributionIndex::default(),
             }
         }
 
         fn reset_for_tree(&mut self, tree: &tree_sitter::Tree) {
-            self.attribution =
-                build_attribution_index(self.source, tree.root_node()).with_resource_spans(
-                    crate::resource_identity::collect_resource_spans(self.source, self.defines),
-                );
+            self.attribution = build_attribution_index(self.source, tree.root_node())
+                .with_resource_spans(crate::resource_identity::collect_resource_spans(
+                    self.source,
+                    &self.analysis_db,
+                ));
         }
 
         fn control_site_for_node(
@@ -63,7 +64,7 @@ mod resource_identity;
 mod symbolic_local_state;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
-use helm_schema_ast::{DefineIndex, TreeSitterParser};
+use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;
 
 /// Simple template IR generation test.
@@ -134,8 +135,7 @@ metadata:
   name: {{ include "common.serviceName" . }}
 "#;
     let mut idx = DefineIndex::new();
-    idx.add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
         .finalize();
@@ -171,8 +171,7 @@ metadata:
   {{- end }}
 "#;
     let mut idx = DefineIndex::new();
-    idx.add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
         .finalize();
@@ -209,8 +208,7 @@ metadata:
   name: {{ include "liba.fullname" . }}
 "#;
     let mut idx = DefineIndex::new();
-    idx.add_source(&TreeSitterParser, helpers)
-        .expect("helpers parse");
+    idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src, &idx)
         .finalize();
