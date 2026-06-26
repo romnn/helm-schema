@@ -19,7 +19,6 @@ use crate::output_pipeline::{
     load_policy_inputs,
 };
 use crate::provider_builder;
-use crate::required_inference;
 use crate::values_roots;
 
 /// Public analysis artifact produced by [`AnalysisSession`].
@@ -109,10 +108,35 @@ impl PreparedSession {
 pub struct AnalysisSession {
     opts: GenerateOptions,
     diagnostics: DiagnosticSink,
-    prepared: Mutex<Option<Arc<PreparedSession>>>,
-    finalized_contract: Mutex<Option<Arc<FinalizedContract>>>,
-    resolved_contract: Mutex<Option<Arc<ResolvedContract>>>,
-    generated_schema: Mutex<Option<Arc<GeneratedSchema>>>,
+    prepared: SessionCache<PreparedSession>,
+    finalized_contract: SessionCache<FinalizedContract>,
+    resolved_contract: SessionCache<ResolvedContract>,
+    generated_schema: SessionCache<GeneratedSchema>,
+}
+
+struct SessionCache<T> {
+    value: Mutex<Option<Arc<T>>>,
+}
+
+impl<T> SessionCache<T> {
+    fn new() -> Self {
+        Self {
+            value: Mutex::new(None),
+        }
+    }
+
+    fn get_or_try_init(&self, init: impl FnOnce() -> CliResult<T>) -> CliResult<Arc<T>> {
+        {
+            let guard = self.value.lock().expect("session cache mutex");
+            if let Some(value) = guard.as_ref() {
+                return Ok(Arc::clone(value));
+            }
+        }
+
+        let value = Arc::new(init()?);
+        let mut guard = self.value.lock().expect("session cache mutex");
+        Ok(Arc::clone(guard.get_or_insert_with(|| Arc::clone(&value))))
+    }
 }
 
 impl AnalysisSession {
@@ -126,10 +150,10 @@ impl AnalysisSession {
         Self {
             opts,
             diagnostics,
-            prepared: Mutex::new(None),
-            finalized_contract: Mutex::new(None),
-            resolved_contract: Mutex::new(None),
-            generated_schema: Mutex::new(None),
+            prepared: SessionCache::new(),
+            finalized_contract: SessionCache::new(),
+            resolved_contract: SessionCache::new(),
+            generated_schema: SessionCache::new(),
         }
     }
 
@@ -176,31 +200,18 @@ impl AnalysisSession {
 
     /// Return the memoized generated values schema.
     pub fn generated_schema(&self) -> CliResult<GeneratedSchema> {
-        {
-            let guard = self
-                .generated_schema
-                .lock()
-                .expect("generated schema mutex");
-            if let Some(generated) = guard.as_ref() {
-                return Ok((**generated).clone());
-            }
-        }
-
-        let prepared = self.prepared()?;
-        let resolved = self.resolved()?;
-        let finalized_contract = self.finalized_contract()?;
-        let generated = Arc::new(generate_schema_from_resolved_contract(
-            &resolved,
-            &prepared,
-            finalized_contract.schema_signals(),
-            &self.opts,
-        ));
-        let mut guard = self
-            .generated_schema
-            .lock()
-            .expect("generated schema mutex");
-        let generated = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&generated)));
-        Ok((*generated).clone())
+        Ok((*self.generated_schema.get_or_try_init(|| {
+            let prepared = self.prepared()?;
+            let resolved = self.resolved()?;
+            let finalized_contract = self.finalized_contract()?;
+            Ok(generate_schema_from_resolved_contract(
+                &resolved,
+                &prepared,
+                finalized_contract.schema_signals(),
+                &self.opts,
+            ))
+        })?)
+        .clone())
     }
 
     /// Emit the final JSON Schema document through the output pipeline.
@@ -290,17 +301,8 @@ impl AnalysisSession {
     }
 
     fn prepared(&self) -> CliResult<Arc<PreparedSession>> {
-        {
-            let guard = self.prepared.lock().expect("prepared session mutex");
-            if let Some(prepared) = guard.as_ref() {
-                return Ok(Arc::clone(prepared));
-            }
-        }
-
-        let prepared = Arc::new(PreparedSession::from_generate_options(&self.opts)?);
-        let mut guard = self.prepared.lock().expect("prepared session mutex");
-        let prepared = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&prepared)));
-        Ok(prepared)
+        self.prepared
+            .get_or_try_init(|| PreparedSession::from_generate_options(&self.opts))
     }
 
     fn chart_base_dir(&self) -> &Path {
@@ -308,52 +310,23 @@ impl AnalysisSession {
     }
 
     fn finalized_contract(&self) -> CliResult<Arc<FinalizedContract>> {
-        {
-            let guard = self
-                .finalized_contract
-                .lock()
-                .expect("finalized contract mutex");
-            if let Some(finalized_contract) = guard.as_ref() {
-                return Ok(Arc::clone(finalized_contract));
-            }
-        }
-
-        let prepared = self.prepared()?;
-        let finalized_contract = Arc::new(prepared.analysis.contract.clone().finalize());
-        let mut guard = self
-            .finalized_contract
-            .lock()
-            .expect("finalized contract mutex");
-        let finalized_contract =
-            Arc::clone(guard.get_or_insert_with(|| Arc::clone(&finalized_contract)));
-        Ok(finalized_contract)
+        self.finalized_contract.get_or_try_init(|| {
+            let prepared = self.prepared()?;
+            Ok(prepared.analysis.contract.clone().finalize())
+        })
     }
 
     fn resolved(&self) -> CliResult<Arc<ResolvedContract>> {
-        {
-            let guard = self
-                .resolved_contract
-                .lock()
-                .expect("resolved contract mutex");
-            if let Some(resolved) = guard.as_ref() {
-                return Ok(Arc::clone(resolved));
-            }
-        }
-
-        let prepared = self.prepared()?;
-        let finalized_contract = self.finalized_contract()?;
-        let resolved = Arc::new(resolve_contract_from_prepared(
-            &prepared,
-            finalized_contract.schema_signals(),
-            &self.opts,
-            Some(&self.diagnostics),
-        )?);
-        let mut guard = self
-            .resolved_contract
-            .lock()
-            .expect("resolved contract mutex");
-        let resolved = Arc::clone(guard.get_or_insert_with(|| Arc::clone(&resolved)));
-        Ok(resolved)
+        self.resolved_contract.get_or_try_init(|| {
+            let prepared = self.prepared()?;
+            let finalized_contract = self.finalized_contract()?;
+            resolve_contract_from_prepared(
+                &prepared,
+                finalized_contract.schema_signals(),
+                &self.opts,
+                Some(&self.diagnostics),
+            )
+        })
     }
 }
 
@@ -388,7 +361,7 @@ pub(crate) fn generate_schema_from_resolved_contract(
     let mut schema = resolved.schema.clone();
 
     if opts.infer_required {
-        required_inference::apply(
+        helm_schema_gen::required_inference::apply_required_inference(
             &mut schema,
             contract_schema_signals.schema_evidence_by_value_path(),
             &prepared.explicit_value_paths,

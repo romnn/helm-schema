@@ -1,4 +1,7 @@
-use crate::{HelmAst, HelmParser, ParseError, TemplateAction, TemplateHeader};
+use crate::{
+    HelmAst, HelmParser, ParseError, TemplateAction, TemplateHeader, parse_go_template,
+    parse_helm_template,
+};
 
 /// Parser implementation backed by the tree-sitter fused Helm+YAML grammar.
 ///
@@ -13,17 +16,7 @@ pub struct TreeSitterParser;
 /// YAML parser.
 #[tracing::instrument(skip_all, fields(bytes = src.len()))]
 pub fn contains_template_action(src: &str) -> Result<bool, ParseError> {
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser
-        .set_language(&language)
-        .map_err(|_| ParseError::TreeSitterParseFailed)?;
-
-    let tree = parser
-        .parse(src, None)
-        .ok_or(ParseError::TreeSitterParseFailed)?;
-
+    let tree = parse_go_template(src).ok_or(ParseError::TreeSitterParseFailed)?;
     Ok(node_contains_template_action(tree.root_node()))
 }
 
@@ -98,17 +91,7 @@ struct DeindentedYamlFragment {
 impl HelmParser for TreeSitterParser {
     #[tracing::instrument(skip_all, fields(bytes = src.len()))]
     fn parse(&self, src: &str) -> Result<HelmAst, ParseError> {
-        let language =
-            tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-        let mut parser = tree_sitter::Parser::new();
-        parser
-            .set_language(&language)
-            .map_err(|_| ParseError::TreeSitterParseFailed)?;
-
-        let tree = parser
-            .parse(src, None)
-            .ok_or(ParseError::TreeSitterParseFailed)?;
-
+        let tree = parse_go_template(src).ok_or(ParseError::TreeSitterParseFailed)?;
         let root = tree.root_node();
         let mut blocks = Vec::new();
         let mut c = root.walk();
@@ -218,14 +201,6 @@ fn deindent_yaml_fragment_with_base(fragment: &str) -> DeindentedYamlFragment {
     }
 }
 
-fn parse_helm_template_tree(src: &str) -> Option<tree_sitter::Tree> {
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).ok()?;
-    parser.parse(src, None)
-}
-
 fn last_relevant_named_child(node: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
     let mut cursor = node.walk();
     node.children(&mut cursor)
@@ -272,7 +247,7 @@ fn action_continues_pending_yaml_value(pending: &str, action_indent: usize) -> b
     }
 
     let normalized_indent = action_indent.saturating_sub(pending.base_indent);
-    let Some(tree) = parse_helm_template_tree(&pending.text) else {
+    let Some(tree) = parse_helm_template(&pending.text) else {
         return false;
     };
     let Some(indent) = trailing_open_mapping_value_indent(tree.root_node()) else {
@@ -288,7 +263,7 @@ fn parse_yaml_items(src: &str) -> Vec<HelmAst> {
         return vec![];
     }
 
-    let Some(tree) = parse_helm_template_tree(&src) else {
+    let Some(tree) = parse_helm_template(&src) else {
         return vec![];
     };
 

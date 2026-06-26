@@ -1,7 +1,7 @@
 use helm_schema_ast::{HelmAst, HelmParser as _, TreeSitterParser};
 use helm_schema_k8s::{LocalResourceSchema, resource_schemas_from_crd_document_with_source};
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use crate::error::CliResult;
 
@@ -105,46 +105,52 @@ fn crd_resource_schemas_from_ast(
     node: &HelmAst,
     filename: &str,
 ) -> Option<Vec<LocalResourceSchema>> {
-    if literal_string_for_key(node, "apiVersion")?.as_str() != "apiextensions.k8s.io/v1"
-        && literal_string_for_key(node, "apiVersion")?.as_str() != "apiextensions.k8s.io/v1beta1"
-    {
-        return None;
-    }
-    if literal_string_for_key(node, "kind")?.as_str() != "CustomResourceDefinition" {
-        return None;
-    }
+    let document = crd_document_from_ast(node)?;
+    let schemas = resource_schemas_from_crd_document_with_source(
+        document,
+        TEMPLATE_CRD_SOURCE_ID,
+        filename.to_string(),
+    );
+    (!schemas.is_empty()).then_some(schemas)
+}
 
+fn crd_document_from_ast(node: &HelmAst) -> Option<Value> {
     let spec = mapping_value(node, "spec")?;
-    let group = literal_string_for_key(spec, "group")?;
     let names = mapping_value(spec, "names")?;
-    let kind = literal_string_for_key(names, "kind")?;
+    let mut spec_json = json!({
+        "group": literal_string_for_key(spec, "group")?,
+        "names": { "kind": literal_string_for_key(names, "kind")? },
+    });
 
-    if let Some(versions) = mapping_value(spec, "versions") {
-        let mut resource_schemas = Vec::new();
-        for version in sequence_items(versions)? {
-            if literal_bool_for_key(version, "served").is_some_and(|served| !served) {
-                continue;
-            }
-            let version_name = literal_string_for_key(version, "name")?;
-            let schema = mapping_value(version, "schema")
-                .and_then(|schema| mapping_value(schema, "openAPIV3Schema"))
-                .and_then(literal_json_from_ast)?;
-            resource_schemas.push(
-                LocalResourceSchema::new(format!("{group}/{version_name}"), kind.clone(), schema)
-                    .with_source(TEMPLATE_CRD_SOURCE_ID, filename.to_string()),
-            );
-        }
-        return (!resource_schemas.is_empty()).then_some(resource_schemas);
+    if let Some(version_nodes) = mapping_value(spec, "versions").and_then(sequence_items) {
+        let versions = version_nodes
+            .iter()
+            .map(|version| {
+                let schema = mapping_value(version, "schema")
+                    .and_then(|schema| mapping_value(schema, "openAPIV3Schema"))
+                    .and_then(literal_json_from_ast)?;
+                Some(json!({
+                    "name": literal_string_for_key(version, "name")?,
+                    "served": literal_bool_for_key(version, "served"),
+                    "schema": { "openAPIV3Schema": schema },
+                }))
+            })
+            .collect::<Option<Vec<_>>>()?;
+        spec_json["versions"] = Value::Array(versions);
+    } else {
+        let validation = mapping_value(spec, "validation")?;
+        spec_json["version"] = Value::String(literal_string_for_key(spec, "version")?);
+        spec_json["validation"] = json!({
+            "openAPIV3Schema": mapping_value(validation, "openAPIV3Schema")
+                .and_then(literal_json_from_ast)?,
+        });
     }
 
-    let version = literal_string_for_key(spec, "version")?;
-    let schema = mapping_value(spec, "validation")
-        .and_then(|validation| mapping_value(validation, "openAPIV3Schema"))
-        .and_then(literal_json_from_ast)?;
-    Some(vec![
-        LocalResourceSchema::new(format!("{group}/{version}"), kind, schema)
-            .with_source(TEMPLATE_CRD_SOURCE_ID, filename.to_string()),
-    ])
+    Some(json!({
+        "apiVersion": literal_string_for_key(node, "apiVersion")?,
+        "kind": literal_string_for_key(node, "kind")?,
+        "spec": spec_json,
+    }))
 }
 
 fn mapping_value<'a>(node: &'a HelmAst, key: &str) -> Option<&'a HelmAst> {

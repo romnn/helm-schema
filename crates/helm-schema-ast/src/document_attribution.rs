@@ -103,7 +103,6 @@ impl Default for OutputSlot {
 #[derive(Clone, Debug, Default)]
 pub struct ResolvedNodeContext {
     pub current_path: YamlPath,
-    pub output_path: YamlPath,
     pub mapping_entry_path: YamlPath,
     pub in_mapping_key: bool,
     pub entire_scalar_value: bool,
@@ -391,7 +390,7 @@ fn output_slot_from_context(
     let mut path = if context.in_mapping_key || context.inside_block_scalar {
         YamlPath(Vec::new())
     } else {
-        context.output_path.clone()
+        context.current_path.clone()
     };
     if output.kind == ValueKind::Fragment
         && let Some(last) = path.0.last_mut()
@@ -684,7 +683,6 @@ fn context_from_line_text(
     if action_span.is_some_and(|(start, _)| start >= key_start && start <= key_end) {
         return ResolvedNodeContext {
             current_path: parent_path.clone(),
-            output_path: YamlPath(Vec::new()),
             mapping_entry_path: parent_path.clone(),
             in_mapping_key: true,
             entire_scalar_value: false,
@@ -697,7 +695,6 @@ fn context_from_line_text(
     let value_start = text_start + colon + 1 + value.len().saturating_sub(value.trim_start().len());
     ResolvedNodeContext {
         current_path: key_path.clone(),
-        output_path: key_path.clone(),
         mapping_entry_path: key_path,
         in_mapping_key: false,
         entire_scalar_value: action_span
@@ -716,7 +713,6 @@ fn scalar_line_context(
     let value_start = text_start + text.len().saturating_sub(text.trim_start().len());
     ResolvedNodeContext {
         current_path: path.clone(),
-        output_path: path.clone(),
         mapping_entry_path: path.clone(),
         in_mapping_key: false,
         entire_scalar_value: action_span
@@ -769,7 +765,6 @@ fn first_nonblank_byte(bytes: &[u8], start: usize, end: usize) -> Option<usize> 
 fn block_scalar_context(path: &YamlPath) -> ResolvedNodeContext {
     ResolvedNodeContext {
         current_path: path.clone(),
-        output_path: YamlPath(Vec::new()),
         mapping_entry_path: path.clone(),
         in_mapping_key: false,
         entire_scalar_value: false,
@@ -780,7 +775,6 @@ fn block_scalar_context(path: &YamlPath) -> ResolvedNodeContext {
 fn default_context(path: &YamlPath) -> ResolvedNodeContext {
     ResolvedNodeContext {
         current_path: path.clone(),
-        output_path: path.clone(),
         mapping_entry_path: path.clone(),
         in_mapping_key: false,
         entire_scalar_value: false,

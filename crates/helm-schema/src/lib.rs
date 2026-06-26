@@ -7,7 +7,6 @@ pub mod generation;
 mod load_budget;
 mod output_pipeline;
 mod provider_builder;
-mod required_inference;
 pub mod schema_override;
 mod session;
 mod values_roots;
