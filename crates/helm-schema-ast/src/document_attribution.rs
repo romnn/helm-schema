@@ -2,9 +2,8 @@ use std::collections::HashMap;
 
 use helm_schema_core::{ResourceRef, ValueKind, YamlPath};
 
-use crate::resource_identity::{ResourceSpan, collect_resource_spans};
 use crate::{
-    DefineIndex, TemplateExpr, first_mapping_colon_offset, parse_action_expressions,
+    TemplateExpr, first_mapping_colon_offset, parse_action_expressions,
     range_body_mapping_entry_indent_from_source,
 };
 
@@ -31,6 +30,14 @@ pub enum OutputSlotKind {
 pub struct ControlSite {
     pub path: YamlPath,
     pub range_mapping_entry_path: Option<YamlPath>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ResourceSpan {
+    pub start: usize,
+    pub end: usize,
+    pub resource: ResourceRef,
+    pub path_prefix: Vec<String>,
 }
 
 impl OutputSlot {
@@ -111,6 +118,11 @@ pub struct AttributionIndex {
 }
 
 impl AttributionIndex {
+    pub fn with_resource_spans(mut self, resource_spans: Vec<ResourceSpan>) -> Self {
+        self.resource_spans = resource_spans;
+        self
+    }
+
     pub fn output_slot_for_node(&self, mut node: tree_sitter::Node<'_>) -> Option<OutputSlot> {
         loop {
             if let Some(slot) = self.output_slots.get(&(node.start_byte(), node.end_byte())) {
@@ -230,16 +242,6 @@ pub fn build_attribution_index(source: &str, root: tree_sitter::Node<'_>) -> Att
         }
     }
 
-    attribution
-}
-
-pub fn build_attribution_index_with_resources(
-    source: &str,
-    root: tree_sitter::Node<'_>,
-    defines: &DefineIndex,
-) -> AttributionIndex {
-    let mut attribution = build_attribution_index(source, root);
-    attribution.resource_spans = collect_resource_spans(source, defines);
     attribution
 }
 

@@ -1,11 +1,13 @@
-use helm_schema_ast::{AttributionIndex, DefineIndex, build_attribution_index_with_resources};
+use helm_schema_ast::{AttributionIndex, DefineIndex, build_attribution_index};
 use indoc::indoc;
 
 use test_util::prelude::sim_assert_eq;
 
 fn attribution_index(source: &str) -> AttributionIndex {
     let tree = helm_schema_ast::parse_go_template(source).expect("parse template");
-    build_attribution_index_with_resources(source, tree.root_node(), &DefineIndex::new())
+    build_attribution_index(source, tree.root_node()).with_resource_spans(
+        crate::resource_identity::collect_resource_spans(source, &DefineIndex::new()),
+    )
 }
 
 #[test]

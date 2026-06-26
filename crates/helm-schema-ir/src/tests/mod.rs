@@ -3,8 +3,7 @@ mod contract;
 mod contract_signals;
 mod document_projection {
     use helm_schema_ast::{
-        AttributionIndex, DefineIndex, OutputSlot, OutputSlotKind,
-        build_attribution_index_with_resources,
+        AttributionIndex, DefineIndex, OutputSlot, OutputSlotKind, build_attribution_index,
     };
 
     use crate::{ValueKind, YamlPath};
@@ -26,7 +25,9 @@ mod document_projection {
 
         fn reset_for_tree(&mut self, tree: &tree_sitter::Tree) {
             self.attribution =
-                build_attribution_index_with_resources(self.source, tree.root_node(), self.defines);
+                build_attribution_index(self.source, tree.root_node()).with_resource_spans(
+                    crate::resource_identity::collect_resource_spans(self.source, self.defines),
+                );
         }
 
         fn control_site_for_node(

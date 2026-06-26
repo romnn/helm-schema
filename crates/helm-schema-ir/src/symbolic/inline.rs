@@ -6,9 +6,8 @@ use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
 use crate::{ContractUse, ValueKind, YamlPath};
-use helm_schema_ast::ResourceIdentityDetector;
+use helm_schema_ast::TemplateExpr;
 use helm_schema_ast::parse_go_template;
-use helm_schema_ast::{HelmAst, TemplateExpr};
 
 use super::SymbolicWalker;
 
@@ -81,16 +80,7 @@ impl SymbolicWalker<'_> {
         let Some(name) = expr_literal_helper_call_callee(expr) else {
             return false;
         };
-        let Some(body_ast) = self.defines.get(name) else {
-            return false;
-        };
-        let ast = HelmAst::Document {
-            items: body_ast.to_vec(),
-        };
-        if ResourceIdentityDetector::new(self.defines)
-            .detect(&ast)
-            .is_none()
-        {
+        if !crate::resource_identity::helper_body_defines_resource(name, self.defines) {
             return false;
         }
         let Some(body) = self.ir_context.inner.analysis_db.parsed_helper_body(name) else {

@@ -20,6 +20,7 @@ mod helper_value_expression;
 mod helper_walk_state;
 mod node_eval;
 mod range_action_plan;
+mod resource_identity;
 mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;

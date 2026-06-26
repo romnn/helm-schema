@@ -1,5 +1,5 @@
 use crate::{CapabilityGuard, HelperBranch, HelperBranchBody};
-use helm_schema_ast::{DefineIndex, HelperOutputEvaluator, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, TreeSitterParser};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -23,7 +23,7 @@ fn index_with(src: &str) -> DefineIndex {
 
 fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperBranchBody {
     let body = helpers.get(name).unwrap_or(&[]);
-    HelperOutputEvaluator::new().evaluate_body(body, helpers, 0)
+    crate::resource_identity::OutputEvaluator::new().evaluate_body(body, None, helpers, 0)
 }
 
 #[test]

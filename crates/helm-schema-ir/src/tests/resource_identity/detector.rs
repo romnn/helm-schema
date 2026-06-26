@@ -1,6 +1,7 @@
-use helm_schema_ast::{DefineIndex, HelmParser, ResourceIdentityDetector, TreeSitterParser};
+use helm_schema_ast::{DefineIndex, HelmParser, TreeSitterParser};
 use indoc::indoc;
 
+use crate::resource_identity::ResourceIdentityDetector;
 use crate::{CapabilityGuard, HelperBranchBody};
 use test_util::prelude::sim_assert_eq;
 
