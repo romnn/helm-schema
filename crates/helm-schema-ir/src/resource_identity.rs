@@ -18,7 +18,7 @@ pub(crate) fn collect_resource_spans(
     analysis_db: &IrAnalysisDb,
 ) -> Vec<ResourceSpan> {
     let mut spans = Vec::new();
-    for (start, end) in document_spans(source) {
+    for (start, end) in source_document_spans(source) {
         let Some(document_source) = source.get(start..end) else {
             continue;
         };
@@ -30,23 +30,6 @@ pub(crate) fn collect_resource_spans(
             Vec::new(),
             analysis_db,
         ));
-    }
-    let mut source_split_spans = Vec::new();
-    for (start, end) in source_document_spans(source) {
-        let Some(document_source) = source.get(start..end) else {
-            continue;
-        };
-        source_split_spans.extend(resource_spans_for_manifest_source(
-            document_source,
-            start,
-            start,
-            end,
-            Vec::new(),
-            analysis_db,
-        ));
-    }
-    if source_split_spans.len() > spans.len() {
-        spans = source_split_spans;
     }
     spans.sort_by(|left, right| {
         left.start
@@ -641,34 +624,6 @@ fn list_item_sources<'source>(
     items
 }
 
-fn document_spans(source: &str) -> Vec<(usize, usize)> {
-    let Some(tree) = parse_helm_template(source) else {
-        return whole_source_span(source);
-    };
-    let root = tree.root_node();
-    let mut docs = Vec::new();
-    let mut cursor = root.walk();
-    for child in root.children(&mut cursor) {
-        if child.is_named() && child.kind() == "document" {
-            docs.push((child.start_byte(), child.end_byte()));
-        }
-    }
-    if docs.is_empty() {
-        return whole_source_span(source);
-    }
-    docs.sort_by_key(|(start, _)| *start);
-    if let Some(first) = docs.first_mut() {
-        first.0 = 0;
-    }
-    for index in 0..docs.len() {
-        docs[index].1 = docs
-            .get(index + 1)
-            .map(|(next_start, _)| *next_start)
-            .unwrap_or(source.len());
-    }
-    docs
-}
-
 fn source_document_spans(source: &str) -> Vec<(usize, usize)> {
     let mut spans = Vec::new();
     let mut start = 0usize;
@@ -686,14 +641,6 @@ fn source_document_spans(source: &str) -> Vec<(usize, usize)> {
         spans.push((start, source.len()));
     }
     spans
-}
-
-fn whole_source_span(source: &str) -> Vec<(usize, usize)> {
-    if source.is_empty() {
-        Vec::new()
-    } else {
-        vec![(0, source.len())]
-    }
 }
 
 fn first_document_node(root: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {

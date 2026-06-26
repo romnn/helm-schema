@@ -3,10 +3,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use crate::merge::{merge_schema_list, merge_two_schemas};
+use crate::merge::merge_two_schemas;
 use crate::schema_model::is_empty_schema;
 use crate::schema_node::SchemaNode;
-use crate::values_yaml::{schema_from_yaml_value, yaml_value_at_segments};
+use crate::values_yaml::{schema_node_from_yaml_value_with_skips, yaml_value_at_segments};
 
 const MAP_WILDCARD_SEGMENT: &str = "__any__";
 
@@ -238,7 +238,8 @@ fn collect_missing_yaml_default_insertions(
     match yaml {
         YamlValue::Mapping(mapping) if !mapping.is_empty() => {
             if !root_schema.path_exists(current_path, MAP_WILDCARD_SEGMENT) {
-                if let Some(schema) = schema_node_from_yaml_default(yaml, current_path, skip_paths)
+                if let Some(schema) =
+                    schema_node_from_yaml_value_with_skips(yaml, current_path, skip_paths)
                 {
                     insertions.push((current_path.to_vec(), schema));
                 }
@@ -261,7 +262,8 @@ fn collect_missing_yaml_default_insertions(
         }
         _ => {
             if !root_schema.path_exists(current_path, MAP_WILDCARD_SEGMENT)
-                && let Some(schema) = schema_node_from_yaml_default(yaml, current_path, skip_paths)
+                && let Some(schema) =
+                    schema_node_from_yaml_value_with_skips(yaml, current_path, skip_paths)
             {
                 insertions.push((current_path.to_vec(), schema));
             }
@@ -273,61 +275,6 @@ fn child_value_path(parent: &[String], child: &str) -> Vec<String> {
     let mut path = parent.to_vec();
     path.push(child.to_string());
     path
-}
-
-fn schema_node_from_yaml_default(
-    value: &YamlValue,
-    current_path: &[String],
-    skip_paths: &BTreeSet<Vec<String>>,
-) -> Option<SchemaNode> {
-    if skip_paths.contains(current_path) {
-        return None;
-    }
-    match value {
-        YamlValue::Sequence(sequence) => {
-            let items = if sequence.is_empty() {
-                SchemaNode::empty()
-            } else {
-                SchemaNode::foreign(merge_schema_list(
-                    sequence
-                        .iter()
-                        .filter_map(|item| {
-                            schema_node_from_yaml_default(item, current_path, skip_paths)
-                        })
-                        .map(SchemaNode::into_value)
-                        .collect(),
-                ))
-            };
-            Some(SchemaNode::array().items(items))
-        }
-        YamlValue::Mapping(mapping) => {
-            if mapping.is_empty() {
-                return Some(SchemaNode::unknown_object());
-            }
-            let mut schema = SchemaNode::closed_object();
-            let mut inserted = false;
-            for (key, value_yaml) in mapping {
-                let Some(key) = key.as_str() else {
-                    continue;
-                };
-                let child_path = child_value_path(current_path, key);
-                let child_schema = if skip_paths.contains(&child_path) {
-                    SchemaNode::empty()
-                } else {
-                    let Some(child_schema) =
-                        schema_node_from_yaml_default(value_yaml, &child_path, skip_paths)
-                    else {
-                        continue;
-                    };
-                    child_schema
-                };
-                inserted = true;
-                schema = schema.property(key.to_string(), child_schema);
-            }
-            inserted.then_some(schema)
-        }
-        _ => Some(SchemaNode::foreign(schema_from_yaml_value(value))),
-    }
 }
 
 pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMap<String, String>) {

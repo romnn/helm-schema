@@ -270,38 +270,74 @@ pub(crate) fn schema_from_yaml_value(value: &YamlValue) -> Value {
     schema_node_from_yaml_value(value).into_value()
 }
 
-fn schema_node_from_yaml_value(value: &YamlValue) -> SchemaNode {
+pub(crate) fn schema_node_from_yaml_value(value: &YamlValue) -> SchemaNode {
+    schema_node_from_yaml_value_with_skips(value, &[], &BTreeSet::new())
+        .unwrap_or_else(SchemaNode::empty)
+}
+
+pub(crate) fn schema_node_from_yaml_value_with_skips(
+    value: &YamlValue,
+    current_path: &[String],
+    skip_paths: &BTreeSet<Vec<String>>,
+) -> Option<SchemaNode> {
+    if skip_paths.contains(current_path) {
+        return None;
+    }
+
     match value {
-        YamlValue::Null | YamlValue::Tagged(_) => SchemaNode::empty(),
-        YamlValue::Bool(_) => SchemaNode::type_named("boolean"),
+        YamlValue::Null | YamlValue::Tagged(_) => Some(SchemaNode::empty()),
+        YamlValue::Bool(_) => Some(SchemaNode::type_named("boolean")),
         YamlValue::Number(number) => {
-            if number.as_i64().is_some() || number.as_u64().is_some() {
+            let schema = if number.as_i64().is_some() || number.as_u64().is_some() {
                 SchemaNode::type_named("integer")
             } else {
                 SchemaNode::type_named("number")
-            }
+            };
+            Some(schema)
         }
-        YamlValue::String(_) => SchemaNode::type_named("string"),
+        YamlValue::String(_) => Some(SchemaNode::type_named("string")),
         YamlValue::Sequence(sequence) => {
             let items = if sequence.is_empty() {
                 empty_schema()
             } else {
-                merge_schema_list(sequence.iter().map(schema_from_yaml_value).collect())
+                merge_schema_list(
+                    sequence
+                        .iter()
+                        .filter_map(|item| {
+                            schema_node_from_yaml_value_with_skips(item, current_path, skip_paths)
+                        })
+                        .map(SchemaNode::into_value)
+                        .collect(),
+                )
             };
-            SchemaNode::array().items(SchemaNode::foreign(items))
+            Some(SchemaNode::array().items(SchemaNode::foreign(items)))
         }
         YamlValue::Mapping(mapping) => {
             if mapping.is_empty() {
-                return SchemaNode::unknown_object();
+                return Some(SchemaNode::unknown_object());
             }
             let mut schema = SchemaNode::closed_object();
+            let mut inserted = false;
             for (key, value) in mapping {
                 let Some(key) = key.as_str() else {
                     continue;
                 };
-                schema = schema.property(key.to_string(), schema_node_from_yaml_value(value));
+                let child_path = child_value_path(current_path, key);
+                let child_schema = if skip_paths.contains(&child_path) {
+                    SchemaNode::empty()
+                } else {
+                    schema_node_from_yaml_value_with_skips(value, &child_path, skip_paths)?
+                };
+                inserted = true;
+                schema = schema.property(key.to_string(), child_schema);
             }
-            schema
+            inserted.then_some(schema)
         }
     }
+}
+
+fn child_value_path(parent: &[String], child: &str) -> Vec<String> {
+    let mut path = parent.to_vec();
+    path.push(child.to_string());
+    path
 }

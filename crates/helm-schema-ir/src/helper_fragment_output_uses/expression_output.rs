@@ -172,14 +172,8 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     state
         .analysis
         .add_type_hints(nested_summary.type_hints.clone());
-    for path in &nested_summary.guard_paths {
-        if let Some(meta) = nested_summary.guard_path_meta.get(path) {
-            state
-                .analysis
-                .merge_guard_path_meta(path.clone(), meta.clone());
-        } else {
-            state.analysis.add_guard_path(path.clone());
-        }
+    for (path, meta) in nested_summary.guard_path_meta {
+        state.analysis.merge_guard_path_meta(path, meta);
     }
     let nested_site_sources: BTreeSet<String> = nested_summary
         .output_uses
@@ -392,12 +386,8 @@ fn collect_bound_fragment_output_assignment_uses(
         state.analysis.chart_defaults.extend(nested.chart_defaults);
         state.analysis.add_type_hints(nested.type_hints);
         if emit_nested_dependencies {
-            for path in nested.guard_paths {
-                if let Some(meta) = nested.guard_path_meta.get(&path) {
-                    state.analysis.merge_guard_path_meta(path, meta.clone());
-                } else {
-                    state.analysis.add_guard_path(path);
-                }
+            for (path, meta) in nested.guard_path_meta {
+                state.analysis.merge_guard_path_meta(path, meta);
             }
             for output in nested.output_uses {
                 let output_site_predicates = nested_output_site_predicates(

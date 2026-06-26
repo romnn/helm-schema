@@ -3,7 +3,7 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::schema_node::JsonSchemaType;
 
-use super::{ForeignSchemaObject, ForeignSchemaRestriction, ForeignSchemaTypeField};
+use super::{ForeignSchemaObject, ForeignSchemaRestriction};
 
 #[test]
 fn allows_array_from_explicit_type_array() {
@@ -46,29 +46,29 @@ fn annotations_only_drops_structural_keywords() {
 }
 
 #[test]
-fn type_field_reports_supported_variants() {
+fn type_variants_reports_supported_variants() {
     let schema = ForeignSchemaObject::from_value(json!({
         "type": ["string", "null"]
     }))
     .expect("object schema");
 
     sim_assert_eq!(
-        have: schema.type_field(),
-        want: ForeignSchemaTypeField::Multiple(vec![
+        have: schema.type_variants(),
+        want: Ok(Some(vec![
             JsonSchemaType::String,
             JsonSchemaType::Null
-        ])
+        ]))
     );
 }
 
 #[test]
-fn type_field_rejects_non_string_type_entries() {
+fn type_variants_rejects_non_string_type_entries() {
     let schema = ForeignSchemaObject::from_value(json!({
         "type": ["string", 7]
     }))
     .expect("object schema");
 
-    sim_assert_eq!(have: schema.type_field(), want: ForeignSchemaTypeField::Unsupported);
+    sim_assert_eq!(have: schema.type_variants(), want: Err(()));
 }
 
 #[test]

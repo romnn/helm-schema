@@ -50,14 +50,6 @@ struct ForeignSchemaObject {
     raw: Map<String, Value>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum ForeignSchemaTypeField {
-    Single(JsonSchemaType),
-    Multiple(Vec<JsonSchemaType>),
-    Absent,
-    Unsupported,
-}
-
 impl ForeignSchemaObject {
     fn from_value(value: Value) -> Result<Self, Value> {
         match value {
@@ -76,39 +68,34 @@ impl ForeignSchemaObject {
         })
     }
 
-    fn type_field(&self) -> ForeignSchemaTypeField {
+    fn type_variants(&self) -> Result<Option<Vec<JsonSchemaType>>, ()> {
         match self.raw.get("type") {
             Some(Value::String(schema_type)) => JsonSchemaType::from_name(schema_type)
-                .map(ForeignSchemaTypeField::Single)
-                .unwrap_or(ForeignSchemaTypeField::Unsupported),
+                .map(|schema_type| Some(vec![schema_type]))
+                .ok_or(()),
             Some(Value::Array(schema_types)) => {
                 let mut values = Vec::with_capacity(schema_types.len());
                 for schema_type in schema_types {
                     let Some(schema_type) = schema_type.as_str() else {
-                        return ForeignSchemaTypeField::Unsupported;
+                        return Err(());
                     };
                     let Some(schema_type) = JsonSchemaType::from_name(schema_type) else {
-                        return ForeignSchemaTypeField::Unsupported;
+                        return Err(());
                     };
                     values.push(schema_type);
                 }
-                ForeignSchemaTypeField::Multiple(values)
+                Ok(Some(values))
             }
-            Some(_) => ForeignSchemaTypeField::Unsupported,
-            None => ForeignSchemaTypeField::Absent,
+            Some(_) => Err(()),
+            None => Ok(None),
         }
     }
 
     fn allows_type(&self, expected: JsonSchemaType) -> bool {
-        match self.type_field() {
-            ForeignSchemaTypeField::Single(schema_type) => schema_type == expected,
-            ForeignSchemaTypeField::Multiple(schema_types) => schema_types
-                .into_iter()
-                .any(|schema_type| schema_type == expected),
-            ForeignSchemaTypeField::Unsupported => false,
-            ForeignSchemaTypeField::Absent => {
-                expected == JsonSchemaType::Array && self.has_any_keywords(ARRAY_KEYWORDS)
-            }
+        match self.type_variants() {
+            Ok(Some(schema_types)) => schema_types.contains(&expected),
+            Ok(None) => expected == JsonSchemaType::Array && self.has_any_keywords(ARRAY_KEYWORDS),
+            Err(()) => false,
         }
     }
 
@@ -212,29 +199,24 @@ impl ForeignSchemaRestriction {
             return rewrite_array_schema(schema, Self::Scalar);
         }
 
-        match schema.type_field() {
-            ForeignSchemaTypeField::Single(schema_type) => {
-                scalar_json_type(schema_type).then(|| schema.into_value())
-            }
-            ForeignSchemaTypeField::Multiple(schema_types) => {
-                let scalar_types: Vec<JsonSchemaType> = schema_types
-                    .into_iter()
+        match schema.type_variants() {
+            Ok(Some(schema_types)) => {
+                let scalar_types = schema_types
+                    .iter()
+                    .copied()
                     .filter(|schema_type| scalar_json_type(*schema_type))
-                    .collect();
+                    .collect::<Vec<_>>();
                 if scalar_types.is_empty() {
                     return None;
                 }
-                if let ForeignSchemaTypeField::Multiple(original_types) = schema.type_field()
-                    && scalar_types.len() != original_types.len()
-                {
+                if scalar_types.len() != schema_types.len() {
                     schema.set_type_variants(scalar_types);
                     schema.strip_non_scalar_keywords();
                 }
                 Some(schema.into_value())
             }
-            ForeignSchemaTypeField::Absent if schema.has_non_scalar_keywords() => None,
-            ForeignSchemaTypeField::Absent => Some(schema.into_value()),
-            ForeignSchemaTypeField::Unsupported => Some(schema.into_value()),
+            Ok(None) if schema.has_non_scalar_keywords() => None,
+            Ok(None) | Err(()) => Some(schema.into_value()),
         }
     }
 

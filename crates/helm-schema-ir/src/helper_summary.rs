@@ -414,7 +414,6 @@ pub(crate) fn relate_outputs_to_sources(
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct HelperSummary {
     pub(crate) string_output: BTreeSet<String>,
-    pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) guard_path_meta: BTreeMap<String, HelperOutputMeta>,
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) output_uses: Vec<HelperFragmentOutputUse>,
@@ -432,7 +431,6 @@ pub(crate) struct HelperSummary {
 
 impl HelperSummary {
     pub(crate) fn extend(&mut self, other: Self) {
-        self.guard_paths.extend(other.guard_paths);
         for (path, meta) in other.guard_path_meta {
             self.merge_guard_path_meta(path, meta);
         }
@@ -454,7 +452,6 @@ impl HelperSummary {
 
     pub(crate) fn add_guard_path(&mut self, path: String) {
         if !path.trim().is_empty() {
-            self.guard_paths.insert(path.clone());
             self.guard_path_meta.entry(path).or_default();
         }
     }
@@ -463,7 +460,6 @@ impl HelperSummary {
         if path.trim().is_empty() {
             return;
         }
-        self.guard_paths.insert(path.clone());
         self.guard_path_meta.entry(path).or_default().merge(meta);
     }
 
@@ -560,7 +556,9 @@ impl HelperSummary {
     }
 
     pub(crate) fn has_document_value_facts(&self) -> bool {
-        !self.output_uses.is_empty() || !self.guard_paths.is_empty() || !self.type_hints.is_empty()
+        !self.output_uses.is_empty()
+            || !self.guard_path_meta.is_empty()
+            || !self.type_hints.is_empty()
     }
 
     pub(crate) fn add_provenance(&mut self, provenance: ContractProvenance) {
@@ -592,7 +590,7 @@ impl HelperSummary {
 
     pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
-        paths.extend(self.guard_paths.iter().cloned());
+        paths.extend(self.guard_path_meta.keys().cloned());
         paths.extend(self.type_hints.keys().cloned());
         paths.extend(
             self.output_uses
@@ -620,7 +618,7 @@ impl HelperSummary {
             .filter(|output| output.is_scalar_summary_output())
             .map(|output| output.source_expr.clone())
             .collect();
-        rendered_sources.extend(self.guard_paths.iter().cloned());
+        rendered_sources.extend(self.guard_path_meta.keys().cloned());
         for binding in bindings.values() {
             let AbstractValue::ValuesPath(root) = binding else {
                 continue;

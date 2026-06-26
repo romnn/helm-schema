@@ -261,7 +261,7 @@ fn append_helper_contract_uses(
         }
     }
 
-    for value in &helper.guard_paths {
+    for value in helper.guard_path_meta.keys() {
         if !suppressed_guard_path_meta.contains_key(value)
             && suppressed_guard_path_meta
                 .iter()
