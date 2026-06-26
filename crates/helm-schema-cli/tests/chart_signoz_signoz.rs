@@ -75,6 +75,9 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
             },
         ],
     )?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+    let schema_validates_instance =
+        |_: &serde_json::Value, instance: &serde_json::Value| validator.is_valid(instance);
     assert!(
         !schema_validates_instance(
             &schema,
@@ -520,12 +523,6 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
     }
 
     Ok(())
-}
-
-fn schema_validates_instance(schema: &serde_json::Value, instance: &serde_json::Value) -> bool {
-    jsonschema::validator_for(schema)
-        .expect("schema validator")
-        .is_valid(instance)
 }
 
 fn clickhouse_operator_image_field_instance(

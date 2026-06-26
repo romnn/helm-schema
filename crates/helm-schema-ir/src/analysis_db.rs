@@ -1,14 +1,18 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, TemplateExpr};
+use helm_schema_ast::{
+    AttributionIndex, DefineIndex, TemplateExpr, build_attribution_index_with_resources,
+};
 
 use crate::abstract_value::AbstractValue;
+use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_body_analysis::{
     ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };
 use crate::helper_summary::HelperSummary;
+use crate::node_eval::{NodeAction, node_action};
 use crate::{ContractProvenance, SourceSpan};
 use helm_schema_ast::parse_go_template;
 
@@ -30,8 +34,12 @@ impl ParsedHelperBody<'_> {
 }
 
 pub(crate) struct IrAnalysisDb {
+    defines: DefineIndex,
     define_bodies: HashMap<String, CachedDefineBody>,
     define_trees: RefCell<HashMap<String, tree_sitter::Tree>>,
+    define_attributions: RefCell<HashMap<String, AttributionIndex>>,
+    helper_direct_dependencies: RefCell<HashMap<String, BTreeSet<String>>>,
+    helper_dependency_closures: RefCell<HashMap<String, BTreeSet<String>>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, HelperSummary>>,
 }
 
@@ -52,8 +60,12 @@ impl IrAnalysisDb {
             }
         }
         Self {
+            defines: defines.clone(),
             define_bodies,
             define_trees: RefCell::new(HashMap::new()),
+            define_attributions: RefCell::new(HashMap::new()),
+            helper_direct_dependencies: RefCell::new(HashMap::new()),
+            helper_dependency_closures: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
         }
     }
@@ -86,6 +98,80 @@ impl IrAnalysisDb {
         })
     }
 
+    pub(crate) fn helper_attribution(&self, name: &str) -> Option<AttributionIndex> {
+        if let Some(attribution) = self.define_attributions.borrow().get(name) {
+            return Some(attribution.clone());
+        }
+
+        let body = self.define_bodies.get(name)?;
+        let tree = self.define_tree(name)?;
+        let attribution = build_attribution_index_with_resources(
+            body.source.as_str(),
+            tree.root_node(),
+            &self.defines,
+        );
+        self.define_attributions
+            .borrow_mut()
+            .insert(name.to_string(), attribution.clone());
+        Some(attribution)
+    }
+
+    fn helper_dependency_closure(&self, name: &str) -> BTreeSet<String> {
+        if let Some(cached) = self.helper_dependency_closures.borrow().get(name) {
+            return cached.clone();
+        }
+
+        let mut closure = BTreeSet::new();
+        self.collect_helper_dependency_closure(name, &mut BTreeSet::new(), &mut closure);
+        self.helper_dependency_closures
+            .borrow_mut()
+            .insert(name.to_string(), closure.clone());
+        closure
+    }
+
+    fn collect_helper_dependency_closure(
+        &self,
+        name: &str,
+        visiting: &mut BTreeSet<String>,
+        closure: &mut BTreeSet<String>,
+    ) {
+        if !visiting.insert(name.to_string()) {
+            closure.insert(name.to_string());
+            return;
+        }
+
+        for dependency in self.helper_direct_dependencies(name) {
+            if closure.insert(dependency.clone()) {
+                self.collect_helper_dependency_closure(&dependency, visiting, closure);
+            }
+        }
+
+        visiting.remove(name);
+    }
+
+    fn helper_direct_dependencies(&self, name: &str) -> BTreeSet<String> {
+        if let Some(cached) = self.helper_direct_dependencies.borrow().get(name) {
+            return cached.clone();
+        }
+
+        let mut dependencies = BTreeSet::new();
+        if let Some(body) = self.parsed_helper_body(name) {
+            collect_helper_dependencies(body.source, body.tree.root_node(), &mut dependencies);
+        }
+        self.helper_direct_dependencies
+            .borrow_mut()
+            .insert(name.to_string(), dependencies.clone());
+        dependencies
+    }
+
+    fn helper_seen_cache_key(&self, name: &str, seen: &HashSet<String>) -> BTreeSet<String> {
+        let dependencies = self.helper_dependency_closure(name);
+        seen.iter()
+            .filter(|helper| dependencies.contains(*helper))
+            .cloned()
+            .collect()
+    }
+
     #[tracing::instrument(skip_all, fields(helper = name))]
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn summarize_bound_helper_call(
@@ -98,72 +184,35 @@ impl IrAnalysisDb {
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> HelperSummary {
-        let outer_bindings_key: BTreeMap<String, AbstractValue> = outer_bindings
-            .into_iter()
-            .flatten()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
-        let fragment_locals_key: BTreeMap<String, AbstractValue> = fragment_locals
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
-        let key = BoundHelperCallCacheKey {
-            name: name.to_string(),
-            arg: format!("{arg:?}"),
-            current_dot: current_dot.cloned(),
-            outer_bindings: outer_bindings_key,
-            fragment_locals: fragment_locals_key,
-            seen: seen.iter().cloned().collect(),
-        };
-
-        if let Some(cached) = self.bound_helper_calls.borrow().get(&key) {
-            return cached.clone();
+        if !seen.insert(name.to_string()) {
+            return HelperSummary::default();
         }
 
-        let summary = analyze_bound_helper_call_with_fragment_locals(
-            name,
+        let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
+            helper_name: name,
             arg,
             outer_bindings,
             current_dot,
             fragment_locals,
             context,
             seen,
-        );
+        });
+        let seen_key = self.helper_seen_cache_key(name, seen);
+        let key = BoundHelperCallCacheKey::from_resolution(name, &resolution, seen_key);
+
+        if let Some(cached) = self.bound_helper_calls.borrow().get(&key) {
+            seen.remove(name);
+            return cached.clone();
+        }
+
+        let mut summary = interpret_bound_helper_body(name, &resolution, context, seen);
+        summary.mark_suppressed_roots_for_bound_outputs(&resolution.bindings);
         self.bound_helper_calls
             .borrow_mut()
             .insert(key, summary.clone());
+        seen.remove(name);
         summary
     }
-}
-
-#[tracing::instrument(skip_all, fields(helper = name))]
-fn analyze_bound_helper_call_with_fragment_locals(
-    name: &str,
-    arg: Option<&TemplateExpr>,
-    outer_bindings: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> HelperSummary {
-    if !seen.insert(name.to_string()) {
-        return HelperSummary::default();
-    }
-
-    let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
-        helper_name: name,
-        arg,
-        outer_bindings,
-        current_dot,
-        fragment_locals,
-        context,
-        seen,
-    });
-    let mut analysis = interpret_bound_helper_body(name, &resolution, context, seen);
-    analysis.mark_suppressed_roots_for_bound_outputs(&resolution.bindings);
-
-    seen.remove(name);
-    analysis
 }
 
 struct CachedDefineBody {
@@ -175,11 +224,73 @@ struct CachedDefineBody {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct BoundHelperCallCacheKey {
     name: String,
-    arg: String,
-    current_dot: Option<AbstractValue>,
-    outer_bindings: BTreeMap<String, AbstractValue>,
-    fragment_locals: BTreeMap<String, AbstractValue>,
+    bindings: BTreeMap<String, AbstractValue>,
+    helper_body_dot: Option<AbstractValue>,
+    helper_fragment_dot: Option<AbstractValue>,
     seen: BTreeSet<String>,
+}
+
+impl BoundHelperCallCacheKey {
+    fn from_resolution(
+        name: &str,
+        resolution: &crate::helper_body_analysis::BoundHelperCallResolution,
+        seen: BTreeSet<String>,
+    ) -> Self {
+        Self {
+            name: name.to_string(),
+            bindings: resolution
+                .bindings
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect(),
+            helper_body_dot: resolution.helper_body_dot.clone(),
+            helper_fragment_dot: resolution.helper_fragment_dot.clone(),
+            seen,
+        }
+    }
+}
+
+fn collect_helper_dependencies(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    dependencies: &mut BTreeSet<String>,
+) {
+    match node_action(source, node) {
+        NodeAction::Assignment(Some(exprs)) | NodeAction::Output(Some(exprs)) => {
+            collect_helper_dependencies_from_exprs(&exprs, dependencies);
+        }
+        NodeAction::If(Some(header))
+        | NodeAction::With(Some(header))
+        | NodeAction::Range(Some(header)) => {
+            collect_helper_dependencies_from_expr(header.expr(), dependencies);
+        }
+        _ => {}
+    }
+
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        collect_helper_dependencies(source, child, dependencies);
+    }
+}
+
+fn collect_helper_dependencies_from_exprs(
+    exprs: &[TemplateExpr],
+    dependencies: &mut BTreeSet<String>,
+) {
+    for expr in exprs {
+        collect_helper_dependencies_from_expr(expr, dependencies);
+    }
+}
+
+fn collect_helper_dependencies_from_expr(expr: &TemplateExpr, dependencies: &mut BTreeSet<String>) {
+    expr.walk(|node| {
+        let TemplateExpr::Call { function, args } = node else {
+            return;
+        };
+        if let Some(name) = literal_helper_call_callee(function, args) {
+            dependencies.insert(name.to_string());
+        }
+    });
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -45,6 +45,7 @@ pub(crate) enum SchemaNode {
     Empty,
     Object {
         properties: BTreeMap<String, SchemaNode>,
+        all_of: Vec<SchemaNode>,
         include_empty_properties: bool,
         required: BTreeSet<String>,
         additional_properties: Option<Box<SchemaNode>>,
@@ -103,6 +104,7 @@ impl SchemaNode {
     pub(crate) fn object() -> Self {
         Self::Object {
             properties: BTreeMap::new(),
+            all_of: Vec::new(),
             include_empty_properties: false,
             required: BTreeSet::new(),
             additional_properties: None,
@@ -173,10 +175,8 @@ impl SchemaNode {
 
     pub(crate) fn push_all_of(&mut self, value: SchemaNode) {
         match self {
-            Self::Object { .. } => {
-                let mut schema = std::mem::replace(self, Self::Empty).into_value();
-                push_all_of_value(&mut schema, value);
-                *self = Self::Foreign(schema);
+            Self::Object { all_of, .. } => {
+                all_of.push(value);
             }
             Self::Foreign(schema) => {
                 push_all_of_value(schema, value);
@@ -332,7 +332,9 @@ impl SchemaNode {
 
     pub(crate) fn has_object_descendants(&self) -> bool {
         match self {
-            Self::Object { properties, .. } => !properties.is_empty(),
+            Self::Object {
+                properties, all_of, ..
+            } => !properties.is_empty() || !all_of.is_empty(),
             Self::Foreign(Value::Object(object)) => foreign_has_object_descendants(object),
             _ => false,
         }
@@ -343,8 +345,13 @@ impl SchemaNode {
             Self::Object {
                 additional_properties: Some(additional_properties),
                 max_properties,
+                all_of,
                 ..
-            } => additional_properties.is_false_schema() && *max_properties != Some(0),
+            } => {
+                additional_properties.is_false_schema()
+                    && *max_properties != Some(0)
+                    && all_of.is_empty()
+            }
             Self::Foreign(Value::Object(object)) => foreign_is_plain_closed_values_object(object),
             _ => false,
         }
@@ -402,9 +409,16 @@ impl SchemaNode {
         match self {
             Self::Object {
                 properties,
+                all_of,
                 additional_properties,
                 ..
             } => {
+                if all_of
+                    .iter()
+                    .any(|child| child.path_exists(path_segments, map_wildcard_segment))
+                {
+                    return true;
+                }
                 if head == map_wildcard_segment {
                     return additional_properties
                         .as_deref()
@@ -436,6 +450,7 @@ impl SchemaNode {
             Self::Empty => Value::Object(Map::new()),
             Self::Object {
                 properties,
+                all_of,
                 include_empty_properties,
                 required,
                 additional_properties,
@@ -476,6 +491,12 @@ impl SchemaNode {
                     object.insert(
                         "maxProperties".to_string(),
                         Value::Number(Number::from(max_properties)),
+                    );
+                }
+                if !all_of.is_empty() {
+                    object.insert(
+                        "allOf".to_string(),
+                        Value::Array(all_of.into_iter().map(Self::into_value).collect()),
                     );
                 }
                 Value::Object(object)

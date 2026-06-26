@@ -103,7 +103,7 @@ pub struct ResolvedNodeContext {
     pub inside_block_scalar: bool,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct AttributionIndex {
     output_slots: HashMap<(usize, usize), OutputSlot>,
     control_sites: HashMap<(usize, usize), ControlSite>,

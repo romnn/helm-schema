@@ -136,6 +136,26 @@ In short: the simpler Rust is usually the better Rust here. Prefer direct,
 boring code over abstraction that does not materially improve correctness or
 clarity.
 
+## Design goal: fast, deterministic, cache-safe output
+
+helm-schema should be fast enough for normal interactive use. Most schemas
+should generate in less than a second, and very large charts should stay within
+a few seconds. Performance work should be architectural: cache phase artifacts
+at natural boundaries, use efficient algorithms and data structures, and avoid
+repeated whole-schema rewrites when a typed structure can be updated directly.
+
+Output must be deterministic and ordered. With the same chart inputs, options,
+and stable network fetches, repeated runs should produce the same schema. Use
+stable maps, stable sets, and explicit sorting wherever iteration order can
+affect emitted JSON or diagnostics.
+
+Any cache that can affect analysis or generation must be keyed by every input
+that can change the result: source identity, version, schema pointer or path,
+policy/options, and any chart-local context that changes semantics. A stale,
+partial, or under-keyed cache hit must never become evidence that changes the
+inferred schema. Prefer recomputation or an explicit unknown result over
+serving a potentially inaccurate cached answer.
+
 ### Rust test layout and source LOC hygiene
 
 Keep production `src/` files focused on production code so source LOC remains a

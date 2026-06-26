@@ -5,7 +5,7 @@ mod runtime;
 
 use helm_schema_ast::children_with_field;
 
-use action::{NodeAction, node_action};
+pub(crate) use action::{NodeAction, node_action};
 pub(crate) use effects::{
     NodeActionEffectSink, activate_condition_alternative_guards, activate_if_condition_plan,
     activate_range_action_plan, activate_with_condition_plan,

@@ -1,9 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::{
-    AttributionIndex, ControlSite, TemplateExpr, build_attribution_index_with_resources,
-    range_body_emits_sequence_item_from_source, range_body_renders_mapping_entries_from_ast,
-    range_has_destructured_variable_definition,
+    AttributionIndex, ControlSite, TemplateExpr, range_body_emits_sequence_item_from_source,
+    range_body_renders_mapping_entries_from_ast, range_has_destructured_variable_definition,
 };
 
 use crate::abstract_value::AbstractValue;
@@ -132,8 +131,11 @@ pub(crate) fn interpret_bound_helper_body(
     let Some(body) = context.analysis_db.parsed_helper_body(name) else {
         return HelperSummary::default();
     };
+    let Some(attribution) = context.analysis_db.helper_attribution(name) else {
+        return HelperSummary::default();
+    };
     let mut analysis = HelperSummary::default();
-    collect_helper_summary(&body, resolution, context, seen, &mut analysis);
+    collect_helper_summary(&body, resolution, context, seen, &mut analysis, attribution);
     analysis.add_provenance(body.provenance(name));
 
     analysis
@@ -145,14 +147,13 @@ fn collect_helper_summary(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
     analysis: &mut HelperSummary,
+    attribution: AttributionIndex,
 ) {
     let mut value_locals = SymbolicLocalState::default();
     let mut fragment_locals = SymbolicLocalState::default();
     let mut fragment_output_uses = Vec::new();
     let mut value_seen = seen.clone();
     let mut fragment_seen = seen.clone();
-    let attribution =
-        build_attribution_index_with_resources(body.source, body.tree.root_node(), context.defines);
     let mut runtime = HelperAnalysisRuntime {
         source: body.source,
         bindings: &resolution.bindings,
