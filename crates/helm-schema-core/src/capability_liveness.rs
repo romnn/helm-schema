@@ -10,8 +10,17 @@ pub trait CapabilityOracle: Send + Sync {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum GuardLiveness {
+    Live,
+    Dead,
+    Unknown,
+}
+
 /// Resolve a typed-branch chain to the literal alternatives the chart would
-/// emit at runtime for the target K8s version.
+/// emit at runtime for the target K8s version. If a non-empty branch is not
+/// statically decidable, return no chosen branch so callers preserve all
+/// candidates instead of collapsing ambiguity to source order.
 #[must_use]
 pub fn live_literals<O: CapabilityOracle + ?Sized>(
     branches: &[HelperBranch],
@@ -21,8 +30,10 @@ pub fn live_literals<O: CapabilityOracle + ?Sized>(
         if branch.body.is_empty() {
             continue;
         }
-        if !guard_is_live(branch.guard.as_ref(), oracle) {
-            continue;
+        match guard_liveness(branch.guard.as_ref(), oracle) {
+            GuardLiveness::Dead => continue,
+            GuardLiveness::Unknown => return Vec::new(),
+            GuardLiveness::Live => {}
         }
         match &branch.body {
             HelperBranchBody::Literals { values } => return values.clone(),
@@ -37,17 +48,26 @@ pub fn live_literals<O: CapabilityOracle + ?Sized>(
     Vec::new()
 }
 
-fn guard_is_live<O: CapabilityOracle + ?Sized>(
+fn guard_liveness<O: CapabilityOracle + ?Sized>(
     guard: Option<&CapabilityGuard>,
     oracle: &O,
-) -> bool {
+) -> GuardLiveness {
     match guard {
-        None | Some(CapabilityGuard::Opaque { .. }) => true,
+        None => GuardLiveness::Live,
+        Some(CapabilityGuard::Opaque { .. }) => GuardLiveness::Unknown,
         Some(CapabilityGuard::Has { api }) => ApiPresenceQuery::parse_helm_literal(api)
             .and_then(|query| oracle.capability_has_query(&query))
-            .unwrap_or(true),
+            .map_or(GuardLiveness::Unknown, bool_liveness),
         Some(CapabilityGuard::NotHas { api }) => ApiPresenceQuery::parse_helm_literal(api)
             .and_then(|query| oracle.capability_has_query(&query))
-            .is_none_or(|has| !has),
+            .map_or(GuardLiveness::Unknown, |has| bool_liveness(!has)),
+    }
+}
+
+fn bool_liveness(live: bool) -> GuardLiveness {
+    if live {
+        GuardLiveness::Live
+    } else {
+        GuardLiveness::Dead
     }
 }

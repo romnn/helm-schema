@@ -435,23 +435,15 @@ fn detector_resolves_helper_with_if_else_branches() {
         .expect("expected use for `roleName`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.kind, want: "RoleBinding");
-    // Capability-gated helper output is resolved by the version-aware lookup
-    // chain, so the IR preserves both alternatives without choosing a primary.
-    assert!(
-        r.api_version.is_empty(),
-        "primary must be empty for multi-branch helper (preserve exact alternatives); got {:?}",
-        r.api_version
-    );
-    let expected = vec![
-        "rbac.authorization.k8s.io/v1".to_string(),
-        "rbac.authorization.k8s.io/v1beta1".to_string(),
-    ];
+    sim_assert_eq!(have: r.api_version, want: "rbac.authorization.k8s.io/v1");
+    let expected = vec!["rbac.authorization.k8s.io/v1beta1".to_string()];
     sim_assert_eq!(
         have: r.api_version_candidates,
         want: expected,
         "both branches must be preserved in source order; got {:?}",
         r.api_version_candidates
     );
+    sim_assert_eq!(have: r.api_version_branches.len(), want: 2);
 }
 
 // `include` works like `template` for helper-returned apiVersion values.
@@ -488,20 +480,12 @@ fn detector_resolves_include_returned_api_version() {
         .expect("expected use for `maxReplicas`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.kind, want: "HorizontalPodAutoscaler");
-    // Capability-gated helper output is resolved by the version-aware lookup
-    // chain, so the IR preserves both alternatives without choosing a primary.
-    assert!(
-        r.api_version.is_empty(),
-        "primary must be empty for multi-branch helper; got {:?}",
-        r.api_version
-    );
+    sim_assert_eq!(have: r.api_version, want: "autoscaling/v2");
     sim_assert_eq!(
         have: r.api_version_candidates,
-        want: vec![
-            "autoscaling/v2".to_string(),
-            "autoscaling/v2beta2".to_string()
-        ]
+        want: vec!["autoscaling/v2beta2".to_string()]
     );
+    sim_assert_eq!(have: r.api_version_branches.len(), want: 2);
 }
 
 // Pins Finding (round 5) #2 — source-order primary, NOT stability rank.

@@ -59,6 +59,15 @@ fn branch_else(literals: &[&str]) -> HelperBranch {
     }
 }
 
+fn branch_opaque(literals: &[&str]) -> HelperBranch {
+    HelperBranch {
+        guard: Some(CapabilityGuard::Opaque {
+            text: "semverCompare \"<1.19-0\" .Capabilities.KubeVersion.GitVersion".to_string(),
+        }),
+        body: literal_body(literals),
+    }
+}
+
 fn literal_body(literals: &[&str]) -> HelperBranchBody {
     HelperBranchBody::Literals {
         values: literals
@@ -111,6 +120,24 @@ fn unresolved_branches_fall_back_to_ranked_candidates() {
     );
     let oracle = StaticOracle::new().with("networking.k8s.io/v1/Ingress", true);
     let candidates = resource_lookup_candidates(&resource, &oracle);
+
+    sim_assert_eq!(
+        have: planned_api_versions(&candidates),
+        want: vec!["networking.k8s.io/v1", "extensions/v1beta1"]
+    );
+}
+
+#[test]
+fn opaque_branch_guard_falls_back_to_ranked_candidates() {
+    let resource = resource(
+        "extensions/v1beta1",
+        &["networking.k8s.io/v1"],
+        vec![
+            branch_opaque(&["extensions/v1beta1"]),
+            branch_else(&["networking.k8s.io/v1"]),
+        ],
+    );
+    let candidates = resource_lookup_candidates(&resource, &StaticOracle::new());
 
     sim_assert_eq!(
         have: planned_api_versions(&candidates),

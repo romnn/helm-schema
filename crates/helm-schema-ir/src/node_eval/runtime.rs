@@ -6,7 +6,7 @@ use helm_schema_ast::ControlSite;
 
 pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
     type ScopeSnapshot: Clone;
-    type ConditionPlan;
+    type ConditionPlan: Clone;
     type RangePlan;
 
     fn source(&self) -> &str;
@@ -30,6 +30,17 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     );
+
+    fn join_condition_branch_scopes(
+        &mut self,
+        entry: &Self::ScopeSnapshot,
+        branches: Vec<BranchOutcome<Self::ConditionPlan, Self::ScopeSnapshot>>,
+    ) {
+        self.join_branch_scopes(
+            entry,
+            branches.into_iter().map(|branch| branch.outcome).collect(),
+        );
+    }
 
     fn join_range_scopes(
         &mut self,
@@ -79,4 +90,9 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
         plan: &Self::RangePlan,
         current_path: &YamlPath,
     );
+}
+
+pub(crate) struct BranchOutcome<Plan, Snapshot> {
+    pub(crate) plan: Option<Plan>,
+    pub(crate) outcome: Snapshot,
 }

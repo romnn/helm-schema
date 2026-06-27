@@ -6,12 +6,11 @@ mod runtime;
 use helm_schema_ast::children_with_field;
 
 pub(crate) use action::{NodeAction, node_action};
-pub(crate) use control_flow::else_if_pairs;
 pub(crate) use effects::{
     NodeActionEffectSink, activate_condition_alternative_guards, activate_if_condition_plan,
     activate_range_action_plan, activate_with_condition_plan,
 };
-pub(crate) use runtime::NodeEvalRuntime;
+pub(crate) use runtime::{BranchOutcome, NodeEvalRuntime};
 
 pub(crate) fn eval_node<R>(runtime: &mut R, node: tree_sitter::Node<'_>)
 where

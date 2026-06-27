@@ -3,7 +3,7 @@ use helm_schema_ast::TemplateHeader;
 use helm_schema_ast::children_with_field;
 
 use super::action;
-use super::{NodeEvalRuntime, eval_children, eval_node};
+use super::{BranchOutcome, NodeEvalRuntime, eval_children, eval_node};
 
 pub(super) fn eval_assignment_node<R>(
     runtime: &mut R,
@@ -62,28 +62,62 @@ fn eval_condition_node<R, F>(
     let else_if_pairs = else_if_pairs(node, runtime.source());
     let alternatives = children_with_field(node, "alternative");
 
-    let condition_plan = header.map(|header| enter_consequence(runtime, header));
+    let mut branch_outcomes = Vec::new();
+    let mut prior_plans = Vec::new();
 
+    let condition_plan = header.map(|header| enter_consequence(runtime, header));
     runtime.enter_local_scope();
     for child in children_with_field(node, "consequence") {
         eval_node(runtime, child);
     }
     runtime.exit_local_scope();
-    let consequence_outcome = runtime.scope_snapshot();
+    branch_outcomes.push(BranchOutcome {
+        plan: condition_plan.clone(),
+        outcome: runtime.scope_snapshot(),
+    });
+    if let Some(plan) = condition_plan {
+        prior_plans.push(plan);
+    }
+
+    for (condition_header, option_children) in else_if_pairs {
+        runtime.restore_scope(entry.clone());
+        for plan in &prior_plans {
+            runtime.activate_condition_alternative(plan);
+        }
+        let condition_plan = condition_header
+            .as_ref()
+            .map(|header| enter_consequence(runtime, header));
+
+        runtime.enter_local_scope();
+        for child in option_children {
+            eval_node(runtime, child);
+        }
+        runtime.exit_local_scope();
+        branch_outcomes.push(BranchOutcome {
+            plan: condition_plan.clone(),
+            outcome: runtime.scope_snapshot(),
+        });
+        if let Some(plan) = condition_plan {
+            prior_plans.push(plan);
+        }
+    }
 
     runtime.restore_scope(entry.clone());
-    if let Some(plan) = &condition_plan {
+    for plan in &prior_plans {
         runtime.activate_condition_alternative(plan);
     }
-    let alternative_outcome = eval_condition_alternative_chain(
-        runtime,
-        &else_if_pairs,
-        &alternatives,
-        &mut enter_consequence,
-    );
+    runtime.enter_local_scope();
+    for child in alternatives {
+        eval_node(runtime, child);
+    }
+    runtime.exit_local_scope();
+    branch_outcomes.push(BranchOutcome {
+        plan: None,
+        outcome: runtime.scope_snapshot(),
+    });
 
     runtime.restore_scope(entry.clone());
-    runtime.join_branch_scopes(&entry, vec![consequence_outcome, alternative_outcome]);
+    runtime.join_condition_branch_scopes(&entry, branch_outcomes);
 }
 
 pub(crate) fn else_if_pairs<'node>(
@@ -120,49 +154,6 @@ pub(crate) fn else_if_pairs<'node>(
     }
 
     pairs
-}
-
-fn eval_condition_alternative_chain<R, F>(
-    runtime: &mut R,
-    else_if_pairs: &[(Option<TemplateHeader>, Vec<tree_sitter::Node<'_>>)],
-    alternatives: &[tree_sitter::Node<'_>],
-    enter_consequence: &mut F,
-) -> R::ScopeSnapshot
-where
-    R: NodeEvalRuntime,
-    F: FnMut(&mut R, &TemplateHeader) -> R::ConditionPlan,
-{
-    let Some(((condition_header, option_children), tail)) = else_if_pairs.split_first() else {
-        runtime.enter_local_scope();
-        for child in alternatives {
-            eval_node(runtime, *child);
-        }
-        runtime.exit_local_scope();
-        return runtime.scope_snapshot();
-    };
-
-    let entry = runtime.scope_snapshot();
-    let condition_plan = condition_header
-        .as_ref()
-        .map(|header| enter_consequence(runtime, header));
-
-    runtime.enter_local_scope();
-    for child in option_children {
-        eval_node(runtime, *child);
-    }
-    runtime.exit_local_scope();
-    let consequence_outcome = runtime.scope_snapshot();
-
-    runtime.restore_scope(entry.clone());
-    if let Some(plan) = &condition_plan {
-        runtime.activate_condition_alternative(plan);
-    }
-    let alternative_outcome =
-        eval_condition_alternative_chain(runtime, tail, alternatives, enter_consequence);
-
-    runtime.restore_scope(entry.clone());
-    runtime.join_branch_scopes(&entry, vec![consequence_outcome, alternative_outcome]);
-    runtime.scope_snapshot()
 }
 
 pub(super) fn eval_range_node<R>(

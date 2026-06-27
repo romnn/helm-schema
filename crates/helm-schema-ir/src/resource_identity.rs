@@ -4,12 +4,17 @@ use helm_schema_ast::{
     ResourceSpan, TemplateExpr, TemplateHeader, decode_guard, decode_guard_expr, parse_expr_text,
     parse_go_template, parse_helm_template,
 };
-use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
+use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, Predicate, ResourceRef};
 
+use crate::YamlPath;
+use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, literal_helper_call_callee};
-use crate::node_eval::{NodeAction, else_if_pairs, node_action};
+use crate::node_eval::{
+    BranchOutcome, NodeAction, NodeActionEffectSink, NodeEvalRuntime, eval_template_body,
+    node_action,
+};
 
 const MAX_RECURSION_DEPTH: usize = 12;
 
@@ -47,86 +52,6 @@ pub(crate) fn helper_body_defines_resource(name: &str, analysis_db: &IrAnalysisD
 }
 
 #[derive(Default)]
-struct ResourceState {
-    kind: Option<String>,
-    api_versions: Vec<String>,
-    suppress_primary_api_version: bool,
-    api_version_branches: Vec<HelperBranch>,
-}
-
-impl ResourceState {
-    fn set_kind_if_empty(&mut self, kind: &str) {
-        if self.kind.is_none() && !kind.is_empty() {
-            self.kind = Some(kind.to_string());
-        }
-    }
-
-    fn record_api_version_output(&mut self, output: HelperBranchBody) {
-        match output {
-            HelperBranchBody::Literals { values } => {
-                for value in values {
-                    self.insert_api_version(value);
-                }
-            }
-            HelperBranchBody::Nested { branches } => {
-                self.suppress_primary_api_version = true;
-                self.record_api_version_branch_literals(&branches);
-            }
-        }
-    }
-
-    fn record_api_version_branches(&mut self, branches: Vec<HelperBranch>) {
-        if branches.is_empty() {
-            return;
-        }
-        if branches.len() == 1 {
-            match branches.into_iter().next().expect("single branch").body {
-                HelperBranchBody::Literals { values } => {
-                    self.record_api_version_output(HelperBranchBody::Literals { values });
-                }
-                HelperBranchBody::Nested { branches } => self.record_api_version_branches(branches),
-            }
-            return;
-        }
-        self.record_api_version_branch_literals(&branches);
-        self.api_version_branches.extend(branches);
-    }
-
-    fn record_api_version_branch_literals(&mut self, branches: &[HelperBranch]) {
-        for branch in branches {
-            for value in branch.body.all_literals() {
-                self.insert_api_version(value);
-            }
-        }
-    }
-
-    fn insert_api_version(&mut self, value: String) {
-        if !value.is_empty() && !self.api_versions.contains(&value) {
-            self.api_versions.push(value);
-        }
-    }
-
-    fn into_resource(self) -> Option<ResourceRef> {
-        let kind = self.kind?;
-        let mut versions = self.api_versions;
-        let api_version = if self.suppress_primary_api_version {
-            String::new()
-        } else {
-            versions.first().cloned().unwrap_or_default()
-        };
-        if !api_version.is_empty() {
-            versions.retain(|version| version != &api_version);
-        }
-        Some(ResourceRef {
-            api_version,
-            kind,
-            api_version_candidates: versions,
-            api_version_branches: self.api_version_branches,
-        })
-    }
-}
-
-#[derive(Default)]
 pub(crate) struct OutputEvaluator {
     seen: HashSet<String>,
 }
@@ -148,144 +73,13 @@ impl OutputEvaluator {
         if depth >= MAX_RECURSION_DEPTH {
             return HelperBranchBody::literals(Vec::new());
         }
-        let mut literals = Vec::new();
-        let mut branches = Vec::new();
-        self.collect_node(
+        self.evaluate_template_body(
             source,
             node,
             analysis_db,
-            depth + 1,
+            depth,
             BodyOutputMode::WholeHelper,
-            &mut literals,
-            &mut branches,
-        );
-        body_from_helper_parts(literals, branches)
-    }
-
-    fn collect_node(
-        &mut self,
-        source: &str,
-        node: tree_sitter::Node<'_>,
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-        mode: BodyOutputMode,
-        literals: &mut Vec<String>,
-        branches: &mut Vec<HelperBranch>,
-    ) {
-        match node_action(source, node) {
-            NodeAction::Text if matches!(mode, BodyOutputMode::WholeHelper) => {
-                if let Ok(text) = node.utf8_text(source.as_bytes()) {
-                    push_nonempty(text, literals);
-                }
-            }
-            NodeAction::Text => {
-                for body in api_version_outputs_in_span(
-                    source,
-                    node.start_byte(),
-                    node.end_byte(),
-                    analysis_db,
-                ) {
-                    append_body(body, literals, branches);
-                }
-            }
-            NodeAction::Output(Some(exprs)) if matches!(mode, BodyOutputMode::WholeHelper) => {
-                if let Some(body) = self.action_body(&exprs, analysis_db, depth) {
-                    append_body(body, literals, branches);
-                }
-            }
-            NodeAction::If(Some(header)) => {
-                branches.extend(self.branches_from_if(
-                    source,
-                    node,
-                    &header,
-                    analysis_db,
-                    depth,
-                    mode,
-                ));
-            }
-            NodeAction::Range(_) | NodeAction::With(_) => {
-                for field in ["body", "alternative"] {
-                    for child in helm_schema_ast::children_with_field(node, field) {
-                        self.collect_node(
-                            source,
-                            child,
-                            analysis_db,
-                            depth + 1,
-                            mode,
-                            literals,
-                            branches,
-                        );
-                    }
-                }
-            }
-            NodeAction::Suppressed | NodeAction::Assignment(_) | NodeAction::Output(Some(_)) => {}
-            NodeAction::Descend | NodeAction::Output(None) | NodeAction::If(None) => {
-                let mut cursor = node.walk();
-                for child in node.children(&mut cursor) {
-                    self.collect_node(
-                        source,
-                        child,
-                        analysis_db,
-                        depth + 1,
-                        mode,
-                        literals,
-                        branches,
-                    );
-                }
-            }
-        }
-    }
-
-    fn branches_from_if(
-        &mut self,
-        source: &str,
-        node: tree_sitter::Node<'_>,
-        header: &TemplateHeader,
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-        mode: BodyOutputMode,
-    ) -> Vec<HelperBranch> {
-        if depth >= MAX_RECURSION_DEPTH {
-            return Vec::new();
-        };
-        let mut branches = vec![HelperBranch {
-            guard: Some(branch_guard_for_mode(header, "if", mode)),
-            body: self.evaluate_children_with_field(
-                source,
-                node,
-                "consequence",
-                analysis_db,
-                depth + 1,
-                mode,
-            ),
-        }];
-
-        for (header, children) in else_if_pairs(node, source) {
-            let Some(header) = header else {
-                continue;
-            };
-            let body = self.evaluate_nodes(source, &children, analysis_db, depth + 1, mode);
-            if !body.is_empty() {
-                branches.push(HelperBranch {
-                    guard: Some(branch_guard_for_mode(&header, "else if", mode)),
-                    body,
-                });
-            }
-        }
-
-        let body = self.evaluate_children_with_field(
-            source,
-            node,
-            "alternative",
-            analysis_db,
-            depth + 1,
-            mode,
-        );
-        if !body.is_empty() {
-            branches.push(HelperBranch { guard: None, body });
-        }
-        branches.retain(|branch| !branch.body.is_empty());
-        branches
+        )
     }
 
     fn action_body(
@@ -329,44 +123,297 @@ impl OutputEvaluator {
         result
     }
 
-    fn evaluate_children_with_field(
+    fn evaluate_template_body(
         &mut self,
         source: &str,
         node: tree_sitter::Node<'_>,
-        field: &str,
         analysis_db: &IrAnalysisDb,
         depth: usize,
         mode: BodyOutputMode,
     ) -> HelperBranchBody {
-        let children = helm_schema_ast::children_with_field(node, field);
-        self.evaluate_nodes(source, &children, analysis_db, depth, mode)
+        let mut runtime = ResourceOutputRuntime {
+            evaluator: self,
+            source,
+            analysis_db,
+            depth,
+            mode,
+            parts: OutputParts::default(),
+            no_output_depth: 0,
+        };
+        eval_template_body(&mut runtime, node);
+        runtime.into_body()
     }
 
-    fn evaluate_nodes(
+    fn evaluate_resource_output(
         &mut self,
         source: &str,
-        nodes: &[tree_sitter::Node<'_>],
+        node: tree_sitter::Node<'_>,
         analysis_db: &IrAnalysisDb,
-        depth: usize,
-        mode: BodyOutputMode,
-    ) -> HelperBranchBody {
-        let mut literals = Vec::new();
-        let mut branches = Vec::new();
-        for node in nodes {
-            self.collect_node(
-                source,
-                *node,
-                analysis_db,
-                depth + 1,
-                mode,
-                &mut literals,
-                &mut branches,
-            );
+    ) -> (Option<String>, HelperBranchBody) {
+        let mut runtime = ResourceOutputRuntime {
+            evaluator: self,
+            source,
+            analysis_db,
+            depth: 0,
+            mode: BodyOutputMode::ApiVersionHeader,
+            parts: OutputParts::default(),
+            no_output_depth: 0,
+        };
+        eval_template_body(&mut runtime, node);
+        runtime.into_output()
+    }
+}
+
+#[derive(Clone, Default)]
+struct OutputParts {
+    literals: Vec<String>,
+    branches: Vec<HelperBranch>,
+    kind: Option<String>,
+}
+
+impl OutputParts {
+    fn append_body(&mut self, body: HelperBranchBody) {
+        match body {
+            HelperBranchBody::Literals { values } => self.literals.extend(values),
+            HelperBranchBody::Nested { branches } => self.branches.extend(branches),
         }
+    }
+
+    fn append_parts(&mut self, other: Self) {
+        self.literals.extend(other.literals);
+        self.branches.extend(other.branches);
+        if self.kind.is_none() {
+            self.kind = other.kind;
+        }
+    }
+
+    fn delta_after(&self, base: &Self) -> Self {
+        Self {
+            literals: self
+                .literals
+                .iter()
+                .skip(base.literals.len())
+                .cloned()
+                .collect(),
+            branches: self
+                .branches
+                .iter()
+                .skip(base.branches.len())
+                .cloned()
+                .collect(),
+            kind: base.kind.is_none().then(|| self.kind.clone()).flatten(),
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.literals.is_empty() && self.branches.is_empty()
+    }
+
+    fn into_body(self, mode: BodyOutputMode) -> HelperBranchBody {
         match mode {
-            BodyOutputMode::WholeHelper => body_from_helper_parts(literals, branches),
-            BodyOutputMode::ApiVersionHeader => body_from_parts(literals, branches),
+            BodyOutputMode::WholeHelper => body_from_helper_parts(self.literals, self.branches),
+            BodyOutputMode::ApiVersionHeader => body_from_parts(self.literals, self.branches),
         }
+    }
+}
+
+#[derive(Clone)]
+struct ResourceOutputSnapshot {
+    parts: OutputParts,
+    no_output_depth: usize,
+}
+
+#[derive(Clone)]
+struct ResourceConditionPlan {
+    output_guard: Option<CapabilityGuard>,
+}
+
+struct ResourceOutputRuntime<'a, 'source> {
+    evaluator: &'a mut OutputEvaluator,
+    source: &'source str,
+    analysis_db: &'a IrAnalysisDb,
+    depth: usize,
+    mode: BodyOutputMode,
+    parts: OutputParts,
+    no_output_depth: usize,
+}
+
+impl ResourceOutputRuntime<'_, '_> {
+    fn into_body(self) -> HelperBranchBody {
+        self.parts.into_body(self.mode)
+    }
+
+    fn into_output(self) -> (Option<String>, HelperBranchBody) {
+        let kind = self.parts.kind.clone();
+        (kind, self.into_body())
+    }
+}
+
+impl NodeActionEffectSink for ResourceOutputRuntime<'_, '_> {
+    fn push_predicate_if_absent(&mut self, _predicate: Predicate) {}
+
+    fn push_dot_binding(&mut self, _binding: Option<AbstractValue>) {}
+}
+
+impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
+    type ScopeSnapshot = ResourceOutputSnapshot;
+    type ConditionPlan = ResourceConditionPlan;
+    type RangePlan = ();
+
+    fn source(&self) -> &str {
+        self.source
+    }
+
+    fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
+        if self.no_output_depth > 0 {
+            return;
+        }
+        match node_action(self.source, node) {
+            NodeAction::Text if matches!(self.mode, BodyOutputMode::WholeHelper) => {
+                if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
+                    push_nonempty(text, &mut self.parts.literals);
+                }
+            }
+            NodeAction::Text => {
+                for body in api_version_outputs_in_span(
+                    self.source,
+                    node.start_byte(),
+                    node.end_byte(),
+                    self.analysis_db,
+                ) {
+                    self.parts.append_body(body);
+                }
+                if self.parts.kind.is_none()
+                    && let Some(kind) =
+                        header_lines_in_span(self.source, node.start_byte(), node.end_byte())
+                            .find_map(|line| header_line_value(line, "kind"))
+                {
+                    self.parts.kind = Some(unquote_yaml_scalar(kind).to_string());
+                }
+            }
+            NodeAction::Suppressed
+            | NodeAction::Assignment(_)
+            | NodeAction::If(_)
+            | NodeAction::With(_)
+            | NodeAction::Range(_)
+            | NodeAction::Output(_)
+            | NodeAction::Descend => {}
+        }
+    }
+
+    fn scope_snapshot(&self) -> Self::ScopeSnapshot {
+        ResourceOutputSnapshot {
+            parts: self.parts.clone(),
+            no_output_depth: self.no_output_depth,
+        }
+    }
+
+    fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
+        self.parts = snapshot.parts;
+        self.no_output_depth = snapshot.no_output_depth;
+    }
+
+    fn join_branch_scopes(
+        &mut self,
+        entry: &Self::ScopeSnapshot,
+        outcomes: Vec<Self::ScopeSnapshot>,
+    ) {
+        self.parts = entry.parts.clone();
+        for outcome in outcomes {
+            self.parts
+                .append_parts(outcome.parts.delta_after(&entry.parts));
+        }
+        self.no_output_depth = entry.no_output_depth;
+    }
+
+    fn join_condition_branch_scopes(
+        &mut self,
+        entry: &Self::ScopeSnapshot,
+        branches: Vec<BranchOutcome<Self::ConditionPlan, Self::ScopeSnapshot>>,
+    ) {
+        let has_output_guards = branches.iter().any(|branch| {
+            branch
+                .plan
+                .as_ref()
+                .and_then(|plan| plan.output_guard.as_ref())
+                .is_some()
+        });
+        if !has_output_guards {
+            self.join_branch_scopes(
+                entry,
+                branches.into_iter().map(|branch| branch.outcome).collect(),
+            );
+            return;
+        }
+
+        self.parts = entry.parts.clone();
+        for branch in branches {
+            if self.parts.kind.is_none() {
+                self.parts.kind = branch.outcome.parts.kind.clone();
+            }
+            let parts = branch.outcome.parts.delta_after(&entry.parts);
+            if parts.is_empty() {
+                continue;
+            }
+            self.parts.branches.push(HelperBranch {
+                guard: branch.plan.and_then(|plan| plan.output_guard),
+                body: parts.into_body(self.mode),
+            });
+        }
+        self.no_output_depth = entry.no_output_depth;
+    }
+
+    fn enter_no_output(&mut self) {
+        self.no_output_depth += 1;
+    }
+
+    fn exit_no_output(&mut self) {
+        self.no_output_depth = self.no_output_depth.saturating_sub(1);
+    }
+
+    fn handle_output_node(&mut self, _node: tree_sitter::Node<'_>, exprs: &[TemplateExpr]) {
+        if self.no_output_depth > 0 || !matches!(self.mode, BodyOutputMode::WholeHelper) {
+            return;
+        }
+        if let Some(body) = self
+            .evaluator
+            .action_body(exprs, self.analysis_db, self.depth)
+        {
+            self.parts.append_body(body);
+        }
+    }
+
+    fn plan_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan {
+        ResourceConditionPlan {
+            output_guard: Some(guard_from_header(header)),
+        }
+    }
+
+    fn activate_if_condition(&mut self, _plan: &Self::ConditionPlan) {}
+
+    fn plan_with_condition(&mut self, _header: &TemplateHeader) -> Self::ConditionPlan {
+        ResourceConditionPlan { output_guard: None }
+    }
+
+    fn activate_with_condition(&mut self, _plan: &Self::ConditionPlan) {}
+
+    fn activate_condition_alternative(&mut self, _plan: &Self::ConditionPlan) {}
+
+    fn plan_range_action(
+        &mut self,
+        _node: tree_sitter::Node<'_>,
+        _header: Option<&TemplateHeader>,
+        _current_path: &YamlPath,
+        _mapping_entry_path: Option<&YamlPath>,
+    ) -> Self::RangePlan {
+    }
+
+    fn activate_range_action(
+        &mut self,
+        _node: tree_sitter::Node<'_>,
+        _plan: &Self::RangePlan,
+        _current_path: &YamlPath,
+    ) {
     }
 }
 
@@ -416,102 +463,75 @@ fn detect_manifest_resource(source: &str, analysis_db: &IrAnalysisDb) -> Option<
 }
 
 fn detect_resource_in_source(source: &str, analysis_db: &IrAnalysisDb) -> Option<ResourceRef> {
-    let mut state = ResourceState::default();
-    collect_go_template_resource_fields(source, analysis_db, &mut state);
-    state.into_resource()
+    let tree = parse_go_template(source)?;
+    let (kind, api_version_output) =
+        OutputEvaluator::default().evaluate_resource_output(source, tree.root_node(), analysis_db);
+    resource_from_parts(kind, api_version_output)
 }
 
-fn collect_go_template_resource_fields(
-    source: &str,
-    analysis_db: &IrAnalysisDb,
-    state: &mut ResourceState,
-) {
-    let Some(tree) = parse_go_template(source) else {
-        return;
-    };
-    collect_go_template_resource_fields_from_node(
-        source,
-        tree.root_node(),
-        analysis_db,
-        state,
-        true,
+fn resource_from_parts(
+    kind: Option<String>,
+    api_version_output: HelperBranchBody,
+) -> Option<ResourceRef> {
+    let kind = kind.filter(|kind| !kind.is_empty())?;
+    let mut api_versions = Vec::new();
+    let mut api_version_branches = Vec::new();
+    record_api_version_output(
+        api_version_output,
+        &mut api_versions,
+        &mut api_version_branches,
     );
+    let api_version = api_versions.first().cloned().unwrap_or_default();
+    if !api_version.is_empty() {
+        api_versions.retain(|version| version != &api_version);
+    }
+    Some(ResourceRef {
+        api_version,
+        kind,
+        api_version_candidates: api_versions,
+        api_version_branches,
+    })
 }
 
-fn collect_go_template_resource_fields_from_node(
-    source: &str,
-    node: tree_sitter::Node<'_>,
-    analysis_db: &IrAnalysisDb,
-    state: &mut ResourceState,
-    collect_api_versions: bool,
+fn record_api_version_output(
+    output: HelperBranchBody,
+    versions: &mut Vec<String>,
+    branches: &mut Vec<HelperBranch>,
 ) {
-    match node_action(source, node) {
-        NodeAction::If(Some(header)) if collect_api_versions => {
-            let branches = OutputEvaluator::default().branches_from_if(
-                source,
-                node,
-                &header,
-                analysis_db,
-                0,
-                BodyOutputMode::ApiVersionHeader,
-            );
-            if !branches.is_empty() {
-                state.record_api_version_branches(branches);
-            }
-            for field in ["consequence", "alternative", "option"] {
-                for child in helm_schema_ast::children_with_field(node, field) {
-                    collect_go_template_resource_fields_from_node(
-                        source,
-                        child,
-                        analysis_db,
-                        state,
-                        false,
-                    );
-                }
-            }
+    match output {
+        HelperBranchBody::Literals { values } => insert_api_versions(values, versions),
+        HelperBranchBody::Nested { branches: nested } => {
+            record_api_version_branches(nested, versions, branches);
         }
-        NodeAction::Range(_) | NodeAction::With(_) => {
-            for field in ["body", "alternative"] {
-                for child in helm_schema_ast::children_with_field(node, field) {
-                    collect_go_template_resource_fields_from_node(
-                        source,
-                        child,
-                        analysis_db,
-                        state,
-                        collect_api_versions,
-                    );
-                }
-            }
-        }
-        NodeAction::Text => {
-            if collect_api_versions {
-                for body in api_version_outputs_in_span(
-                    source,
-                    node.start_byte(),
-                    node.end_byte(),
-                    analysis_db,
-                ) {
-                    state.record_api_version_output(body);
-                }
-            }
-            if let Some(kind) = header_lines_in_span(source, node.start_byte(), node.end_byte())
-                .find_map(|line| header_line_value(line, "kind"))
-            {
-                state.set_kind_if_empty(unquote_yaml_scalar(kind));
-            }
-        }
-        NodeAction::Suppressed => {}
-        _ => {
-            let mut cursor = node.walk();
-            for child in node.children(&mut cursor) {
-                collect_go_template_resource_fields_from_node(
-                    source,
-                    child,
-                    analysis_db,
-                    state,
-                    collect_api_versions,
-                );
-            }
+    }
+}
+
+fn record_api_version_branches(
+    nested: Vec<HelperBranch>,
+    versions: &mut Vec<String>,
+    branches: &mut Vec<HelperBranch>,
+) {
+    if nested.is_empty() {
+        return;
+    }
+    if nested.len() == 1 {
+        record_api_version_output(
+            nested.into_iter().next().expect("single branch").body,
+            versions,
+            branches,
+        );
+        return;
+    }
+    for branch in &nested {
+        insert_api_versions(branch.body.all_literals(), versions);
+    }
+    branches.extend(nested);
+}
+
+fn insert_api_versions(values: impl IntoIterator<Item = String>, versions: &mut Vec<String>) {
+    for value in values {
+        if !value.is_empty() && !versions.contains(&value) {
+            versions.push(value);
         }
     }
 }
@@ -831,26 +851,6 @@ fn push_nonempty(text: &str, out: &mut Vec<String>) {
 
 fn guard_from_header(header: &TemplateHeader) -> CapabilityGuard {
     decode_guard_expr(header.expr(), header.raw()).unwrap_or_else(|| decode_guard(header.raw()))
-}
-
-fn guard_from_branch_header(header: &TemplateHeader, prefix: &str) -> CapabilityGuard {
-    let raw = header.raw().trim();
-    if raw.starts_with("if ") || raw.starts_with("else if ") {
-        return guard_from_header(header);
-    }
-    let display = format!("{prefix} {raw}");
-    decode_guard_expr(header.expr(), &display).unwrap_or_else(|| decode_guard(&display))
-}
-
-fn branch_guard_for_mode(
-    header: &TemplateHeader,
-    prefix: &str,
-    mode: BodyOutputMode,
-) -> CapabilityGuard {
-    match mode {
-        BodyOutputMode::WholeHelper => guard_from_header(header),
-        BodyOutputMode::ApiVersionHeader => guard_from_branch_header(header, prefix),
-    }
 }
 
 fn helper_call_names(exprs: &[TemplateExpr]) -> Vec<String> {
