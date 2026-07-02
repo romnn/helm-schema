@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
 use helm_schema_ast::{
-    ResourceSpan, TemplateExpr, TemplateHeader, decode_guard, decode_guard_expr, parse_expr_text,
-    parse_go_template, parse_helm_template,
+    AttributionIndex, ResourceSpan, TemplateExpr, TemplateHeader, build_attribution_index,
+    decode_guard, decode_guard_expr, parse_expr_text, parse_go_template, parse_helm_template,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, Predicate, ResourceRef};
 
@@ -17,6 +17,17 @@ use crate::node_eval::{
 };
 
 const MAX_RECURSION_DEPTH: usize = 12;
+
+/// Build the complete attributed-document artifact for one template source:
+/// output slots, control sites, and resource identity spans derived together.
+pub(crate) fn attributed_document(
+    source: &str,
+    root: tree_sitter::Node<'_>,
+    analysis_db: &IrAnalysisDb,
+) -> AttributionIndex {
+    build_attribution_index(source, root)
+        .with_resource_spans(collect_resource_spans(source, analysis_db))
+}
 
 pub(crate) fn collect_resource_spans(
     source: &str,
@@ -750,13 +761,7 @@ fn yaml_scalar_text<'source>(
     source: &'source str,
 ) -> Option<&'source str> {
     let text = node.utf8_text(source.as_bytes()).ok()?.trim();
-    text.strip_prefix('"')
-        .and_then(|text| text.strip_suffix('"'))
-        .or_else(|| {
-            text.strip_prefix('\'')
-                .and_then(|text| text.strip_suffix('\''))
-        })
-        .or(Some(text))
+    Some(unquote_yaml_scalar(text))
 }
 
 fn normalize_sequence_item_source(source: &str) -> String {

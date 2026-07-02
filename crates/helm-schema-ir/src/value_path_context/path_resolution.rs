@@ -42,7 +42,7 @@ impl ValuePathContext<'_> {
         let effects = self.expression_effects(exprs);
         let mut values = effects.output_value_paths();
         let defaults = effects.default_paths_with_local();
-        let type_hints = effects.schema_type_hints();
+        let type_hints = effects.type_hints.clone();
         values.extend(defaults.iter().cloned());
         Effects {
             output_paths: values,

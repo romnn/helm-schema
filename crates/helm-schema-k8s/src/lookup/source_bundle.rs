@@ -4,6 +4,8 @@ use std::convert::Infallible;
 use json_schema_walk::{SchemaTraversalContext, ref_points_inside, try_map_schema_context};
 use serde_json::{Map, Value};
 
+use crate::schema_doc::strip_ref;
+
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct SourceBundleLocation {
     pub(crate) document: String,
@@ -250,15 +252,6 @@ where
             }
         }
     }
-}
-
-fn strip_ref(schema: &Value) -> Value {
-    let Some(object) = schema.as_object() else {
-        return schema.clone();
-    };
-    let mut out = object.clone();
-    out.remove("$ref");
-    Value::Object(out)
 }
 
 fn definition_base_name(pointer: &str) -> String {

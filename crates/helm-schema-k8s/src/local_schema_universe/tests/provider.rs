@@ -3,6 +3,22 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+fn universe_from_crd_documents<I: IntoIterator<Item = serde_json::Value>>(
+    documents: I,
+) -> LocalSchemaUniverse {
+    let mut universe = LocalSchemaUniverse::default();
+    for document in documents {
+        for resource_schema in crate::resource_schemas_from_crd_document_with_source(
+            document,
+            "chart-local",
+            String::new(),
+        ) {
+            universe.insert_resource_schema(resource_schema);
+        }
+    }
+    universe
+}
+
 fn resource(api_version: &str) -> ResourceRef {
     ResourceRef {
         api_version: api_version.to_string(),
@@ -13,7 +29,7 @@ fn resource(api_version: &str) -> ResourceRef {
 }
 
 fn widget_universe() -> LocalSchemaUniverse {
-    LocalSchemaUniverse::from_crd_documents([json!({
+    universe_from_crd_documents([json!({
         "apiVersion": "apiextensions.k8s.io/v1",
         "kind": "CustomResourceDefinition",
         "spec": {
@@ -63,7 +79,7 @@ fn resolves_served_crd_version_schema_from_universe() {
 #[test]
 fn lookup_attaches_chart_local_provider_source() {
     let mut universe = LocalSchemaUniverse::default();
-    universe.insert_crd_document_with_source(
+    for resource_schema in crate::resource_schemas_from_crd_document_with_source(
         json!({
             "apiVersion": "apiextensions.k8s.io/v1",
             "kind": "CustomResourceDefinition",
@@ -93,7 +109,9 @@ fn lookup_attaches_chart_local_provider_source() {
         }),
         "chart-static-crd",
         "/chart/crds/widgets.yaml",
-    );
+    ) {
+        universe.insert_resource_schema(resource_schema);
+    }
     let provider = ChartLocalCrdSchemaProvider::new(universe);
 
     let result = provider.lookup(

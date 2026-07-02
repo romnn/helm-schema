@@ -480,10 +480,8 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
         &overlay
             .evidence
             .as_path_evidence("serviceMonitor.metricRelabelings"),
-        &serde_yaml::from_str("null\n").expect("yaml null"),
         &provider,
-    )
-    .expect("resolved overlay schema");
+    );
     sim_assert_eq!(
         have: resolved_overlay.schema.get("type").and_then(Value::as_str),
         want: Some("array"),

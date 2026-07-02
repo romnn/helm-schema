@@ -3,6 +3,22 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+fn universe_from_crd_documents<I: IntoIterator<Item = serde_json::Value>>(
+    documents: I,
+) -> LocalSchemaUniverse {
+    let mut universe = LocalSchemaUniverse::default();
+    for document in documents {
+        for resource_schema in crate::resource_schemas_from_crd_document_with_source(
+            document,
+            "chart-local",
+            String::new(),
+        ) {
+            universe.insert_resource_schema(resource_schema);
+        }
+    }
+    universe
+}
+
 fn resource(api_version: &str) -> ResourceRef {
     ResourceRef {
         api_version: api_version.to_string(),
@@ -14,7 +30,7 @@ fn resource(api_version: &str) -> ResourceRef {
 
 #[test]
 fn extracts_served_crd_version_schema() {
-    let universe = LocalSchemaUniverse::from_crd_documents([json!({
+    let universe = universe_from_crd_documents([json!({
         "apiVersion": "apiextensions.k8s.io/v1",
         "kind": "CustomResourceDefinition",
         "spec": {
@@ -55,7 +71,7 @@ fn extracts_served_crd_version_schema() {
 
 #[test]
 fn ignores_unserved_crd_versions() {
-    let universe = LocalSchemaUniverse::from_crd_documents([json!({
+    let universe = universe_from_crd_documents([json!({
         "apiVersion": "apiextensions.k8s.io/v1",
         "kind": "CustomResourceDefinition",
         "spec": {

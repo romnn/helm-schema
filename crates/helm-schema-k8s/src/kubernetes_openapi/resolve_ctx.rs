@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
 use serde_json::{Map, Value};
 
-use crate::schema_doc::SchemaDoc;
+use crate::schema_doc::{SchemaDoc, strip_ref};
 
 /// `$ref` resolution context. Holds previously-loaded documents and a
 /// stack of (filename, json-pointer) pairs to break cycles.
@@ -217,15 +217,6 @@ fn append_json_pointer_segment(pointer: &str, segment: &str) -> String {
     } else {
         format!("{pointer}/{escaped}")
     }
-}
-
-fn strip_ref(schema: &Value) -> Value {
-    let Some(obj) = schema.as_object() else {
-        return schema.clone();
-    };
-    let mut out = obj.clone();
-    out.remove("$ref");
-    Value::Object(out)
 }
 
 fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(

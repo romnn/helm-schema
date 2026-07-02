@@ -26,9 +26,12 @@ use crate::source_cache::{
 };
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
-use super::mirror_chain::{K8sMirrorChain, K8sSource};
 use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf_with_location};
 use super::version_chain::K8sVersionChain;
+use crate::mirror_chain::{MirrorChain, SchemaSource};
+
+const K8S_DEFAULT_BASE_URL: &str =
+    "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master";
 
 /// In-memory doc cache key: `(source_id, version_dir, filename)`.
 type MemKey = (String, String, String);
@@ -43,13 +46,13 @@ fn mem_key(source_id: &str, version: &str, filename: &str) -> MemKey {
 
 /// Composer of fetch + cache + lookup primitives for upstream K8s
 /// OpenAPI schemas. Carries a [`K8sVersionChain`] (Feature B) and a
-/// [`K8sMirrorChain`] (Feature B+) and walks the cross product
+/// [`MirrorChain`] (Feature B+) and walks the cross product
 /// version-first / mirror-first per the design in
 /// `plan/helm-schema/multi-version-k8s-and-apiversion-guessing.md`.
 #[derive(Debug)]
 pub struct KubernetesJsonSchemaProvider {
     pub versions: K8sVersionChain,
-    pub mirrors: K8sMirrorChain,
+    pub mirrors: MirrorChain,
     pub cache_dir: PathBuf,
     pub allow_download: bool,
     pub use_cache: bool,
@@ -77,7 +80,7 @@ enum ProbeOutcome {
 }
 
 struct LoadedK8sSchemaDoc {
-    source: K8sSource,
+    source: SchemaSource,
     version: String,
     filename: String,
     doc: SchemaDoc,
@@ -104,7 +107,7 @@ impl KubernetesJsonSchemaProvider {
     pub fn with_versions(versions: K8sVersionChain) -> Self {
         Self {
             versions,
-            mirrors: K8sMirrorChain::default(),
+            mirrors: MirrorChain::with_mirrors(K8S_DEFAULT_BASE_URL, Vec::new()),
             cache_dir: default_k8s_schema_cache_dir(),
             allow_download: std::env::var("HELM_SCHEMA_ALLOW_NET")
                 .ok()
@@ -140,7 +143,7 @@ impl KubernetesJsonSchemaProvider {
 
     #[must_use]
     pub fn with_mirrors(mut self, mirrors: Vec<String>) -> Self {
-        self.mirrors = K8sMirrorChain::with_mirrors(mirrors);
+        self.mirrors = MirrorChain::with_mirrors(K8S_DEFAULT_BASE_URL, mirrors);
         self
     }
 
@@ -217,7 +220,7 @@ impl KubernetesJsonSchemaProvider {
 
     fn try_load_from_source(
         &self,
-        source: &K8sSource,
+        source: &SchemaSource,
         version: &str,
         filename: &str,
     ) -> Option<SchemaDoc> {
@@ -518,7 +521,7 @@ impl KubernetesJsonSchemaProvider {
         };
         let configured_versions: std::collections::HashSet<String> =
             self.versions.ordered().into_iter().collect();
-        let configured_source_ids = self.configured_source_ids();
+        let configured_source_ids = self.mirrors.source_ids();
         for source_entry in source_entries.flatten() {
             let source_path = source_entry.path();
             if !source_path.is_dir() {
@@ -557,18 +560,6 @@ impl KubernetesJsonSchemaProvider {
         out.sort();
         out.dedup();
         out
-    }
-
-    /// Source-id directory names currently configured (`default` plus
-    /// any `--k8s-schema-mirror` mirrors). Cache scans consult only
-    /// these — stale dirs from removed mirrors do not influence live
-    /// inference or hints (Finding 2).
-    fn configured_source_ids(&self) -> std::collections::HashSet<String> {
-        self.mirrors
-            .sources
-            .iter()
-            .map(|source| source.source_id.clone())
-            .collect()
     }
 }
 
@@ -672,7 +663,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         out.extend(scan_k8s_cache(
             &self.cache_dir,
             kind,
-            &self.configured_source_ids(),
+            &self.mirrors.source_ids(),
             &inference_versions,
         ));
         out

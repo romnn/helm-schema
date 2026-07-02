@@ -24,3 +24,13 @@ impl SchemaDoc {
         self.root.as_ref()
     }
 }
+
+/// Clone `schema` without its `$ref` key, keeping sibling keys.
+pub(crate) fn strip_ref(schema: &Value) -> Value {
+    let Some(object) = schema.as_object() else {
+        return schema.clone();
+    };
+    let mut out = object.clone();
+    out.remove("$ref");
+    Value::Object(out)
+}

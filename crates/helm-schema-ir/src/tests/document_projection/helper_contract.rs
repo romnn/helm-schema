@@ -46,7 +46,7 @@ fn document_type_hints_resolve_template_local_aliases() {
     let effects = context.expression_output_effects(&exprs);
 
     sim_assert_eq!(
-        have: effects.schema_type_hints(),
+        have: effects.type_hints.clone(),
         want: BTreeMap::from([
             (
                 "global.service.port".to_string(),

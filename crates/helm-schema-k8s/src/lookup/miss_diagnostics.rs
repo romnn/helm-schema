@@ -47,7 +47,7 @@ impl<'a> MissingLookupDiagnostics<'a> {
             tried_filenames: candidate_filenames_for_resource(resource),
             suggested_k8s_version: available_in_cache_versions.first().cloned(),
             available_in_cache_versions,
-            hint: crate::kubernetes_openapi::missing_schema_hint(resource),
+            hint: missing_schema_hint(resource),
         }
     }
 
@@ -69,6 +69,19 @@ impl<'a> MissingLookupDiagnostics<'a> {
             .flatten()
             .collect()
     }
+}
+
+/// Returns a short user-facing hint for resources we know were removed
+/// from a specific K8s minor — e.g. HPA `autoscaling/v2beta1` going
+/// away in v1.25.
+fn missing_schema_hint(resource: &ResourceRef) -> Option<String> {
+    if resource.kind == "HorizontalPodAutoscaler" && resource.api_version == "autoscaling/v2beta1" {
+        return Some(
+            "autoscaling/v2beta1 HorizontalPodAutoscaler was removed in Kubernetes v1.25+"
+                .to_string(),
+        );
+    }
+    None
 }
 
 fn local_override_unreadable(trace: &LookupTrace) -> Option<Diagnostic> {

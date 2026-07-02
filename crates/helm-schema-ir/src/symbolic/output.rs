@@ -147,7 +147,7 @@ fn output_contract(
         contract.push(context.contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar, &[]));
     }
 
-    contract.extend_type_hints(output_effects.schema_type_hints());
+    contract.extend_type_hints(output_effects.type_hints.clone());
     append_helper_contract_uses(
         &helper,
         &output_effects.encoded_paths,

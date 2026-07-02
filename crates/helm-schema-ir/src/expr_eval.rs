@@ -128,11 +128,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                 .as_ref()
                 .and_then(|value| value.apply_to_path(path));
             let mut effects = base.effects;
-            effects.reads.clear();
             effects.output_paths.clear();
-            if let Some(value) = &value {
-                effects.reads.extend(value.paths());
-            }
             effects
                 .bound_output_paths
                 .extend(env.bound_values.selector_paths(expr));
@@ -254,7 +250,16 @@ pub(crate) fn expr_literal_helper_call_callee(expr: &TemplateExpr) -> Option<&st
     literal_helper_call_callee(function, args)
 }
 
-fn is_helper_call_function(function: &str) -> bool {
+/// Leading `$var` of an expression or pipeline, after unwrapping parens.
+pub(crate) fn expr_leading_variable(expr: &TemplateExpr) -> Option<&str> {
+    match expr.deparen() {
+        TemplateExpr::Variable(name) if !name.is_empty() => Some(name.as_str()),
+        TemplateExpr::Pipeline(stages) => stages.first().and_then(expr_leading_variable),
+        _ => None,
+    }
+}
+
+pub(crate) fn is_helper_call_function(function: &str) -> bool {
     matches!(function, "include" | "template")
 }
 

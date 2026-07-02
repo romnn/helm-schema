@@ -8,25 +8,11 @@ use serde_json::Value;
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
+use crate::local_schema_universe::ResourceDocKey;
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct ResourceDocKey {
-    api_version: String,
-    kind: String,
-}
-
-impl ResourceDocKey {
-    fn from_resource(resource: &ResourceRef) -> Self {
-        Self {
-            api_version: resource.api_version.clone(),
-            kind: resource.kind.clone(),
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct LocalSchemaProvider {
@@ -51,26 +37,10 @@ impl LocalSchemaProvider {
         self
     }
 
-    fn relative_path_for_resource(resource: &ResourceRef) -> Option<String> {
-        let api_version = resource.api_version.trim();
-        let kind = resource.kind.trim();
-        if api_version.is_empty() || kind.is_empty() {
-            return None;
-        }
-        let (group, version) = api_version.split_once('/')?;
-        let group = group.trim();
-        let version = version.trim();
-        if group.is_empty() || version.is_empty() {
-            return None;
-        }
-        let kind_lc = kind.to_ascii_lowercase();
-        Some(format!("{group}/{kind_lc}_{version}.json"))
-    }
-
     fn override_file_for(&self, resource: &ResourceRef) -> Option<PathBuf> {
         Some(
             self.root_dir
-                .join(Self::relative_path_for_resource(resource)?),
+                .join(crate::filename::group_relative_path_for_resource(resource)?),
         )
     }
 
@@ -124,7 +94,7 @@ impl LocalSchemaProvider {
             ProviderOrigin::LocalOverride,
             self.root_dir.display().to_string(),
             None,
-            Self::relative_path_for_resource(resource)?,
+            crate::filename::group_relative_path_for_resource(resource)?,
             pointer.to_string(),
         ))
     }

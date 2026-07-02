@@ -463,9 +463,6 @@ fn eval_index(
     }
 
     let value = AbstractValue::choice(values);
-    if let Some(value) = &value {
-        effects.reads.extend(value.paths());
-    }
     EvalResult::with_effects(value, effects)
 }
 

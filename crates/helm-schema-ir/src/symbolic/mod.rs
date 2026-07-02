@@ -5,7 +5,7 @@ mod runtime;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{AttributionIndex, DefineIndex, TemplateExpr, build_attribution_index};
+use helm_schema_ast::{AttributionIndex, DefineIndex, TemplateExpr};
 
 use crate::Guard;
 use crate::abstract_value::AbstractValue;
@@ -216,11 +216,11 @@ impl<'a> SymbolicWalker<'a> {
     }
 
     fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {
-        self.attribution = build_attribution_index(self.source, tree.root_node())
-            .with_resource_spans(crate::resource_identity::collect_resource_spans(
-                self.source,
-                &self.ir_context.inner.analysis_db,
-            ));
+        self.attribution = crate::resource_identity::attributed_document(
+            self.source,
+            tree.root_node(),
+            &self.ir_context.inner.analysis_db,
+        );
         self.scope
             .reset_control(&self.seed_predicates, self.seed_dot.clone());
         self.no_output_depth = 0;

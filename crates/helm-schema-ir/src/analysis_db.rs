@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{AttributionIndex, DefineIndex, TemplateExpr, build_attribution_index};
+use helm_schema_ast::{AttributionIndex, DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -95,10 +95,11 @@ impl IrAnalysisDb {
 
         let body = self.define_bodies.get(name)?;
         let tree = self.define_tree(name)?;
-        let attribution =
-            build_attribution_index(body.source.as_str(), tree.root_node()).with_resource_spans(
-                crate::resource_identity::collect_resource_spans(body.source.as_str(), self),
-            );
+        let attribution = crate::resource_identity::attributed_document(
+            body.source.as_str(),
+            tree.root_node(),
+            self,
+        );
         self.define_attributions
             .borrow_mut()
             .insert(name.to_string(), attribution.clone());

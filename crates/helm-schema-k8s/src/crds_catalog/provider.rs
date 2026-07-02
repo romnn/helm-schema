@@ -21,8 +21,10 @@ use crate::source_cache::{
 };
 
 use super::cross_scan::collect_other_versions;
-use super::mirror_chain::{CrdMirrorChain, CrdSource};
 use super::relative_path::relative_path_for_resource;
+use crate::mirror_chain::{MirrorChain, SchemaSource};
+
+const CRD_DEFAULT_BASE_URL: &str = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main";
 
 /// In-memory cache key: `(source_id, relative_path)`.
 type MemKey = (String, String);
@@ -33,7 +35,7 @@ fn mem_key(source_id: &str, relative_path: &str) -> MemKey {
 
 #[derive(Debug)]
 pub struct CrdsCatalogSchemaProvider {
-    pub mirrors: CrdMirrorChain,
+    pub mirrors: MirrorChain,
     pub cache_dir: PathBuf,
     pub allow_download: bool,
     pub loose: bool,
@@ -52,7 +54,7 @@ impl CrdsCatalogSchemaProvider {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            mirrors: CrdMirrorChain::default(),
+            mirrors: MirrorChain::with_mirrors(CRD_DEFAULT_BASE_URL, Vec::new()),
             cache_dir: default_crd_schema_cache_dir(),
             allow_download: std::env::var("HELM_SCHEMA_ALLOW_NET")
                 .ok()
@@ -82,7 +84,7 @@ impl CrdsCatalogSchemaProvider {
 
     #[must_use]
     pub fn with_mirrors(mut self, mirrors: Vec<String>) -> Self {
-        self.mirrors = CrdMirrorChain::with_mirrors(mirrors);
+        self.mirrors = MirrorChain::with_mirrors(CRD_DEFAULT_BASE_URL, mirrors);
         self
     }
 
@@ -166,20 +168,11 @@ impl CrdsCatalogSchemaProvider {
             .collect()
     }
 
-    /// Source-id directory names currently configured (`default` plus
-    /// any `--crd-catalog-mirror` mirrors). Cache scans MUST consult
-    /// only these; on-disk dirs from previously-removed mirrors are
-    /// stale and must not influence live inference or cross-version
-    /// hints (Finding 2).
-    fn configured_source_ids(&self) -> std::collections::HashSet<String> {
-        self.mirrors
-            .sources
-            .iter()
-            .map(|source| source.source_id.clone())
-            .collect()
-    }
-
-    fn try_load_from_source(&self, source: &CrdSource, relative_path: &str) -> Option<SchemaDoc> {
+    fn try_load_from_source(
+        &self,
+        source: &SchemaSource,
+        relative_path: &str,
+    ) -> Option<SchemaDoc> {
         let local = crd_cache_path(&self.cache_dir, &source.source_id, relative_path);
         let url = source_url(&source.base_url, relative_path);
         load_source_schema_doc(
@@ -282,7 +275,7 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
                 &self.cache_dir,
                 resource,
                 requested_version,
-                &self.configured_source_ids(),
+                &self.mirrors.source_ids(),
             );
             if !other_versions.is_empty() {
                 out.push(Diagnostic::CrdVersionAvailableAtOtherVersions {
@@ -304,7 +297,7 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
             &self.cache_dir,
             kind,
             ProviderOrigin::DefaultCatalog,
-            &self.configured_source_ids(),
+            &self.mirrors.source_ids(),
         );
         // Tier 3 online probe.
         if self.allow_download {

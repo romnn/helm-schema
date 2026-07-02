@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use crate::schema_doc::SchemaDoc;
 
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct ResourceDocKey {
     api_version: String,
     kind: String,
@@ -102,37 +102,6 @@ impl LocalSchemaDocument {
 }
 
 impl LocalSchemaUniverse {
-    #[must_use]
-    pub fn from_crd_documents<I>(documents: I) -> Self
-    where
-        I: IntoIterator<Item = Value>,
-    {
-        let mut universe = Self::default();
-        for document in documents {
-            universe.insert_crd_document(document);
-        }
-        universe
-    }
-
-    pub fn insert_crd_document(&mut self, document: Value) {
-        for resource_schema in resource_schemas_from_crd_document(document) {
-            insert_resource_schema(&mut self.docs, resource_schema);
-        }
-    }
-
-    pub fn insert_crd_document_with_source(
-        &mut self,
-        document: Value,
-        source_id: impl Into<String>,
-        filename: impl Into<String>,
-    ) {
-        for resource_schema in
-            resource_schemas_from_crd_document_with_source(document, source_id, filename)
-        {
-            insert_resource_schema(&mut self.docs, resource_schema);
-        }
-    }
-
     pub fn insert_resource_schema(&mut self, resource_schema: LocalResourceSchema) {
         insert_resource_schema(&mut self.docs, resource_schema);
     }
@@ -157,11 +126,6 @@ impl LocalSchemaUniverse {
     pub(crate) fn resource_keys(&self) -> impl Iterator<Item = &ResourceDocKey> {
         self.docs.keys()
     }
-}
-
-#[must_use]
-pub fn resource_schemas_from_crd_document(document: Value) -> Vec<LocalResourceSchema> {
-    resource_schemas_from_crd_document_with_source(document, "chart-local", String::new())
 }
 
 #[must_use]

@@ -26,6 +26,7 @@ pub mod local_override;
 pub mod local_schema_universe;
 pub mod lookup;
 mod metadata_enrichment;
+mod mirror_chain;
 mod schema_doc;
 mod source_cache;
 
@@ -45,13 +46,11 @@ pub use filename::{
 pub use inference::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
 };
-pub use kubernetes_openapi::{
-    K8sMirrorChain, K8sSource, K8sVersionChain, KubernetesJsonSchemaProvider,
-};
+pub use kubernetes_openapi::{K8sVersionChain, KubernetesJsonSchemaProvider};
 pub use local_override::LocalSchemaProvider;
 pub use local_schema_universe::{
     ChartLocalCrdSchemaProvider, LocalResourceSchema, LocalSchemaUniverse,
-    resource_schemas_from_crd_document, resource_schemas_from_crd_document_with_source,
+    resource_schemas_from_crd_document_with_source,
 };
 pub use lookup::{
     Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,

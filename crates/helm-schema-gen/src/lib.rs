@@ -355,9 +355,7 @@ fn conditional_target_schema(
     resolved_fallback: Option<Value>,
     active_by_defaults: Option<bool>,
 ) -> Value {
-    let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider)
-        .or(resolved_fallback.clone())
-        .unwrap_or_else(crate::schema_model::empty_schema);
+    let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider);
 
     let Some(active_by_defaults) = active_by_defaults else {
         return branch_schema;
@@ -407,10 +405,9 @@ fn resolve_overlay_target_schema(
     target_value_path: &str,
     overlay: &ConditionalPathOverlay,
     provider: &dyn ResourceSchemaOracle,
-) -> Option<Value> {
+) -> Value {
     let evidence = overlay.evidence.as_path_evidence(target_value_path);
-    PathSchemaResolver::resolve_single_path_evidence(&evidence, &YamlValue::Null, provider)
-        .map(|resolved| resolved.schema)
+    PathSchemaResolver::resolve_single_path_evidence(&evidence, provider).schema
 }
 
 fn conditional_ancestor_segments(
@@ -671,7 +668,7 @@ fn build_target_fragment(path_segments: &[String], leaf_schema: SchemaNode) -> S
     SchemaNode::object().property(head.clone(), child)
 }
 
-fn split_value_path(path: &str) -> Vec<String> {
+pub(crate) fn split_value_path(path: &str) -> Vec<String> {
     path.split('.')
         .filter(|segment| !segment.is_empty())
         .map(std::string::ToString::to_string)

@@ -254,7 +254,7 @@ fn condition_source_relations(
     local_bindings: &HashMap<String, AbstractValue>,
     local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
 ) -> Vec<BTreeSet<String>> {
-    let Some(variable) = condition_local_variable(expr) else {
+    let Some(variable) = crate::expr_eval::expr_leading_variable(expr) else {
         return Vec::new();
     };
     let mut sources = local_bindings
@@ -271,14 +271,6 @@ fn condition_source_relations(
     }
 }
 
-fn condition_local_variable(expr: &TemplateExpr) -> Option<&str> {
-    match expr.deparen() {
-        TemplateExpr::Variable(name) if !name.is_empty() => Some(name.as_str()),
-        TemplateExpr::Pipeline(stages) => stages.first().and_then(condition_local_variable),
-        _ => None,
-    }
-}
-
 fn branch_guard_paths_for_expr(
     expr: &TemplateExpr,
     bindings: &HashMap<String, AbstractValue>,
@@ -288,7 +280,7 @@ fn branch_guard_paths_for_expr(
     seen: &mut HashSet<String>,
 ) -> BTreeSet<String> {
     let env = EvalEnv::from_helper_context(Some(bindings), current_dot).without_helper_call_args();
-    let mut branch_guard_paths = eval_expr(expr, &env).effects.reads;
+    let mut branch_guard_paths = eval_expr(expr, &env).effects.output_paths;
     let local_env = EvalEnv {
         locals: local_bindings.clone(),
         skip_helper_call_args: true,

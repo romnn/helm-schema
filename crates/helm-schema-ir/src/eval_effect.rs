@@ -9,12 +9,10 @@ use helm_schema_core::Predicate;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
-    pub(crate) reads: BTreeSet<String>,
     pub(crate) output_paths: BTreeSet<String>,
     pub(crate) bound_output_paths: BTreeSet<String>,
     pub(crate) defaults: BTreeSet<String>,
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    pub(crate) string_hints: BTreeSet<String>,
     pub(crate) encoded_paths: BTreeSet<String>,
     pub(crate) chart_default_paths: BTreeSet<String>,
     pub(crate) local_default_paths: BTreeSet<String>,
@@ -27,18 +25,15 @@ pub(crate) struct Effects {
 impl Effects {
     pub(crate) fn from_value(value: &AbstractValue) -> Self {
         Self {
-            reads: value.paths(),
             output_paths: value.paths(),
             ..Self::default()
         }
     }
 
     pub(crate) fn merge(&mut self, other: Self) {
-        self.reads.extend(other.reads);
         self.output_paths.extend(other.output_paths);
         self.bound_output_paths.extend(other.bound_output_paths);
         self.defaults.extend(other.defaults);
-        self.string_hints.extend(other.string_hints);
         self.encoded_paths.extend(other.encoded_paths);
         self.chart_default_paths.extend(other.chart_default_paths);
         self.local_default_paths.extend(other.local_default_paths);
@@ -74,16 +69,7 @@ impl Effects {
     }
 
     pub(crate) fn add_string_hints(&mut self, paths: BTreeSet<String>) {
-        self.string_hints
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
-    }
-
-    pub(crate) fn schema_type_hints(&self) -> BTreeMap<String, BTreeSet<String>> {
-        let mut hints = self.type_hints.clone();
-        for path in &self.string_hints {
-            insert_type_hint(&mut hints, path.clone(), "string");
-        }
-        hints
+        self.add_type_hints(paths, "string");
     }
 
     pub(crate) fn add_encoded_paths(&mut self, paths: BTreeSet<String>) {

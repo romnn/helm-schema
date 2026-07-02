@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use helm_schema_ast::is_merge_function;
 use helm_schema_ast::{Literal, TemplateExpr, parse_yaml_key};
 
 use crate::abstract_value::AbstractValue;
@@ -62,12 +63,6 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         return;
     }
 
-    let direct_effects = eval_helper_exprs_direct_effects(exprs, bindings, current_dot);
-    state
-        .analysis
-        .chart_defaults
-        .extend(direct_effects.chart_default_paths);
-
     let kind = if matches!(output_kind, ValueKind::Fragment)
         || exprs.iter().any(TemplateExpr::renders_yaml_fragment)
     {
@@ -94,7 +89,11 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let local_effects = &result.effects;
     state
         .analysis
-        .add_type_hints(local_effects.schema_type_hints());
+        .chart_defaults
+        .extend(local_effects.chart_default_paths.iter().cloned());
+    state
+        .analysis
+        .add_type_hints(local_effects.type_hints.clone());
     if kind == ValueKind::Scalar && relative_path.0.is_empty() {
         state
             .analysis
@@ -361,7 +360,7 @@ fn collect_bound_fragment_output_assignment_uses(
         .extend(result.effects.chart_default_paths.clone());
     state
         .analysis
-        .add_type_hints(result.effects.schema_type_hints());
+        .add_type_hints(result.effects.type_hints.clone());
     let mut top_level_helper_dependency_paths = BTreeSet::new();
     let nested = result.effects.helper_summary;
     let direct_helper_assignment = exprs_start_with_helper_call(rhs_exprs);
@@ -580,7 +579,7 @@ fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
     let mut found = false;
     expr.walk(|node| {
         if let TemplateExpr::Call { function, .. } = node
-            && matches!(function.as_str(), "include" | "template")
+            && crate::expr_eval::is_helper_call_function(function)
         {
             found = true;
         }
@@ -637,15 +636,7 @@ fn exprs_start_with_local_binding(
     exprs: &[TemplateExpr],
     locals: &HashMap<String, AbstractValue>,
 ) -> bool {
-    matches!(exprs, [expr] if expr_start_variable(expr).is_some_and(|name| locals.contains_key(name)))
-}
-
-fn expr_start_variable(expr: &TemplateExpr) -> Option<&str> {
-    match expr.deparen() {
-        TemplateExpr::Variable(name) if !name.is_empty() => Some(name.as_str()),
-        TemplateExpr::Pipeline(stages) => stages.first().and_then(expr_start_variable),
-        _ => None,
-    }
+    matches!(exprs, [expr] if crate::expr_eval::expr_leading_variable(expr).is_some_and(|name| locals.contains_key(name)))
 }
 
 fn exprs_merge_into_var(exprs: &[TemplateExpr], var: &str) -> bool {
@@ -664,13 +655,6 @@ fn expr_merge_call_targets_var(expr: &TemplateExpr, var: &str) -> bool {
             .any(|stage| expr_merge_call_targets_var(stage, var)),
         _ => false,
     }
-}
-
-fn is_merge_function(function: &str) -> bool {
-    matches!(
-        function,
-        "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite"
-    )
 }
 
 fn expr_references_assignment_target(expr: &TemplateExpr, var: &str) -> bool {

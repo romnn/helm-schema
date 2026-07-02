@@ -8,25 +8,12 @@ use crate::builtin_groups::is_k8s_builtin_group;
 /// without a group/version.
 #[must_use]
 pub fn relative_path_for_resource(resource: &ResourceRef) -> Option<String> {
-    let api_version = resource.api_version.trim();
-    let kind = resource.kind.trim();
-    if api_version.is_empty() || kind.is_empty() {
-        return None;
-    }
-
-    let (group, version) = api_version.split_once('/')?;
-    let group = group.trim();
-    let version = version.trim();
-    if group.is_empty() || version.is_empty() {
-        return None;
-    }
-
+    let relative_path = crate::filename::group_relative_path_for_resource(resource)?;
+    let (group, _rest) = relative_path.split_once('/')?;
     if is_k8s_builtin_group(group) {
         return None;
     }
-
-    let kind = kind.to_ascii_lowercase();
-    Some(format!("{group}/{kind}_{version}.json"))
+    Some(relative_path)
 }
 
 #[cfg(test)]

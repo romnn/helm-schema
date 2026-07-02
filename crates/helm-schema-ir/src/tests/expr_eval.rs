@@ -167,11 +167,19 @@ fn string_transform_pipeline_preserves_all_printf_argument_paths() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     assert!(
-        result.effects.string_hints.contains("primary.name"),
+        result
+            .effects
+            .type_hints
+            .get("primary.name")
+            .is_some_and(|hints| hints.contains("string")),
         "primary.name should remain visible through printf before trunc"
     );
     assert!(
-        result.effects.string_hints.contains("suffix"),
+        result
+            .effects
+            .type_hints
+            .get("suffix")
+            .is_some_and(|hints| hints.contains("string")),
         "suffix should remain visible through printf before trunc"
     );
 }
@@ -232,7 +240,7 @@ fn integer_index_on_values_path_descends_array_item_wildcard() {
     assert!(
         result
             .effects
-            .reads
+            .output_paths
             .contains("sentinel.externalAccess.service.loadBalancerIP.*")
     );
 }
@@ -336,7 +344,7 @@ fn set_call_preserves_assigned_value_path() {
 
     let result = eval_expr(&single_expr(r#"$config.name"#), &env);
     sim_assert_eq!(
-        have: result.effects.reads,
+        have: result.effects.output_paths,
         want: BTreeSet::from(["generatedName".to_string()])
     );
 }
@@ -362,7 +370,7 @@ fn selector_on_local_dict_records_only_selected_child_reads() {
     let result = eval_expr(&expr, &env);
 
     sim_assert_eq!(
-        have: result.effects.reads,
+        have: result.effects.output_paths,
         want: BTreeSet::from(["serviceAccount.annotations".to_string()])
     );
 }
@@ -373,7 +381,11 @@ fn unsupported_printf_format_preserves_string_hint_without_exact_string() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     assert!(
-        result.effects.string_hints.contains("count"),
+        result
+            .effects
+            .type_hints
+            .get("count")
+            .is_some_and(|hints| hints.contains("string")),
         "unsupported printf formats still prove scalar string-context use"
     );
     assert!(

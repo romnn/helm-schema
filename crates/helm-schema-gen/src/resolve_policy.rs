@@ -7,7 +7,6 @@ use helm_schema_ir::{
 use crate::foreign_schema::ForeignSchemaRestriction;
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
-    EmptyMapPlaceholderUse, empty_map_placeholder_has_structural_object_use,
     generalize_fixed_object_schema_to_open_map, merge_explicit_empty_placeholder,
     open_fragment_values_schema,
 };
@@ -81,15 +80,14 @@ impl ValuePathSchemaFacts {
                 || is_scalar_like_schema(guard_predicate_schema))
     }
 
-    fn empty_map_placeholder_use(self) -> EmptyMapPlaceholderUse {
-        EmptyMapPlaceholderUse {
-            is_empty_map: self.values_yaml.is_empty_map,
-            is_ranged_source: self.contract.is_ranged_source,
-            has_self_range_guard_render_use: self.contract.has_self_range_guard_render_use,
-            has_render_use: self.contract.has_render_use,
-            all_render_uses_self_guarded: self.contract.all_render_uses_self_guarded,
-            used_as_fragment: self.contract.used_as_fragment,
-        }
+    fn empty_map_placeholder_has_structural_object_use(self, provider_schema: &Value) -> bool {
+        self.values_yaml.is_empty_map
+            && (self.contract.is_ranged_source
+                || self.contract.has_self_range_guard_render_use
+                || (schema_allows_type(provider_schema, "object")
+                    && (self.contract.used_as_fragment
+                        || (self.contract.has_render_use
+                            && self.contract.all_render_uses_self_guarded))))
     }
 }
 
@@ -103,15 +101,6 @@ pub(crate) struct ValuePathSchemaInputs {
     pub(crate) values_yaml_schema: Value,
     pub(crate) guard_predicate_schema: Value,
     pub(crate) type_hint_schema: Value,
-}
-
-struct ValuePathMergeInputs {
-    facts: ValuePathSchemaFacts,
-    provider_schema: Value,
-    values_yaml_schema: Value,
-    guard_predicate_schema: Value,
-    type_hint_schema: Value,
-    preserve_empty_string_fallback: bool,
 }
 
 impl ResolvePolicy {
@@ -202,14 +191,16 @@ impl ResolvePolicy {
         );
         let guard_predicate_schema =
             merge_schema_list(vec![guard_predicate_schema, partial_scalar_schema]);
-        let merged = self.resolve_merged_schema_for_value_path(ValuePathMergeInputs {
-            facts,
-            provider_schema,
-            values_yaml_schema,
-            guard_predicate_schema,
-            type_hint_schema,
+        let merged = self.resolve_merged_schema_for_value_path(
+            ValuePathSchemaInputs {
+                facts,
+                provider_schema,
+                values_yaml_schema,
+                guard_predicate_schema,
+                type_hint_schema,
+            },
             preserve_empty_string_fallback,
-        });
+        );
         let preserve_explicit_null_default = preserve_explicit_null_default_by_contract
             || (facts.values_yaml.is_explicit_null
                 && facts.contract.used_as_fragment
@@ -222,10 +213,7 @@ impl ResolvePolicy {
             add_null_schema(merged)
         } else if preserve_explicit_null_default {
             type_schema("null")
-        } else if empty_map_placeholder_has_structural_object_use(
-            &merged,
-            facts.empty_map_placeholder_use(),
-        ) {
+        } else if facts.empty_map_placeholder_has_structural_object_use(&merged) {
             merge_explicit_empty_placeholder(merged, facts.values_yaml.is_empty_map)
         } else {
             merged
@@ -238,14 +226,12 @@ impl ResolvePolicy {
         facts: ValuePathSchemaFacts,
         provider_schema: &Value,
     ) -> Value {
-        let values_yaml_schema = if empty_map_placeholder_has_structural_object_use(
-            provider_schema,
-            facts.empty_map_placeholder_use(),
-        ) {
-            empty_schema()
-        } else {
-            values_yaml_schema
-        };
+        let values_yaml_schema =
+            if facts.empty_map_placeholder_has_structural_object_use(provider_schema) {
+                empty_schema()
+            } else {
+                values_yaml_schema
+            };
         let values_yaml_schema =
             if facts.contract.accepted_values_root_fragment && facts.values_yaml.is_mapping {
                 values_yaml_schema
@@ -305,7 +291,11 @@ impl ResolvePolicy {
         }
     }
 
-    fn resolve_merged_schema_for_value_path(&self, input: ValuePathMergeInputs) -> Value {
+    fn resolve_merged_schema_for_value_path(
+        &self,
+        input: ValuePathSchemaInputs,
+        preserve_empty_string_fallback: bool,
+    ) -> Value {
         let base = if !is_empty_schema(&input.provider_schema) {
             if is_empty_schema(&input.values_yaml_schema) {
                 input.provider_schema
@@ -333,7 +323,7 @@ impl ResolvePolicy {
                     && is_scalar_schema(&input.values_yaml_schema)
                     && schema_allows_type(&input.provider_schema, values_yaml_ty)
                 {
-                    if input.preserve_empty_string_fallback
+                    if preserve_empty_string_fallback
                         && values_yaml_ty == "string"
                         && !schema_permits_empty_string(&input.provider_schema)
                     {

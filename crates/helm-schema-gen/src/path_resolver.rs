@@ -71,47 +71,21 @@ impl<'a> PathSchemaResolver<'a> {
         )
     }
 
+    /// Resolve overlay/branch evidence in isolation, without a values.yaml
+    /// document or a shared cache.
     pub(crate) fn resolve_single_path_evidence(
         evidence: &ContractPathSchemaEvidence,
-        values_yaml_doc: &YamlValue,
         provider: &dyn ResourceSchemaOracle,
-    ) -> Option<ResolvedPathSchema> {
-        let referenced_value_paths = evidence
-            .is_referenced_value_path
-            .then(|| evidence.value_path.clone())
-            .into_iter()
-            .collect::<BTreeSet<_>>();
-        let path_caches =
-            build_value_path_caches(values_yaml_doc, &referenced_value_paths, &BTreeSet::new());
-        let path_segments = path_caches.path_segments.get(&evidence.value_path)?.clone();
-        let values_yaml_info = path_caches.values_yaml.get(&evidence.value_path);
-        let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
-        let accepted_dependency_values_root_fragment =
-            evidence.facts.accepted_dependency_values_root_fragment;
-        let mut provider_schema_cache = HashMap::new();
-        let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
+    ) -> ResolvedPathSchema {
+        let path_segments = crate::split_value_path(&evidence.value_path);
+        resolve_path_evidence(
             evidence.clone(),
-            values_yaml_info,
+            path_segments,
+            None,
             provider,
             &ResolvePolicy,
-            &mut provider_schema_cache,
-        );
-        let resolve_policy = ResolvePolicy;
-        let schema = resolve_policy.resolve_schema_for_value_path(policy_inputs);
-        let provider_schema_candidate = provider_schema_candidate
-            .filter(|provider_schema| provider_schema.survives_as(&schema));
-
-        Some(ResolvedPathSchema {
-            value_path: evidence.value_path.clone(),
-            path_segments,
-            schema,
-            values_yaml_schema: values_yaml_info
-                .map(|path_info| path_info.schema.clone())
-                .unwrap_or_else(empty_schema),
-            provider_schema_candidate,
-            used_as_pathless_fragment,
-            accepted_dependency_values_root_fragment,
-        })
+            &mut HashMap::new(),
+        )
     }
 
     pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
@@ -128,34 +102,14 @@ impl<'a> PathSchemaResolver<'a> {
             .schema_evidence_by_value_path
             .get(&value_path)
             .cloned()?;
-        let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
-        let accepted_dependency_values_root_fragment =
-            evidence.facts.accepted_dependency_values_root_fragment;
-        let values_yaml_info = self.path_caches.values_yaml.get(&value_path);
-        let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
+        Some(resolve_path_evidence(
             evidence,
-            values_yaml_info,
+            path_segments,
+            self.path_caches.values_yaml.get(&value_path),
             self.provider,
             &self.resolve_policy,
             &mut self.provider_schema_cache,
-        );
-        let merged = self
-            .resolve_policy
-            .resolve_schema_for_value_path(policy_inputs);
-        let provider_schema_candidate = provider_schema_candidate
-            .filter(|provider_schema| provider_schema.survives_as(&merged));
-
-        Some(ResolvedPathSchema {
-            value_path,
-            path_segments,
-            schema: merged,
-            values_yaml_schema: values_yaml_info
-                .map(|path_info| path_info.schema.clone())
-                .unwrap_or_else(empty_schema),
-            provider_schema_candidate,
-            used_as_pathless_fragment,
-            accepted_dependency_values_root_fragment,
-        })
+        ))
     }
 
     fn from_schema_evidence(
@@ -178,6 +132,45 @@ impl<'a> PathSchemaResolver<'a> {
             provider,
             provider_schema_cache: HashMap::new(),
         }
+    }
+}
+
+fn resolve_path_evidence(
+    evidence: ContractPathSchemaEvidence,
+    path_segments: Vec<String>,
+    values_yaml_info: Option<&ValuesYamlPathInfo>,
+    provider: &dyn ResourceSchemaOracle,
+    resolve_policy: &ResolvePolicy,
+    provider_schema_cache: &mut HashMap<
+        ProviderSchemaLookupKey,
+        Option<Arc<ProviderSchemaCandidate>>,
+    >,
+) -> ResolvedPathSchema {
+    let value_path = evidence.value_path.clone();
+    let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
+    let accepted_dependency_values_root_fragment =
+        evidence.facts.accepted_dependency_values_root_fragment;
+    let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
+        evidence,
+        values_yaml_info,
+        provider,
+        resolve_policy,
+        provider_schema_cache,
+    );
+    let schema = resolve_policy.resolve_schema_for_value_path(policy_inputs);
+    let provider_schema_candidate =
+        provider_schema_candidate.filter(|provider_schema| provider_schema.survives_as(&schema));
+
+    ResolvedPathSchema {
+        value_path,
+        path_segments,
+        schema,
+        values_yaml_schema: values_yaml_info
+            .map(|path_info| path_info.schema.clone())
+            .unwrap_or_else(empty_schema),
+        provider_schema_candidate,
+        used_as_pathless_fragment,
+        accepted_dependency_values_root_fragment,
     }
 }
 

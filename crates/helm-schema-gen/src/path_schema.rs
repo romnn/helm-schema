@@ -7,29 +7,6 @@ use crate::schema_model::{
 };
 use crate::schema_node::SchemaNode;
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct EmptyMapPlaceholderUse {
-    pub(crate) is_empty_map: bool,
-    pub(crate) is_ranged_source: bool,
-    pub(crate) has_self_range_guard_render_use: bool,
-    pub(crate) has_render_use: bool,
-    pub(crate) all_render_uses_self_guarded: bool,
-    pub(crate) used_as_fragment: bool,
-}
-
-pub(crate) fn empty_map_placeholder_has_structural_object_use(
-    provider_schema: &Value,
-    placeholder_use: EmptyMapPlaceholderUse,
-) -> bool {
-    placeholder_use.is_empty_map
-        && (placeholder_use.is_ranged_source
-            || placeholder_use.has_self_range_guard_render_use
-            || (schema_allows_type(provider_schema, "object")
-                && (placeholder_use.used_as_fragment
-                    || (placeholder_use.has_render_use
-                        && placeholder_use.all_render_uses_self_guarded))))
-}
-
 pub(crate) fn merge_explicit_empty_placeholder(schema: Value, is_empty_map: bool) -> Value {
     if is_empty_map {
         if schema_accepts_empty_object(&schema) {

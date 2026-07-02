@@ -177,11 +177,6 @@ impl AnalysisSession {
         Ok(self.finalized_contract()?.document())
     }
 
-    /// Return the chart-local schema universe extracted from the chart tree.
-    pub fn local_schema_universe(&self) -> CliResult<LocalSchemaUniverse> {
-        Ok(self.prepared()?.analysis.local_schemas.clone())
-    }
-
     #[must_use]
     pub fn diagnostics(&self) -> DiagnosticSink {
         self.diagnostics.clone()
