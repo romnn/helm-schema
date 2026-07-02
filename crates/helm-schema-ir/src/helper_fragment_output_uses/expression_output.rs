@@ -158,7 +158,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         let mut meta = output
             .meta
             .clone()
-            .with_output_site_predicates(&output.source_expr, &output_site_predicates);
+            .with_output_site_predicates(&output_site_predicates);
         relate_meta_to_active_sources(&mut meta, active_source_relations);
         state
             .analysis
@@ -233,7 +233,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         }
         let mut meta = nested_output
             .meta
-            .with_output_site_predicates(&nested_output.source_expr, active_output_predicates);
+            .with_output_site_predicates(active_output_predicates);
         relate_meta_to_active_sources(&mut meta, active_source_relations);
         state.outputs.push(HelperFragmentOutputUse::new(
             nested_output.source_expr,
@@ -253,7 +253,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         }
         let mut meta = nested_output
             .meta
-            .with_output_site_predicates(&nested_output.source_expr, active_output_predicates);
+            .with_output_site_predicates(active_output_predicates);
         relate_meta_to_active_sources(&mut meta, active_source_relations);
         if yaml_path_contains_sequence(relative_path) && !nested_output.relative_path.0.is_empty() {
             state.outputs.push(HelperFragmentOutputUse::new(
@@ -303,7 +303,7 @@ fn collect_bound_fragment_output_assignment_uses(
         output_meta = output_meta
             .into_iter()
             .map(|(path, meta)| {
-                let meta = meta.with_output_site_predicates(&path, active_output_predicates);
+                let meta = meta.with_output_site_predicates(active_output_predicates);
                 (path, meta)
             })
             .collect();
@@ -360,7 +360,7 @@ fn collect_bound_fragment_output_assignment_uses(
                 );
                 let mut meta = output
                     .meta
-                    .with_output_site_predicates(&output.source_expr, &output_site_predicates);
+                    .with_output_site_predicates(&output_site_predicates);
                 relate_meta_to_active_sources(&mut meta, active_source_relations);
                 state
                     .analysis

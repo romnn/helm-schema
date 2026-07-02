@@ -164,14 +164,14 @@ fn collect_helper_summary(
         attribution,
     };
     eval_template_body(&mut runtime, body.tree.root_node());
+    // Rendered rows land in `fragment_output_uses` during the walk (the
+    // summary only accumulates dependency rows there), so scalar-vs-structured
+    // reconciliation happens on the local vec before the rows join the summary.
     let structured_sources: std::collections::BTreeSet<String> = fragment_output_uses
         .iter()
         .filter(|output| output.is_structured_output())
         .map(|output| output.source_expr.clone())
         .collect();
-    for source in &structured_sources {
-        analysis.remove_output_path(source);
-    }
     fragment_output_uses.retain(|output| {
         output.is_structured_output() || !structured_sources.contains(&output.source_expr)
     });

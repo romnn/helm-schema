@@ -142,11 +142,7 @@ impl<'a> ContractUseContext<'a> {
         if let Some(site) = &self.site_provenance {
             provenance.push(site.clone());
         }
-        for extra in extra_provenance {
-            if !provenance.contains(extra) {
-                provenance.push(extra.clone());
-            }
-        }
+        crate::helper_summary::merge_provenance_sites(&mut provenance, extra_provenance);
         provenance
     }
 }

@@ -7,9 +7,9 @@ use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
 use crate::eval_effect::Effects;
 use crate::helper_summary::{
-    HelperFragmentOutputUse, HelperOutputMeta, HelperSummary, values_paths_are_related,
+    HelperFragmentOutputUse, HelperSummary, merge_provenance_sites, values_paths_are_related,
 };
-use crate::{Guard, ValueKind, YamlPath};
+use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 use helm_schema_ast::{OutputSlot, OutputSlotKind};
 use helm_schema_core as output_path;
 
@@ -89,7 +89,7 @@ fn output_contract(
         return contract;
     }
 
-    let suppressed_guard_path_meta = suppressed_guard_path_meta(&helper);
+    let suppressed_guard_path_provenance = suppressed_guard_path_provenance(&helper);
     let mut suppress_direct_values = helper.dependency_relevant_paths();
     suppress_direct_values.extend(helper.suppress_roots.iter().cloned());
 
@@ -100,9 +100,9 @@ fn output_contract(
                 .iter()
                 .any(|root| output_path::values_path_is_descendant(&value, root))
         {
-            let provenance = suppressed_guard_path_meta
+            let provenance = suppressed_guard_path_provenance
                 .get(&value)
-                .map(|meta| meta.provenance.as_slice())
+                .map(Vec::as_slice)
                 .unwrap_or_default();
             contract.push(context.contract_use_with_extra_provenance(
                 value,
@@ -150,7 +150,7 @@ fn output_contract(
     contract.extend_type_hints(output_effects.type_hints.clone());
     append_helper_contract_uses(
         &helper,
-        &suppressed_guard_path_meta,
+        &suppressed_guard_path_provenance,
         &output_effects.encoded_paths,
         &site,
         &mut contract,
@@ -161,7 +161,7 @@ fn output_contract(
 
 fn append_helper_contract_uses(
     helper: &HelperSummary,
-    suppressed_guard_path_meta: &BTreeMap<String, HelperOutputMeta>,
+    suppressed_guard_path_provenance: &BTreeMap<String, Vec<ContractProvenance>>,
     encoded_output_values: &BTreeSet<String>,
     site: &OutputSlot,
     contract: &mut ContractIr,
@@ -221,6 +221,7 @@ fn append_helper_contract_uses(
         append_fragment_output_contract_use(
             output,
             helper,
+            &helper_output_sources,
             encoded_output_values,
             site,
             contract,
@@ -237,12 +238,8 @@ fn append_helper_contract_uses(
         let mut meta = output.meta.clone();
         meta.note_sibling_sources(value, &helper_output_sources);
         let mut provenance = meta.provenance.clone();
-        if let Some(parent_meta) = suppressed_guard_path_meta.get(value) {
-            for site in &parent_meta.provenance {
-                if !provenance.contains(site) {
-                    provenance.push(site.clone());
-                }
-            }
+        if let Some(suppressed) = suppressed_guard_path_provenance.get(value) {
+            merge_provenance_sites(&mut provenance, suppressed);
         }
         let structured_scalar_guard_sets = structured_scalar_output_guard_sets(helper, value);
         let defaulted_scalar_guard_sets = defaulted_scalar_summary_guard_sets(helper, value);
@@ -262,18 +259,20 @@ fn append_helper_contract_uses(
         }
     }
 
-    for value in helper.guard_path_meta.keys() {
-        if !suppressed_guard_path_meta.contains_key(value)
-            && suppressed_guard_path_meta
-                .iter()
-                .any(|(path, _meta)| output_path::values_path_is_descendant(path, value))
+    for (value, base_meta) in &helper.guard_path_meta {
+        if !suppressed_guard_path_provenance.contains_key(value)
+            && suppressed_guard_path_provenance
+                .keys()
+                .any(|path| output_path::values_path_is_descendant(path, value))
         {
             continue;
         }
-        let guard_path_meta = merged_guard_path_meta(helper, &suppressed_guard_path_meta, value);
-        let guard_path_has_own_context = guard_path_meta
-            .as_ref()
-            .is_some_and(|meta| !meta.predicates.is_empty() || meta.defaulted);
+        let mut guard_path_meta = base_meta.clone();
+        if let Some(suppressed) = suppressed_guard_path_provenance.get(value) {
+            merge_provenance_sites(&mut guard_path_meta.provenance, suppressed);
+        }
+        let guard_path_has_own_context =
+            !guard_path_meta.predicates.is_empty() || guard_path_meta.defaulted;
         if !guard_path_has_own_context
             && defaulted_scalar_summary_guard_sets(helper, value)
                 .iter()
@@ -281,9 +280,8 @@ fn append_helper_contract_uses(
         {
             continue;
         }
-        let guard_path_meta_has_context = guard_path_meta.as_ref().is_some_and(|meta| {
-            !meta.predicates.is_empty() || meta.defaulted || context.has_ambient_guards()
-        });
+        let guard_path_meta_has_context =
+            guard_path_has_own_context || context.has_ambient_guards();
         if site.path.0.is_empty()
             && site.resource.is_none()
             && helper_output_sources.contains(value)
@@ -292,17 +290,14 @@ fn append_helper_contract_uses(
             continue;
         }
         let lower_guard_path_meta = site.path.0.is_empty()
-            && (site.resource.is_none() || suppressed_guard_path_meta.contains_key(value));
-        if lower_guard_path_meta
-            && let Some(meta) = guard_path_meta.as_ref()
-            && guard_path_meta_has_context
-        {
-            for extra_guards in meta.contract_guard_sets(value) {
+            && (site.resource.is_none() || suppressed_guard_path_provenance.contains_key(value));
+        if lower_guard_path_meta && guard_path_meta_has_context {
+            for extra_guards in guard_path_meta.contract_guard_sets(value) {
                 contract.push(context.pathless_contract_use_with_extra_provenance(
                     value.clone(),
                     ValueKind::Scalar,
                     &extra_guards,
-                    &meta.provenance,
+                    &guard_path_meta.provenance,
                 ));
             }
         } else {
@@ -311,36 +306,25 @@ fn append_helper_contract_uses(
     }
 }
 
-fn merged_guard_path_meta(
+/// Provenance of the output rows that suppressed guard predicates for each
+/// values path, so the pathless rows emitted for those paths still name the
+/// helper sites that justified them.
+fn suppressed_guard_path_provenance(
     helper: &HelperSummary,
-    suppressed_guard_path_meta: &BTreeMap<String, HelperOutputMeta>,
-    value: &str,
-) -> Option<HelperOutputMeta> {
-    let mut meta = helper.guard_path_meta.get(value).cloned();
-    if let Some(suppressed_meta) = suppressed_guard_path_meta.get(value) {
-        match &mut meta {
-            Some(meta) => meta.merge_ref(suppressed_meta),
-            None => meta = Some(suppressed_meta.clone()),
-        }
-    }
-    meta
-}
-
-fn suppressed_guard_path_meta(helper: &HelperSummary) -> BTreeMap<String, HelperOutputMeta> {
-    let mut by_path = BTreeMap::new();
+) -> BTreeMap<String, Vec<ContractProvenance>> {
+    let mut by_path: BTreeMap<String, Vec<ContractProvenance>> = BTreeMap::new();
     for output in &helper.output_uses {
+        // Outputs without provenance must not create (empty) entries: key
+        // presence doubles as the "this path was suppressed here" signal for
+        // the guard-path emission checks below.
         if output.meta.provenance.is_empty() {
             continue;
         }
         for path in &output.meta.suppress_predicate_paths {
-            let mut meta = HelperOutputMeta::default();
-            for provenance in &output.meta.provenance {
-                meta.add_provenance_site(provenance.clone());
-            }
-            by_path
-                .entry(path.clone())
-                .or_insert_with(HelperOutputMeta::default)
-                .merge(meta);
+            merge_provenance_sites(
+                by_path.entry(path.clone()).or_default(),
+                &output.meta.provenance,
+            );
         }
     }
     by_path
@@ -391,18 +375,14 @@ fn is_self_default_or_truthy_guard(guard: &Guard, value: &str) -> bool {
 fn append_fragment_output_contract_use(
     output: &HelperFragmentOutputUse,
     helper: &HelperSummary,
+    helper_output_sources: &BTreeSet<String>,
     encoded_output_values: &BTreeSet<String>,
     site: &OutputSlot,
     contract: &mut ContractIr,
     context: &ContractUseContext<'_>,
 ) {
-    let helper_output_sources = helper
-        .output_uses
-        .iter()
-        .map(|output| output.source_expr.clone())
-        .collect::<BTreeSet<_>>();
     let mut meta = output.meta.clone();
-    meta.prune_source_not_for_sibling_truthy(&output.source_expr, &helper_output_sources);
+    meta.prune_source_not_for_sibling_truthy(&output.source_expr, helper_output_sources);
     if !output.relative_path.0.is_empty() {
         meta.prune_truthy_ancestors_of_source(&output.source_expr);
     }
@@ -469,10 +449,7 @@ fn optional_ancestor_fragment_sources(
         .collect()
 }
 
-fn provenance_is_subset(
-    candidate: &[crate::ContractProvenance],
-    output: &[crate::ContractProvenance],
-) -> bool {
+fn provenance_is_subset(candidate: &[ContractProvenance], output: &[ContractProvenance]) -> bool {
     !candidate.is_empty()
         && candidate
             .iter()

@@ -689,7 +689,7 @@ fn push_output_path(
     } else {
         scope.defaulted_paths.contains(path)
     };
-    let meta = meta.with_output_site_predicates(path, scope.active_output_predicates);
+    let meta = meta.with_output_site_predicates(scope.active_output_predicates);
     outputs.push(HelperFragmentOutputUse::with_encoding(
         path.to_string(),
         relative_path.clone(),
