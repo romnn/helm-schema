@@ -5,64 +5,49 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
 use crate::path_resolver::ResolvedPathSchema;
-use crate::provider_schema::{
-    ProviderSchemaCandidate, canonical_schema_key, rewrite_internal_refs_for_root_definition,
-};
+use crate::provider_schema::{ProviderSchemaCandidate, rewrite_internal_refs_for_root_definition};
 
 const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
 const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
 
-/// Repeated provider-owned schema leaves emitted as root `$defs`.
-#[derive(Debug, Default)]
-pub(crate) struct ProviderSchemaDefinitions {
-    definitions_by_name: BTreeMap<String, Value>,
-}
+/// Extract repeated provider-owned schema leaves into root `$defs`
+/// definitions, rewriting each extracted `resolved_path.schema` to an
+/// internal `$ref`. Returns the definitions keyed by definition name.
+pub(crate) fn extract_provider_definitions(
+    resolved_paths: &mut [ResolvedPathSchema],
+    values_descriptions: &BTreeMap<String, String>,
+) -> BTreeMap<String, Value> {
+    let description_paths = DescriptionPathIndex::new(values_descriptions);
+    let entries =
+        ProviderSchemaDefinitionEntries::from_resolved_paths(resolved_paths, &description_paths);
+    let mut ref_names_by_key = BTreeMap::new();
+    let mut definitions_by_name = BTreeMap::new();
+    let mut used_definition_names = BTreeSet::new();
+    let mut next_id = 1;
 
-impl ProviderSchemaDefinitions {
-    pub(crate) fn from_resolved_paths(
-        resolved_paths: &mut [ResolvedPathSchema],
-        values_descriptions: &BTreeMap<String, String>,
-    ) -> Self {
-        let description_paths = DescriptionPathIndex::new(values_descriptions);
-        let entries = ProviderSchemaDefinitionEntries::from_resolved_paths(
-            resolved_paths,
-            &description_paths,
-        );
-        let mut ref_names_by_key = BTreeMap::new();
-        let mut definitions_by_name = BTreeMap::new();
-        let mut used_definition_names = BTreeSet::new();
-        let mut next_id = 1;
-
-        for (key, entry) in entries.into_repeated_entries() {
-            let name = next_definition_name(&entry, &mut used_definition_names, &mut next_id);
-            ref_names_by_key.insert(key, name.clone());
-            let definition_schema = entry.into_definition_schema(&name);
-            definitions_by_name.insert(name, definition_schema);
-        }
-
-        for resolved_path in resolved_paths {
-            let Some(provider_schema_candidate) = resolved_path.provider_schema_candidate.as_ref()
-            else {
-                continue;
-            };
-            if description_paths.has_description_at_or_below(&resolved_path.path_segments) {
-                continue;
-            }
-            let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
-                continue;
-            };
-            resolved_path.schema = reference_schema(name);
-        }
-
-        Self {
-            definitions_by_name,
-        }
+    for (key, entry) in entries.into_repeated_entries() {
+        let name = next_definition_name(&entry, &mut used_definition_names, &mut next_id);
+        ref_names_by_key.insert(key, name.clone());
+        let definition_schema = entry.into_definition_schema(&name);
+        definitions_by_name.insert(name, definition_schema);
     }
 
-    pub(crate) fn into_definitions_by_name(self) -> BTreeMap<String, Value> {
-        self.definitions_by_name
+    for resolved_path in resolved_paths {
+        let Some(provider_schema_candidate) = resolved_path.provider_schema_candidate.as_ref()
+        else {
+            continue;
+        };
+        if description_paths.has_description_at_or_below(&resolved_path.path_segments) {
+            continue;
+        }
+        let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
+            continue;
+        };
+        resolved_path.schema = reference_schema(name);
     }
+
+    definitions_by_name
 }
 
 pub(crate) fn insert_definitions_into_root(
@@ -133,9 +118,10 @@ impl ProviderSchemaDefinitionEntries {
                 uses: 0,
             });
         if let Some(source_schema) = provider_schema_candidate.source_definition_schema() {
-            entry
-                .definition_schemas_by_key
-                .insert(canonical_schema_key(source_schema), source_schema.clone());
+            entry.definition_schemas_by_key.insert(
+                json_schema_walk::canonical_json_string(source_schema),
+                source_schema.clone(),
+            );
             entry.definition_schema_uses += 1;
         }
         if let Some(source) = provider_schema_candidate.source() {
@@ -206,12 +192,8 @@ impl DescriptionPathIndex {
     fn has_description_at_or_below(&self, path_segments: &[String]) -> bool {
         self.paths
             .iter()
-            .any(|description_path| path_segments_are_prefix(path_segments, description_path))
+            .any(|description_path| description_path.starts_with(path_segments))
     }
-}
-
-fn path_segments_are_prefix(prefix: &[String], path: &[String]) -> bool {
-    prefix.len() <= path.len() && prefix.iter().zip(path).all(|(left, right)| left == right)
 }
 
 fn reference_schema(name: &str) -> Value {

@@ -3,20 +3,8 @@ use serde_json::{Map, Value};
 use crate::schema_model::{empty_schema, is_annotation_keyword, is_empty_schema, schema_type};
 use crate::schema_node::SchemaNode;
 
-pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
-    match schemas.len() {
-        0 => return empty_schema(),
-        1 => return schemas.pop().unwrap_or_else(empty_schema),
-        2 => {
-            let right = schemas.pop().unwrap_or_else(empty_schema);
-            let left = schemas.pop().unwrap_or_else(empty_schema);
-            return merge_two_schemas(left, right);
-        }
-        _ => {}
-    }
-
-    schemas = dedup_schemas(schemas);
-    let mut it = schemas.into_iter();
+pub fn merge_schema_list(schemas: Vec<Value>) -> Value {
+    let mut it = dedup_schemas(schemas).into_iter();
     let Some(first) = it.next() else {
         return empty_schema();
     };
@@ -37,13 +25,7 @@ pub fn union_schema_list(mut schemas: Vec<Value>) -> Value {
     if out.iter().any(|schema| !is_empty_schema(schema)) {
         out.retain(|schema| !is_empty_schema(schema));
     }
-    out = dedup_schemas(out);
-    out.sort_by_key(json_schema_walk::canonical_json_string);
-    if out.len() == 1 {
-        out.into_iter().next().expect("len == 1")
-    } else {
-        any_of_schema(out)
-    }
+    deduped_sorted_any_of(out)
 }
 
 pub fn merge_two_schemas(a: Value, b: Value) -> Value {
@@ -76,18 +58,16 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     let mut out: Vec<Value> = Vec::new();
     out.extend(flatten_union_variants(a));
     out.extend(flatten_union_variants(b));
-    out = collapse_compatible_variants(out);
-    out = dedup_schemas(out);
-    out.sort_by_key(json_schema_walk::canonical_json_string);
-    if out.len() == 1 {
-        out.into_iter().next().expect("len == 1")
-    } else {
-        any_of_schema(out)
-    }
+    deduped_sorted_any_of(collapse_compatible_variants(out))
 }
 
-fn any_of_schema(schemas: Vec<Value>) -> Value {
-    SchemaNode::any_of(schemas.into_iter().map(SchemaNode::foreign).collect()).into_value()
+fn deduped_sorted_any_of(variants: Vec<Value>) -> Value {
+    let mut variants = dedup_schemas(variants);
+    variants.sort_by_key(json_schema_walk::canonical_json_string);
+    if variants.len() == 1 {
+        return variants.into_iter().next().expect("len == 1");
+    }
+    SchemaNode::any_of(variants.into_iter().map(SchemaNode::foreign).collect()).into_value()
 }
 
 fn flatten_union_variants(v: Value) -> Vec<Value> {
@@ -232,15 +212,6 @@ fn merge_array_schemas(a: &Value, b: &Value) -> Option<Value> {
             out.insert("items".to_string(), items_b);
         }
         _ => {}
-    }
-
-    let out_items_is_null = out.get("items").is_some_and(serde_json::Value::is_null);
-    let b_items_is_null = bobj.get("items").is_some_and(serde_json::Value::is_null);
-    if out_items_is_null && !b_items_is_null {
-        out.insert(
-            "items".to_string(),
-            bobj.get("items").cloned().unwrap_or(Value::Null),
-        );
     }
 
     for (k, bv) in bobj {

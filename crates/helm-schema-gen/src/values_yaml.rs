@@ -235,13 +235,10 @@ fn prune_schema_at_relative_path(schema: &mut Value, relative_segments: &[&str])
     }
 }
 
-pub(crate) fn schema_from_yaml_value(value: &YamlValue) -> Value {
-    schema_node_from_yaml_value(value).into_value()
-}
-
-pub(crate) fn schema_node_from_yaml_value(value: &YamlValue) -> SchemaNode {
+fn schema_from_yaml_value(value: &YamlValue) -> Value {
     schema_node_from_yaml_value_with_skips(value, &[], &BTreeSet::new())
         .unwrap_or_else(SchemaNode::empty)
+        .into_value()
 }
 
 pub(crate) fn schema_node_from_yaml_value_with_skips(

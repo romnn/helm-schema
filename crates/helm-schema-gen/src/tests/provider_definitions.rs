@@ -90,9 +90,9 @@ fn repeated_provider_subtrees_move_to_root_definitions() {
         resolved_path("second", provider_schema.clone()),
     ];
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(
         have: paths[0].schema,
@@ -142,9 +142,9 @@ fn repeated_provider_subtrees_with_one_source_use_source_stable_definition_name(
         resolved_sourced_path("second", provider_schema.clone(), source.pointer()),
     ];
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(
         have: paths[0].schema,
@@ -222,9 +222,9 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
         },
     ];
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
     let expected_definition = json!({
         "type": "object",
         "properties": {
@@ -301,9 +301,9 @@ fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema(
         },
     ];
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(
         have: root.pointer(&format!("/$defs/{definition_name}")),
@@ -369,9 +369,9 @@ fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
         },
     ];
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(
         have: root.pointer(&format!("/$defs/{definition_name}")),
@@ -416,9 +416,9 @@ fn structurally_equal_provider_schemas_share_even_with_different_sources() {
         },
     ];
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(
         have: paths[0].schema,
@@ -442,9 +442,9 @@ fn scalar_provider_schemas_stay_inline() {
         resolved_path("second", provider_schema.clone()),
     ];
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(have: paths[0].schema, want: provider_schema);
     assert!(root.pointer("/$defs").is_none());
@@ -467,9 +467,9 @@ fn described_provider_subtrees_stay_inline_even_when_other_paths_share_definitio
     let descriptions =
         BTreeMap::from([("first.name".to_string(), "chart-authored name".to_string())]);
 
-    let definitions = ProviderSchemaDefinitions::from_resolved_paths(&mut paths, &descriptions);
+    let definitions = extract_provider_definitions(&mut paths, &descriptions);
     let mut root = json!({ "type": "object", "properties": {} });
-    insert_definitions_into_root(&mut root, definitions.into_definitions_by_name());
+    insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(have: paths[0].schema, want: provider_schema);
     sim_assert_eq!(

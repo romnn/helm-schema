@@ -21,7 +21,7 @@ use helm_schema_ir::{ConditionalGuard, ConditionalPathOverlay, ContractSchemaSig
 
 use merge::{merge_schema_list, union_schema_list};
 use path_resolver::PathSchemaResolver;
-use provider_definitions::{ProviderSchemaDefinitions, insert_definitions_into_root};
+use provider_definitions::{extract_provider_definitions, insert_definitions_into_root};
 use schema_model::{
     guard_value_to_json, is_fixed_object_schema, is_scalar_like_schema, schema_allows_type,
 };
@@ -109,7 +109,7 @@ fn build_root_schema(
     let path_resolver = PathSchemaResolver::new(contract_schema_signals, values_yaml_doc, provider);
     let mut resolved_paths = path_resolver.resolve_all();
     let provider_definitions =
-        ProviderSchemaDefinitions::from_resolved_paths(&mut resolved_paths, values_descriptions);
+        extract_provider_definitions(&mut resolved_paths, values_descriptions);
 
     let conditional_schemas = collect_conditional_schemas(
         &resolved_paths,
@@ -147,10 +147,7 @@ fn build_root_schema(
     );
 
     let mut root_schema = root_schema.into_value();
-    insert_definitions_into_root(
-        &mut root_schema,
-        provider_definitions.into_definitions_by_name(),
-    );
+    insert_definitions_into_root(&mut root_schema, provider_definitions);
     schema_tree::apply_values_descriptions(&mut root_schema, values_descriptions);
     root_schema
 }
@@ -294,15 +291,12 @@ fn collect_conditional_schemas(
 ) -> Vec<ConditionalResolvedSchema> {
     let resolved_by_path = resolved_paths
         .iter()
-        .map(|resolved| (resolved.value_path.as_str(), &resolved.schema))
+        .map(|resolved| (resolved.value_path.as_str(), resolved))
         .collect::<BTreeMap<_, _>>();
     let mut conditionals = Vec::new();
 
     for (target_value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
-        let Some(resolved_target) = resolved_paths
-            .iter()
-            .find(|resolved| resolved.value_path == *target_value_path)
-        else {
+        let Some(resolved_target) = resolved_by_path.get(target_value_path.as_str()) else {
             continue;
         };
 
@@ -321,10 +315,7 @@ fn collect_conditional_schemas(
                 values_yaml_doc,
                 provider,
                 resolved_target.values_yaml_schema.clone(),
-                resolved_by_path
-                    .get(target_value_path.as_str())
-                    .cloned()
-                    .cloned(),
+                resolved_target.schema.clone(),
                 active_by_defaults,
             );
             if crate::schema_model::is_empty_schema(&target_schema) {
@@ -352,7 +343,7 @@ fn conditional_target_schema(
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
     values_yaml_schema: Value,
-    resolved_fallback: Option<Value>,
+    resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
     let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider);
@@ -367,11 +358,10 @@ fn conditional_target_schema(
             branch_schema
         };
     if !active_by_defaults {
-        if let Some(fallback) = resolved_fallback
-            && is_placeholder_fragment_object_schema(&branch_schema)
-            && !is_placeholder_fragment_object_schema(&fallback)
+        if is_placeholder_fragment_object_schema(&branch_schema)
+            && !is_placeholder_fragment_object_schema(&resolved_fallback)
         {
-            return fallback;
+            return resolved_fallback;
         }
         return branch_schema;
     }
@@ -385,7 +375,7 @@ fn conditional_target_schema(
     if schema_accepts_json_value(&branch_schema, &default_value) {
         branch_schema
     } else {
-        resolved_fallback.unwrap_or(branch_schema)
+        resolved_fallback
     }
 }
 
@@ -394,11 +384,7 @@ fn should_merge_values_yaml_into_conditional_branch(
     values_yaml_schema: &Value,
 ) -> bool {
     crate::schema_model::is_empty_schema(branch_schema)
-        || schemas_share_scalar_input_domain(branch_schema, values_yaml_schema)
-}
-
-fn schemas_share_scalar_input_domain(left: &Value, right: &Value) -> bool {
-    is_scalar_like_schema(left) && is_scalar_like_schema(right)
+        || (is_scalar_like_schema(branch_schema) && is_scalar_like_schema(values_yaml_schema))
 }
 
 fn resolve_overlay_target_schema(
@@ -426,13 +412,13 @@ fn conditional_ancestor_segments(
 
 fn guards_supported_for_conditional_lowering(
     guards: &[ConditionalGuard],
-    resolved_by_path: &BTreeMap<&str, &Value>,
+    resolved_by_path: &BTreeMap<&str, &path_resolver::ResolvedPathSchema>,
 ) -> bool {
     !guards.is_empty()
         && guards.iter().all(|guard| match guard {
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => resolved_by_path
                 .get(path.as_str())
-                .is_some_and(|schema| schema_is_boolean_like(schema)),
+                .is_some_and(|resolved| schema_is_boolean_like(&resolved.schema)),
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
@@ -441,10 +427,7 @@ fn guards_supported_for_conditional_lowering(
                 std::slice::from_ref(inner),
                 resolved_by_path,
             ),
-            ConditionalGuard::AllOf(guards) => {
-                guards_supported_for_conditional_lowering(guards, resolved_by_path)
-            }
-            ConditionalGuard::AnyOf(guards) => {
+            ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
                 guards_supported_for_conditional_lowering(guards, resolved_by_path)
             }
         })
@@ -464,16 +447,12 @@ fn append_conditional_schemas(
     conditionals: Vec<ConditionalResolvedSchema>,
     values_yaml_doc: &YamlValue,
 ) {
-    if conditionals.is_empty() {
-        return;
-    }
-
     for conditional in conditionals {
-        let condition = build_condition_fragment(
+        let condition = SchemaNode::all_of(build_condition_clauses(
             &conditional.guards,
             &conditional.ancestor_segments,
             values_yaml_doc,
-        );
+        ));
         let then_schema = build_target_fragment(
             &conditional.relative_target_segments,
             SchemaNode::foreign(conditional.target_schema),
@@ -482,18 +461,17 @@ fn append_conditional_schemas(
     }
 }
 
-fn build_condition_fragment(
+fn build_condition_clauses(
     guards: &[ConditionalGuard],
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
-) -> SchemaNode {
-    let clauses = guards
+) -> Vec<SchemaNode> {
+    guards
         .iter()
         .filter_map(|guard| {
             build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
         })
-        .collect::<Vec<_>>();
-    SchemaNode::all_of(clauses)
+        .collect()
 }
 
 fn build_single_condition_fragment(
@@ -547,21 +525,11 @@ fn build_single_condition_fragment(
             values_yaml_doc,
         )?)),
         ConditionalGuard::AllOf(guards) => {
-            let clauses = guards
-                .iter()
-                .filter_map(|guard| {
-                    build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
-                })
-                .collect::<Vec<_>>();
+            let clauses = build_condition_clauses(guards, ancestor_segments, values_yaml_doc);
             (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
-            let clauses = guards
-                .iter()
-                .filter_map(|guard| {
-                    build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
-                })
-                .collect::<Vec<_>>();
+            let clauses = build_condition_clauses(guards, ancestor_segments, values_yaml_doc);
             (!clauses.is_empty()).then(|| SchemaNode::any_of(clauses))
         }
     }
@@ -571,35 +539,19 @@ fn guard_value_enum_schema(value: &GuardValue) -> Option<SchemaNode> {
     guard_value_to_json(value).map(|value| SchemaNode::enum_values(vec![value]))
 }
 
-fn build_leaf_condition_fragment(
-    value_path: &str,
-    ancestor_segments: &[String],
-    leaf_schema: SchemaNode,
-) -> Option<SchemaNode> {
-    let segments = split_value_path(value_path);
-    let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
-    if relative_segments.is_empty() {
-        Some(leaf_schema)
-    } else {
-        build_required_condition_fragment(&relative_segments, leaf_schema)
-    }
-}
-
 fn build_default_aware_leaf_condition_fragment(
     value_path: &str,
     ancestor_segments: &[String],
     leaf_schema: SchemaNode,
     default_matches: bool,
 ) -> Option<SchemaNode> {
-    let explicit =
-        build_leaf_condition_fragment(value_path, ancestor_segments, leaf_schema.clone())?;
-    if !default_matches {
-        return Some(explicit);
-    }
-
     let segments = split_value_path(value_path);
     let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
     if relative_segments.is_empty() {
+        return Some(leaf_schema);
+    }
+    let explicit = build_required_condition_fragment(&relative_segments, leaf_schema)?;
+    if !default_matches {
         return Some(explicit);
     }
     let absent = build_required_condition_fragment(&relative_segments, SchemaNode::empty())
@@ -694,11 +646,7 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         ConditionalGuard::Not(inner) => {
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)
         }
-        ConditionalGuard::AllOf(guards) => guards
-            .iter()
-            .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
-            .collect::<Option<Vec<_>>>()
-            .map(|results| results.into_iter().all(|result| result)),
+        ConditionalGuard::AllOf(guards) => evaluate_guard_set_on_values(guards, values_yaml_doc),
         ConditionalGuard::AnyOf(guards) => guards
             .iter()
             .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))

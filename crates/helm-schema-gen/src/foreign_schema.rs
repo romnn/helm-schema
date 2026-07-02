@@ -185,7 +185,18 @@ impl ForeignSchemaRestriction {
                     schema.set_keyword(kind, Value::Array(restricted));
                     Some(schema.into_value())
                 }
-                _ => restrict_schema_union(schema, kind, variants, |variant| self.apply(variant)),
+                _ => {
+                    let retained_variants: Vec<Value> = variants
+                        .into_iter()
+                        .filter_map(|variant| self.apply(variant))
+                        .collect();
+                    if retained_variants.is_empty() {
+                        return None;
+                    }
+                    let mut annotations = schema.into_annotations_only();
+                    annotations.set_keyword(kind, Value::Array(retained_variants));
+                    Some(annotations.into_value())
+                }
             };
         }
 
@@ -239,22 +250,6 @@ fn rewrite_array_schema(
     schema.set_type(JsonSchemaType::Array);
     schema.strip_object_keywords();
     Some(schema.into_value())
-}
-
-fn restrict_schema_union(
-    schema: ForeignSchemaObject,
-    keyword: &'static str,
-    variants: Vec<Value>,
-    restrict: impl FnMut(Value) -> Option<Value>,
-) -> Option<Value> {
-    let retained_variants: Vec<Value> = variants.into_iter().filter_map(restrict).collect();
-    if retained_variants.is_empty() {
-        return None;
-    }
-
-    let mut annotations = schema.into_annotations_only();
-    annotations.set_keyword(keyword, Value::Array(retained_variants));
-    Some(annotations.into_value())
 }
 
 fn scalar_json_type(schema_type: JsonSchemaType) -> bool {

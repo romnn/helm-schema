@@ -22,7 +22,7 @@ pub(crate) struct ProviderSchemaCandidate {
 impl ProviderSchemaCandidate {
     pub(crate) fn from_provider_fragment(fragment: ProviderSchemaFragment) -> Self {
         let (schema, source_fragment) = fragment.into_source_parts();
-        let key = canonical_schema_key(&schema);
+        let key = json_schema_walk::canonical_json_string(&schema);
         Self {
             key,
             schema,
@@ -85,10 +85,6 @@ fn is_provider_subtree_schema(schema: &Value) -> bool {
             .and_then(Value::as_array)
             .is_some_and(|variants| variants.iter().any(is_provider_subtree_schema))
     })
-}
-
-pub(crate) fn canonical_schema_key(schema: &Value) -> String {
-    json_schema_walk::canonical_json_string(schema)
 }
 
 pub(crate) fn rewrite_internal_refs_for_root_definition(

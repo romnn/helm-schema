@@ -20,14 +20,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use helm_schema_ir::ContractPathSchemaEvidence;
 use serde_json::Value;
 
-#[derive(Debug, Default, Clone, Copy)]
-struct RequiredInferencePolicy;
-
-struct RequiredInferenceInputs<'a> {
-    schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
-    explicit_default_value_paths: &'a BTreeSet<String>,
-}
-
 /// Mutate `schema` in place to add `required: [...]` arrays at the
 /// parent objects of paths the chart references unconditionally and
 /// never accesses via a `default` fallback.
@@ -37,39 +29,24 @@ struct RequiredInferenceInputs<'a> {
 /// by the chart and must not be inferred as user-required, even if they also
 /// appear in positive guard headers.
 ///
+/// Required paths are those checked in positive header positions, lacking
+/// explicit chart defaults, and also consumed by at least one non-self-guarded
+/// render use. This remains heuristic because Helm truthiness does not by
+/// itself imply user-requiredness. The extra render-use eligibility check
+/// filters out common feature-toggle and helper-override patterns like:
+/// `if .Values.fullnameOverride }}{{ .Values.fullnameOverride }}{{ else }}...`.
 pub fn apply_required_inference(
     schema: &mut Value,
     schema_evidence_by_value_path: &BTreeMap<String, ContractPathSchemaEvidence>,
     explicit_default_value_paths: &BTreeSet<String>,
 ) {
-    let paths = RequiredInferencePolicy.required_paths(RequiredInferenceInputs {
-        schema_evidence_by_value_path,
-        explicit_default_value_paths,
-    });
-    for path in paths {
-        add_path_to_required(schema, &path);
-    }
-}
-
-/// Identify paths checked in positive header positions, lacking explicit chart
-/// defaults, and also consumed by at least one non-self-guarded render use.
-///
-/// This remains heuristic because Helm truthiness does not by itself imply
-/// user-requiredness. The extra render-use eligibility check filters out
-/// common feature-toggle and helper-override patterns like:
-/// `if .Values.fullnameOverride }}{{ .Values.fullnameOverride }}{{ else }}...`.
-impl RequiredInferencePolicy {
-    fn required_paths(self, input: RequiredInferenceInputs<'_>) -> BTreeSet<String> {
-        let mut required: BTreeSet<String> = BTreeSet::new();
-        for (path, evidence) in input.schema_evidence_by_value_path {
-            if !evidence.is_required_inference_candidate()
-                || input.explicit_default_value_paths.contains(path)
-            {
-                continue;
-            }
-            required.insert(path.clone());
+    for (path, evidence) in schema_evidence_by_value_path {
+        if !evidence.is_required_inference_candidate()
+            || explicit_default_value_paths.contains(path)
+        {
+            continue;
         }
-        required
+        add_path_to_required(schema, path);
     }
 }
 
