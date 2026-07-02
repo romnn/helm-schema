@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use helm_schema_ast::{
     AttributionIndex, ResourceSpan, TemplateExpr, TemplateHeader, build_attribution_index,
     decode_guard, decode_guard_expr, parse_expr_text, parse_go_template, parse_helm_template,
+    unquote_yaml_scalar,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, Predicate, ResourceRef};
 
@@ -529,18 +530,6 @@ fn header_line_value<'source>(line: &'source str, key: &str) -> Option<&'source 
     (trimmed[..colon].trim() == key)
         .then(|| trimmed[colon + 1..].trim())
         .filter(|value| !value.is_empty())
-}
-
-fn unquote_yaml_scalar(value: &str) -> &str {
-    value
-        .strip_prefix('"')
-        .and_then(|value| value.strip_suffix('"'))
-        .or_else(|| {
-            value
-                .strip_prefix('\'')
-                .and_then(|value| value.strip_suffix('\''))
-        })
-        .unwrap_or(value)
 }
 
 fn is_kubernetes_list_envelope(resource: &ResourceRef) -> bool {

@@ -1,18 +1,18 @@
-use super::{ParsedYamlKey, first_mapping_colon_offset, parse_yaml_key};
+use super::{first_mapping_colon_offset, parse_yaml_key};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn parse_yaml_key_handles_plain_and_quoted_keys() {
     sim_assert_eq!(
-        have: parse_yaml_key("metadata.name: value").map(ParsedYamlKey::into_key),
+        have: parse_yaml_key("metadata.name: value"),
         want: Some("metadata.name".to_string())
     );
     sim_assert_eq!(
-        have: parse_yaml_key(r#""app.kubernetes.io/name": value"#).map(ParsedYamlKey::into_key),
+        have: parse_yaml_key(r#""app.kubernetes.io/name": value"#),
         want: Some("app.kubernetes.io/name".to_string())
     );
     sim_assert_eq!(
-        have: parse_yaml_key("'it''s': value").map(ParsedYamlKey::into_key),
+        have: parse_yaml_key("'it''s': value"),
         want: Some("it's".to_string())
     );
 }

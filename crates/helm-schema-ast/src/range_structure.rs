@@ -10,25 +10,17 @@ pub fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
     Some(name.trim_start_matches('$').to_string())
 }
 
-pub fn range_header_text_from_source(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
-    if let Some(range) = node.child_by_field_name("range") {
-        return range
-            .utf8_text(source.as_bytes())
-            .ok()
-            .map(|text| text.trim().to_string());
-    }
-    let mut walker = node.walk();
-    for child in node.named_children(&mut walker) {
-        if child.kind() == "range_variable_definition"
-            && let Some(range) = child.child_by_field_name("range")
-        {
-            return range
-                .utf8_text(source.as_bytes())
-                .ok()
-                .map(|text| text.trim().to_string());
-        }
-    }
-    None
+fn range_header_text_from_source(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
+    let range = node.child_by_field_name("range").or_else(|| {
+        let mut walker = node.walk();
+        node.named_children(&mut walker)
+            .filter(|child| child.kind() == "range_variable_definition")
+            .find_map(|child| child.child_by_field_name("range"))
+    })?;
+    range
+        .utf8_text(source.as_bytes())
+        .ok()
+        .map(|text| text.trim().to_string())
 }
 
 pub fn range_header_from_source(
@@ -71,13 +63,7 @@ pub fn range_body_mapping_entry_indent_from_source(
     source: &str,
 ) -> Option<usize> {
     let key_variable = range_destructured_key_variable(node, source)?;
-    let mut body_text = String::new();
-    for body_node in children_with_field(node, "body") {
-        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
-            continue;
-        };
-        body_text.push_str(text);
-    }
+    let body_text = range_body_text(node, source);
 
     for line in body_text.lines() {
         let indent = line.chars().take_while(|&ch| ch == ' ').count();
@@ -118,14 +104,7 @@ pub fn range_body_renders_scalar_sequence_items_from_source(
     source: &str,
 ) -> bool {
     let mut saw_sequence_item = false;
-    let mut body_text = String::new();
-
-    for body_node in children_with_field(node, "body") {
-        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
-            continue;
-        };
-        body_text.push_str(text);
-    }
+    let body_text = range_body_text(node, source);
 
     for line in body_text.lines() {
         let trimmed = line.trim_start();
@@ -148,45 +127,55 @@ pub fn range_body_renders_scalar_sequence_items_from_source(
 }
 
 pub fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -> bool {
-    let mut walker = node.walk();
-    node.named_children(&mut walker)
-        .find(|child| child.kind() == "range_variable_definition")
-        .is_some_and(|definition| {
-            let mut definition_walker = definition.walk();
-            definition
-                .named_children(&mut definition_walker)
-                .filter(|child| child.kind() == "variable")
-                .count()
-                >= 2
-        })
+    destructured_range_variables(node).len() >= 2
 }
 
 fn range_destructured_key_variable(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
-    let mut walker = node.walk();
-    let definition = node
-        .named_children(&mut walker)
-        .find(|child| child.kind() == "range_variable_definition")?;
-    let mut definition_walker = definition.walk();
-    let mut variables = definition
-        .named_children(&mut definition_walker)
-        .filter(|child| child.kind() == "variable");
-    let first = variables.next()?;
-    variables.next()?;
-    first
+    let variables = destructured_range_variables(node);
+    if variables.len() < 2 {
+        return None;
+    }
+    variables
+        .first()?
         .utf8_text(source.as_bytes())
         .ok()
         .map(|text| text.trim_start_matches('$').to_string())
 }
 
-fn range_body_min_content_indent(node: tree_sitter::Node<'_>, source: &str) -> Option<usize> {
-    let mut min_indent = None;
+/// The `$key, $value` variable nodes of a `range $key, $value := …`
+/// destructuring header, in source order. Empty when the range has no
+/// `range_variable_definition` child.
+fn destructured_range_variables(node: tree_sitter::Node<'_>) -> Vec<tree_sitter::Node<'_>> {
+    let mut walker = node.walk();
+    let Some(definition) = node
+        .named_children(&mut walker)
+        .find(|child| child.kind() == "range_variable_definition")
+    else {
+        return Vec::new();
+    };
+    let mut definition_walker = definition.walk();
+    definition
+        .named_children(&mut definition_walker)
+        .filter(|child| child.kind() == "variable")
+        .collect()
+}
+
+/// Concatenated source text of every `body` child of a range/control
+/// node. Body children are contiguous source spans, so this reproduces
+/// the body's exact source text for line-based scanning.
+fn range_body_text(node: tree_sitter::Node<'_>, source: &str) -> String {
     let mut body_text = String::new();
     for body_node in children_with_field(node, "body") {
-        let Ok(text) = body_node.utf8_text(source.as_bytes()) else {
-            continue;
-        };
-        body_text.push_str(text);
+        if let Ok(text) = body_node.utf8_text(source.as_bytes()) {
+            body_text.push_str(text);
+        }
     }
+    body_text
+}
+
+fn range_body_min_content_indent(node: tree_sitter::Node<'_>, source: &str) -> Option<usize> {
+    let mut min_indent = None;
+    let body_text = range_body_text(node, source);
 
     for line in body_text.lines() {
         let trimmed = line.trim();

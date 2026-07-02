@@ -33,9 +33,7 @@ pub fn decode_guard_expr(expr: &TemplateExpr, raw: &str) -> Option<CapabilityGua
 }
 
 fn is_capabilities_has(function: &str) -> bool {
-    function == ".Capabilities.APIVersions.Has"
-        || function == "$.Capabilities.APIVersions.Has"
-        || function.ends_with(".Capabilities.APIVersions.Has")
+    function.ends_with(".Capabilities.APIVersions.Has")
 }
 
 fn find_capability_has(expr: &TemplateExpr, negated: bool) -> Option<(bool, String)> {

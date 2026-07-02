@@ -1,20 +1,9 @@
-pub struct ParsedYamlKey {
-    key: String,
-}
-
-impl ParsedYamlKey {
-    #[must_use]
-    pub fn into_key(self) -> String {
-        self.key
-    }
-}
-
-pub fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
-    fn finalize_yaml_key(key: String) -> Option<ParsedYamlKey> {
+pub fn parse_yaml_key(after: &str) -> Option<String> {
+    fn finalize_yaml_key(key: String) -> Option<String> {
         if key.is_empty() {
             return None;
         }
-        Some(ParsedYamlKey { key })
+        Some(key)
     }
 
     let after = after.trim_end();
@@ -65,6 +54,31 @@ pub fn parse_yaml_key(after: &str) -> Option<ParsedYamlKey> {
         return None;
     }
     None
+}
+
+/// Strip one matching pair of surrounding single or double quotes from a
+/// YAML scalar, returning the inner text. Unquoted (or mismatched-quote)
+/// input is returned unchanged.
+pub fn unquote_yaml_scalar(value: &str) -> &str {
+    value
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .or_else(|| {
+            value
+                .strip_prefix('\'')
+                .and_then(|value| value.strip_suffix('\''))
+        })
+        .unwrap_or(value)
+}
+
+/// Whether the colon at `colon` separates a mapping key from its value.
+/// YAML only treats `:` as a mapping separator when it ends the line or is
+/// followed by whitespace; `key:value` is a plain scalar.
+pub(crate) fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
+    text[colon + 1..]
+        .chars()
+        .next()
+        .is_none_or(char::is_whitespace)
 }
 
 pub fn first_mapping_colon_offset(line: &str) -> Option<usize> {

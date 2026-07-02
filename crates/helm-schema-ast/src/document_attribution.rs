@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use helm_schema_core::{ResourceRef, ValueKind, YamlPath};
 
 use crate::{
-    TemplateExpr, first_mapping_colon_offset, parse_action_expressions,
-    range_body_mapping_entry_indent_from_source,
+    TemplateExpr, first_mapping_colon_offset, mapping_colon_is_structural, parse_expr_text,
+    range_body_mapping_entry_indent_from_source, unquote_yaml_scalar,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -97,12 +97,11 @@ impl Default for OutputSlot {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct ResolvedNodeContext {
-    pub current_path: YamlPath,
-    pub mapping_entry_path: YamlPath,
-    pub in_mapping_key: bool,
-    pub entire_scalar_value: bool,
-    pub inside_block_scalar: bool,
+struct ResolvedNodeContext {
+    current_path: YamlPath,
+    in_mapping_key: bool,
+    entire_scalar_value: bool,
+    inside_block_scalar: bool,
 }
 
 #[derive(Clone, Default)]
@@ -240,7 +239,7 @@ pub fn build_attribution_index(source: &str, root: tree_sitter::Node<'_>) -> Att
             document
                 .structural_context_before(control.context_byte, indent)
                 .or_else(|| Some(control_context.clone()))
-                .map(|context| context.mapping_entry_path)
+                .map(|context| context.current_path)
         });
         let control_path = if control_context.inside_block_scalar {
             YamlPath(Vec::new())
@@ -346,12 +345,7 @@ fn output_action_shape(
     end: usize,
 ) -> Option<(ValueKind, Option<usize>)> {
     let text = source.get(start.min(source.len())..end.min(source.len()))?;
-    let trimmed = text.trim();
-    let exprs = if trimmed.starts_with("{{") {
-        parse_action_expressions(trimmed)
-    } else {
-        parse_action_expressions(&format!("{{{{ {trimmed} }}}}"))
-    };
+    let exprs = parse_expr_text(text);
     if exprs.is_empty() {
         return None;
     }
@@ -387,10 +381,8 @@ fn template_action_span_for_node(source: &str, mut node: tree_sitter::Node<'_>) 
 }
 
 fn delimited_action_span(source: &str, start: usize, end: usize) -> Option<(usize, usize)> {
-    let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
-    let line_end = source[end..]
-        .find('\n')
-        .map_or(source.len(), |offset| end + offset);
+    let (line_start, _) = line_bounds(source, start);
+    let (_, line_end) = line_bounds(source, end);
     let action_start = source[line_start..start]
         .rfind("{{")
         .map(|offset| line_start + offset)?;
@@ -451,7 +443,7 @@ fn output_slot_kind(
 }
 
 fn document_site_is_yaml_comment_part(source: &str, start: usize) -> bool {
-    let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
+    let (line_start, _) = line_bounds(source, start);
     source[line_start..start].trim_start().starts_with('#')
 }
 
@@ -660,7 +652,7 @@ fn push_mapping_slot(text: &str, indent: usize, slots: &mut Vec<StructuralSlot>)
     if !value.is_empty() && !block_scalar && !template_value {
         return;
     }
-    let key = strip_scalar_quotes(text[..colon].trim());
+    let key = unquote_yaml_scalar(text[..colon].trim());
     if key.is_empty() || key.contains("{{") || key.contains("}}") {
         return;
     }
@@ -691,7 +683,7 @@ fn context_from_line_text(
 
     let key_start = text_start;
     let key_end = text_start + colon;
-    let key_text = strip_scalar_quotes(text[..colon].trim());
+    let key_text = unquote_yaml_scalar(text[..colon].trim());
     let key_path = if key_text.contains("{{") || key_text.contains("}}") {
         parent_path.clone()
     } else {
@@ -701,7 +693,6 @@ fn context_from_line_text(
     if action_span.is_some_and(|(start, _)| start >= key_start && start <= key_end) {
         return ResolvedNodeContext {
             current_path: parent_path.clone(),
-            mapping_entry_path: parent_path.clone(),
             in_mapping_key: true,
             entire_scalar_value: false,
             inside_block_scalar: false,
@@ -712,8 +703,7 @@ fn context_from_line_text(
     let value_trimmed = value.trim();
     let value_start = text_start + colon + 1 + value.len().saturating_sub(value.trim_start().len());
     ResolvedNodeContext {
-        current_path: key_path.clone(),
-        mapping_entry_path: key_path,
+        current_path: key_path,
         in_mapping_key: false,
         entire_scalar_value: action_span
             .is_some_and(|span| span_is_entire_scalar(value_trimmed, value_start, span)),
@@ -731,7 +721,6 @@ fn scalar_line_context(
     let value_start = text_start + text.len().saturating_sub(text.trim_start().len());
     ResolvedNodeContext {
         current_path: path.clone(),
-        mapping_entry_path: path.clone(),
         in_mapping_key: false,
         entire_scalar_value: action_span
             .is_some_and(|span| span_is_entire_scalar(value, value_start, span)),
@@ -744,10 +733,7 @@ fn span_is_entire_scalar(text: &str, text_start: usize, (start, end): (usize, us
     if start == text_start && end == trimmed_end {
         return true;
     }
-    if text.len() >= 2
-        && ((text.starts_with('"') && text.ends_with('"'))
-            || (text.starts_with('\'') && text.ends_with('\'')))
-    {
+    if unquote_yaml_scalar(text).len() != text.len() {
         return start == text_start + 1 && end == trimmed_end - 1;
     }
     false
@@ -764,13 +750,6 @@ fn starts_with_inline_mapping(text: &str) -> bool {
     first_mapping_colon_offset(text).is_some_and(|colon| mapping_colon_is_structural(text, colon))
 }
 
-fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
-    text[colon + 1..]
-        .chars()
-        .next()
-        .is_none_or(char::is_whitespace)
-}
-
 fn first_nonblank_byte(bytes: &[u8], start: usize, end: usize) -> Option<usize> {
     let end = end.min(bytes.len());
     let start = start.min(end);
@@ -782,32 +761,17 @@ fn first_nonblank_byte(bytes: &[u8], start: usize, end: usize) -> Option<usize> 
 
 fn block_scalar_context(path: &YamlPath) -> ResolvedNodeContext {
     ResolvedNodeContext {
-        current_path: path.clone(),
-        mapping_entry_path: path.clone(),
-        in_mapping_key: false,
-        entire_scalar_value: false,
         inside_block_scalar: true,
+        ..default_context(path)
     }
 }
 
 fn default_context(path: &YamlPath) -> ResolvedNodeContext {
     ResolvedNodeContext {
         current_path: path.clone(),
-        mapping_entry_path: path.clone(),
         in_mapping_key: false,
         entire_scalar_value: false,
         inside_block_scalar: false,
-    }
-}
-
-fn strip_scalar_quotes(text: &str) -> &str {
-    if text.len() >= 2
-        && ((text.starts_with('"') && text.ends_with('"'))
-            || (text.starts_with('\'') && text.ends_with('\'')))
-    {
-        &text[1..text.len() - 1]
-    } else {
-        text
     }
 }
 

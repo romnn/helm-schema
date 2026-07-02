@@ -569,10 +569,6 @@ fn fragment_render_semantics_ignore_string_literals() {
         !exprs.iter().any(TemplateExpr::renders_yaml_fragment),
         "string literals must not masquerade as fragment render functions: {exprs:?}"
     );
-    assert!(
-        !exprs.iter().any(TemplateExpr::may_inject_yaml_structure),
-        "string literals must not masquerade as yaml injectors: {exprs:?}"
-    );
 }
 
 #[test]
@@ -581,10 +577,6 @@ fn fragment_render_semantics_distinguish_include_from_fragment_render() {
     assert!(
         !exprs.iter().any(TemplateExpr::renders_yaml_fragment),
         "bare include is not a definite fragment render: {exprs:?}"
-    );
-    assert!(
-        exprs.iter().any(TemplateExpr::may_inject_yaml_structure),
-        "bare include still may inject yaml structure: {exprs:?}"
     );
 }
 
@@ -604,10 +596,6 @@ fn assignment_rhs_include_is_not_treated_as_emitted_yaml_structure() {
     assert!(
         !exprs.iter().any(TemplateExpr::renders_yaml_fragment),
         "assignment-side include must not be treated as a rendered fragment: {exprs:?}"
-    );
-    assert!(
-        !exprs.iter().any(TemplateExpr::may_inject_yaml_structure),
-        "assignment-side include must not be treated as emitted yaml structure: {exprs:?}"
     );
 }
 

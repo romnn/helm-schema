@@ -142,27 +142,6 @@ impl TemplateExpr {
     }
 
     #[must_use]
-    pub fn may_inject_yaml_structure(&self) -> bool {
-        match self.deparen() {
-            TemplateExpr::Call { function, args } => {
-                is_yaml_structure_injector_function(function)
-                    || args.iter().any(TemplateExpr::may_inject_yaml_structure)
-            }
-            TemplateExpr::Pipeline(stages) => {
-                stages.iter().any(TemplateExpr::may_inject_yaml_structure)
-            }
-            TemplateExpr::Parenthesized(inner) => inner.may_inject_yaml_structure(),
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Selector { .. }
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::VariableDefinition { .. }
-            | TemplateExpr::Assignment { .. }
-            | TemplateExpr::Unknown(_) => false,
-        }
-    }
-
-    #[must_use]
     pub fn fragment_indent_width(&self) -> Option<usize> {
         match self {
             TemplateExpr::Call { function, args }
@@ -215,13 +194,6 @@ fn is_fragment_render_function(function: &str) -> bool {
     matches!(function, "toYaml" | "nindent" | "indent" | "tpl")
 }
 
-fn is_yaml_structure_injector_function(function: &str) -> bool {
-    matches!(
-        function,
-        "include" | "template" | "tpl" | "toYaml" | "fromYaml" | "indent" | "nindent"
-    )
-}
-
 fn indent_width_from_call_args(args: &[TemplateExpr]) -> Option<usize> {
     match args.first()?.deparen() {
         TemplateExpr::Literal(Literal::Int(width)) => usize::try_from(*width).ok(),
@@ -245,11 +217,7 @@ pub fn parse_action_expressions(body_text: &str) -> Vec<TemplateExpr> {
 
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    if parser.set_language(&language).is_err() {
-        return Vec::new();
-    }
-    let Some(tree) = parser.parse(body_text, None) else {
+    let Some(tree) = crate::tree_sitter_utils::parse_with(language, body_text) else {
         return Vec::new();
     };
 
@@ -270,17 +238,12 @@ fn collect_from_node(node: Node<'_>, src: &str, out: &mut Vec<TemplateExpr>) {
     match node.kind() {
         "text" | "yaml_no_injection_text" | "comment" => {}
 
-        "template" | "if_action" | "range_action" | "with_action" => {
-            let mut cursor = node.walk();
-            for ch in node.named_children(&mut cursor) {
-                collect_from_node(ch, src, out);
-            }
-        }
-
-        // `{{ define "name" }} BODY {{ end }}` / `{{ block "name" arg }}
-        // BODY {{ end }}` — recurse into every named child *except* the
-        // `name` field (an opaque string literal that adds noise).
-        "define_action" | "block_action" => {
+        // Control-flow and definition bodies: recurse into every named
+        // child. For `{{ define "name" }}` / `{{ block "name" arg }}` the
+        // `name` field (an opaque string literal that adds noise) is
+        // skipped; the other action kinds have no `name` field.
+        "template" | "if_action" | "range_action" | "with_action" | "define_action"
+        | "block_action" => {
             let name_node = node.child_by_field_name("name");
             let mut cursor = node.walk();
             for ch in node.named_children(&mut cursor) {

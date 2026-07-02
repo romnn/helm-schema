@@ -2,29 +2,12 @@ use crate::{Literal, TemplateExpr};
 
 use crate::{is_provenance_preserving_function, is_string_transform_function};
 
-pub fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
+pub fn expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_)) => Some("string"),
         TemplateExpr::Literal(Literal::Int(_)) => Some("integer"),
         TemplateExpr::Literal(Literal::Float(_)) => Some("number"),
         TemplateExpr::Literal(Literal::Bool(_)) => Some("boolean"),
-        TemplateExpr::Literal(Literal::Nil)
-        | TemplateExpr::Field(_)
-        | TemplateExpr::Variable(_)
-        | TemplateExpr::Selector { .. }
-        | TemplateExpr::Call { .. }
-        | TemplateExpr::Pipeline(_)
-        | TemplateExpr::Parenthesized(_)
-        | TemplateExpr::Unknown(_)
-        | TemplateExpr::VariableDefinition { .. }
-        | TemplateExpr::Assignment { .. } => None,
-    }
-}
-
-pub fn expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
-    match expr.deparen() {
-        TemplateExpr::Literal(_) => literal_schema_type(expr),
-        TemplateExpr::Parenthesized(inner) => expression_schema_type(inner),
         TemplateExpr::Call { function, args } => match function.as_str() {
             "include" | "template" | "printf" => Some("string"),
             "default" if args.len() == 2 => expression_schema_type(&args[0]),
@@ -35,7 +18,9 @@ pub fn expression_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
             _ => None,
         },
         TemplateExpr::Pipeline(stages) => expression_schema_type_for_pipeline(stages),
-        TemplateExpr::Field(_)
+        TemplateExpr::Literal(Literal::Nil)
+        | TemplateExpr::Parenthesized(_)
+        | TemplateExpr::Field(_)
         | TemplateExpr::Variable(_)
         | TemplateExpr::Selector { .. }
         | TemplateExpr::Unknown(_)

@@ -12,7 +12,7 @@ mod yaml_syntax;
 
 pub use capability_branch::{decode_guard, decode_guard_expr};
 pub use document_attribution::{
-    AttributionIndex, ControlSite, OutputSlot, OutputSlotKind, ResolvedNodeContext, ResourceSpan,
+    AttributionIndex, ControlSite, OutputSlot, OutputSlotKind, ResourceSpan,
     build_attribution_index, is_output_root_kind,
 };
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
@@ -20,21 +20,21 @@ pub use expr_function_catalog::{
     is_merge_function, is_provenance_preserving_function, is_string_transform_function,
     type_is_schema_type,
 };
-pub use literal_schema_type::{expression_schema_type, literal_schema_type};
+pub use literal_schema_type::expression_schema_type;
 pub use printf_eval::{literal_printf_format, render_printf_string_sets};
 pub use range_structure::{
     mapping_key_text_refs_range_key_variable, range_body_emits_sequence_item_from_source,
     range_body_mapping_entry_indent_from_source, range_body_renders_mapping_entries_from_ast,
     range_body_renders_scalar_sequence_items_from_source,
-    range_has_destructured_variable_definition, range_header_from_source,
-    range_header_text_from_source, range_variable_name_expr,
+    range_has_destructured_variable_definition, range_header_from_source, range_variable_name_expr,
 };
 pub use template_action::contains_template_action;
 pub use tree_sitter_utils::{
     children_with_field, parse_expr_text, parse_go_template, parse_helm_template,
 };
 pub use values_comments::extract_values_yaml_descriptions;
-pub use yaml_syntax::{ParsedYamlKey, first_mapping_colon_offset, parse_yaml_key};
+pub(crate) use yaml_syntax::mapping_colon_is_structural;
+pub use yaml_syntax::{first_mapping_colon_offset, parse_yaml_key, unquote_yaml_scalar};
 
 use std::collections::HashMap;
 
@@ -56,8 +56,7 @@ pub struct TemplateHeader {
 }
 
 impl TemplateHeader {
-    #[must_use]
-    pub fn new(raw: impl Into<String>, expr: TemplateExpr) -> Self {
+    fn new(raw: impl Into<String>, expr: TemplateExpr) -> Self {
         Self {
             raw: raw.into(),
             expr,

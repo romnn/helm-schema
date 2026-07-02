@@ -21,24 +21,25 @@ pub fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
     }
 }
 
+pub(crate) fn parse_with(
+    language: tree_sitter::Language,
+    source: &str,
+) -> Option<tree_sitter::Tree> {
+    let mut parser = tree_sitter::Parser::new();
+    parser.set_language(&language).ok()?;
+    parser.parse(source, None)
+}
+
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]
 pub fn parse_go_template(source: &str) -> Option<tree_sitter::Tree> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    if parser.set_language(&language).is_err() {
-        return None;
-    }
-    parser.parse(source, None)
+    parse_with(language, source)
 }
 
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]
 pub fn parse_helm_template(source: &str) -> Option<tree_sitter::Tree> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    if parser.set_language(&language).is_err() {
-        return None;
-    }
-    parser.parse(source, None)
+    parse_with(language, source)
 }

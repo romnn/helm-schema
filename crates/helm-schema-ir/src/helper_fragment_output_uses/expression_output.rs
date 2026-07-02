@@ -478,7 +478,7 @@ fn static_yaml_fragment_output_path_from_exprs(exprs: &[TemplateExpr]) -> Option
         return None;
     };
     let format = printf_format(expr)?;
-    let key = parse_yaml_key(format.trim_start())?.into_key();
+    let key = parse_yaml_key(format.trim_start())?;
     Some(YamlPath(vec![key]))
 }
 

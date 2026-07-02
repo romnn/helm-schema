@@ -22,25 +22,18 @@ fn node_contains_template_action(node: tree_sitter::Node<'_>) -> bool {
 }
 
 fn is_template_action_node(kind: &str) -> bool {
-    is_template_delim_start(kind)
-        || is_template_delim_end(kind)
-        || matches!(
-            kind,
-            "template_action"
-                | "if_action"
-                | "else_action"
-                | "range_action"
-                | "with_action"
-                | "define_action"
-                | "block_action"
-                | "end_action"
-        )
-}
-
-fn is_template_delim_start(kind: &str) -> bool {
-    kind == "{{" || kind == "{{-"
-}
-
-fn is_template_delim_end(kind: &str) -> bool {
-    kind == "}}" || kind == "-}}"
+    matches!(
+        kind,
+        "{{" | "{{-"
+            | "}}"
+            | "-}}"
+            | "template_action"
+            | "if_action"
+            | "else_action"
+            | "range_action"
+            | "with_action"
+            | "define_action"
+            | "block_action"
+            | "end_action"
+    )
 }

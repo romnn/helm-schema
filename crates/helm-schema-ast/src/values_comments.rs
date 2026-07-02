@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::{ParseError, first_mapping_colon_offset, parse_yaml_key};
+use crate::{ParseError, first_mapping_colon_offset, mapping_colon_is_structural, parse_yaml_key};
 
 /// Extract chart-authored descriptions from comments in a values YAML document.
 ///
@@ -160,7 +160,7 @@ fn mapping_entry(trimmed: &str) -> Option<MappingEntry> {
         return None;
     }
 
-    let key = parse_yaml_key(text)?.into_key();
+    let key = parse_yaml_key(text)?;
     if key.contains("{{") || key.contains("}}") {
         return None;
     }
@@ -181,13 +181,6 @@ fn sequence_item_text(trimmed: &str) -> (bool, &str) {
         return (false, trimmed);
     }
     (true, after_dash.trim_start())
-}
-
-fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
-    text[colon + 1..]
-        .chars()
-        .next()
-        .is_none_or(char::is_whitespace)
 }
 
 fn inline_comment(value: &str) -> Option<String> {
