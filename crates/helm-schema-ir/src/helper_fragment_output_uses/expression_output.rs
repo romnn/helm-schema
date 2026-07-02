@@ -122,37 +122,6 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         );
         relate_outputs_to_active_sources(&mut expression_output_uses, active_source_relations);
     }
-    if !exprs.iter().any(expr_contains_helper_call)
-        && let Some(value) = AbstractValue::path_choices(local_effects.output_paths.clone())
-    {
-        let existing = expression_output_uses
-            .iter()
-            .map(|output| (output.source_expr.clone(), output.relative_path.clone()))
-            .collect::<BTreeSet<_>>();
-        let mut effect_output_uses = Vec::new();
-        value.collect_output_uses_with_encoding(
-            &mut effect_output_uses,
-            &output_path,
-            kind,
-            &local_effects.encoded_paths,
-            active_output_predicates,
-            &expression_default_paths,
-            true,
-        );
-        relate_outputs_to_active_sources(&mut effect_output_uses, active_source_relations);
-        for output in &mut effect_output_uses {
-            if kind == ValueKind::Scalar
-                && output.source_expr.ends_with(".*")
-                && output.relative_path == output_path
-                && !existing.contains(&(output.source_expr.clone(), output.relative_path.clone()))
-            {
-                output.relative_path = output_path::sequence_item_path(&output.relative_path);
-            }
-        }
-        expression_output_uses.extend(effect_output_uses.into_iter().filter(|output| {
-            !existing.contains(&(output.source_expr.clone(), output.relative_path.clone()))
-        }));
-    }
     let expression_sources =
         rendered_sources(local_output_uses.iter().chain(&expression_output_uses));
     note_outputs_sibling_sources(&mut local_output_uses, &expression_sources);
@@ -333,7 +302,7 @@ fn collect_bound_fragment_output_assignment_uses(
         state.context,
         &mut seen_rhs,
     );
-    let mut binding = result.value;
+    let mut binding = result.value.and_then(AbstractValue::without_widened);
     let local_default_paths = result.effects.local_default_paths.clone();
     let mut output_meta = result.effects.local_output_meta.clone();
     if assignment_kind == AssignmentKind::Assignment && !active_output_predicates.is_empty() {
@@ -573,18 +542,6 @@ fn predicate_truthiness(predicate: &Predicate) -> Option<(&str, bool)> {
         },
         _ => None,
     }
-}
-
-fn expr_contains_helper_call(expr: &TemplateExpr) -> bool {
-    let mut found = false;
-    expr.walk(|node| {
-        if let TemplateExpr::Call { function, .. } = node
-            && crate::expr_eval::is_helper_call_function(function)
-        {
-            found = true;
-        }
-    });
-    found
 }
 
 fn expression_output_use_is_keyed_map_projection(

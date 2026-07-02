@@ -255,7 +255,8 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
         | AbstractValue::OutputPath(_, _)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)
-        | AbstractValue::List(_) => None,
+        | AbstractValue::List(_)
+        | AbstractValue::Widened(_) => None,
     }
 }
 

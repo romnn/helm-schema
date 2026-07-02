@@ -74,7 +74,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
         current = match function.as_str() {
             "default" => {
                 let mut effects = current.effects;
-                let current_paths = value_paths(&current.value);
+                let current_paths = identity_value_paths(&current.value);
                 effects.add_default_paths(current_paths.clone());
                 if let Some(schema_type) = args.first().and_then(expression_schema_type) {
                     effects.add_type_hints(current_paths, schema_type);
@@ -101,7 +101,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 for arg in args {
                     let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
                     if function == "b64enc" {
-                        effects.add_encoded_paths(value_paths(&arg_result.value));
+                        effects.add_encoded_paths(identity_value_paths(&arg_result.value));
                     }
                     effects.merge(arg_result.effects);
                 }
@@ -115,7 +115,10 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             _ => {
                 let mut effects = current.effects;
                 merge_arg_effects(args, env, resolver, &mut effects);
-                EvalResult::with_effects(None, effects)
+                // An unknown stage widens the pipeline value, but everything
+                // that flowed into the pipeline so far still influences it.
+                let value = AbstractValue::widened(effects.output_paths.clone());
+                EvalResult::with_effects(value, effects)
             }
         };
     }
@@ -145,7 +148,7 @@ fn record_string_transform_effects(
     value: &Option<AbstractValue>,
     effects: &mut Effects,
 ) {
-    let paths = value_paths(value);
+    let paths = identity_value_paths(value);
     effects.add_string_hints(paths.clone());
     if function == "b64enc" {
         effects.add_encoded_paths(paths);
@@ -168,7 +171,12 @@ fn eval_helper_call(
         return EvalResult::none();
     }
 
-    eval_unknown_call(args, env, resolver)
+    // Unresolved helper calls stay value-free: their output is attributed by
+    // the bound-helper summary path, so carrying the call-site argument paths
+    // as widened provenance would double-attribute the context argument.
+    let mut effects = Effects::default();
+    merge_arg_effects(args, env, resolver, &mut effects);
+    EvalResult::with_effects(None, effects)
 }
 
 fn eval_set_call(
@@ -280,11 +288,7 @@ fn eval_default(
 ) -> EvalResult {
     let fallback = eval_expr_with_helper_calls(&args[0], env, resolver);
     let primary = eval_expr_with_helper_calls(&args[1], env, resolver);
-    let primary_paths = primary
-        .value
-        .as_ref()
-        .map(AbstractValue::paths)
-        .unwrap_or_default();
+    let primary_paths = identity_value_paths(&primary.value);
     let mut effects = fallback.effects;
     effects.merge(primary.effects);
     effects.add_default_paths(primary_paths.clone());
@@ -553,11 +557,18 @@ fn eval_printf(
 ) -> EvalResult {
     let mut effects = Effects::default();
     let mut provenance_paths = BTreeSet::new();
+    let mut widened_paths = BTreeSet::new();
     let mut values = Vec::with_capacity(args.len());
 
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
-        provenance_paths.extend(value_paths(&result.value));
+        let identity_paths = identity_value_paths(&result.value);
+        widened_paths.extend(
+            value_paths(&result.value)
+                .difference(&identity_paths)
+                .cloned(),
+        );
+        provenance_paths.extend(identity_paths);
         effects.merge(result.effects);
         values.push(result.value);
     }
@@ -583,6 +594,11 @@ fn eval_printf(
     }
     if let Some(paths) = AbstractValue::path_choices(provenance_paths) {
         values.push(paths);
+    }
+    // Influence stays widened: the format arguments flowed through an unknown
+    // call, so they attribute the rendered text without becoming identities.
+    if let Some(widened) = AbstractValue::widened(widened_paths) {
+        values.push(widened);
     }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
@@ -670,11 +686,7 @@ fn eval_type_is(
         values.push(result.value);
     }
     if let Some(schema_type) = type_is_schema_type(args.first()) {
-        let paths = values
-            .get(1)
-            .and_then(Option::as_ref)
-            .map(AbstractValue::paths)
-            .unwrap_or_default();
+        let paths = values.get(1).map(identity_value_paths).unwrap_or_default();
         effects.add_type_hints(paths, &schema_type);
     }
     EvalResult::with_effects(None, effects)
@@ -725,11 +737,24 @@ fn eval_unknown_call(
 ) -> EvalResult {
     let mut effects = Effects::default();
     merge_arg_effects(args, env, resolver, &mut effects);
-    EvalResult::with_effects(None, effects)
+    let value = AbstractValue::widened(effects.output_paths.clone());
+    EvalResult::with_effects(value, effects)
 }
 
 pub(crate) fn value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
     value.as_ref().map(AbstractValue::paths).unwrap_or_default()
+}
+
+/// Paths whose value this abstract value may literally be. Widened influence
+/// is dataflow through an unknown call, not value identity: defaulting or
+/// type-hinting the call result (e.g. `required "..." .Values.x | quote`)
+/// says nothing about the type or defaultedness of `.Values.x` itself.
+fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
+    value
+        .clone()
+        .and_then(AbstractValue::without_widened)
+        .map(|value| value.paths())
+        .unwrap_or_default()
 }
 
 pub(crate) fn path_segment_options(

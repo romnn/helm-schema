@@ -19,6 +19,12 @@ pub(crate) enum AbstractValue {
         fallback: Box<AbstractValue>,
     },
     Choice(BTreeSet<AbstractValue>),
+    /// Result of a call without a transfer function: the value itself is
+    /// unknown (structural operations treat it like `Unknown`), but the
+    /// `.Values` paths that flowed into the call are kept so output
+    /// projection can still attribute the rendered text to its sources.
+    /// Declared last so projected rows sort after structured alternatives.
+    Widened(BTreeSet<String>),
 }
 
 impl AbstractValue {
@@ -68,6 +74,14 @@ impl AbstractValue {
                     value.collect_paths(out, descend_structures, suppress_values_root);
                 }
             }
+            // Influence paths surface in full path collection (output
+            // attribution), but a widened value is not a fragment source:
+            // fragment projections must treat it like `Unknown`.
+            Self::Widened(paths) => {
+                if !suppress_values_root {
+                    out.extend(paths.iter().cloned());
+                }
+            }
             Self::Top
             | Self::Unknown
             | Self::RootContext
@@ -115,7 +129,8 @@ impl AbstractValue {
             | Self::RootContext
             | Self::StringSet(_)
             | Self::Dict(_)
-            | Self::Overlay { .. } => None,
+            | Self::Overlay { .. }
+            | Self::Widened(_) => None,
         }
     }
 
@@ -135,6 +150,30 @@ impl AbstractValue {
 
     pub(crate) fn path_choices(paths: BTreeSet<String>) -> Option<Self> {
         Self::choice(paths.into_iter().map(Self::ValuesPath).collect())
+    }
+
+    pub(crate) fn widened(paths: BTreeSet<String>) -> Option<Self> {
+        if paths.is_empty() {
+            None
+        } else {
+            Some(Self::Widened(paths))
+        }
+    }
+
+    /// A widened value flows to output projection, but it is not a
+    /// values-backed fragment: binding it to a local must behave like the
+    /// unknown call results did before provenance carrying, i.e. not bind.
+    pub(crate) fn without_widened(self) -> Option<Self> {
+        match self {
+            Self::Widened(_) => None,
+            Self::Choice(choices) => Self::choice(
+                choices
+                    .into_iter()
+                    .filter_map(Self::without_widened)
+                    .collect(),
+            ),
+            other => Some(other),
+        }
     }
 
     pub(crate) fn join_all(values: Vec<Self>) -> Option<Self> {
@@ -188,7 +227,10 @@ impl AbstractValue {
                 }
             }
             Self::Top => Some(Self::Top),
-            Self::Unknown => None,
+            // Selecting into an unknown call result severs the influence:
+            // the selected member is not derived from the recorded paths in
+            // any way the projection could still attribute.
+            Self::Unknown | Self::Widened(_) => None,
             Self::StringSet(_) => None,
             Self::Choice(choices) => {
                 let mut out = Vec::new();
@@ -363,6 +405,9 @@ impl AbstractValue {
                     non_dict_strings.extend(strings);
                 }
                 Self::RootContext | Self::Unknown | Self::Top | Self::List(_) => {}
+                // Widened influence is not a context fragment: merged dot
+                // contexts keep only values-backed members.
+                Self::Widened(_) => {}
             }
         }
 
@@ -402,6 +447,7 @@ impl AbstractValue {
             | Self::Unknown
             | Self::Top
             | Self::StringSet(_) => Some(self),
+            Self::Widened(paths) => Self::widened(paths.difference(remove).cloned().collect()),
             Self::Dict(entries) => {
                 let entries = entries
                     .into_iter()
@@ -473,7 +519,8 @@ impl AbstractValue {
             | Self::List(_)
             | Self::Overlay { .. }
             | Self::StringSet(_)
-            | Self::Choice(_) => None,
+            | Self::Choice(_)
+            | Self::Widened(_) => None,
         }
     }
 
@@ -595,6 +642,31 @@ impl AbstractValue {
                     );
                 }
             }
+            Self::Widened(paths) => {
+                for path in paths {
+                    if suppress_values_root && path.is_empty() {
+                        continue;
+                    }
+                    // A range item (`path.*`) that reaches a scalar slot only
+                    // through an unknown call renders once per iteration, so
+                    // it lands on the slot's sequence-item path.
+                    let path_for_output = if kind == ValueKind::Scalar && path.ends_with(".*") {
+                        output_path::sequence_item_path(relative_path)
+                    } else {
+                        relative_path.clone()
+                    };
+                    push_output_path(
+                        outputs,
+                        path,
+                        &path_for_output,
+                        kind,
+                        None,
+                        encoded_paths,
+                        active_output_predicates,
+                        defaulted_paths,
+                    );
+                }
+            }
             Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => {}
         }
     }
@@ -627,7 +699,8 @@ impl AbstractValue {
             | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::StringSet(_)
-            | Self::Choice(_) => ValueKind::Scalar,
+            | Self::Choice(_)
+            | Self::Widened(_) => ValueKind::Scalar,
         }
     }
 }

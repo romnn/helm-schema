@@ -151,3 +151,74 @@ fn fragment_range_item_does_not_iterate_map_values() {
 
     sim_assert_eq!(have: value.fragment_range_item(), want: None);
 }
+
+#[test]
+fn widened_carries_paths_for_attribution_but_is_no_fragment_source() {
+    let value = AbstractValue::Widened(paths(&["auth.existingSecret"]));
+
+    sim_assert_eq!(have: value.paths(), want: paths(&["auth.existingSecret"]));
+    sim_assert_eq!(have: value.fragment_source_paths(), want: BTreeSet::new());
+    sim_assert_eq!(have: value.fragment_rendered_paths(), want: BTreeSet::new());
+    sim_assert_eq!(have: value.apply_to_path(&["data".to_string()]), want: None);
+}
+
+#[test]
+fn without_widened_drops_widened_alternatives() {
+    let widened = AbstractValue::Widened(paths(&["name"]));
+
+    sim_assert_eq!(have: widened.clone().without_widened(), want: None);
+    sim_assert_eq!(
+        have: join(vec![path("image.tag"), widened]).without_widened(),
+        want: Some(path("image.tag"))
+    );
+}
+
+#[test]
+fn widened_projects_rows_at_the_expression_slot() {
+    let value = AbstractValue::Widened(paths(&["auth.existingSecret"]));
+    let slot = YamlPath(vec!["data".to_string(), "password".to_string()]);
+    let mut outputs = Vec::new();
+    value.collect_output_uses_with_encoding(
+        &mut outputs,
+        &slot,
+        ValueKind::Scalar,
+        &BTreeSet::new(),
+        &BTreeSet::new(),
+        &BTreeSet::new(),
+        true,
+    );
+
+    let rows: Vec<(String, YamlPath, ValueKind)> = outputs
+        .into_iter()
+        .map(|output| (output.source_expr, output.relative_path, output.kind))
+        .collect();
+    sim_assert_eq!(
+        have: rows,
+        want: vec![("auth.existingSecret".to_string(), slot, ValueKind::Scalar)]
+    );
+}
+
+#[test]
+fn widened_range_item_scalar_projects_to_sequence_item_path() {
+    let value = AbstractValue::Widened(paths(&["hosts.*"]));
+    let slot = YamlPath(vec!["tls".to_string()]);
+    let mut outputs = Vec::new();
+    value.collect_output_uses_with_encoding(
+        &mut outputs,
+        &slot,
+        ValueKind::Scalar,
+        &BTreeSet::new(),
+        &BTreeSet::new(),
+        &BTreeSet::new(),
+        true,
+    );
+
+    let rows: Vec<(String, YamlPath)> = outputs
+        .into_iter()
+        .map(|output| (output.source_expr, output.relative_path))
+        .collect();
+    sim_assert_eq!(
+        have: rows,
+        want: vec![("hosts.*".to_string(), output_path::sequence_item_path(&slot))]
+    );
+}

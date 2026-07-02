@@ -175,5 +175,6 @@ pub(crate) fn fragment_value_from_expr(
         },
     )
     .value
+    .and_then(AbstractValue::without_widened)
     .map(|value| value.to_context_value())
 }
