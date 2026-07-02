@@ -362,7 +362,7 @@ fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKi
 fn conditional_guard_predicates(predicates: &[Predicate]) -> Vec<ConditionalGuard> {
     let mut guards = predicates
         .iter()
-        .filter_map(predicate_to_conditional_guard)
+        .filter_map(|predicate| predicate_to_guard(predicate, None))
         .collect::<Vec<_>>();
     guards.sort();
     guards.dedup();
@@ -410,10 +410,6 @@ fn provider_schema_use(
                 .last()
                 .is_none_or(|segment| !segment.ends_with("[*]")),
     })
-}
-
-fn predicate_to_conditional_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
-    predicate_to_guard(predicate, None)
 }
 
 fn predicate_to_guard(

@@ -7,7 +7,7 @@ pub fn canonical_json_string(value: &Value) -> String {
     serde_json::to_string(&canonical_json_value(value)).expect("serialize canonical JSON value")
 }
 
-pub fn canonical_json_value(value: &Value) -> Value {
+fn canonical_json_value(value: &Value) -> Value {
     match value {
         Value::Object(object) => {
             let mut out = serde_json::Map::new();
@@ -36,6 +36,8 @@ pub enum SchemaTraversalContext {
     Schema,
     SchemaArray,
     SchemaMapValues,
+    /// Value of a `$ref` keyword: a reference target, not a subschema.
+    Ref,
     Data,
 }
 
@@ -56,6 +58,7 @@ pub fn schema_child_context_for_keyword(key: &str) -> SchemaTraversalContext {
         | "then"
         | "unevaluatedItems"
         | "unevaluatedProperties" => SchemaTraversalContext::Schema,
+        "$ref" => SchemaTraversalContext::Ref,
         _ => SchemaTraversalContext::Data,
     }
 }
@@ -67,110 +70,38 @@ pub fn ref_points_inside(root: &Value, reference: &str) -> bool {
     pointer.is_empty() || root.pointer(pointer).is_some()
 }
 
-pub fn schema_refs_point_inside(root: &Value, schema: &Value) -> bool {
-    schema_refs_point_inside_value(root, schema, SchemaTraversalContext::Schema)
+/// Whether every internal (`#`-prefixed) `$ref` in `schema` resolves within
+/// `schema` itself.
+pub fn schema_refs_point_inside(schema: &Value) -> bool {
+    refs_point_inside_value(schema, schema, SchemaTraversalContext::Schema)
 }
 
-pub fn schema_refs_point_inside_value(
-    root: &Value,
-    value: &Value,
-    context: SchemaTraversalContext,
-) -> bool {
+fn refs_point_inside_value(root: &Value, value: &Value, context: SchemaTraversalContext) -> bool {
     match value {
+        Value::String(reference) if context == SchemaTraversalContext::Ref => {
+            ref_points_inside(root, reference)
+        }
         Value::Array(values) => match context {
-            SchemaTraversalContext::Data => true,
-            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
-                values.iter().all(|value| {
-                    schema_refs_point_inside_value(root, value, SchemaTraversalContext::Schema)
-                })
-            }
+            SchemaTraversalContext::Data | SchemaTraversalContext::Ref => true,
+            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => values
+                .iter()
+                .all(|value| refs_point_inside_value(root, value, SchemaTraversalContext::Schema)),
             SchemaTraversalContext::SchemaMapValues => values.iter().all(|value| {
-                schema_refs_point_inside_value(root, value, SchemaTraversalContext::SchemaMapValues)
+                refs_point_inside_value(root, value, SchemaTraversalContext::SchemaMapValues)
             }),
         },
         Value::Object(object) => match context {
-            SchemaTraversalContext::Data => true,
-            SchemaTraversalContext::SchemaMapValues => object.values().all(|value| {
-                schema_refs_point_inside_value(root, value, SchemaTraversalContext::Schema)
-            }),
+            SchemaTraversalContext::Data | SchemaTraversalContext::Ref => true,
+            SchemaTraversalContext::SchemaMapValues => object
+                .values()
+                .all(|value| refs_point_inside_value(root, value, SchemaTraversalContext::Schema)),
             SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
-                if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-                    && !ref_points_inside(root, reference)
-                {
-                    return false;
-                }
                 object.iter().all(|(key, value)| {
-                    schema_refs_point_inside_value(
-                        root,
-                        value,
-                        schema_child_context_for_keyword(key),
-                    )
+                    refs_point_inside_value(root, value, schema_child_context_for_keyword(key))
                 })
             }
         },
         _ => true,
-    }
-}
-
-pub fn try_rewrite_schema_refs<E>(
-    value: &Value,
-    context: SchemaTraversalContext,
-    mut rewrite_ref: impl FnMut(&Value) -> Result<Value, E>,
-) -> Result<Value, E> {
-    try_rewrite_schema_refs_in(value, context, &mut rewrite_ref)
-}
-
-fn try_rewrite_schema_refs_in<E>(
-    value: &Value,
-    context: SchemaTraversalContext,
-    rewrite_ref: &mut impl FnMut(&Value) -> Result<Value, E>,
-) -> Result<Value, E> {
-    match value {
-        Value::Array(values) => match context {
-            SchemaTraversalContext::Data => Ok(Value::Array(values.clone())),
-            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => values
-                .iter()
-                .map(|value| {
-                    try_rewrite_schema_refs_in(value, SchemaTraversalContext::Schema, rewrite_ref)
-                })
-                .collect(),
-            SchemaTraversalContext::SchemaMapValues => values
-                .iter()
-                .map(|value| {
-                    try_rewrite_schema_refs_in(
-                        value,
-                        SchemaTraversalContext::SchemaMapValues,
-                        rewrite_ref,
-                    )
-                })
-                .collect(),
-        },
-        Value::Object(object) => match context {
-            SchemaTraversalContext::Data => Ok(Value::Object(object.clone())),
-            SchemaTraversalContext::SchemaMapValues => object
-                .iter()
-                .map(|(key, value)| {
-                    try_rewrite_schema_refs_in(value, SchemaTraversalContext::Schema, rewrite_ref)
-                        .map(|value| (key.clone(), value))
-                })
-                .collect(),
-            SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => object
-                .iter()
-                .map(|(key, value)| {
-                    let value = if key == "$ref" {
-                        rewrite_ref(value)?
-                    } else {
-                        try_rewrite_schema_refs_in(
-                            value,
-                            schema_child_context_for_keyword(key),
-                            rewrite_ref,
-                        )?
-                    };
-                    Ok((key.clone(), value))
-                })
-                .collect(),
-        },
-        _ => Ok(value.clone()),
     }
 }
 
@@ -194,7 +125,9 @@ fn try_map_schema_context_at<E>(
 
     match value {
         Value::Array(values) => match context {
-            SchemaTraversalContext::Data => Ok(Value::Array(values.clone())),
+            SchemaTraversalContext::Data | SchemaTraversalContext::Ref => {
+                Ok(Value::Array(values.clone()))
+            }
             SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => values
                 .iter()
                 .map(|value| {
@@ -219,7 +152,9 @@ fn try_map_schema_context_at<E>(
                 .collect(),
         },
         Value::Object(object) => match context {
-            SchemaTraversalContext::Data => Ok(Value::Object(object.clone())),
+            SchemaTraversalContext::Data | SchemaTraversalContext::Ref => {
+                Ok(Value::Object(object.clone()))
+            }
             SchemaTraversalContext::SchemaMapValues => object
                 .iter()
                 .map(|(key, value)| {
@@ -286,7 +221,7 @@ pub fn visit_subschemas(schema: &Value, visitor: &mut impl FnMut(&Value)) {
                     }
                 }
             }
-            SchemaTraversalContext::Data => {}
+            SchemaTraversalContext::Data | SchemaTraversalContext::Ref => {}
         }
     }
 }
@@ -342,7 +277,7 @@ pub fn try_visit_subschemas_mut<E>(
                     }
                 }
             }
-            SchemaTraversalContext::Data => {}
+            SchemaTraversalContext::Data | SchemaTraversalContext::Ref => {}
         }
     }
 

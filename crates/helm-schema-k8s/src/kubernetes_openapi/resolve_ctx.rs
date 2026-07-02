@@ -284,7 +284,7 @@ fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
                         .collect(),
                 )
             }
-            SchemaTraversalContext::Data => continue,
+            SchemaTraversalContext::Data | SchemaTraversalContext::Ref => continue,
         };
         obj.insert(key.clone(), expanded);
     }

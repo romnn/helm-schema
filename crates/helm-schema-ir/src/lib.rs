@@ -28,11 +28,10 @@ mod value_path_context;
 
 pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};
 pub use helm_schema_core::{
-    ApiPresenceQuery, CapabilityGuard, CapabilityOracle, ConditionalGuard,
-    ConditionalOverlayEvidence, ConditionalPathOverlay, ContractPathSchemaEvidence,
-    ContractProvenance, ContractRequirednessEvidence, ContractSchemaSignals,
-    ContractValuePathFacts, Guard, GuardValue, HelperBranch, HelperBranchBody, MetadataFieldKind,
-    ProviderSchemaUse, ResourceRef, SourceSpan, ValueKind, YamlPath, live_literals,
+    CapabilityGuard, ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
+    ContractProvenance, ContractSchemaSignals, ContractValuePathFacts, Guard, GuardValue,
+    HelperBranch, HelperBranchBody, MetadataFieldKind, ProviderSchemaUse, ResourceRef, SourceSpan,
+    ValueKind, YamlPath,
 };
 pub use symbolic::SymbolicIrContext;
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use helm_schema_core::{ResourceRef, ValueKind, YamlPath};
+use helm_schema_core::{ResourceRef, ValueKind, YamlPath, sequence_item_path};
 
 use crate::{
     TemplateExpr, first_mapping_colon_offset, mapping_colon_is_structural, parse_expr_text,
@@ -508,7 +508,7 @@ impl<'a> StructuralDocument<'a> {
         let parent_path = parent_context.current_path;
 
         if is_sequence_item {
-            let item_path = append_sequence_segment(&parent_path);
+            let item_path = sequence_item_path(&parent_path);
             let after_dash = &trimmed[1..];
             let nested = after_dash.trim_start();
             if action_span.is_none() && !starts_with_inline_mapping(nested) {
@@ -604,7 +604,7 @@ fn push_structural_line(line: &str, slots: &mut Vec<StructuralSlot>) {
         .last()
         .map(|slot| slot.path.clone())
         .unwrap_or_else(|| YamlPath(Vec::new()));
-    let item_path = append_sequence_segment(&parent_path);
+    let item_path = sequence_item_path(&parent_path);
     let nested = after_dash.trim_start();
     let block_scalar = nested.starts_with('|') || nested.starts_with('>');
     slots.push(StructuralSlot {
@@ -779,18 +779,6 @@ fn append_mapping_segment(path: &YamlPath, key: &str) -> YamlPath {
     let mut path = path.clone();
     if !key.is_empty() {
         path.0.push(key.to_string());
-    }
-    path
-}
-
-fn append_sequence_segment(path: &YamlPath) -> YamlPath {
-    let mut path = path.clone();
-    if let Some(last) = path.0.last_mut() {
-        if !last.ends_with("[*]") {
-            last.push_str("[*]");
-        }
-    } else {
-        path.0.push("[*]".to_string());
     }
     path
 }

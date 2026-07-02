@@ -4,10 +4,6 @@ use crate::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBranchBody};
 /// a specific Kubernetes version.
 pub trait CapabilityOracle: Send + Sync {
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool>;
-
-    fn kube_version(&self) -> Option<&str> {
-        None
-    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

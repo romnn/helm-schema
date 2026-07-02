@@ -88,12 +88,7 @@ pub struct ProviderSourceFragment {
 }
 
 impl ProviderSourceFragment {
-    #[must_use]
-    pub fn new(
-        source: ProviderSchemaSource,
-        source_schema: Value,
-        definition_schema: Value,
-    ) -> Self {
+    fn new(source: ProviderSchemaSource, source_schema: Value, definition_schema: Value) -> Self {
         Self {
             source,
             source_schema,
@@ -166,18 +161,6 @@ impl ProviderSchemaFragment {
     }
 
     #[must_use]
-    pub fn with_optional_source_schema(
-        self,
-        source: ProviderSchemaSource,
-        source_schema: Option<Value>,
-    ) -> Self {
-        match source_schema {
-            Some(source_schema) => self.with_source_schema(source, source_schema),
-            None => self.with_source(source),
-        }
-    }
-
-    #[must_use]
     pub fn schema(&self) -> &Value {
         &self.schema
     }
@@ -187,25 +170,6 @@ impl ProviderSchemaFragment {
         self.source_fragment
             .as_ref()
             .map(ProviderSourceFragment::source)
-    }
-
-    #[must_use]
-    pub fn source_schema(&self) -> Option<&Value> {
-        self.source_fragment
-            .as_ref()
-            .map(ProviderSourceFragment::source_schema)
-    }
-
-    #[must_use]
-    pub fn definition_schema(&self) -> Option<&Value> {
-        self.source_fragment
-            .as_ref()
-            .map(ProviderSourceFragment::definition_schema)
-    }
-
-    #[must_use]
-    pub fn source_fragment(&self) -> Option<&ProviderSourceFragment> {
-        self.source_fragment.as_ref()
     }
 
     #[must_use]

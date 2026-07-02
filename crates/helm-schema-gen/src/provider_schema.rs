@@ -1,6 +1,6 @@
 use helm_schema_core::{ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment};
 use json_schema_walk::{
-    SchemaTraversalContext, escape_json_pointer_segment, try_rewrite_schema_refs,
+    SchemaTraversalContext, escape_json_pointer_segment, try_map_schema_context,
 };
 use serde_json::Value;
 
@@ -48,7 +48,7 @@ impl ProviderSchemaCandidate {
         self.source_fragment
             .as_ref()
             .map(ProviderSourceFragment::definition_schema)
-            .filter(|schema| schema_refs_point_inside(schema))
+            .filter(|schema| json_schema_walk::schema_refs_point_inside(schema))
     }
 
     pub(crate) fn survives_as(&self, schema: &Value) -> bool {
@@ -95,21 +95,20 @@ pub(crate) fn rewrite_internal_refs_for_root_definition(
     schema: &Value,
     definition_name: &str,
 ) -> Option<Value> {
-    rewrite_internal_refs_in(schema, schema, definition_name)
-}
-
-fn schema_refs_point_inside(schema: &Value) -> bool {
-    json_schema_walk::schema_refs_point_inside(schema, schema)
-}
-
-fn rewrite_internal_refs_in(root: &Value, value: &Value, definition_name: &str) -> Option<Value> {
-    let rewritten: Result<Value, ()> =
-        try_rewrite_schema_refs(value, SchemaTraversalContext::Schema, |reference| {
-            let reference = reference.as_str().ok_or(())?;
+    let rewritten: Result<Value, ()> = try_map_schema_context(
+        schema,
+        SchemaTraversalContext::Schema,
+        |value, context, _depth| {
+            if context != SchemaTraversalContext::Ref {
+                return Ok(None);
+            }
+            let reference = value.as_str().ok_or(())?;
             let reference =
-                rewrite_local_ref_for_root_definition(root, reference, definition_name).ok_or(())?;
-            Ok(Value::String(reference))
-        });
+                rewrite_local_ref_for_root_definition(schema, reference, definition_name)
+                    .ok_or(())?;
+            Ok(Some(Value::String(reference)))
+        },
+    );
     rewritten.ok()
 }
 
@@ -119,7 +118,7 @@ fn rewrite_local_ref_for_root_definition(
     definition_name: &str,
 ) -> Option<String> {
     let pointer = reference.strip_prefix('#')?;
-    if !local_ref_points_inside(root, reference) {
+    if !json_schema_walk::ref_points_inside(root, reference) {
         return None;
     }
     Some(format!(
@@ -127,10 +126,6 @@ fn rewrite_local_ref_for_root_definition(
         escape_json_pointer_segment(definition_name),
         pointer
     ))
-}
-
-fn local_ref_points_inside(root: &Value, reference: &str) -> bool {
-    json_schema_walk::ref_points_inside(root, reference)
 }
 
 #[cfg(test)]

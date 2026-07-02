@@ -334,10 +334,6 @@ impl CapabilityOracle for Chain {
         self.capability_has_query_at_primary_version_traced(query)
             .answer
     }
-
-    fn kube_version(&self) -> Option<&str> {
-        Chain::kube_version(self)
-    }
 }
 
 fn needs_inference(resource: &ResourceRef) -> bool {

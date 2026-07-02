@@ -46,7 +46,7 @@ pub(crate) fn bundle_source_definition(
     source_schema: &Value,
     mut resolve_external_ref: impl FnMut(&SourceBundleLocation, &str) -> Option<SourceBundleNode>,
 ) -> Value {
-    if json_schema_walk::schema_refs_point_inside(source_schema, source_schema) {
+    if json_schema_walk::schema_refs_point_inside(source_schema) {
         return source_schema.clone();
     }
 
@@ -165,7 +165,10 @@ where
     ) -> Value {
         let mapped: Result<Value, Infallible> =
             try_map_schema_context(value, context, |value, context, relative_depth| {
-                if matches!(context, SchemaTraversalContext::Data) {
+                if matches!(
+                    context,
+                    SchemaTraversalContext::Data | SchemaTraversalContext::Ref
+                ) {
                     return Ok(None);
                 }
                 let Some(reference) = value.get("$ref").and_then(Value::as_str) else {

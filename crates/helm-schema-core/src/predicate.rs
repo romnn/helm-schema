@@ -60,20 +60,6 @@ impl Predicate {
         paths
     }
 
-    pub fn truthy_disjunction_paths(&self) -> Option<Vec<String>> {
-        match self {
-            Self::Guard(Guard::Truthy { path }) => Some(vec![path.clone()]),
-            Self::Or(predicates) => predicates
-                .iter()
-                .map(|predicate| match predicate {
-                    Self::Guard(Guard::Truthy { path }) => Some(path.clone()),
-                    _ => None,
-                })
-                .collect(),
-            _ => None,
-        }
-    }
-
     pub fn with_context_predicates(self) -> Vec<Self> {
         match self {
             Self::True => Vec::new(),
@@ -84,7 +70,14 @@ impl Predicate {
                 .collect(),
             Self::Guard(Guard::Truthy { path }) => vec![Self::from(Guard::With { path })],
             Self::Or(predicates) => {
-                let Some(paths) = Self::Or(predicates.clone()).truthy_disjunction_paths() else {
+                let paths: Option<Vec<String>> = predicates
+                    .iter()
+                    .map(|predicate| match predicate {
+                        Self::Guard(Guard::Truthy { path }) => Some(path.clone()),
+                        _ => None,
+                    })
+                    .collect();
+                let Some(paths) = paths else {
                     return vec![Self::Or(predicates)];
                 };
                 let mut out: Vec<Self> = paths
