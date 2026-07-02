@@ -23,11 +23,6 @@ pub(crate) struct SymbolicLocalState {
     local_scopes: Vec<LocalScopeFrame>,
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct SymbolicLocalStateSnapshot {
-    state: SymbolicLocalState,
-}
-
 #[derive(Clone, Debug, Default)]
 struct LocalScopeFrame {
     previous_values: HashMap<String, VariableLocalState>,
@@ -43,26 +38,8 @@ struct VariableLocalState {
 }
 
 impl SymbolicLocalState {
-    pub(crate) fn snapshot(&self) -> SymbolicLocalStateSnapshot {
-        SymbolicLocalStateSnapshot {
-            state: self.clone(),
-        }
-    }
-
-    pub(crate) fn restore(&mut self, snapshot: SymbolicLocalStateSnapshot) {
-        *self = snapshot.state;
-    }
-
-    pub(crate) fn join_branch_outcomes(
-        &mut self,
-        entry: &SymbolicLocalStateSnapshot,
-        outcomes: Vec<SymbolicLocalStateSnapshot>,
-    ) {
-        let outcomes = outcomes
-            .into_iter()
-            .map(|snapshot| snapshot.state)
-            .collect();
-        *self = joined_branch_outcomes(&entry.state, outcomes);
+    pub(crate) fn join_branch_outcomes(&mut self, entry: &Self, outcomes: Vec<Self>) {
+        *self = joined_branch_outcomes(entry, outcomes);
     }
 
     pub(crate) fn merge_helper_outcome(mut self, other: Self) -> Self {
@@ -98,8 +75,6 @@ impl SymbolicLocalState {
         binding: Option<AbstractValue>,
     ) {
         self.record_scope_shadow(&variable);
-        self.range_domains.remove(&variable);
-        self.get_bindings.remove(&variable);
         self.set_fragment_value(variable, binding);
     }
 
@@ -183,23 +158,23 @@ impl SymbolicLocalState {
 
     fn declare_get_binding(&mut self, variable: String, binding: GetBinding) {
         self.record_scope_shadow(&variable);
+        self.set_get_binding(variable, binding);
+    }
+
+    fn assign_get_binding(&mut self, variable: String, binding: GetBinding) {
+        if self.local_scopes.is_empty() || self.variable_has_current_value(&variable) {
+            self.set_get_binding(variable, binding);
+        } else {
+            self.declare_get_binding(variable, binding);
+        }
+    }
+
+    fn set_get_binding(&mut self, variable: String, binding: GetBinding) {
         self.range_domains.remove(&variable);
         self.fragment_values.remove(&variable);
         self.default_paths.remove(&variable);
         self.output_meta.remove(&variable);
         self.get_bindings.insert(variable, binding);
-    }
-
-    fn assign_get_binding(&mut self, variable: String, binding: GetBinding) {
-        if self.local_scopes.is_empty() || self.variable_has_current_value(&variable) {
-            self.range_domains.remove(&variable);
-            self.fragment_values.remove(&variable);
-            self.default_paths.remove(&variable);
-            self.output_meta.remove(&variable);
-            self.get_bindings.insert(variable, binding);
-        } else {
-            self.declare_get_binding(variable, binding);
-        }
     }
 
     fn restore_variable_state(&mut self, variable: &str, previous: VariableLocalState) {

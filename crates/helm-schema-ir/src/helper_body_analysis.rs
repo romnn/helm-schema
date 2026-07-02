@@ -345,7 +345,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        self.control.prepare_branch_join(&entry.control);
+        self.control.restore(&entry.control);
         self.merge_outcomes(outcomes);
     }
 

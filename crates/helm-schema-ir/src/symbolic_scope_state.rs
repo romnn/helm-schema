@@ -1,6 +1,6 @@
 use crate::Guard;
 use crate::abstract_value::AbstractValue;
-use crate::symbolic_local_state::{SymbolicLocalState, SymbolicLocalStateSnapshot};
+use crate::symbolic_local_state::SymbolicLocalState;
 use helm_schema_core::Predicate;
 
 #[derive(Clone, Debug, Default)]
@@ -14,7 +14,7 @@ pub(crate) struct SymbolicScopeState {
 pub(crate) struct SymbolicScopeSnapshot {
     predicates_len: usize,
     dot_stack_len: usize,
-    locals: SymbolicLocalStateSnapshot,
+    locals: SymbolicLocalState,
 }
 
 impl SymbolicScopeState {
@@ -30,14 +30,14 @@ impl SymbolicScopeState {
         SymbolicScopeSnapshot {
             predicates_len: self.predicates.len(),
             dot_stack_len: self.dot_stack.len(),
-            locals: self.locals.snapshot(),
+            locals: self.locals.clone(),
         }
     }
 
     pub(crate) fn restore(&mut self, snapshot: SymbolicScopeSnapshot) {
         self.predicates.truncate(snapshot.predicates_len);
         self.dot_stack.truncate(snapshot.dot_stack_len);
-        self.locals.restore(snapshot.locals);
+        self.locals = snapshot.locals;
     }
 
     pub(crate) fn join_branch_outcomes(

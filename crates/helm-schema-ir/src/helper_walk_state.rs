@@ -145,10 +145,6 @@ impl HelperRuntimeControlState {
         self.range_frames.push(frame);
     }
 
-    pub(crate) fn prepare_branch_join(&mut self, snapshot: &HelperRuntimeControlSnapshot) {
-        self.restore(snapshot);
-    }
-
     pub(crate) fn prepare_range_join(
         &mut self,
         snapshot: &HelperRuntimeControlSnapshot,

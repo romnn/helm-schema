@@ -17,7 +17,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state
         .chart_value_defaults
         .insert("serviceAccount.name".to_string());
-    let snapshot = state.snapshot();
+    let snapshot = state.clone();
     state.enter_local_scope();
 
     state.declare_fragment_value(
@@ -30,7 +30,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
         .insert("serviceAccount.labels".to_string());
     state.exit_local_scope();
 
-    state.restore(snapshot);
+    state = snapshot;
 
     sim_assert_eq!(
         have: state.fragment_values.get("image"),
@@ -277,7 +277,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("entry".to_string())),
     );
-    let entry_snapshot = entry.snapshot();
+    let entry_snapshot = entry.clone();
 
     let mut first = entry.clone();
     first.assign_fragment_value(
@@ -291,7 +291,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     );
 
     let mut joined = entry;
-    joined.join_branch_outcomes(&entry_snapshot, vec![first.snapshot(), second.snapshot()]);
+    joined.join_branch_outcomes(&entry_snapshot, vec![first, second]);
 
     sim_assert_eq!(
         have: joined.fragment_values.get("name"),
@@ -312,14 +312,14 @@ fn branch_join_intersects_chart_value_defaults() {
     entry
         .chart_value_defaults
         .insert("already.defaulted".to_string());
-    let entry_snapshot = entry.snapshot();
+    let entry_snapshot = entry.clone();
 
     let mut first = entry.clone();
     first.chart_value_defaults.insert("branch.only".to_string());
     let second = entry.clone();
 
     let mut joined = entry;
-    joined.join_branch_outcomes(&entry_snapshot, vec![first.snapshot(), second.snapshot()]);
+    joined.join_branch_outcomes(&entry_snapshot, vec![first, second]);
 
     sim_assert_eq!(
         have: joined.chart_value_defaults,
