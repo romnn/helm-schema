@@ -13,7 +13,7 @@ use crate::fragment_expr_eval::{
     helper_result_from_exprs_with_fragment_locals,
 };
 use crate::helper_summary::{
-    HelperFragmentOutputUse, HelperOutputMeta, relate_outputs_to_sources, values_paths_are_related,
+    HelperFragmentOutputUse, HelperOutputMeta, NestedDependencyRows, relate_outputs_to_sources,
 };
 use crate::helper_walk_state::FragmentOutputWalkState;
 use crate::{ValueKind, YamlPath};
@@ -127,43 +127,15 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         state
             .analysis
             .string_output
-            .extend(nested_summary.string_output.clone());
+            .extend(nested_summary.string_output.iter().cloned());
     }
-    state
-        .analysis
-        .chart_defaults
-        .extend(nested_summary.chart_defaults.clone());
-    state
-        .analysis
-        .add_type_hints(nested_summary.type_hints.clone());
-    for (path, meta) in nested_summary.guard_path_meta {
-        state.analysis.merge_guard_path_meta(path, meta);
-    }
-    let nested_site_sources: BTreeSet<String> = nested_summary
-        .output_uses
-        .iter()
-        .map(|output| output.source_expr.clone())
-        .collect();
-    for output in nested_summary
-        .output_uses
-        .iter()
-        .filter(|output| output.is_dependency())
-    {
-        let output_site_predicates = nested_output_site_predicates(
-            &output.source_expr,
-            &output.meta,
-            active_output_predicates,
-            &nested_site_sources,
-        );
-        let mut meta = output
-            .meta
-            .clone()
-            .with_output_site_predicates(&output_site_predicates);
-        relate_meta_to_active_sources(&mut meta, active_source_relations);
-        state
-            .analysis
-            .merge_dependency_meta(output.source_expr.clone(), meta);
-    }
+    state.analysis.absorb_nested_hints(&nested_summary);
+    state.analysis.absorb_nested_dependencies(
+        &nested_summary,
+        NestedDependencyRows::DependenciesOnly,
+        active_output_predicates,
+        active_source_relations,
+    );
     let nested_outputs = nested_summary
         .output_uses
         .into_iter()
@@ -234,7 +206,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         let mut meta = nested_output
             .meta
             .with_output_site_predicates(active_output_predicates);
-        relate_meta_to_active_sources(&mut meta, active_source_relations);
+        meta.relate_source_relations(active_source_relations);
         state.outputs.push(HelperFragmentOutputUse::new(
             nested_output.source_expr,
             relative_path.clone(),
@@ -254,7 +226,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         let mut meta = nested_output
             .meta
             .with_output_site_predicates(active_output_predicates);
-        relate_meta_to_active_sources(&mut meta, active_source_relations);
+        meta.relate_source_relations(active_source_relations);
         if yaml_path_contains_sequence(relative_path) && !nested_output.relative_path.0.is_empty() {
             state.outputs.push(HelperFragmentOutputUse::new(
                 nested_output.source_expr.clone(),
@@ -330,9 +302,6 @@ fn collect_bound_fragment_output_assignment_uses(
     let rhs_merges_into_var = exprs_merge_into_var(rhs_exprs, var);
     let emit_nested_dependencies =
         direct_helper_assignment || binding.is_none() || rhs_merges_into_var;
-    let nested_binding = direct_helper_assignment
-        .then(|| nested.project_value())
-        .flatten();
     if nested.has_document_value_facts() {
         if emit_nested_dependencies {
             top_level_helper_dependency_paths = nested.dependency_relevant_paths();
@@ -340,38 +309,14 @@ fn collect_bound_fragment_output_assignment_uses(
         if direct_helper_assignment {
             merge_output_use_meta(&mut output_meta, &nested.output_uses);
         }
-        let nested_site_sources: BTreeSet<String> = nested
-            .output_uses
-            .iter()
-            .map(|output| output.source_expr.clone())
-            .collect();
-        state.analysis.chart_defaults.extend(nested.chart_defaults);
-        state.analysis.add_type_hints(nested.type_hints);
+        state.analysis.absorb_nested_hints(&nested);
         if emit_nested_dependencies {
-            for (path, meta) in nested.guard_path_meta {
-                state.analysis.merge_guard_path_meta(path, meta);
-            }
-            for output in nested.output_uses {
-                let output_site_predicates = nested_output_site_predicates(
-                    &output.source_expr,
-                    &output.meta,
-                    active_output_predicates,
-                    &nested_site_sources,
-                );
-                let mut meta = output
-                    .meta
-                    .with_output_site_predicates(&output_site_predicates);
-                relate_meta_to_active_sources(&mut meta, active_source_relations);
-                state
-                    .analysis
-                    .merge_dependency_meta(output.source_expr, meta);
-            }
-        }
-        if let Some(nested_binding) = nested_binding {
-            binding = match binding {
-                Some(binding) => AbstractValue::merge_context_values(vec![binding, nested_binding]),
-                None => Some(nested_binding),
-            };
+            state.analysis.absorb_nested_dependencies(
+                &nested,
+                NestedDependencyRows::AllRows,
+                active_output_predicates,
+                active_source_relations,
+            );
         }
     }
     let mut merged_current_item_paths = BTreeSet::new();
@@ -475,15 +420,6 @@ fn relate_outputs_to_active_sources(
     }
 }
 
-fn relate_meta_to_active_sources(
-    meta: &mut HelperOutputMeta,
-    active_source_relations: &[BTreeSet<String>],
-) {
-    for sources in active_source_relations {
-        meta.relate_sources(sources);
-    }
-}
-
 fn rendered_sources<'a>(
     outputs: impl Iterator<Item = &'a HelperFragmentOutputUse>,
 ) -> BTreeSet<String> {
@@ -504,42 +440,6 @@ fn note_outputs_sibling_sources(
         output
             .meta
             .note_sibling_sources(&output.source_expr, &sources);
-    }
-}
-
-fn nested_output_site_predicates(
-    source_expr: &str,
-    meta: &HelperOutputMeta,
-    active_output_predicates: &BTreeSet<Predicate>,
-    sibling_sources: &BTreeSet<String>,
-) -> BTreeSet<Predicate> {
-    active_output_predicates
-        .iter()
-        .filter(|predicate| {
-            let Some((path, truthy)) = predicate_truthiness(predicate) else {
-                return true;
-            };
-            if sibling_sources.contains(path)
-                && path != source_expr
-                && !values_paths_are_related(path, source_expr)
-            {
-                return false;
-            }
-            truthy || path != source_expr || !meta.defaulted
-        })
-        .cloned()
-        .collect()
-}
-
-fn predicate_truthiness(predicate: &Predicate) -> Option<(&str, bool)> {
-    match predicate {
-        Predicate::Guard(crate::Guard::Truthy { path }) => Some((path.as_str(), true)),
-        Predicate::Guard(crate::Guard::Not { path }) => Some((path.as_str(), false)),
-        Predicate::Not(inner) => match inner.as_ref() {
-            Predicate::Guard(crate::Guard::Truthy { path }) => Some((path.as_str(), false)),
-            _ => None,
-        },
-        _ => None,
     }
 }
 

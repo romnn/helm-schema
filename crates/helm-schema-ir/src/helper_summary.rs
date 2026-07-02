@@ -79,6 +79,12 @@ impl HelperOutputMeta {
             .extend(sources.iter().filter(|source| !source.is_empty()).cloned());
     }
 
+    pub(crate) fn relate_source_relations(&mut self, relations: &[BTreeSet<String>]) {
+        for sources in relations {
+            self.relate_sources(sources);
+        }
+    }
+
     pub(crate) fn note_sibling_sources(&mut self, source_expr: &str, sources: &BTreeSet<String>) {
         if self.predicates.is_empty() && !self.defaulted {
             return;
@@ -254,6 +260,42 @@ fn predicate_not_truthy_path(predicate: &Predicate) -> Option<&str> {
     }
 }
 
+fn predicate_truthiness(predicate: &Predicate) -> Option<(&str, bool)> {
+    if let Some(path) = predicate_truthy_path(predicate) {
+        return Some((path, true));
+    }
+    predicate_not_truthy_path(predicate).map(|path| (path, false))
+}
+
+/// The active output-site predicates that may apply to one nested row. A
+/// predicate about another nested source is dropped unless the paths are
+/// related (it describes a sibling's branch, not this row's), and a
+/// not-truthy predicate about the row's own defaulted source is dropped (the
+/// default admits that branch).
+fn nested_output_site_predicates(
+    source_expr: &str,
+    meta: &HelperOutputMeta,
+    active_output_predicates: &BTreeSet<Predicate>,
+    sibling_sources: &BTreeSet<String>,
+) -> BTreeSet<Predicate> {
+    active_output_predicates
+        .iter()
+        .filter(|predicate| {
+            let Some((path, truthy)) = predicate_truthiness(predicate) else {
+                return true;
+            };
+            if sibling_sources.contains(path)
+                && path != source_expr
+                && !values_paths_are_related(path, source_expr)
+            {
+                return false;
+            }
+            truthy || path != source_expr || !meta.defaulted
+        })
+        .cloned()
+        .collect()
+}
+
 fn drop_redundant_not_eq_guards(guards: &mut Vec<Guard>) {
     let eq_guards = guards
         .iter()
@@ -386,6 +428,19 @@ pub(crate) struct HelperSummary {
     pub(crate) chart_defaults: BTreeSet<String>,
 }
 
+/// Which rows of a nested helper call's summary land in the calling
+/// collector's summary as dependency rows.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum NestedDependencyRows {
+    /// A direct output site keeps nested rendered rows as rendered output (it
+    /// re-bases and re-pushes them itself), so only rows that already were
+    /// dependencies transfer.
+    DependenciesOnly,
+    /// An assignment site captures rendered output into a local binding
+    /// instead of emitting it, so every nested row demotes to a dependency.
+    AllRows,
+}
+
 impl HelperSummary {
     pub(crate) fn extend(&mut self, other: Self) {
         for (path, meta) in other.guard_path_meta {
@@ -396,6 +451,56 @@ impl HelperSummary {
         self.string_output.extend(other.string_output);
         self.suppress_roots.extend(other.suppress_roots);
         self.chart_defaults.extend(other.chart_defaults);
+    }
+
+    /// Absorbs a nested helper call's site-independent hint facts: chart-level
+    /// default declarations and schema type hints. These describe the values
+    /// shape regardless of where the nested output lands, so direct output
+    /// sites and assignment sites absorb them alike.
+    pub(crate) fn absorb_nested_hints(&mut self, nested: &HelperSummary) {
+        self.chart_defaults
+            .extend(nested.chart_defaults.iter().cloned());
+        self.add_type_hints(nested.type_hints.clone());
+    }
+
+    /// Absorbs a nested helper call's read facts: guard-path meta rows first,
+    /// then the selected output rows as dependency rows. Each dependency row
+    /// keeps the nested meta, gains the active output-site predicates that
+    /// survive nested sibling-source filtering, and records the active source
+    /// relations. Every nested source counts as a sibling for that filter,
+    /// even when only the dependency rows land.
+    pub(crate) fn absorb_nested_dependencies(
+        &mut self,
+        nested: &HelperSummary,
+        rows: NestedDependencyRows,
+        active_output_predicates: &BTreeSet<Predicate>,
+        active_source_relations: &[BTreeSet<String>],
+    ) {
+        for (path, meta) in &nested.guard_path_meta {
+            self.merge_guard_path_meta(path.clone(), meta.clone());
+        }
+        let nested_site_sources: BTreeSet<String> = nested
+            .output_uses
+            .iter()
+            .map(|output| output.source_expr.clone())
+            .collect();
+        for output in &nested.output_uses {
+            if rows == NestedDependencyRows::DependenciesOnly && !output.is_dependency() {
+                continue;
+            }
+            let output_site_predicates = nested_output_site_predicates(
+                &output.source_expr,
+                &output.meta,
+                active_output_predicates,
+                &nested_site_sources,
+            );
+            let mut meta = output
+                .meta
+                .clone()
+                .with_output_site_predicates(&output_site_predicates);
+            meta.relate_source_relations(active_source_relations);
+            self.merge_dependency_meta(output.source_expr.clone(), meta);
+        }
     }
 
     pub(crate) fn merge_dependency_meta(&mut self, path: String, meta: HelperOutputMeta) {
