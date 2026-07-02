@@ -108,11 +108,11 @@ impl SymbolicWalker<'_> {
         let exprs = std::slice::from_ref(rhs_expr);
         let output_effects = self.value_path_context().expression_output_effects(exprs);
         let helper = self.summarize_bound_helper_calls_in_exprs(exprs);
-        let mut output_meta = output_effects.local_output_meta.clone();
+        let mut output_meta = output_effects.local_output_meta;
         merge_output_use_meta(&mut output_meta, &helper.output_uses);
         self.scope
             .locals_mut()
-            .set_default_paths(&variable, output_effects.defaults.clone());
+            .set_default_paths(&variable, output_effects.defaults);
         self.scope
             .locals_mut()
             .set_output_meta(variable, output_meta);
@@ -185,26 +185,20 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         self.observe_symbolic_assignment(exprs);
     }
 
-    fn plan_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
-        let value_path_context = self.value_path_context();
-        plan_if_condition(header, &value_path_context)
-    }
-
-    fn activate_if_condition(&mut self, plan: &ConditionActionPlan) {
+    fn enter_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
+        let plan = plan_if_condition(header, &self.value_path_context());
         self.control_resource_context_depth += 1;
-        activate_if_condition_plan(self, plan);
+        activate_if_condition_plan(self, &plan);
         self.control_resource_context_depth = self.control_resource_context_depth.saturating_sub(1);
+        plan
     }
 
-    fn plan_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
-        let value_path_context = self.value_path_context();
-        plan_with_condition(header, &value_path_context)
-    }
-
-    fn activate_with_condition(&mut self, plan: &ConditionActionPlan) {
+    fn enter_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
+        let plan = plan_with_condition(header, &self.value_path_context());
         self.control_resource_context_depth += 1;
-        activate_with_condition_plan(self, plan);
+        activate_with_condition_plan(self, &plan);
         self.control_resource_context_depth = self.control_resource_context_depth.saturating_sub(1);
+        plan
     }
 
     fn activate_condition_alternative(&mut self, plan: &ConditionActionPlan) {

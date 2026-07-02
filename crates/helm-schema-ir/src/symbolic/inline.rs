@@ -11,7 +11,39 @@ use helm_schema_ast::parse_go_template;
 
 use super::SymbolicWalker;
 
-impl SymbolicWalker<'_> {
+impl<'a> SymbolicWalker<'a> {
+    /// Construct a walker for a nested inline walk (a helper body or a static
+    /// file template) that inherits this walker's ambient predicates, inline
+    /// stack, and chart-level default mutations. The parent's
+    /// `include "X.defaultValues" .` already ran above the nested fragment in
+    /// source order, so the fragment's reads see the same defaulted state.
+    fn nested_walker<'b>(
+        &self,
+        source: &'b str,
+        source_path: &'b str,
+        source_offset: usize,
+        token: String,
+    ) -> SymbolicWalker<'b>
+    where
+        'a: 'b,
+    {
+        let mut nested = SymbolicWalker::new_with_context(
+            source,
+            Some(source_path),
+            source_offset,
+            self.defines,
+            self.ir_context.clone(),
+        );
+        nested.seed_predicates = self.scope.predicates().to_vec();
+        nested.inline_stack = self.inline_stack.clone();
+        nested.inline_stack.push(token);
+        nested
+            .scope
+            .locals_mut()
+            .set_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
+        nested
+    }
+
     pub(super) fn inline_static_file_templates_from_helper_calls(
         &mut self,
         exprs: &[TemplateExpr],
@@ -53,19 +85,8 @@ impl SymbolicWalker<'_> {
             return;
         };
 
-        let mut stack = self.inline_stack.clone();
-        stack.push(token);
-        let mut nested = SymbolicWalker::new_with_context(
-            src,
-            Some(request.path.as_str()),
-            0,
-            self.defines,
-            self.ir_context.clone(),
-        )
-        .with_initial_predicates(self.scope.predicates().to_vec())
-        .with_initial_dot_binding(request.dot)
-        .with_inline_stack(stack)
-        .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
+        let mut nested = self.nested_walker(src, request.path.as_str(), 0, token);
+        nested.seed_dot = request.dot;
         let contract = nested.run_contract(&tree);
         self.contract.append(contract);
     }
@@ -105,19 +126,8 @@ impl SymbolicWalker<'_> {
                     .map(|value| value.to_context_value())
             })
             .bindings;
-        let mut stack = self.inline_stack.clone();
-        stack.push(token);
-        let mut nested = SymbolicWalker::new_with_context(
-            body.source,
-            Some(body.source_path),
-            body.body_offset,
-            self.defines,
-            self.ir_context.clone(),
-        )
-        .with_initial_predicates(self.scope.predicates().to_vec())
-        .with_inline_stack(stack)
-        .with_helper_values(bindings)
-        .with_chart_value_defaults(self.scope.locals().chart_value_defaults.clone());
+        let mut nested = self.nested_walker(body.source, body.source_path, body.body_offset, token);
+        nested.root_bindings = bindings;
         let mut contract = nested.run_contract(&body.tree);
         let helper_renders_output = helper_summary.has_document_value_facts();
         let suppress_roots = helper_summary.suppress_roots;
@@ -139,11 +149,7 @@ impl SymbolicWalker<'_> {
             }
             for extra_guards in output.meta.contract_guard_sets(&value) {
                 let mut guards = outer_guards.clone();
-                for guard in extra_guards {
-                    if !guards.contains(&guard) {
-                        guards.push(guard);
-                    }
-                }
+                crate::contract_sink::merge_guards(&mut guards, &extra_guards);
                 self.contract.push(ContractUse::with_provenances(
                     value.clone(),
                     YamlPath(Vec::new()),

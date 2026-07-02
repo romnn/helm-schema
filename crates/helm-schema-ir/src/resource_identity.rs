@@ -5,16 +5,14 @@ use helm_schema_ast::{
     decode_guard, decode_guard_expr, parse_expr_text, parse_go_template, parse_helm_template,
     unquote_yaml_scalar,
 };
-use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, Predicate, ResourceRef};
+use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
 
 use crate::YamlPath;
-use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, literal_helper_call_callee};
 use crate::node_eval::{
-    BranchOutcome, NodeAction, NodeActionEffectSink, NodeEvalRuntime, eval_template_body,
-    node_action,
+    BranchOutcome, NodeAction, NodeEvalRuntime, eval_template_body, node_action,
 };
 
 const MAX_RECURSION_DEPTH: usize = 12;
@@ -224,12 +222,6 @@ struct ResourceOutputRuntime<'a, 'source> {
     no_output_depth: usize,
 }
 
-impl NodeActionEffectSink for ResourceOutputRuntime<'_, '_> {
-    fn push_predicate_if_absent(&mut self, _predicate: Predicate) {}
-
-    fn push_dot_binding(&mut self, _binding: Option<AbstractValue>) {}
-}
-
 impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
     /// `no_output_depth` is deliberately not part of the snapshot: the only
     /// enter/exit_no_output caller (`eval_assignment_node`) is strictly
@@ -356,7 +348,7 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
         }
     }
 
-    fn plan_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan {
+    fn enter_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan {
         let guard = decode_guard_expr(header.expr(), header.raw())
             .unwrap_or_else(|| decode_guard(header.raw()));
         ResourceConditionPlan {
@@ -364,13 +356,9 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
         }
     }
 
-    fn activate_if_condition(&mut self, _plan: &Self::ConditionPlan) {}
-
-    fn plan_with_condition(&mut self, _header: &TemplateHeader) -> Self::ConditionPlan {
+    fn enter_with_condition(&mut self, _header: &TemplateHeader) -> Self::ConditionPlan {
         ResourceConditionPlan { output_guard: None }
     }
-
-    fn activate_with_condition(&mut self, _plan: &Self::ConditionPlan) {}
 
     fn activate_condition_alternative(&mut self, _plan: &Self::ConditionPlan) {}
 

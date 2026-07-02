@@ -44,31 +44,6 @@ pub(crate) fn literal_helper_calls_from_exprs(exprs: &[TemplateExpr]) -> Vec<Lit
     out
 }
 
-pub(crate) fn collect_template_requests<F>(
-    expr: &TemplateExpr,
-    resolve_fragment_value: &mut F,
-    requests: &mut BTreeSet<StaticFileTemplate>,
-) where
-    F: FnMut(&TemplateExpr) -> Option<AbstractValue>,
-{
-    expr.walk(|node| {
-        if let TemplateExpr::Call { function, args } = node
-            && function == "tpl"
-            && let Some(template_arg) = args.first()
-        {
-            let dot = args.get(1).and_then(&mut *resolve_fragment_value);
-            let mut paths = BTreeSet::new();
-            collect_files_get_paths(template_arg, resolve_fragment_value, &mut paths);
-            for path in paths {
-                requests.insert(StaticFileTemplate {
-                    path,
-                    dot: dot.clone(),
-                });
-            }
-        }
-    });
-}
-
 pub(crate) fn collect_template_requests_from_helper(
     name: &str,
     helper_dot: Option<&AbstractValue>,
@@ -82,11 +57,25 @@ pub(crate) fn collect_template_requests_from_helper(
     let mut requests = BTreeSet::new();
     walk_template_exprs(body.source, body.tree.root_node(), &mut |expr| {
         let mut seen = HashSet::new();
-        collect_template_requests(
-            expr,
-            &mut |expr| context.fragment_value_from_expr(expr, &locals, helper_dot, &mut seen),
-            &mut requests,
-        );
+        let mut resolve_fragment_value = |expr: &TemplateExpr| {
+            context.fragment_value_from_expr(expr, &locals, helper_dot, &mut seen)
+        };
+        expr.walk(|node| {
+            if let TemplateExpr::Call { function, args } = node
+                && function == "tpl"
+                && let Some(template_arg) = args.first()
+            {
+                let dot = args.get(1).and_then(&mut resolve_fragment_value);
+                let mut paths = BTreeSet::new();
+                collect_files_get_paths(template_arg, &mut resolve_fragment_value, &mut paths);
+                for path in paths {
+                    requests.insert(StaticFileTemplate {
+                        path,
+                        dot: dot.clone(),
+                    });
+                }
+            }
+        });
     });
     requests
 }

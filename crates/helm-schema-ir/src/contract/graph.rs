@@ -81,23 +81,8 @@ impl ContractIr {
     /// an already-scoped batch of claims, such as dependency `condition:` /
     /// `tags:` liveness from `Chart.yaml`.
     pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
-        if guards.is_empty() {
-            return;
-        }
-
-        for contract_use in &mut self.uses {
-            for guard in guards {
-                if !contract_use.guards.contains(guard) {
-                    contract_use.guards.push(guard.clone());
-                }
-            }
-        }
-        for contract_use in &mut self.dependency_uses {
-            for guard in guards {
-                if !contract_use.guards.contains(guard) {
-                    contract_use.guards.push(guard.clone());
-                }
-            }
+        for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
+            crate::contract_sink::merge_guards(&mut contract_use.guards, guards);
         }
     }
 
@@ -110,10 +95,7 @@ impl ContractIr {
     where
         F: FnMut(&str) -> String,
     {
-        for contract_use in &mut self.uses {
-            contract_use.map_value_paths(&mut map);
-        }
-        for contract_use in &mut self.dependency_uses {
+        for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
             contract_use.map_value_paths(&mut map);
         }
         self.dependency_values_root_fragments =
@@ -121,13 +103,14 @@ impl ContractIr {
                 .into_iter()
                 .map(|path| map(&path))
                 .collect();
-        self.type_hints = std::mem::take(&mut self.type_hints)
-            .into_iter()
-            .map(|(path, schema_types)| (map(&path), schema_types))
-            .fold(BTreeMap::new(), |mut type_hints, (path, schema_types)| {
-                type_hints.entry(path).or_default().extend(schema_types);
-                type_hints
-            });
+        let mut type_hints: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for (path, schema_types) in std::mem::take(&mut self.type_hints) {
+            type_hints
+                .entry(map(&path))
+                .or_default()
+                .extend(schema_types);
+        }
+        self.type_hints = type_hints;
     }
 
     /// Add declared input-type hints for values paths without projecting them

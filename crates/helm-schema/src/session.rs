@@ -255,9 +255,8 @@ impl AnalysisSession {
                     .collect()
             })
             .unwrap_or_default();
-        let has_default_fallback = schema_signals
-            .evidence_for(&normalized_path)
-            .is_some_and(|evidence| evidence.requiredness.has_default_fallback);
+        let has_default_fallback =
+            evidence.is_some_and(|evidence| evidence.requiredness.has_default_fallback);
 
         Ok(ValuePathExplanation {
             path: normalized_path,

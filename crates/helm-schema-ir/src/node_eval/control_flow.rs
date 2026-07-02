@@ -28,11 +28,7 @@ pub(super) fn eval_if_node<R>(
 ) where
     R: NodeEvalRuntime,
 {
-    eval_condition_node(runtime, node, header, |runtime, header| {
-        let plan = runtime.plan_if_condition(header);
-        runtime.activate_if_condition(&plan);
-        plan
-    });
+    eval_condition_node(runtime, node, header, R::enter_if_condition);
 }
 
 pub(super) fn eval_with_node<R>(
@@ -42,11 +38,7 @@ pub(super) fn eval_with_node<R>(
 ) where
     R: NodeEvalRuntime,
 {
-    eval_condition_node(runtime, node, header, |runtime, header| {
-        let plan = runtime.plan_with_condition(header);
-        runtime.activate_with_condition(&plan);
-        plan
-    });
+    eval_condition_node(runtime, node, header, R::enter_with_condition);
 }
 
 fn eval_condition_node<R, F>(

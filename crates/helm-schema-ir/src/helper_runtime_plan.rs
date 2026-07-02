@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{TemplateExpr, TemplateHeader, range_variable_name_expr};
 
@@ -7,7 +7,6 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with_fragment_locals};
-use crate::helper_summary::HelperOutputMeta;
 use crate::helper_walk_state::{HelperRangeIteration, HelperRuntimeControlState, RangeFrame};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
@@ -54,24 +53,26 @@ pub(crate) fn helper_if_condition_plan(
     header: &TemplateHeader,
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    locals: &SymbolicLocalState,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperConditionPlan {
     let expr = header.expr();
-    let guard_paths =
-        branch_guard_paths_for_expr(expr, bindings, current_dot, local_bindings, context, seen);
-    let range_domains = HashMap::new();
-    let get_bindings = HashMap::new();
+    let guard_paths = branch_guard_paths_for_expr(
+        expr,
+        bindings,
+        current_dot,
+        &locals.fragment_values,
+        context,
+        seen,
+    );
     let value_path_context = ValuePathContext {
         root_bindings: bindings,
-        template_bindings: local_bindings,
-        range_domains: &range_domains,
-        get_bindings: &get_bindings,
-        template_default_paths: local_default_paths,
-        template_output_meta: local_output_meta,
+        template_bindings: &locals.fragment_values,
+        range_domains: &locals.range_domains,
+        get_bindings: &locals.get_bindings,
+        template_default_paths: &locals.default_paths,
+        template_output_meta: &locals.output_meta,
         fragment_context: context,
         current_dot_fragment: None,
         current_dot_binding: current_dot.cloned(),
@@ -91,37 +92,25 @@ pub(crate) fn helper_if_condition_plan(
     HelperConditionPlan {
         guard_paths,
         predicate,
-        source_relations: condition_source_relations(expr, local_bindings, local_output_meta),
+        source_relations: condition_source_relations(expr, locals),
         dot_binding: None,
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 pub(crate) fn helper_with_condition_plan(
     header: &TemplateHeader,
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
     current_dot_fragment: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    locals: &SymbolicLocalState,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperConditionPlan {
-    let mut plan = helper_if_condition_plan(
-        header,
-        bindings,
-        current_dot,
-        local_bindings,
-        local_default_paths,
-        local_output_meta,
-        context,
-        seen,
-    );
+    let mut plan = helper_if_condition_plan(header, bindings, current_dot, locals, context, seen);
     plan.dot_binding = computed_with_body_fragment_value_expr(
         header.expr(),
         bindings,
-        local_bindings,
+        &locals.fragment_values,
         context,
         current_dot_fragment,
         current_dot,
@@ -206,17 +195,17 @@ pub(crate) fn helper_range_runtime_plan(
 
 fn condition_source_relations(
     expr: &TemplateExpr,
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    locals: &SymbolicLocalState,
 ) -> Vec<BTreeSet<String>> {
     let Some(variable) = crate::expr_eval::expr_leading_variable(expr) else {
         return Vec::new();
     };
-    let mut sources = local_bindings
+    let mut sources = locals
+        .fragment_values
         .get(variable)
         .map(AbstractValue::fragment_source_paths)
         .unwrap_or_default();
-    if let Some(meta_by_path) = local_output_meta.get(variable) {
+    if let Some(meta_by_path) = locals.output_meta.get(variable) {
         sources.extend(meta_by_path.keys().cloned());
     }
     if sources.len() > 1 {

@@ -237,6 +237,15 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         );
     }
 
+    fn activate_condition_plan(&mut self, plan: &HelperConditionPlan) {
+        for path in &plan.guard_paths {
+            self.analysis.add_guard_path(path.clone());
+        }
+        push_predicate_contract_guards(self, &plan.predicate);
+        self.control
+            .extend_source_relations(plan.source_relations.iter().cloned());
+    }
+
     fn collect_dependency_expression(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) {
         let output_len = self.outputs.len();
         self.collect_fragment_expression(exprs, &YamlPath(Vec::new()), ValueKind::Scalar);
@@ -291,10 +300,6 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
 impl NodeActionEffectSink for HelperAnalysisRuntime<'_, '_> {
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         self.control.push_predicate_if_absent(predicate);
-    }
-
-    fn push_dot_binding(&mut self, binding: Option<AbstractValue>) {
-        self.control.push_effect_dot_binding(binding);
     }
 }
 
@@ -405,60 +410,42 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         self.collect_fragment_expression(exprs, &YamlPath(Vec::new()), ValueKind::Scalar);
     }
 
-    fn plan_if_condition(
+    fn enter_if_condition(
         &mut self,
         header: &helm_schema_ast::TemplateHeader,
     ) -> Self::ConditionPlan {
         let current_dot = self.current_helper_dot().cloned();
-        helper_if_condition_plan(
+        let plan = helper_if_condition_plan(
             header,
             self.bindings,
             current_dot.as_ref(),
-            &self.locals.fragment_values,
-            &self.locals.default_paths,
-            &self.locals.output_meta,
+            self.locals,
             self.context,
             self.seen,
-        )
+        );
+        self.activate_condition_plan(&plan);
+        plan
     }
 
-    fn activate_if_condition(&mut self, plan: &Self::ConditionPlan) {
-        for path in &plan.guard_paths {
-            self.analysis.add_guard_path(path.clone());
-        }
-        push_predicate_contract_guards(self, &plan.predicate);
-        self.control
-            .extend_source_relations(plan.source_relations.iter().cloned());
-    }
-
-    fn plan_with_condition(
+    fn enter_with_condition(
         &mut self,
         header: &helm_schema_ast::TemplateHeader,
     ) -> Self::ConditionPlan {
         let current_dot = self.current_helper_dot().cloned();
         let fragment_current_dot = self.current_fragment_dot().cloned();
-        helper_with_condition_plan(
+        let plan = helper_with_condition_plan(
             header,
             self.bindings,
             current_dot.as_ref(),
             fragment_current_dot.as_ref(),
-            &self.locals.fragment_values,
-            &self.locals.default_paths,
-            &self.locals.output_meta,
+            self.locals,
             self.context,
             self.seen,
-        )
-    }
-
-    fn activate_with_condition(&mut self, plan: &Self::ConditionPlan) {
-        for path in &plan.guard_paths {
-            self.analysis.add_guard_path(path.clone());
-        }
-        push_predicate_contract_guards(self, &plan.predicate);
-        self.control
-            .extend_source_relations(plan.source_relations.iter().cloned());
+        );
+        self.activate_condition_plan(&plan);
         self.control
             .push_effect_dot_binding(plan.dot_binding.clone());
+        plan
     }
 
     fn activate_condition_alternative(&mut self, plan: &Self::ConditionPlan) {

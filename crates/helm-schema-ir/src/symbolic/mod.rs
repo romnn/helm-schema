@@ -2,7 +2,7 @@ mod inline;
 mod output;
 mod runtime;
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use helm_schema_ast::{AttributionIndex, DefineIndex, TemplateExpr};
@@ -54,21 +54,7 @@ impl SymbolicIrContext {
     /// [`ContractIr::into_schema_signals`]. Inspection output can finalize the
     /// graph once and ask the resulting contract for its stable document.
     pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
-        self.generate_contract_ir_with_provenance(src, None, defines, &[])
-    }
-
-    /// Generate the opaque contract graph, seeding the walk with external
-    /// guards that must hold for the template's output to be live.
-    ///
-    /// Callers use this for chart-structural liveness facts such as
-    /// `Chart.yaml` dependency activation conditions and tags.
-    pub fn generate_contract_ir_with_guards(
-        &self,
-        src: &str,
-        defines: &DefineIndex,
-        guards: &[Guard],
-    ) -> ContractIr {
-        self.generate_contract_ir_with_provenance(src, None, defines, guards)
+        self.generate_contract_ir_with_provenance(src, None, defines)
     }
 
     pub fn generate_contract_ir_for_source(
@@ -77,17 +63,7 @@ impl SymbolicIrContext {
         source_path: &str,
         defines: &DefineIndex,
     ) -> ContractIr {
-        self.generate_contract_ir_with_provenance(src, Some(source_path), defines, &[])
-    }
-
-    pub fn generate_contract_ir_for_source_with_guards(
-        &self,
-        src: &str,
-        source_path: &str,
-        defines: &DefineIndex,
-        guards: &[Guard],
-    ) -> ContractIr {
-        self.generate_contract_ir_with_provenance(src, Some(source_path), defines, guards)
+        self.generate_contract_ir_with_provenance(src, Some(source_path), defines)
     }
 
     fn generate_contract_ir_with_provenance(
@@ -95,15 +71,12 @@ impl SymbolicIrContext {
         src: &str,
         source_path: Option<&str>,
         defines: &DefineIndex,
-        guards: &[Guard],
     ) -> ContractIr {
         let Some(tree) = parse_go_template(src) else {
             return ContractIr::default();
         };
 
-        let predicates = guards.iter().cloned().map(Predicate::from).collect();
-        let mut w = SymbolicWalker::new_with_context(src, source_path, 0, defines, self.clone())
-            .with_initial_predicates(predicates);
+        let mut w = SymbolicWalker::new_with_context(src, source_path, 0, defines, self.clone());
         w.run_contract(&tree)
     }
 }
@@ -159,32 +132,12 @@ impl<'a> SymbolicWalker<'a> {
         }
     }
 
-    fn with_initial_predicates(mut self, predicates: Vec<Predicate>) -> Self {
-        self.seed_predicates = predicates;
-        self
-    }
-
-    fn with_initial_dot_binding(mut self, dot: Option<AbstractValue>) -> Self {
-        self.seed_dot = dot;
-        self
-    }
-
-    fn with_inline_stack(mut self, stack: Vec<String>) -> Self {
-        self.inline_stack = stack;
-        self
-    }
-
     fn provenance_helper_chain(&self) -> Vec<String> {
         self.inline_stack
             .iter()
             .filter_map(|entry| entry.strip_prefix("define:"))
             .map(std::string::ToString::to_string)
             .collect()
-    }
-
-    fn with_helper_values(mut self, bindings: HashMap<String, AbstractValue>) -> Self {
-        self.root_bindings = bindings;
-        self
     }
 
     fn fragment_eval_context(&self) -> FragmentEvalContext<'_> {
@@ -203,16 +156,6 @@ impl<'a> SymbolicWalker<'a> {
             current_dot_fragment: self.current_dot_fragment(),
             current_dot_binding: self.current_dot_binding(),
         }
-    }
-
-    /// Seed this walker's chart-level defaults from a parent walker so a
-    /// nested static-file template walk inherits the same render-time
-    /// mutation context. The parent's `include "X.defaultValues" .`
-    /// already ran above the nested fragment in source order, so the
-    /// fragment's reads see the same defaulted state.
-    fn with_chart_value_defaults(mut self, defaults: BTreeSet<String>) -> Self {
-        self.scope.locals_mut().set_chart_value_defaults(defaults);
-        self
     }
 
     fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {

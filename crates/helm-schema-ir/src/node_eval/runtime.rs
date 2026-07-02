@@ -1,10 +1,9 @@
 use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
-use super::effects::NodeActionEffectSink;
 use crate::YamlPath;
 use helm_schema_ast::ControlSite;
 
-pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
+pub(crate) trait NodeEvalRuntime {
     type ScopeSnapshot: Clone;
     type ConditionPlan: Clone;
     type RangePlan;
@@ -66,13 +65,9 @@ pub(crate) trait NodeEvalRuntime: NodeActionEffectSink {
 
     fn observe_assignment_exprs(&mut self, _exprs: &[TemplateExpr]) {}
 
-    fn plan_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan;
+    fn enter_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan;
 
-    fn activate_if_condition(&mut self, plan: &Self::ConditionPlan);
-
-    fn plan_with_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan;
-
-    fn activate_with_condition(&mut self, plan: &Self::ConditionPlan);
+    fn enter_with_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan;
 
     fn activate_condition_alternative(&mut self, plan: &Self::ConditionPlan);
 

@@ -7,7 +7,7 @@ use helm_schema_core::Predicate;
 pub(crate) trait NodeActionEffectSink {
     fn push_predicate_if_absent(&mut self, predicate: Predicate);
 
-    fn push_dot_binding(&mut self, binding: Option<AbstractValue>);
+    fn push_dot_binding(&mut self, _binding: Option<AbstractValue>) {}
 
     fn insert_range_domain(&mut self, _variable: String, _literals: Vec<String>) {}
 
