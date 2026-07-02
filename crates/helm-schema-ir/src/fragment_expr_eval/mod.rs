@@ -85,13 +85,14 @@ pub(crate) fn helper_result_from_expr_with_fragment_locals(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> crate::eval_effect::EvalResult {
-    let env = EvalEnv::from_helper_context_with_fragment_locals(
-        outer,
-        current_dot,
-        fragment_locals.bindings,
-        fragment_locals.default_paths,
-        fragment_locals.output_meta,
-    );
+    let mut env = EvalEnv::from_helper_context(outer, current_dot);
+    env.locals = fragment_locals.bindings.clone();
+    if let Some(default_paths) = fragment_locals.default_paths {
+        env.local_default_paths = default_paths.clone();
+    }
+    if let Some(output_meta) = fragment_locals.output_meta {
+        env.local_output_meta = output_meta.clone();
+    }
     let mut result = eval_expr_result_with_bound_helpers(
         expr,
         &env,

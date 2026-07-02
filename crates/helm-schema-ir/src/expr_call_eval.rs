@@ -23,7 +23,10 @@ pub(crate) fn eval_call_with_helper_calls(
     match function {
         "include" | "template" => eval_helper_call(args, env, resolver),
         "set" if args.len() == 3 => eval_set_call(args, env, resolver),
-        "default" if args.len() == 2 => eval_default(args, env, resolver),
+        "default" if args.len() == 2 => {
+            let primary = eval_expr_with_helper_calls(&args[1], env, resolver);
+            eval_default(primary, &args[..1], env, resolver)
+        }
         "and" => eval_short_circuit_args(args, true, env, resolver),
         "or" => eval_short_circuit_args(args, false, env, resolver),
         "dict" => eval_dict(args, env, resolver),
@@ -33,9 +36,11 @@ pub(crate) fn eval_call_with_helper_calls(
         "splitList" if args.len() == 2 => eval_split_list(args, env, resolver),
         "append" => eval_append(args, env, resolver),
         "omit" if !args.is_empty() => eval_omit(args, env, resolver),
-        function if is_merge_function(function) => eval_merge(args, env, resolver),
+        function if is_merge_function(function) => {
+            eval_merge(args, EvalResult::none(), env, resolver)
+        }
         "coalesce" => eval_all_args(args, env, resolver),
-        "ternary" => eval_first_arg_values(args, 2, env, resolver),
+        "ternary" => eval_ternary(args, Effects::default(), env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
         "tpl" if args.len() == 2 => eval_tpl(args, env, resolver),
@@ -51,7 +56,7 @@ pub(crate) fn eval_call_with_helper_calls(
         function if is_provenance_preserving_function(function) => {
             eval_all_args(args, env, resolver)
         }
-        _ => eval_unknown_call(args, env, resolver),
+        _ => eval_unknown_call(args, Effects::default(), env, resolver),
     }
 }
 
@@ -74,29 +79,11 @@ pub(crate) fn eval_pipeline_with_helper_calls(
         };
 
         current = match function.as_str() {
-            "default" => {
-                let mut effects = current.effects;
-                let current_paths = identity_value_paths(&current.value);
-                effects.add_default_paths(current_paths.clone());
-                if let Some(schema_type) = args.first().and_then(expression_schema_type) {
-                    effects.add_type_hints(current_paths, schema_type);
-                }
-                let mut values = current.value.into_iter().collect::<Vec<_>>();
-                merge_arg_values(args, env, resolver, &mut values, &mut effects);
-                EvalResult::with_effects(AbstractValue::choice(values), effects)
-            }
-            function if is_merge_function(function) => {
-                let mut effects = current.effects;
-                let mut values = current.value.into_iter().collect::<Vec<_>>();
-                merge_arg_values(args, env, resolver, &mut values, &mut effects);
-                EvalResult::with_effects(AbstractValue::merge_all(values), effects)
-            }
-            "ternary" => {
-                let mut values = Vec::new();
-                let mut effects = current.effects;
-                merge_first_arg_values(args, 2, env, resolver, &mut values, &mut effects);
-                EvalResult::with_effects(AbstractValue::choice(values), effects)
-            }
+            "default" => eval_default(current, args, env, resolver),
+            function if is_merge_function(function) => eval_merge(args, current, env, resolver),
+            // The piped ternary operand is the condition: its effects flow,
+            // its value does not.
+            "ternary" => eval_ternary(args, current.effects, env, resolver),
             function if is_string_transform_function(function) => {
                 let mut effects = current.effects;
                 record_string_transform_effects(function, &current.value, &mut effects);
@@ -114,14 +101,9 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 merge_arg_effects(args, env, resolver, &mut effects);
                 EvalResult::with_effects(current.value, effects)
             }
-            _ => {
-                let mut effects = current.effects;
-                merge_arg_effects(args, env, resolver, &mut effects);
-                // An unknown stage widens the pipeline value, but everything
-                // that flowed into the pipeline so far still influences it.
-                let value = AbstractValue::widened(effects.output_paths.clone());
-                EvalResult::with_effects(value, effects)
-            }
+            // An unknown stage widens the pipeline value, but everything
+            // that flowed into the pipeline so far still influences it.
+            _ => eval_unknown_call(args, current.effects, env, resolver),
         };
     }
 
@@ -205,11 +187,7 @@ fn eval_set_call(
     let mut keys = BTreeSet::new();
     if let Some(expr) = args.get(1) {
         let key = eval_expr_with_helper_calls(expr, env, resolver);
-        keys = key
-            .value
-            .as_ref()
-            .map(AbstractValue::strings)
-            .unwrap_or_default();
+        keys = value_strings(&key.value);
         effects.merge(key.effects);
     }
     let assigned_value = if let Some(expr) = args.get(2) {
@@ -254,58 +232,50 @@ fn set_target_paths(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> BTreeSet<String> {
-    match expr.deparen() {
-        TemplateExpr::Variable(name) if !name.is_empty() => env
+    let deparened = expr.deparen();
+    if let TemplateExpr::Variable(name) = deparened
+        && !name.is_empty()
+    {
+        return env
             .locals
             .get(name)
             .or_else(|| env.root_fields.get(name))
             .map(AbstractValue::paths)
-            .unwrap_or_default(),
-        TemplateExpr::Selector { operand, path } => match operand.deparen() {
-            TemplateExpr::Variable(name) if !name.is_empty() => env
-                .locals
-                .get(name)
-                .or_else(|| env.root_fields.get(name))
-                .and_then(|value| value.apply_to_path(path))
-                .map(|value| value.paths())
-                .unwrap_or_default(),
-            _ => eval_expr_with_helper_calls(expr, env, resolver)
-                .value
-                .as_ref()
-                .map(AbstractValue::paths)
-                .unwrap_or_default(),
-        },
-        _ => eval_expr_with_helper_calls(expr, env, resolver)
-            .value
-            .as_ref()
-            .map(AbstractValue::paths)
-            .unwrap_or_default(),
+            .unwrap_or_default();
     }
+    if let TemplateExpr::Selector { operand, path } = deparened
+        && let TemplateExpr::Variable(name) = operand.deparen()
+        && !name.is_empty()
+    {
+        return env
+            .locals
+            .get(name)
+            .or_else(|| env.root_fields.get(name))
+            .and_then(|value| value.apply_to_path(path))
+            .map(|value| value.paths())
+            .unwrap_or_default();
+    }
+    value_paths(&eval_expr_with_helper_calls(expr, env, resolver).value)
 }
 
+/// `default FALLBACK PRIMARY` and `PRIMARY | default FALLBACK` are one rule:
+/// the primary's identity paths become defaulted (typed by a literal
+/// fallback), and the value is the choice of primary and fallback values.
 fn eval_default(
-    args: &[TemplateExpr],
+    primary: EvalResult,
+    fallback_args: &[TemplateExpr],
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let fallback = eval_expr_with_helper_calls(&args[0], env, resolver);
-    let primary = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let mut effects = primary.effects;
     let primary_paths = identity_value_paths(&primary.value);
-    let mut effects = fallback.effects;
-    effects.merge(primary.effects);
     effects.add_default_paths(primary_paths.clone());
-    if let Some(schema_type) = expression_schema_type(&args[0]) {
+    if let Some(schema_type) = fallback_args.first().and_then(expression_schema_type) {
         effects.add_type_hints(primary_paths, schema_type);
     }
-    EvalResult::with_effects(
-        AbstractValue::choice(
-            [primary.value, fallback.value]
-                .into_iter()
-                .flatten()
-                .collect(),
-        ),
-        effects,
-    )
+    let mut values = primary.value.into_iter().collect::<Vec<_>>();
+    merge_arg_values(fallback_args, env, resolver, &mut values, &mut effects);
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
 fn eval_dict(
@@ -473,15 +443,12 @@ fn eval_index(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct PathSegmentOption {
+struct PathSegmentOption {
     segment: String,
     integer_index: bool,
 }
 
-pub(crate) fn apply_index_segment(
-    value: &AbstractValue,
-    option: &PathSegmentOption,
-) -> Option<AbstractValue> {
+fn apply_index_segment(value: &AbstractValue, option: &PathSegmentOption) -> Option<AbstractValue> {
     if !option.integer_index {
         return value.apply_to_path(std::slice::from_ref(&option.segment));
     }
@@ -521,13 +488,7 @@ fn eval_append(
         }
         None => Vec::new(),
     };
-    for arg in &args[1..] {
-        let result = eval_expr_with_helper_calls(arg, env, resolver);
-        effects.merge(result.effects);
-        if let Some(value) = result.value {
-            items.push(value);
-        }
-    }
+    merge_arg_values(&args[1..], env, resolver, &mut items, &mut effects);
     EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
 }
 
@@ -540,12 +501,7 @@ fn eval_omit(
     let mut keys = BTreeSet::new();
     for arg in &args[1..] {
         let key = eval_expr_with_helper_calls(arg, env, resolver);
-        keys.extend(
-            key.value
-                .as_ref()
-                .map(AbstractValue::strings)
-                .unwrap_or_default(),
-        );
+        keys.extend(value_strings(&key.value));
         base.effects.merge(key.effects);
     }
     let value = base.value.map(|value| value.omit_keys(&keys));
@@ -576,16 +532,7 @@ fn eval_printf(
     }
 
     let rendered = literal_printf_format(args).and_then(|format| {
-        let arg_strings = values
-            .iter()
-            .skip(1)
-            .map(|value| {
-                value
-                    .as_ref()
-                    .map(AbstractValue::strings)
-                    .unwrap_or_default()
-            })
-            .collect::<Vec<_>>();
+        let arg_strings = values.iter().skip(1).map(value_strings).collect::<Vec<_>>();
         render_printf_string_sets(format, &arg_strings)
     });
 
@@ -615,11 +562,7 @@ fn eval_print(
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
-        let strings = result
-            .value
-            .as_ref()
-            .map(AbstractValue::strings)
-            .unwrap_or_default();
+        let strings = value_strings(&result.value);
         if strings.is_empty() {
             return EvalResult::with_effects(None, effects);
         }
@@ -691,43 +634,35 @@ fn rendered_content_value(value: AbstractValue) -> Option<AbstractValue> {
 
 fn eval_merge(
     args: &[TemplateExpr],
+    piped: EvalResult,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let result = eval_all_args(args, env, resolver);
-    let values = result.value.into_iter().collect();
-    EvalResult::with_effects(AbstractValue::merge_all(values), result.effects)
+    let mut effects = piped.effects;
+    let mut values = piped.value.into_iter().collect::<Vec<_>>();
+    merge_arg_values(args, env, resolver, &mut values, &mut effects);
+    EvalResult::with_effects(AbstractValue::merge_all(values), effects)
 }
 
-fn eval_first_arg_values(
+/// `ternary A B COND`: the first two arguments are the branch values, the
+/// trailing (or piped) condition contributes effects only.
+fn eval_ternary(
     args: &[TemplateExpr],
-    value_count: usize,
+    mut effects: Effects,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut values = Vec::new();
-    let mut effects = Effects::default();
-    merge_first_arg_values(args, value_count, env, resolver, &mut values, &mut effects);
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
-}
-
-fn merge_first_arg_values(
-    args: &[TemplateExpr],
-    value_count: usize,
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-    values: &mut Vec<AbstractValue>,
-    effects: &mut Effects,
-) {
     for (index, arg) in args.iter().enumerate() {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
-        if index < value_count
+        if index < 2
             && let Some(value) = result.value
         {
             values.push(value);
         }
     }
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
 fn eval_type_is(
@@ -787,19 +722,29 @@ fn merge_arg_effects(
     }
 }
 
+/// A call without a transfer function widens: the value is unknown, but every
+/// path that flowed into the call (including a piped value's effects) still
+/// influences the result.
 fn eval_unknown_call(
     args: &[TemplateExpr],
+    mut effects: Effects,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let mut effects = Effects::default();
     merge_arg_effects(args, env, resolver, &mut effects);
     let value = AbstractValue::widened(effects.output_paths.clone());
     EvalResult::with_effects(value, effects)
 }
 
-pub(crate) fn value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
+fn value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
     value.as_ref().map(AbstractValue::paths).unwrap_or_default()
+}
+
+fn value_strings(value: &Option<AbstractValue>) -> BTreeSet<String> {
+    value
+        .as_ref()
+        .map(AbstractValue::strings)
+        .unwrap_or_default()
 }
 
 /// Paths whose value this abstract value may literally be. Widened influence
@@ -814,7 +759,7 @@ fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
         .unwrap_or_default()
 }
 
-pub(crate) fn path_segment_options(
+fn path_segment_options(
     expr: &TemplateExpr,
     evaluated_value: Option<&AbstractValue>,
 ) -> Option<Vec<PathSegmentOption>> {

@@ -24,42 +24,10 @@ impl EvalEnv {
     ) -> Self {
         Self {
             dot: current_dot.cloned(),
-            root_fields: bindings
-                .map(|bindings| {
-                    bindings
-                        .iter()
-                        .map(|(name, binding)| (name.clone(), binding.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            locals: HashMap::new(),
-            local_default_paths: HashMap::new(),
-            local_output_meta: HashMap::new(),
-            bound_values: BoundValueContext::default(),
+            root_fields: bindings.cloned().unwrap_or_default(),
             allow_field_root_lookup: true,
-            skip_helper_call_args: false,
+            ..Self::default()
         }
-    }
-
-    pub(crate) fn from_helper_context_with_fragment_locals(
-        bindings: Option<&HashMap<String, AbstractValue>>,
-        current_dot: Option<&AbstractValue>,
-        fragment_locals: &HashMap<String, AbstractValue>,
-        local_default_paths: Option<&HashMap<String, BTreeSet<String>>>,
-        local_output_meta: Option<&HashMap<String, BTreeMap<String, HelperOutputMeta>>>,
-    ) -> Self {
-        let mut env = Self::from_helper_context(bindings, current_dot);
-        env.locals = fragment_locals
-            .iter()
-            .map(|(name, binding)| (name.clone(), binding.clone()))
-            .collect();
-        if let Some(local_default_paths) = local_default_paths {
-            env.local_default_paths = local_default_paths.clone();
-        }
-        if let Some(local_output_meta) = local_output_meta {
-            env.local_output_meta = local_output_meta.clone();
-        }
-        env
     }
 
     pub(crate) fn from_outer_fragment_expr_context(
@@ -67,22 +35,6 @@ impl EvalEnv {
         root_bindings: Option<&HashMap<String, AbstractValue>>,
         current_dot: Option<&AbstractValue>,
     ) -> Self {
-        let root_fields = root_bindings
-            .map(|bindings| {
-                bindings
-                    .iter()
-                    .map(|(name, binding)| (name.clone(), binding.clone()))
-                    .collect()
-            })
-            .unwrap_or_default();
-        let locals = fragment_locals
-            .map(|locals| {
-                locals
-                    .iter()
-                    .map(|(name, binding)| (name.clone(), binding.clone()))
-                    .collect()
-            })
-            .unwrap_or_default();
         let dot = root_bindings
             .map(|bindings| {
                 AbstractValue::Dict(
@@ -95,13 +47,10 @@ impl EvalEnv {
             .or_else(|| current_dot.cloned());
         Self {
             dot,
-            root_fields,
-            locals,
-            local_default_paths: HashMap::new(),
-            local_output_meta: HashMap::new(),
-            bound_values: BoundValueContext::default(),
+            root_fields: root_bindings.cloned().unwrap_or_default(),
+            locals: fragment_locals.cloned().unwrap_or_default(),
             allow_field_root_lookup: true,
-            skip_helper_call_args: false,
+            ..Self::default()
         }
     }
 
@@ -109,19 +58,12 @@ impl EvalEnv {
         locals: &HashMap<String, AbstractValue>,
         current_dot: Option<&AbstractValue>,
     ) -> Self {
-        let locals: HashMap<String, AbstractValue> = locals
-            .iter()
-            .map(|(name, binding)| (name.clone(), binding.clone()))
-            .collect();
         Self {
             dot: current_dot.cloned(),
             root_fields: locals.clone(),
-            locals,
-            local_default_paths: HashMap::new(),
-            local_output_meta: HashMap::new(),
-            bound_values: BoundValueContext::default(),
+            locals: locals.clone(),
             allow_field_root_lookup: false,
-            skip_helper_call_args: false,
+            ..Self::default()
         }
     }
 
