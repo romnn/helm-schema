@@ -150,6 +150,7 @@ fn output_contract(
     contract.extend_type_hints(output_effects.type_hints.clone());
     append_helper_contract_uses(
         &helper,
+        &suppressed_guard_path_meta,
         &output_effects.encoded_paths,
         &site,
         &mut contract,
@@ -160,6 +161,7 @@ fn output_contract(
 
 fn append_helper_contract_uses(
     helper: &HelperSummary,
+    suppressed_guard_path_meta: &BTreeMap<String, HelperOutputMeta>,
     encoded_output_values: &BTreeSet<String>,
     site: &OutputSlot,
     contract: &mut ContractIr,
@@ -171,7 +173,6 @@ fn append_helper_contract_uses(
         .iter()
         .map(|output| output.source_expr.clone())
         .collect::<BTreeSet<_>>();
-    let suppressed_guard_path_meta = suppressed_guard_path_meta(helper);
     let helper_has_only_scalar_outputs = helper
         .output_uses
         .iter()

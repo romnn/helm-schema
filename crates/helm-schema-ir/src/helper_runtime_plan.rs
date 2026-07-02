@@ -78,6 +78,7 @@ pub(crate) fn helper_if_condition_plan(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn helper_with_condition_plan(
     header: &TemplateHeader,
     bindings: &HashMap<String, AbstractValue>,
@@ -89,8 +90,8 @@ pub(crate) fn helper_with_condition_plan(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperConditionPlan {
-    let facts = branch_condition_facts_for_expr(
-        header.expr(),
+    let mut plan = helper_if_condition_plan(
+        header,
         bindings,
         current_dot,
         local_bindings,
@@ -99,7 +100,7 @@ pub(crate) fn helper_with_condition_plan(
         context,
         seen,
     );
-    let body_dot = computed_with_body_fragment_value_expr(
+    plan.dot_binding = computed_with_body_fragment_value_expr(
         header.expr(),
         bindings,
         local_bindings,
@@ -107,12 +108,7 @@ pub(crate) fn helper_with_condition_plan(
         current_dot_fragment,
         current_dot,
     );
-    HelperConditionPlan {
-        guard_paths: facts.guard_paths,
-        predicate: facts.predicate,
-        source_relations: facts.source_relations,
-        dot_binding: body_dot,
-    }
+    plan
 }
 
 pub(crate) fn helper_range_runtime_plan(
