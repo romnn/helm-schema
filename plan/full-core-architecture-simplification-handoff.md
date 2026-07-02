@@ -68,7 +68,7 @@ artifact, not because it guesses from less information.
 
 ## Current state
 
-As of this handoff:
+As of the latest simplification round (2026-07-02):
 
 ```sh
 task tokei:core
@@ -77,20 +77,22 @@ task tokei:core
 reports:
 
 ```text
-Rust Code: 26,240
-Total Code: 26,492
+Rust Code: 26,019
 ```
 
-and:
-
-```sh
-task tokei:core -- crates/helm-schema-ir/
-```
-
-reports:
+Per-crate production Rust Code LOC at that measurement:
 
 ```text
-helm-schema-ir Rust Code: 9,959
+helm-schema-ir    ~9,890
+helm-schema-k8s   ~4,500
+helm-schema-gen   ~4,310
+helm-schema       ~2,730
+helm-schema-ast   ~2,310
+helm-schema-core  ~1,180
+helm-schema-cli     ~390
+json-schema-walk    ~330
+json-schema-minify  ~180
+template-grammar    ~100
 ```
 
 Use the `Rust` row's `Code` column. Do not use the `Total` row for architecture
@@ -234,6 +236,77 @@ Fixture review for that pass:
 
 This was a real architectural cleanup, but it did not reduce full-core LOC much
 because it mostly replaced one implementation with an equivalent typed path.
+
+### Round 2026-07-02: representation dedupe across k8s/gen/ir (26,240 -> 26,019)
+
+Commit: `refactor(core): delete duplicate representations across k8s, gen, and ir`.
+
+Landed deletions, all gates green (862/862 tests, IR/gen corpus equal, luup3
+aggregate chart check with the release binary):
+
+- one `SchemaSource`/`MirrorChain` replaced the `K8sSource`/`K8sMirrorChain`
+  and `CrdSource`/`CrdMirrorChain` twins; `configured_source_ids` became
+  `MirrorChain::source_ids`
+- one shared `strip_ref`, `ResourceDocKey`, and
+  `filename::group_relative_path_for_resource` replaced per-module copies
+- dead `missing_schema_hint_for_version` wrapper deleted; the live hint moved
+  next to its only caller in `miss_diagnostics`
+- no-source `LocalSchemaUniverse` constructors deleted (tests migrated to the
+  with-source path production uses)
+- `Effects.reads` deleted: it tracked the same paths as `output_paths` at
+  every write site and had one consumer (helper branch guard-path seeding)
+- `Effects.string_hints` deleted: producers record `type_hints["string"]`
+  directly, which deleted the `schema_type_hints` re-projection
+- the duplicate direct-effects evaluation in
+  `collect_bound_fragment_output_uses_from_exprs` was removed; chart defaults
+  now ride the single fragment-locals evaluation (also a perf win)
+- generator: `resolve_single_path_evidence`/`resolve_path` collapsed into one
+  `resolve_path_evidence`; `ValuePathMergeInputs` and `EmptyMapPlaceholderUse`
+  DTO hops deleted; overlay resolution no longer threads a null values doc
+- IR: `resource_identity::attributed_document` is now the single constructor
+  for slots + control sites + resource spans (Lever 1's remaining step)
+
+### Verified load-bearing facts (do not re-litigate without new evidence)
+
+These were tested empirically this round; each "candidate deletion" below was
+tried or traced and found to be real semantics, not dead weight:
+
+- The third output-use projection in `expression_output.rs` (the
+  `!exprs.iter().any(expr_contains_helper_call)` block over
+  `Effects.output_paths`) is the sole carrier of interpolated partial-scalar
+  attributions such as `image.tag` inside
+  `image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default ... }}"`.
+  Deleting it loses a guarded, resource-scoped `containers[*].image` use in
+  the cert-manager IR fixture. It can only go away when the value lattice
+  models scalar concatenation (a concat value carrying source paths), so the
+  final value still exposes those paths.
+- `HelperSummary.suppress_roots` must stay materialized: it is derived from
+  the bound-call bindings inside `summarize_bound_helper_call`, and its
+  readers (`symbolic/output.rs`, `symbolic/inline.rs`) do not have those
+  bindings. It is a legitimate cross-boundary artifact, not a cache.
+- The dual dot-stacks and dual predicate sets in
+  `HelperRuntimeControlState` encode the value-vs-fragment domain split the
+  single-walker postmortem documents. They are not mergeable by flag.
+- `local_output_uses` vs `expression_output_uses` vs `effect_output_uses` are
+  three deliberate projections for three abstraction-failure modes (local
+  value flowed through a transforming call; final value shape; value modeling
+  lost the path but the read is real). Reconciliation code between them can
+  only be deleted by strengthening the value transfer functions first.
+- Helper condition predicate decoding is already shared: helper planning
+  calls `ValuePathContext::condition_predicate_expr`. No duplicate decoder
+  exists there.
+- `decode_guard` (text entry point) is parser-backed internally
+  (`parse_action_expressions` + `decode_guard_expr`); it is not a string
+  heuristic to delete.
+- The k8s `lookup/trace.rs` machinery is small, typed, and pinned by the
+  AGENTS-critical offline capability tests; narrowing it buys ~30 LOC and
+  weakens diagnostics. Not worth it.
+- The `(version x filename x source)` loops in `kubernetes_openapi/provider.rs`
+  are three different actions over the same cross product; a shared iterator
+  would need per-callsite closures (KISS violation). Leave as direct loops.
+- gen `schema_node.rs`/`schema_tree.rs`/`merge.rs` are dense but honest schema
+  algebra; the earlier mapping found no verbatim-copy layers left beyond the
+  ones deleted this round.
 
 ### Performance architecture was improved earlier
 
@@ -617,20 +690,19 @@ Interpretation:
 Current baseline for the next agent:
 
 ```text
-full core Rust Code: 26,240
-helm-schema-ir Rust Code: 9,959
+full core Rust Code: 26,019
 ```
 
 Near-term honest target:
 
 ```text
-full core Rust Code <= 25,000
+full core Rust Code <= 25,500 (value-lattice concat + guard algebra rounds)
 ```
 
 Good next target if that succeeds:
 
 ```text
-full core Rust Code <= 24,000
+full core Rust Code <= 24,000 (requires the helper event-stream rewrite)
 ```
 
 ## Real big levers left
@@ -936,36 +1008,58 @@ Expected LOC opportunity:
 
 This is useful but not the main route to 25K.
 
-## Recommended next plan
+## Recommended next plan (revised 2026-07-02)
 
-The next agent should not start by compressing small adapters.
+The 2026-07-02 round exhausted the verified small/medium representation
+dedupe across all crates (see the round notes above). The original lever
+estimates were optimistic: Lever 1's remainder was worth ~30 LOC, not
+400-900 (the heavy consolidation had already landed in earlier rounds), and
+the generator chain audit found ~100 LOC of DTO hops, not 500-1,200. The
+crumbs are gone.
 
-Recommended sequence:
+What is actually left, in order of value:
 
-1. **Resource identity plus output-slot consolidation**
-   - Goal: delete remaining resource/header attribution overlap.
-   - Target: 400-900 LOC.
-   - Must preserve `api_version_branches`.
-   - Must keep Signoz zookeeper and Zalando fixtures equal or more precise.
+1. **Value-lattice strengthening to retire the projection reconciliation**
+   (the real Lever 2+3 core). The concrete missing piece is a value shape
+   for partial-scalar concatenation, so an interpolated scalar such as
+   `"{{ .Values.a }}:{{ .Values.b | default x }}"` yields a value that
+   carries both source paths with their defaults/guards. Once the final
+   value exposes those paths:
+   - the `effect_output_uses` block in `expression_output.rs` becomes
+     deletable,
+   - `Effects.output_paths` can stop double-tracking value paths,
+   - parts of the local/expression dedup in
+     `collect_bound_fragment_output_uses_from_exprs` collapse.
+   Expected honest yield: 150-400 LOC plus a precision gain (today's
+   partial-scalar handling drops sibling attribution in some shapes).
+   Failure mode to watch: pathless scalar rows appearing in Bitnami
+   fixtures.
 
-2. **Effect-domain split with one real deletion**
-   - Goal: separate emitted output facts from dependency/guard/default facts.
-   - Target: 600-1,000 LOC in the first successful pass.
-   - Delete one old projection path immediately.
-   - Watch Bitnami/common and Signoz fixtures.
+2. **Helper runtime event stream** (unchanged from before, still the
+   largest honest prize, still multi-session). The body-level walk is
+   already unified in `HelperAnalysisRuntime`; what differs is the
+   expression-level fact collection. Events must cover the postmortem's
+   list before any collector is deleted.
 
-3. **Helper event stream prototype**
-   - Goal: make helper runtime events explicit.
-   - Target: not necessarily immediate LOC reduction.
-   - Acceptance: event golden tests and one deleted collector.
-   - Do not merge all helper execution semantics in one patch.
+3. **Guard/witness algebra for `HelperOutputMeta` + `symbolic/output.rs`**.
+   The five interacting mechanisms (suppress_predicate_paths,
+   related_sources, sibling_sources, require_sibling_guards, and the
+   document-side guard-set re-derivations) encode one semantic question.
+   A principled `Guarded<T>` could replace them, but every rule is pinned
+   by real-chart fixtures; expect slow, fixture-by-fixture derivation.
+   Expected: 300-700 LOC across `helper_summary.rs` and
+   `symbolic/output.rs`, at the highest regression risk in the tree.
 
-4. **Reassess generator witness algebra**
-   - Goal: remove generator-side reassembly after upstream effects are cleaner.
-   - Target: 500-1,200 LOC.
+4. **StructuralDocument performance** (not LOC): the line model rescans
+   every line before a byte per query (`structural_slot_stack_before`),
+   which is O(n^2) per template. If large-chart profiles show it, cache
+   the slot stack per line prefix. Do not replace the line model itself;
+   the rollback postmortem stands.
 
-If step 1 succeeds, core should approach or cross 25K. If steps 1 and 2
-succeed, 24K is realistic. If steps 2-4 all succeed, 23K is plausible.
+Realistic LOC outlook from 26,019: item 1 lands ~25,700; item 3 done well
+lands ~25,100; only the full event-stream rewrite (item 2) opens 24K and
+below. Treat 24K as a two-to-three-session goal through item 2, not a
+sequence of local cleanups — the local cleanups are finished.
 
 ## Estimated clean lower bound
 
