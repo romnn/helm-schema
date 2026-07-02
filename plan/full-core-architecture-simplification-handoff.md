@@ -77,8 +77,20 @@ task tokei:core
 reports:
 
 ```text
-Rust Code: 26,019
+Rust Code: 25,866
 ```
+
+Later rounds on 2026-07-02 (commits `a4ebdd5`, `e60280e`, `59ce5d8`) continued
+the ladder: AbstractValue::Widened carries unknown-call provenance in the
+value (fallback projection deleted), output uses project from the value
+lattice only (local-values projection deleted, typed tpl/cat transfers
+added), and guard-algebra facts are derived once across the summary and
+output layers. All rounds landed with byte-identical fixtures.
+
+Note: `add_output_uses` now normalizes once per batch instead of per add;
+this is fixture-equal across all 867 tests but not proven equivalent by
+construction (mid-batch identity matching sees unpruned sibling_sources).
+If a corpus addition ever diffs there, suspect this first.
 
 Per-crate production Rust Code LOC at that measurement:
 
@@ -713,7 +725,7 @@ Interpretation:
 Current baseline for the next agent:
 
 ```text
-full core Rust Code: 26,010
+full core Rust Code: 25,866
 ```
 
 Near-term honest target:
