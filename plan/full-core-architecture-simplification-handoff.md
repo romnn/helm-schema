@@ -266,6 +266,29 @@ aggregate chart check with the release binary):
 - IR: `resource_identity::attributed_document` is now the single constructor
   for slots + control sites + resource spans (Lever 1's remaining step)
 
+### Round 2026-07-02b: value-join provenance invariant (26,019 -> 26,010)
+
+Commits `5f9155a` and `1ba284e`. The important change is semantic, not LOC:
+
+- `AbstractValue::join_all` no longer lets `Top`/`Unknown` absorb the join.
+  Unknown alternatives normalize to one `Top` member inside the `Choice`, so
+  structured alternatives (values paths, output paths, dicts, string sets)
+  survive joins such as `default $unknownFallback .Values.image.tag`.
+- All IR/schema fixtures stayed byte-identical because the fragment-output
+  reconciliation previously recovered those paths from
+  `Effects.output_paths` and deduplicated; the primary value projection now
+  carries them directly. This is the prerequisite invariant for ever
+  deleting the effects-path fallback projection.
+- Second empirical probe of that fallback block (with the new lattice): the
+  remaining reason it cannot be deleted is that its rows feed the
+  sibling-source guard algebra — removing it changes `Truthy` guard sets on
+  *other* rows in the signoz postgresql fixtures. So the deletion is now
+  blocked only by guard-set derivation, not by attribution loss. Unify the
+  sibling/suppression guard algebra first, then retry.
+- `helper_with_condition_plan` now derives from `helper_if_condition_plan`
+  plus the with-body dot binding; `suppressed_guard_path_meta` is computed
+  once per output site.
+
 ### Verified load-bearing facts (do not re-litigate without new evidence)
 
 These were tested empirically this round; each "candidate deletion" below was
@@ -690,7 +713,7 @@ Interpretation:
 Current baseline for the next agent:
 
 ```text
-full core Rust Code: 26,019
+full core Rust Code: 26,010
 ```
 
 Near-term honest target:
