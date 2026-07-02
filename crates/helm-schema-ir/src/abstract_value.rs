@@ -139,24 +139,22 @@ impl AbstractValue {
 
     pub(crate) fn join_all(values: Vec<Self>) -> Option<Self> {
         let mut flat = BTreeSet::new();
-        for value in values {
+        let mut pending = values;
+        while let Some(value) = pending.pop() {
             match value {
-                Self::Top | Self::Unknown => return Some(Self::Top),
-                Self::Choice(inner) => {
-                    for choice in inner {
-                        match choice {
-                            Self::Top | Self::Unknown => return Some(Self::Top),
-                            other => {
-                                flat.insert(other);
-                            }
-                        }
-                    }
+                Self::Choice(inner) => pending.extend(inner),
+                Self::Unknown => {
+                    flat.insert(Self::Top);
                 }
                 other => {
                     flat.insert(other);
                 }
             }
         }
+        // An unknown alternative widens the join but must not erase the
+        // structured alternatives: path attribution has to survive joins
+        // such as `default $unknown .Values.x`. A single Top member records
+        // the width.
         match flat.len() {
             0 => None,
             1 => flat.into_iter().next(),

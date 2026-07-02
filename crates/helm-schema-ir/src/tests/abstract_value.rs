@@ -51,26 +51,33 @@ fn join_is_associative() {
 }
 
 #[test]
-fn top_absorbs_join() {
+fn top_widens_join_but_keeps_alternatives() {
     sim_assert_eq!(
         have: join(vec![path("image.tag"), AbstractValue::Top]),
-        want: AbstractValue::Top
+        want: AbstractValue::Choice(BTreeSet::from([AbstractValue::Top, path("image.tag")]))
     );
 }
 
 #[test]
-fn compatibility_unknown_widens_joins_to_top() {
+fn unknown_widens_join_but_keeps_alternatives() {
     sim_assert_eq!(
         have: join(vec![path("image.tag"), AbstractValue::Unknown]),
-        want: AbstractValue::Top
+        want: AbstractValue::Choice(BTreeSet::from([AbstractValue::Top, path("image.tag")]))
     );
 }
 
 #[test]
-fn top_inside_choice_absorbs_join() {
+fn top_inside_choice_stays_one_width_marker() {
     let nested = AbstractValue::Choice(BTreeSet::from([AbstractValue::Top, path("name")]));
 
-    sim_assert_eq!(have: join(vec![path("image.tag"), nested]), want: AbstractValue::Top);
+    sim_assert_eq!(
+        have: join(vec![path("image.tag"), nested]),
+        want: AbstractValue::Choice(BTreeSet::from([
+            AbstractValue::Top,
+            path("image.tag"),
+            path("name"),
+        ]))
+    );
 }
 
 #[test]
