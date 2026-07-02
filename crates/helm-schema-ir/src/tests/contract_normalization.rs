@@ -61,12 +61,10 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
         SourceSpan::new(1195, 1576),
         vec!["common.utils.getValueFromKey".to_string()],
     );
-    let resource = Some(ResourceRef {
-        api_version: "v1".to_string(),
-        kind: "Secret".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    });
+    let resource = Some(ResourceRef::concrete(
+        "v1".to_string(),
+        "Secret".to_string(),
+    ));
     let base_guards = vec![Guard::NotEq {
         path: "auth.username".to_string(),
         value: GuardValue::string("postgres"),

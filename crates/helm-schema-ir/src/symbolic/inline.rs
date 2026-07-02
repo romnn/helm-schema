@@ -103,7 +103,8 @@ impl SymbolicWalker<'_> {
                 eval_expr(expr, &env)
                     .value
                     .map(|value| value.to_context_value())
-            });
+            })
+            .bindings;
         let mut stack = self.inline_stack.clone();
         stack.push(token);
         let mut nested = SymbolicWalker::new_with_context(

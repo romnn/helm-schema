@@ -180,19 +180,27 @@ pub(crate) fn eval_helper_exprs_direct_effects(
     eval_exprs_effects(exprs, &env)
 }
 
+pub(crate) struct HelperArgBindings {
+    pub(crate) bindings: HashMap<String, AbstractValue>,
+    /// Whole-arg evaluated value when `bindings` derived from one evaluation
+    /// (the non-dot, non-merge arm). Callers reuse it as the helper body dot
+    /// instead of evaluating the same expression a second time.
+    pub(crate) value: Option<AbstractValue>,
+}
+
 pub(crate) fn bindings_for_helper_arg_with(
     arg: Option<&TemplateExpr>,
     outer: Option<&HashMap<String, AbstractValue>>,
     mut eval_binding: impl FnMut(&TemplateExpr) -> Option<AbstractValue>,
-) -> HashMap<String, AbstractValue> {
+) -> HelperArgBindings {
     let Some(arg) = arg else {
-        return HashMap::new();
+        return HelperArgBindings {
+            bindings: HashMap::new(),
+            value: None,
+        };
     };
 
-    match arg.deparen() {
-        TemplateExpr::Parenthesized(inner) => {
-            bindings_for_helper_arg_with(Some(inner), outer, eval_binding)
-        }
+    let bindings = match arg.deparen() {
         TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
         TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
         TemplateExpr::Call { function, args } if is_merge_function(function) => {
@@ -202,7 +210,17 @@ pub(crate) fn bindings_for_helper_arg_with(
             }
             merged
         }
-        _ => bindings_from_helper_arg_value(eval_binding(arg), outer),
+        _ => {
+            let value = eval_binding(arg);
+            return HelperArgBindings {
+                bindings: bindings_from_helper_arg_value(value.clone(), outer),
+                value,
+            };
+        }
+    };
+    HelperArgBindings {
+        bindings,
+        value: None,
     }
 }
 

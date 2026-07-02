@@ -140,5 +140,5 @@ fn collect_files_get_paths<F>(
 }
 
 fn is_static_files_get_call(function: &str) -> bool {
-    function == "Files.Get" || function == ".Files.Get" || function.ends_with(".Files.Get")
+    function == "Files.Get" || function.ends_with(".Files.Get")
 }

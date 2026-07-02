@@ -30,12 +30,10 @@ fn materialize_schema_for_resource(
 fn materialize_prometheusrule() {
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
 
-    let r = ResourceRef {
-        api_version: "monitoring.coreos.com/v1".to_string(),
-        kind: "PrometheusRule".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(
+        "monitoring.coreos.com/v1".to_string(),
+        "PrometheusRule".to_string(),
+    );
 
     let upstream_materialized =
         materialize_schema_for_resource(&provider, &r).expect("materialize");
@@ -61,12 +59,10 @@ fn materialize_prometheusrule() {
 fn prometheusrule_leaf_schema_rules_items() {
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
 
-    let r = ResourceRef {
-        api_version: "monitoring.coreos.com/v1".to_string(),
-        kind: "PrometheusRule".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(
+        "monitoring.coreos.com/v1".to_string(),
+        "PrometheusRule".to_string(),
+    );
 
     let path = YamlPath(vec![
         "spec".to_string(),
@@ -107,12 +103,10 @@ fn has_resource_true_for_cached_crd() {
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
 
     // Force the cache to populate first.
-    let r = ResourceRef {
-        api_version: "monitoring.coreos.com/v1".to_string(),
-        kind: "PrometheusRule".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(
+        "monitoring.coreos.com/v1".to_string(),
+        "PrometheusRule".to_string(),
+    );
     let _ = materialize_schema_for_resource(&provider, &r);
 
     assert!(
@@ -136,12 +130,10 @@ fn relative_path_handles_dot_k8s_io_suffix_groups() {
     // false. A successful download path will flip this to true; in
     // offline test runs with no cache it's false, but the regression
     // we're guarding against is the unconditional `.k8s.io` skip.
-    let r = ResourceRef {
-        api_version: "autoscaling.k8s.io/v1".to_string(),
-        kind: "VerticalPodAutoscaler".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(
+        "autoscaling.k8s.io/v1".to_string(),
+        "VerticalPodAutoscaler".to_string(),
+    );
 
     let online = provider.has_resource(&r);
     if !online {
@@ -171,12 +163,7 @@ fn relative_path_skips_built_in_k8s_groups() {
         ("extensions/v1beta1", "Ingress"),
     ] {
         let (api_version, kind) = built_in;
-        let r = ResourceRef {
-            api_version: api_version.to_string(),
-            kind: kind.to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        };
+        let r = ResourceRef::concrete(api_version.to_string(), kind.to_string());
         assert!(
             !provider.has_resource(&r),
             "{kind} ({api_version}) is a built-in K8s API group — CRDs catalog must skip it",

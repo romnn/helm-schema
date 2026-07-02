@@ -20,12 +20,7 @@ fn universe_from_crd_documents<I: IntoIterator<Item = serde_json::Value>>(
 }
 
 fn resource(api_version: &str) -> ResourceRef {
-    ResourceRef {
-        api_version: api_version.to_string(),
-        kind: "Widget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    }
+    ResourceRef::concrete(api_version.to_string(), "Widget".to_string())
 }
 
 fn widget_universe() -> LocalSchemaUniverse {

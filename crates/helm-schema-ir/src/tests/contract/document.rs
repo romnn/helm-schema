@@ -30,12 +30,10 @@ fn contract_document_serializes_stable_guard_shape() {
                 ],
             },
         ],
-        resource: Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "ConfigMap".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        }),
+        resource: Some(ResourceRef::concrete(
+            "v1".to_string(),
+            "ConfigMap".to_string(),
+        )),
         provenance: Vec::new(),
     };
     let earlier_use = ContractUse {

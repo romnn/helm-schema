@@ -20,7 +20,9 @@ use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_walk_state::{
     HelperRangeJoinBehavior, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
 };
-use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, eval_template_body};
+use crate::node_eval::{
+    NodeActionEffectSink, NodeEvalRuntime, eval_template_body, push_predicate_contract_guards,
+};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::{ValueKind, YamlPath};
 use helm_schema_core::Predicate;
@@ -45,7 +47,7 @@ pub(crate) fn resolve_bound_helper_call(
     params: ResolveBoundHelperCallParams<'_, '_>,
 ) -> BoundHelperCallResolution {
     let mut binding_seen = params.seen.clone();
-    let mut bindings = values_for_helper_arg_with_fragment_locals(
+    let arg_resolution = values_for_helper_arg_with_fragment_locals(
         params.arg,
         params.outer_bindings,
         params.current_dot,
@@ -53,20 +55,26 @@ pub(crate) fn resolve_bound_helper_call(
         params.context,
         &mut binding_seen,
     );
+    let mut bindings = arg_resolution.bindings;
 
-    let mut dot_seen = params.seen.clone();
-    let mut helper_body_dot = params
-        .arg
-        .and_then(|expr| {
-            helper_result_from_expr_with_fragment_locals(
-                expr,
-                FragmentLocalFacts::bindings_only(params.fragment_locals),
-                params.outer_bindings,
-                params.current_dot,
-                params.context,
-                &mut dot_seen,
-            )
-            .value
+    // The binding resolution already evaluated the whole arg unless the arg
+    // was a dot/root or merge call; only those shapes still need their own
+    // helper-dot evaluation here.
+    let mut helper_body_dot = arg_resolution
+        .value
+        .or_else(|| {
+            let mut dot_seen = params.seen.clone();
+            params.arg.and_then(|expr| {
+                helper_result_from_expr_with_fragment_locals(
+                    expr,
+                    FragmentLocalFacts::bindings_only(params.fragment_locals),
+                    params.outer_bindings,
+                    params.current_dot,
+                    params.context,
+                    &mut dot_seen,
+                )
+                .value
+            })
         })
         .or_else(|| params.current_dot.cloned());
 
@@ -133,19 +141,6 @@ pub(crate) fn interpret_bound_helper_body(
         return HelperSummary::default();
     };
     let mut analysis = HelperSummary::default();
-    collect_helper_summary(&body, resolution, context, seen, &mut analysis, attribution);
-    analysis.add_provenance(body.provenance(name));
-    analysis
-}
-
-fn collect_helper_summary(
-    body: &crate::analysis_db::ParsedHelperBody<'_>,
-    resolution: &BoundHelperCallResolution,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-    analysis: &mut HelperSummary,
-    attribution: AttributionIndex,
-) {
     let mut locals = SymbolicLocalState::default();
     let mut fragment_output_uses = Vec::new();
     let mut output_seen = seen.clone();
@@ -159,7 +154,7 @@ fn collect_helper_summary(
         locals: &mut locals,
         context,
         seen: &mut output_seen,
-        analysis,
+        analysis: &mut analysis,
         outputs: &mut fragment_output_uses,
         attribution,
     };
@@ -176,6 +171,8 @@ fn collect_helper_summary(
         output.is_structured_output() || !structured_sources.contains(&output.source_expr)
     });
     analysis.add_output_uses(fragment_output_uses);
+    analysis.add_provenance(body.provenance(name));
+    analysis
 }
 
 struct HelperAnalysisRuntime<'context, 'state> {
@@ -287,18 +284,6 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
                 ValueKind::Fragment,
                 meta.clone(),
             ));
-        }
-    }
-
-    fn push_condition_predicates(&mut self, plan: &HelperConditionPlan) {
-        let guards = plan.predicate.contract_guards();
-        for guard in &guards {
-            self.control
-                .push_predicate_if_absent(Predicate::from(guard.clone()));
-        }
-        if guards.is_empty() {
-            self.control
-                .push_predicate_if_absent(plan.predicate.clone());
         }
     }
 }
@@ -441,7 +426,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         for path in &plan.guard_paths {
             self.analysis.add_guard_path(path.clone());
         }
-        self.push_condition_predicates(plan);
+        push_predicate_contract_guards(self, &plan.predicate);
         self.control
             .extend_source_relations(plan.source_relations.iter().cloned());
     }
@@ -469,7 +454,7 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         for path in &plan.guard_paths {
             self.analysis.add_guard_path(path.clone());
         }
-        self.push_condition_predicates(plan);
+        push_predicate_contract_guards(self, &plan.predicate);
         self.control
             .extend_source_relations(plan.source_relations.iter().cloned());
         self.control

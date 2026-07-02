@@ -35,12 +35,7 @@ fn repeated_provider_lookup_uses_cached_result() {
     let provider = CountingProvider {
         calls: AtomicUsize::new(0),
     };
-    let resource = ResourceRef {
-        api_version: "v1".to_string(),
-        kind: "ConfigMap".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("v1".to_string(), "ConfigMap".to_string());
     let path = YamlPath(vec!["metadata".to_string(), "name".to_string()]);
 
     let first = cache.lookup(0, &provider, &resource, &path);

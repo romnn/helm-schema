@@ -24,3 +24,17 @@ pub struct ResourceRef {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub api_version_branches: Vec<HelperBranch>,
 }
+
+impl ResourceRef {
+    /// Resource with one exact apiVersion and no alternative candidates or
+    /// branch-aware apiVersion output.
+    #[must_use]
+    pub fn concrete(api_version: String, kind: String) -> Self {
+        Self {
+            api_version,
+            kind,
+            api_version_candidates: Vec::new(),
+            api_version_branches: Vec::new(),
+        }
+    }
+}

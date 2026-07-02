@@ -58,12 +58,10 @@ fn k8s_version_fallback_falls_back_to_older() {
 
     let chain = Chain::new(vec![Box::new(provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
     let schema = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
     assert!(schema.is_some(), "expected fallback to v1.24.0 to resolve");
 
@@ -101,12 +99,10 @@ fn k8s_version_fallback_offline_returns_none() {
 
     let chain = Chain::new(vec![Box::new(provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
     let schema = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
     assert!(schema.is_none(), "offline → no schema");
     let diagnostics = diagnostics.snapshot();
@@ -140,12 +136,10 @@ fn has_resource_does_not_speculatively_download() {
     .with_allow_download(true)
     .with_fetcher(mock.clone());
 
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
     let owns = provider.has_resource(&resource);
     assert!(!owns, "empty cache + no downloads → has_resource=false");
     sim_assert_eq!(
@@ -202,12 +196,10 @@ fn resolved_from_fallback_version_payload_fields() {
 
     let chain = Chain::new(vec![Box::new(provider)]).with_diagnostic_sink(diagnostics.clone());
     let _ = chain.schema_fragment_for_resource_path(
-        &ResourceRef {
-            api_version: "policy/v1beta1".to_string(),
-            kind: "PodDisruptionBudget".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        },
+        &ResourceRef::concrete(
+            "policy/v1beta1".to_string(),
+            "PodDisruptionBudget".to_string(),
+        ),
         &YamlPath(Vec::new()),
     );
 
@@ -257,12 +249,10 @@ fn k8s_negative_cache_per_source_and_version() {
     .with_allow_download(true)
     .with_fetcher(mock.clone());
 
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
 
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
@@ -294,12 +284,10 @@ fn negative_cache_avoids_retry() {
     .with_allow_download(true)
     .with_fetcher(mock.clone());
 
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
 
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
@@ -331,12 +319,10 @@ fn persisted_not_found_marker_avoids_cross_process_retry() {
     .with_allow_download(true)
     .with_fetcher(first_fetcher.clone());
 
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
 
     let _ = first_provider.lookup(&resource, &YamlPath(Vec::new()));
     sim_assert_eq!(
@@ -375,12 +361,10 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
     .with_allow_download(true)
     .with_fetcher(stale_fetcher.clone());
 
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
     let schema_path = k8s_cache_path(
         &cache_dir,
         default_source_id(),
@@ -448,12 +432,10 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
 fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
     let cache_dir = tmp_dir("k8s-no-cache-clears-positive");
     let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
-    let resource = ResourceRef {
-        api_version: "policy/v1beta1".to_string(),
-        kind: "PodDisruptionBudget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "policy/v1beta1".to_string(),
+        "PodDisruptionBudget".to_string(),
+    );
 
     let positive_fetcher =
         Arc::new(MockFetcher::new().with_body(url, pdb_v1beta1_doc().into_bytes()));

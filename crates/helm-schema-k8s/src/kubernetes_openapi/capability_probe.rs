@@ -26,18 +26,13 @@ impl CapabilityProbeTable {
     /// live.
     pub(super) fn build_probe(self, query: &ApiPresenceQuery) -> Option<ResourceRef> {
         match query {
-            ApiPresenceQuery::Resource { api_version, kind } => Some(ResourceRef {
-                api_version: api_version.clone(),
-                kind: kind.clone(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            }),
-            ApiPresenceQuery::GroupVersion { api_version } => Some(ResourceRef {
-                api_version: api_version.clone(),
-                kind: self.canonical_kind(api_version)?.to_string(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            }),
+            ApiPresenceQuery::Resource { api_version, kind } => {
+                Some(ResourceRef::concrete(api_version.clone(), kind.clone()))
+            }
+            ApiPresenceQuery::GroupVersion { api_version } => Some(ResourceRef::concrete(
+                api_version.clone(),
+                self.canonical_kind(api_version)?.to_string(),
+            )),
         }
     }
 

@@ -69,12 +69,7 @@ fn materialize_expands_refs() {
 
     let provider = LocalSchemaProvider::new(&root_dir);
 
-    let r = ResourceRef {
-        api_version: api_version.to_string(),
-        kind: kind.to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(api_version.to_string(), kind.to_string());
 
     let actual = materialize_schema_for_resource(&provider, &r).expect("materialize");
 
@@ -180,12 +175,7 @@ fn leaf_schema() {
 
     let provider = LocalSchemaProvider::new(&root_dir);
 
-    let r = ResourceRef {
-        api_version: api_version.to_string(),
-        kind: kind.to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(api_version.to_string(), kind.to_string());
 
     let path = YamlPath(vec![
         "spec".to_string(),
@@ -209,12 +199,7 @@ fn returns_none_for_missing_schema() {
 
     let provider = LocalSchemaProvider::new(&root_dir);
 
-    let r = ResourceRef {
-        api_version: "acme.example.com/v1".to_string(),
-        kind: "NonExistent".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete("acme.example.com/v1".to_string(), "NonExistent".to_string());
 
     assert!(materialize_schema_for_resource(&provider, &r).is_none());
 }
@@ -252,12 +237,7 @@ fn local_provider_accepts_builtin_k8s_resource_override() {
     .expect("write override");
 
     let provider = LocalSchemaProvider::new(&root_dir);
-    let r = ResourceRef {
-        api_version: api_version.to_string(),
-        kind: kind.to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(api_version.to_string(), kind.to_string());
     let actual = materialize_schema_for_resource(&provider, &r)
         .expect("LocalSchemaProvider must answer for built-in group overrides");
     sim_assert_eq!(

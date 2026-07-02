@@ -26,12 +26,16 @@ pub(crate) fn parse_helper_assignment_from_exprs(
         return None;
     };
     match expr {
-        TemplateExpr::VariableDefinition { name, value } => {
-            parsed_assignment_from_expr(name, AssignmentKind::Declaration, value)
-        }
-        TemplateExpr::Assignment { name, value } => {
-            parsed_assignment_from_expr(name, AssignmentKind::Assignment, value)
-        }
+        TemplateExpr::VariableDefinition { name, value } => Some(parsed_assignment_from_expr(
+            name,
+            AssignmentKind::Declaration,
+            value,
+        )),
+        TemplateExpr::Assignment { name, value } => Some(parsed_assignment_from_expr(
+            name,
+            AssignmentKind::Assignment,
+            value,
+        )),
         _ => None,
     }
 }
@@ -40,12 +44,12 @@ fn parsed_assignment_from_expr(
     name: &str,
     kind: AssignmentKind,
     value: &TemplateExpr,
-) -> Option<ParsedHelperAssignment> {
-    Some(ParsedHelperAssignment {
+) -> ParsedHelperAssignment {
+    ParsedHelperAssignment {
         variable: name.trim_start_matches('$').to_string(),
         kind,
         rhs_expr: value.clone(),
-    })
+    }
 }
 
 pub(crate) fn merge_fragment_locals(

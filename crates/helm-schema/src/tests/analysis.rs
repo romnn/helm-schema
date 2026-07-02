@@ -798,12 +798,7 @@ spec:
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
-    let resource = ResourceRef {
-        api_version: "example.com/v1".to_string(),
-        kind: "Widget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("example.com/v1".to_string(), "Widget".to_string());
 
     let schema = provider
         .lookup(
@@ -876,12 +871,7 @@ spec:
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
-    let resource = ResourceRef {
-        api_version: "example.com/v1".to_string(),
-        kind: "Widget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("example.com/v1".to_string(), "Widget".to_string());
 
     let schema = provider
         .lookup(

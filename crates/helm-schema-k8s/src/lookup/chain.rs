@@ -134,12 +134,7 @@ impl Chain {
                 origin,
             } => {
                 self.maybe_emit_inferred_api_version(resource, &api_version, source, origin);
-                let inferred_ref = ResourceRef {
-                    api_version,
-                    kind: resource.kind.clone(),
-                    api_version_candidates: Vec::new(),
-                    api_version_branches: Vec::new(),
-                };
+                let inferred_ref = ResourceRef::concrete(api_version, resource.kind.clone());
                 self.resolve_against_chain(&inferred_ref, path)
                     .into_schema_fragment()
             }

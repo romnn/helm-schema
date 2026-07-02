@@ -22,7 +22,7 @@ pub(crate) struct HelperConditionPlan {
     pub(crate) dot_binding: Option<AbstractValue>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct HelperRangeRuntimePlan {
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) dot_binding: Option<AbstractValue>,
@@ -60,20 +60,38 @@ pub(crate) fn helper_if_condition_plan(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> HelperConditionPlan {
-    let facts = branch_condition_facts_for_expr(
-        header.expr(),
-        bindings,
-        current_dot,
-        local_bindings,
-        local_default_paths,
-        local_output_meta,
-        context,
-        seen,
-    );
+    let expr = header.expr();
+    let guard_paths =
+        branch_guard_paths_for_expr(expr, bindings, current_dot, local_bindings, context, seen);
+    let range_domains = HashMap::new();
+    let get_bindings = HashMap::new();
+    let value_path_context = ValuePathContext {
+        root_bindings: bindings,
+        template_bindings: local_bindings,
+        range_domains: &range_domains,
+        get_bindings: &get_bindings,
+        template_default_paths: local_default_paths,
+        template_output_meta: local_output_meta,
+        fragment_context: context,
+        current_dot_fragment: None,
+        current_dot_binding: current_dot.cloned(),
+    };
+    let predicate = value_path_context.condition_predicate_expr(expr);
+    let predicate = if predicate.is_trivial() {
+        Predicate::all(
+            guard_paths
+                .iter()
+                .cloned()
+                .map(Predicate::truthy_path)
+                .collect(),
+        )
+    } else {
+        predicate
+    };
     HelperConditionPlan {
-        guard_paths: facts.guard_paths,
-        predicate: facts.predicate,
-        source_relations: facts.source_relations,
+        guard_paths,
+        predicate,
+        source_relations: condition_source_relations(expr, local_bindings, local_output_meta),
         dot_binding: None,
     }
 }
@@ -121,16 +139,7 @@ pub(crate) fn helper_range_runtime_plan(
     seen: &mut HashSet<String>,
 ) -> HelperRangeRuntimePlan {
     let Some(header) = header else {
-        return HelperRangeRuntimePlan {
-            guard_paths: BTreeSet::new(),
-            dot_binding: None,
-            frame: RangeFrame {
-                definitely_nonempty: false,
-                iterations: None,
-            },
-            non_exact_variable_binding: None,
-            range_fragment_value: None,
-        };
+        return HelperRangeRuntimePlan::default();
     };
 
     let guard_paths = branch_guard_paths_for_expr(
@@ -192,56 +201,6 @@ pub(crate) fn helper_range_runtime_plan(
         guard_paths,
         non_exact_variable_binding,
         range_fragment_value,
-    }
-}
-
-struct BranchConditionFacts {
-    guard_paths: BTreeSet<String>,
-    predicate: Predicate,
-    source_relations: Vec<BTreeSet<String>>,
-}
-
-fn branch_condition_facts_for_expr(
-    expr: &TemplateExpr,
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    local_bindings: &HashMap<String, AbstractValue>,
-    local_default_paths: &HashMap<String, BTreeSet<String>>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> BranchConditionFacts {
-    let guard_paths =
-        branch_guard_paths_for_expr(expr, bindings, current_dot, local_bindings, context, seen);
-    let range_domains = HashMap::new();
-    let get_bindings = HashMap::new();
-    let value_path_context = ValuePathContext {
-        root_bindings: bindings,
-        template_bindings: local_bindings,
-        range_domains: &range_domains,
-        get_bindings: &get_bindings,
-        template_default_paths: local_default_paths,
-        template_output_meta: local_output_meta,
-        fragment_context: context,
-        current_dot_fragment: None,
-        current_dot_binding: current_dot.cloned(),
-    };
-    let predicate = value_path_context.condition_predicate_expr(expr);
-    let predicate = if predicate.is_trivial() {
-        Predicate::all(
-            guard_paths
-                .iter()
-                .cloned()
-                .map(Predicate::truthy_path)
-                .collect(),
-        )
-    } else {
-        predicate
-    };
-    BranchConditionFacts {
-        guard_paths,
-        predicate,
-        source_relations: condition_source_relations(expr, local_bindings, local_output_meta),
     }
 }
 

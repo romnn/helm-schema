@@ -2,12 +2,7 @@ use super::*;
 use test_util::prelude::sim_assert_eq;
 
 fn resource(api_version: &str, kind: &str) -> ResourceRef {
-    ResourceRef {
-        api_version: api_version.to_string(),
-        kind: kind.to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    }
+    ResourceRef::concrete(api_version.to_string(), kind.to_string())
 }
 
 #[test]

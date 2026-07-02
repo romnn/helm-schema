@@ -40,12 +40,10 @@ fn crd_has_resource_does_not_speculatively_download() {
         .with_allow_download(true)
         .with_fetcher(mock.clone());
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     let owns = provider.has_resource(&resource);
     assert!(!owns);
     sim_assert_eq!(have: mock.total_calls(), want: 0, "has_resource must not fetch");
@@ -75,12 +73,10 @@ fn crd_loose_probes_mirrors_for_exact_version() {
         .with_mirrors(vec![mirror_url.to_string()])
         .with_fetcher(mock);
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1alpha1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     let schema = provider
         .lookup(&resource, &YamlPath(Vec::new()))
         .into_schema_fragment();
@@ -122,12 +118,10 @@ fn crd_loose_never_substitutes_version() {
         .with_diagnostic_sink(diagnostics.clone());
     let chain = Chain::new(vec![Box::new(provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1alpha1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     let schema = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
     assert!(schema.is_none(), "v1alpha1 must not be substituted by v1");
 
@@ -168,12 +162,10 @@ fn crd_loose_available_at_other_versions_local_cache_only() {
         .with_fetcher(mock);
     let chain = Chain::new(vec![Box::new(provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1alpha1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     let _ = chain.schema_fragment_for_resource_path(&resource, &YamlPath(Vec::new()));
 
     let snapshot = diagnostics.snapshot();
@@ -229,12 +221,10 @@ fn crd_strict_suppresses_cross_scan_keeps_mirrors() {
         .with_fetcher(mock)
         .with_diagnostic_sink(diagnostics.clone());
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1alpha1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     let schema = provider
         .lookup(&resource, &YamlPath(Vec::new()))
         .into_schema_fragment();
@@ -281,12 +271,10 @@ fn crd_mirror_does_not_mask_default_catalog() {
 
     let schema = provider
         .lookup(
-            &ResourceRef {
-                api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-                kind: "ServiceMonitor".to_string(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            },
+            &ResourceRef::concrete(
+                "monitoring.coreos.com/v1alpha1".to_string(),
+                "ServiceMonitor".to_string(),
+            ),
             &YamlPath(Vec::new()),
         )
         .into_schema_fragment()
@@ -325,12 +313,10 @@ fn crd_negative_cache_per_source() {
         .with_mirrors(vec![mirror_url.to_string()])
         .with_fetcher(mock.clone());
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1alpha1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 
@@ -357,12 +343,10 @@ fn crd_cache_record_source_writes_meta_sidecar() {
         .with_record_source(true)
         .with_fetcher(mock);
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1alpha1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 
     let meta = cache.join("default/monitoring.coreos.com/servicemonitor_v1alpha1.json.meta");
@@ -418,12 +402,10 @@ fn crd_mirror_cache_per_source_namespaced() {
         .with_mirrors(vec![mirror_url.to_string()])
         .with_fetcher(mock);
 
-    let resource = ResourceRef {
-        api_version: "monitoring.coreos.com/v1alpha1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete(
+        "monitoring.coreos.com/v1alpha1".to_string(),
+        "ServiceMonitor".to_string(),
+    );
     // Force the default to populate first.
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));
 

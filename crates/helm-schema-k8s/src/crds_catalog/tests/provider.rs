@@ -6,12 +6,7 @@ use super::*;
 use crate::cache::default_source_id;
 
 fn widget_resource() -> ResourceRef {
-    ResourceRef {
-        api_version: "example.com/v1".to_string(),
-        kind: "Widget".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    }
+    ResourceRef::concrete("example.com/v1".to_string(), "Widget".to_string())
 }
 
 #[test]

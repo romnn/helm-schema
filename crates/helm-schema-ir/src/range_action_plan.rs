@@ -10,31 +10,14 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_literal_list_range_expr;
 use crate::value_path_context::ValuePathContext;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct RangeActionPlan {
-    pub(crate) has_header: bool,
     pub(crate) source_paths: Vec<String>,
     pub(crate) literal_range: Option<(String, Vec<String>)>,
     pub(crate) guard_path: YamlPath,
     pub(crate) emit_header_use: bool,
     pub(crate) renders_mapping_entries: bool,
     pub(crate) dot_binding: Option<AbstractValue>,
-    pub(crate) apply_dot_binding: bool,
-}
-
-impl RangeActionPlan {
-    pub(crate) fn empty() -> Self {
-        Self {
-            has_header: false,
-            source_paths: Vec::new(),
-            literal_range: None,
-            guard_path: YamlPath(Vec::new()),
-            emit_header_use: false,
-            renders_mapping_entries: false,
-            dot_binding: None,
-            apply_dot_binding: true,
-        }
-    }
 }
 
 pub(crate) fn plan_range_action(
@@ -52,7 +35,7 @@ pub(crate) fn plan_range_action(
         && range_body_renders_scalar_sequence_items_from_source(node, source);
 
     let Some(header) = header else {
-        return RangeActionPlan::empty();
+        return RangeActionPlan::default();
     };
 
     let direct_iterable_header_path =
@@ -88,13 +71,11 @@ pub(crate) fn plan_range_action(
     let literal_range = parse_literal_list_range_expr(header.expr());
 
     RangeActionPlan {
-        has_header: true,
         source_paths,
         literal_range,
         guard_path,
         emit_header_use,
         renders_mapping_entries,
         dot_binding,
-        apply_dot_binding: true,
     }
 }

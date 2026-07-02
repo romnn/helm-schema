@@ -10,7 +10,7 @@ pub(crate) use context::FragmentEvalContext;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr};
+use crate::expr_eval::{HelperArgBindings, bindings_for_helper_arg_with, eval_expr};
 use crate::helper_summary::HelperOutputMeta;
 use bound_helper_resolver::{BoundHelperValueResolverParams, eval_expr_result_with_bound_helpers};
 
@@ -141,7 +141,7 @@ pub(crate) fn values_for_helper_arg_with_fragment_locals(
     fragment_locals: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-) -> HashMap<String, AbstractValue> {
+) -> HelperArgBindings {
     bindings_for_helper_arg_with(arg, outer, |expr| {
         helper_result_from_expr_with_fragment_locals(
             expr,

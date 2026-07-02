@@ -60,12 +60,7 @@ fn k8s_mirror_cache_per_source_namespaced() {
     .with_allow_download(true)
     .with_fetcher(mock.clone());
 
-    let resource = ResourceRef {
-        api_version: "v1".to_string(),
-        kind: "Service".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("v1".to_string(), "Service".to_string());
 
     // First lookup → default populates.
     let _ = provider.lookup(&resource, &YamlPath(Vec::new()));

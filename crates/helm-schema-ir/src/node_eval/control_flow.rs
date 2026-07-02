@@ -59,27 +59,17 @@ fn eval_condition_node<R, F>(
     F: FnMut(&mut R, &TemplateHeader) -> R::ConditionPlan,
 {
     let entry = runtime.scope_snapshot();
-    let else_if_pairs = else_if_pairs(node, runtime.source());
-    let alternatives = children_with_field(node, "alternative");
+
+    // Every arm evaluates the same way: restore the entry scope, apply the
+    // negations of all prior arm conditions, activate this arm's own
+    // condition (the trailing `else` arm has none), then evaluate the body.
+    let mut arms = vec![(header.cloned(), children_with_field(node, "consequence"))];
+    arms.extend(else_if_pairs(node, runtime.source()));
+    arms.push((None, children_with_field(node, "alternative")));
 
     let mut branch_outcomes = Vec::new();
     let mut prior_plans = Vec::new();
-
-    let condition_plan = header.map(|header| enter_consequence(runtime, header));
-    runtime.enter_local_scope();
-    for child in children_with_field(node, "consequence") {
-        eval_node(runtime, child);
-    }
-    runtime.exit_local_scope();
-    branch_outcomes.push(BranchOutcome {
-        plan: condition_plan.clone(),
-        outcome: runtime.scope_snapshot(),
-    });
-    if let Some(plan) = condition_plan {
-        prior_plans.push(plan);
-    }
-
-    for (condition_header, option_children) in else_if_pairs {
+    for (condition_header, children) in arms {
         runtime.restore_scope(entry.clone());
         for plan in &prior_plans {
             runtime.activate_condition_alternative(plan);
@@ -89,7 +79,7 @@ fn eval_condition_node<R, F>(
             .map(|header| enter_consequence(runtime, header));
 
         runtime.enter_local_scope();
-        for child in option_children {
+        for child in children {
             eval_node(runtime, child);
         }
         runtime.exit_local_scope();
@@ -101,20 +91,6 @@ fn eval_condition_node<R, F>(
             prior_plans.push(plan);
         }
     }
-
-    runtime.restore_scope(entry.clone());
-    for plan in &prior_plans {
-        runtime.activate_condition_alternative(plan);
-    }
-    runtime.enter_local_scope();
-    for child in alternatives {
-        eval_node(runtime, child);
-    }
-    runtime.exit_local_scope();
-    branch_outcomes.push(BranchOutcome {
-        plan: None,
-        outcome: runtime.scope_snapshot(),
-    });
 
     runtime.restore_scope(entry.clone());
     runtime.join_condition_branch_scopes(&entry, branch_outcomes);

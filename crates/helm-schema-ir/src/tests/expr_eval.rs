@@ -85,7 +85,8 @@ fn helper_argument_projection_uses_shared_expression_eval() {
                 .value
                 .map(|value| value.to_context_value())
         },
-    );
+    )
+    .bindings;
 
     sim_assert_eq!(
         have: bindings,
@@ -537,6 +538,7 @@ fn project_helper_arg_expr(
         }
         _ => eval_expr(expr, &EvalEnv::default()).value,
     })
+    .bindings
 }
 
 #[test]

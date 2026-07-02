@@ -188,30 +188,6 @@ impl DomainConstraints {
             .get(variable)
             .is_none_or(|constraint| constraint.allows(value))
     }
-
-    fn require_one_of(variable: &str, values: BTreeSet<String>) -> Self {
-        Self {
-            by_variable: HashMap::from([(
-                variable.to_string(),
-                ValueDomainConstraint {
-                    allowed: Some(values),
-                    excluded: BTreeSet::new(),
-                },
-            )]),
-        }
-    }
-
-    fn exclude(variable: &str, values: BTreeSet<String>) -> Self {
-        Self {
-            by_variable: HashMap::from([(
-                variable.to_string(),
-                ValueDomainConstraint {
-                    allowed: None,
-                    excluded: values,
-                },
-            )]),
-        }
-    }
 }
 
 impl ValueDomainConstraint {
@@ -273,10 +249,19 @@ fn eq_domain_constraints(args: &[TemplateExpr], truthy: bool) -> Option<DomainCo
         return None;
     }
 
-    Some(if truthy {
-        DomainConstraints::require_one_of(&variable, values)
+    let constraint = if truthy {
+        ValueDomainConstraint {
+            allowed: Some(values),
+            excluded: BTreeSet::new(),
+        }
     } else {
-        DomainConstraints::exclude(&variable, values)
+        ValueDomainConstraint {
+            allowed: None,
+            excluded: values,
+        }
+    };
+    Some(DomainConstraints {
+        by_variable: HashMap::from([(variable, constraint)]),
     })
 }
 

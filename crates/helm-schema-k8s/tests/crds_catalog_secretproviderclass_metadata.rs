@@ -3,12 +3,10 @@ use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider};
 use test_util::prelude::sim_assert_eq;
 
 fn resource() -> ResourceRef {
-    ResourceRef {
-        api_version: "secrets-store.csi.x-k8s.io/v1".to_string(),
-        kind: "SecretProviderClass".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    }
+    ResourceRef::concrete(
+        "secrets-store.csi.x-k8s.io/v1".to_string(),
+        "SecretProviderClass".to_string(),
+    )
 }
 
 #[test]

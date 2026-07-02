@@ -16,12 +16,10 @@ fn materialize_schema_for_resource(
 fn materialize_networkpolicy_v1_35() {
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
 
-    let r = ResourceRef {
-        api_version: "networking.k8s.io/v1".to_string(),
-        kind: "NetworkPolicy".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(
+        "networking.k8s.io/v1".to_string(),
+        "NetworkPolicy".to_string(),
+    );
 
     let schema = materialize_schema_for_resource(&provider, &r).expect("materialize schema");
 
@@ -37,12 +35,10 @@ fn materialize_networkpolicy_v1_35() {
 fn networkpolicy_leaf_schema_matchlabels() {
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
 
-    let r = ResourceRef {
-        api_version: "networking.k8s.io/v1".to_string(),
-        kind: "NetworkPolicy".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(
+        "networking.k8s.io/v1".to_string(),
+        "NetworkPolicy".to_string(),
+    );
 
     let path = YamlPath(vec![
         "spec".to_string(),
@@ -70,12 +66,7 @@ fn networkpolicy_leaf_schema_matchlabels() {
 fn deployment_container_security_context_leaf_is_not_pod_spec() {
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
 
-    let r = ResourceRef {
-        api_version: "apps/v1".to_string(),
-        kind: "Deployment".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
 
     let path = YamlPath(vec![
         "spec".to_string(),
@@ -125,12 +116,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
             "matchLabels".to_string(),
         ]),
         kind: ValueKind::Fragment,
-        resource: ResourceRef {
-            api_version: String::new(),
-            kind: "NetworkPolicy".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        },
+        resource: ResourceRef::concrete(String::new(), "NetworkPolicy".to_string()),
         is_self_range_collection: false,
     };
 
@@ -156,12 +142,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
 fn kind_scan_legacy_path_retired() {
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
 
-    let r = ResourceRef {
-        api_version: String::new(),
-        kind: "NetworkPolicy".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let r = ResourceRef::concrete(String::new(), "NetworkPolicy".to_string());
 
     assert!(
         materialize_schema_for_resource(&provider, &r).is_none(),

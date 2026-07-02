@@ -65,12 +65,7 @@ fn resource_candidates_with_api_versions(
 ) -> Vec<ResourceRef> {
     api_versions
         .into_iter()
-        .map(|api_version| ResourceRef {
-            api_version,
-            kind: resource.kind.clone(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        })
+        .map(|api_version| ResourceRef::concrete(api_version, resource.kind.clone()))
         .collect()
 }
 

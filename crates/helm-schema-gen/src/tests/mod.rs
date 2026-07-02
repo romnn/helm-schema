@@ -159,12 +159,10 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         guards: Vec::new(),
-        resource: Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "Service".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        }),
+        resource: Some(ResourceRef::concrete(
+            "v1".to_string(),
+            "Service".to_string(),
+        )),
         provenance: Vec::new(),
     }];
     let contract = with_type_hints(
@@ -674,12 +672,10 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             guards: vec![Guard::Truthy {
                 path: "serviceMonitor.enabled".to_string(),
             }],
-            resource: Some(ResourceRef {
-                api_version: "monitoring.coreos.com/v1".to_string(),
-                kind: "ServiceMonitor".to_string(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            }),
+            resource: Some(ResourceRef::concrete(
+                "monitoring.coreos.com/v1".to_string(),
+                "ServiceMonitor".to_string(),
+            )),
             provenance: Vec::new(),
         },
         ContractUse {
@@ -693,12 +689,10 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             guards: vec![Guard::Truthy {
                 path: "serviceMonitor.enabled".to_string(),
             }],
-            resource: Some(ResourceRef {
-                api_version: "monitoring.coreos.com/v1".to_string(),
-                kind: "ServiceMonitor".to_string(),
-                api_version_candidates: Vec::new(),
-                api_version_branches: Vec::new(),
-            }),
+            resource: Some(ResourceRef::concrete(
+                "monitoring.coreos.com/v1".to_string(),
+                "ServiceMonitor".to_string(),
+            )),
             provenance: Vec::new(),
         },
     ];
@@ -721,12 +715,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
 
 #[test]
 fn repeated_exact_provider_subtrees_emit_provider_definitions() {
-    let resource = ResourceRef {
-        api_version: "example.io/v1".to_string(),
-        kind: "Example".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("example.io/v1".to_string(), "Example".to_string());
     let uses = vec![
         ContractUse {
             source_expr: "first".to_string(),
@@ -780,12 +769,10 @@ fn values_yaml_comments_override_provider_descriptions() {
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         guards: Vec::new(),
-        resource: Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "ConfigMap".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        }),
+        resource: Some(ResourceRef::concrete(
+            "v1".to_string(),
+            "ConfigMap".to_string(),
+        )),
         provenance: Vec::new(),
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
@@ -2909,12 +2896,7 @@ fn wildcard_source_path_creates_array_without_empty_object_variant() {
         ]),
         kind: ValueKind::Scalar,
         guards: Vec::new(),
-        resource: Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "Pod".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        }),
+        resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
     }];
     let values_yaml = indoc! {"
@@ -5644,12 +5626,7 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
             "resources".to_string(),
         ]),
         kind: helm_schema_ir::ValueKind::Fragment,
-        resource: ResourceRef {
-            api_version: "apps/v1".to_string(),
-            kind: "Deployment".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        },
+        resource: ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string()),
         is_self_range_collection: false,
     };
 

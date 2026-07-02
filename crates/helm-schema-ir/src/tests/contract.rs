@@ -51,12 +51,10 @@ fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         Vec::new(),
-        Some(ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "Service".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        }),
+        Some(ResourceRef::concrete(
+            "v1".to_string(),
+            "Service".to_string(),
+        )),
     ));
 
     let value_uses = contract.finalize();
@@ -74,12 +72,7 @@ fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
 
 #[test]
 fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
-    let resource = ResourceRef {
-        api_version: "v1".to_string(),
-        kind: "Secret".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("v1".to_string(), "Secret".to_string());
     let guards = vec![Guard::NotEq {
         path: "auth.username".to_string(),
         value: GuardValue::string("postgres"),

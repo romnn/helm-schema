@@ -90,12 +90,10 @@ impl K8sSchemaProvider for FakeProvider {
 }
 
 fn resource() -> ResourceRef {
-    ResourceRef {
-        api_version: "monitoring.coreos.com/v1".to_string(),
-        kind: "ServiceMonitor".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    }
+    ResourceRef::concrete(
+        "monitoring.coreos.com/v1".to_string(),
+        "ServiceMonitor".to_string(),
+    )
 }
 
 fn branch_literals(
@@ -889,12 +887,7 @@ fn chain_schema_fragment_for_use_path_unresolved_does_not_leak_missing_schema() 
 
     let use_ = provider_use(
         YamlPath(vec!["data".to_string(), "config-blob".to_string()]),
-        ResourceRef {
-            api_version: "v1".to_string(),
-            kind: "ConfigMap".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        },
+        ResourceRef::concrete("v1".to_string(), "ConfigMap".to_string()),
     );
     let schema = chain.schema_fragment_for_use(&use_);
     assert!(

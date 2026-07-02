@@ -9,8 +9,8 @@ use crate::contract_sink::ContractUseContext;
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
 use crate::fragment_expr_eval::fragment_value_from_expr;
 use crate::node_eval::{
-    NodeActionEffectSink, NodeEvalRuntime, activate_condition_alternative_guards,
-    activate_if_condition_plan, activate_range_action_plan, activate_with_condition_plan,
+    NodeActionEffectSink, NodeEvalRuntime, activate_if_condition_plan, activate_range_action_plan,
+    activate_with_condition_plan,
 };
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
@@ -216,7 +216,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     }
 
     fn activate_condition_alternative(&mut self, plan: &ConditionActionPlan) {
-        activate_condition_alternative_guards(self, plan);
+        self.push_predicate_if_absent(plan.predicate.negated());
     }
 
     fn plan_range_action(

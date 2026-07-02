@@ -359,12 +359,7 @@ pub fn assert_rendered_manifest_validation_case(case: &RenderedManifestValidatio
             .get("kind")
             .and_then(|value| value.as_str())
             .expect("manifest missing kind");
-        let resource = ResourceRef {
-            api_version: api_version.to_string(),
-            kind: kind.to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        };
+        let resource = ResourceRef::concrete(api_version.to_string(), kind.to_string());
         let schema = materialized_schema_for_rendered_resource(case.provider, &resource)
             .unwrap_or_else(|| panic!("load schema for rendered {api_version}/{kind}"));
         let errors = validate_json_against_schema(&doc, &schema);

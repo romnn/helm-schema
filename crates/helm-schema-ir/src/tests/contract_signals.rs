@@ -424,12 +424,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
 
 #[test]
 fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
-    let resource = ResourceRef {
-        api_version: "apps/v1".to_string(),
-        kind: "Deployment".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
     let signals = signals_for(vec![
         ContractUse::new(
             "containers".to_string(),
@@ -494,12 +489,7 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
 
 #[test]
 fn contract_ir_schema_signals_bundle_core_generation_facts() {
-    let resource = ResourceRef {
-        api_version: "apps/v1".to_string(),
-        kind: "Deployment".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
     let signals = signals_for(vec![
         ContractUse::new(
             "podLabels".to_string(),
@@ -1009,12 +999,7 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
 
 #[test]
 fn contract_ir_derives_schema_signals_without_projection_detour() {
-    let resource = ResourceRef {
-        api_version: "v1".to_string(),
-        kind: "ServiceAccount".to_string(),
-        api_version_candidates: Vec::new(),
-        api_version_branches: Vec::new(),
-    };
+    let resource = ResourceRef::concrete("v1".to_string(), "ServiceAccount".to_string());
     let mut contract = ContractIr::default();
     contract.push(ContractUse::new(
         "serviceAccount.name".to_string(),

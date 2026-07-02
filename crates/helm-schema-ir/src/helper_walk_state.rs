@@ -13,7 +13,7 @@ pub(crate) struct HelperRangeIteration {
     pub(crate) variable_binding: Option<(String, AbstractValue)>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct RangeFrame {
     pub(crate) definitely_nonempty: bool,
     pub(crate) iterations: Option<Vec<HelperRangeIteration>>,

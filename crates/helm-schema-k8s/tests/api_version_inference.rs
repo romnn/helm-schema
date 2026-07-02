@@ -32,12 +32,7 @@ fn use_with_kind(kind: &str) -> ProviderSchemaUse {
         value_path: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
         kind: ValueKind::Scalar,
-        resource: ResourceRef {
-            api_version: String::new(),
-            kind: kind.to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        },
+        resource: ResourceRef::concrete(String::new(), kind.to_string()),
         is_self_range_collection: false,
     }
 }
@@ -522,12 +517,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
         value_path: "x".to_string(),
         path: YamlPath(vec!["data".to_string()]),
         kind: ValueKind::Scalar,
-        resource: ResourceRef {
-            api_version: String::new(),
-            kind: "ConfigMap".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        },
+        resource: ResourceRef::concrete(String::new(), "ConfigMap".to_string()),
         is_self_range_collection: false,
     };
     let _ = chain.schema_fragment_for_use(&use_);
@@ -562,12 +552,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         value_path: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
         kind: ValueKind::Scalar,
-        resource: ResourceRef {
-            api_version: String::new(),
-            kind: "ServiceMonitor".to_string(),
-            api_version_candidates: Vec::new(),
-            api_version_branches: Vec::new(),
-        },
+        resource: ResourceRef::concrete(String::new(), "ServiceMonitor".to_string()),
         is_self_range_collection: false,
     };
     let _ = chain.schema_fragment_for_use(&use_);
