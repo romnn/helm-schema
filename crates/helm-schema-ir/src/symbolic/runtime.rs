@@ -7,7 +7,6 @@ use crate::bound_value_analysis::parse_get_binding_from_exprs;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
 use crate::contract_sink::ContractUseContext;
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
-use crate::fragment_expr_eval::fragment_value_from_expr;
 use crate::helper_summary::merge_output_use_meta;
 use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, activate_if_condition_plan, activate_range_action_plan,
@@ -79,11 +78,10 @@ impl SymbolicWalker<'_> {
                 .current_dot_binding()
                 .map(|value| value.to_context_value());
             let mut seen = HashSet::new();
-            let fragment_value = fragment_value_from_expr(
+            let fragment_value = self.fragment_eval_context().fragment_value_from_expr(
                 &assignment.rhs_expr,
                 &locals,
                 current_dot.as_ref(),
-                self.fragment_eval_context(),
                 &mut seen,
             );
             match assignment.kind {

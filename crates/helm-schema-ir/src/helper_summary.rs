@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
+use crate::eval_effect::Effects;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 use helm_schema_core as output_path;
 use helm_schema_core::Predicate;
@@ -575,6 +576,15 @@ impl HelperSummary {
                 .or_default()
                 .extend(schema_types);
         }
+    }
+
+    /// Expression-level effects contribute their chart-default paths and
+    /// type hints to the enclosing summary; all other effect fields stay
+    /// with the expression site.
+    pub(crate) fn absorb_effect_hints(&mut self, effects: &Effects) {
+        self.chart_defaults
+            .extend(effects.chart_default_paths.iter().cloned());
+        self.add_type_hints(effects.type_hints.clone());
     }
 
     pub(crate) fn has_document_value_facts(&self) -> bool {

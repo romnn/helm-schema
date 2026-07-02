@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
-    fragment_value_from_expr, helper_result_from_expr_with_fragment_locals,
+    helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_summary::HelperOutputMeta;
 use test_util::prelude::sim_assert_eq;
@@ -214,7 +214,7 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     let mut seen = HashSet::new();
 
     sim_assert_eq!(
-        have: fragment_value_from_expr(&expr, &HashMap::new(), None, context, &mut seen),
+        have: context.fragment_value_from_expr(&expr, &HashMap::new(), None, &mut seen),
         want: Some(AbstractValue::OutputPath(
             "nameOverride".to_string(),
             HelperOutputMeta {

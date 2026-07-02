@@ -154,28 +154,3 @@ pub(crate) fn values_for_helper_arg_with_fragment_locals(
         .value
     })
 }
-
-pub(crate) fn fragment_value_from_expr(
-    expr: &TemplateExpr,
-    locals: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> Option<AbstractValue> {
-    let env = EvalEnv::from_fragment_context(locals, current_dot);
-    let current_dot_helper = current_dot.map(AbstractValue::to_context_value);
-    eval_expr_result_with_bound_helpers(
-        expr,
-        &env,
-        BoundHelperValueResolverParams {
-            fragment_locals: locals,
-            outer: None,
-            current_dot: current_dot_helper.as_ref(),
-            context,
-            seen,
-        },
-    )
-    .value
-    .and_then(AbstractValue::without_widened)
-    .map(|value| value.to_context_value())
-}

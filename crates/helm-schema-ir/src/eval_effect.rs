@@ -73,10 +73,6 @@ impl Effects {
         }
     }
 
-    pub(crate) fn add_string_hints(&mut self, paths: BTreeSet<String>) {
-        self.add_type_hints(paths, "string");
-    }
-
     pub(crate) fn add_encoded_paths(&mut self, paths: BTreeSet<String>) {
         self.encoded_paths
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));

@@ -133,7 +133,7 @@ fn record_string_transform_effects(
     effects: &mut Effects,
 ) {
     let paths = identity_value_paths(value);
-    effects.add_string_hints(paths.clone());
+    effects.add_type_hints(paths.clone(), "string");
     if function == "b64enc" {
         effects.add_encoded_paths(paths);
     }
@@ -536,7 +536,7 @@ fn eval_printf(
         render_printf_string_sets(format, &arg_strings)
     });
 
-    effects.add_string_hints(provenance_paths.clone());
+    effects.add_type_hints(provenance_paths.clone(), "string");
     let mut values = Vec::new();
     if let Some(rendered) = rendered {
         values.push(AbstractValue::StringSet(rendered));

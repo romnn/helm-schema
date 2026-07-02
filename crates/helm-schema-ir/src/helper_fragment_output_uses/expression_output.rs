@@ -85,13 +85,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         state.seen,
     );
     let local_effects = &result.effects;
-    state
-        .analysis
-        .chart_defaults
-        .extend(local_effects.chart_default_paths.iter().cloned());
-    state
-        .analysis
-        .add_type_hints(local_effects.type_hints.clone());
+    state.analysis.absorb_effect_hints(local_effects);
     if kind == ValueKind::Scalar && relative_path.0.is_empty() {
         state
             .analysis
@@ -143,12 +137,9 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .into_iter()
         .filter(|output| output.is_rendered())
         .partition(HelperFragmentOutputUse::is_structured_output);
-    let nested_structured_sources: BTreeSet<String> = nested_structured_outputs
+    let nested_rendered_sources: BTreeSet<String> = nested_structured_outputs
         .iter()
-        .map(|output| output.source_expr.clone())
-        .collect();
-    let nested_scalar_sources: BTreeSet<String> = nested_scalar_outputs
-        .iter()
+        .chain(&nested_scalar_outputs)
         .map(|output| output.source_expr.clone())
         .collect();
     let nested_has_structured_outputs = !nested_structured_outputs.is_empty();
@@ -173,8 +164,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
 
     for output in expression_output_uses {
         if output.relative_path.0.is_empty()
-            && (nested_structured_sources.contains(&output.source_expr)
-                || nested_scalar_sources.contains(&output.source_expr))
+            && nested_rendered_sources.contains(&output.source_expr)
         {
             continue;
         }
@@ -270,13 +260,7 @@ fn collect_bound_fragment_output_assignment_uses(
     let rhs_carries_local_output_meta = !result.effects.local_output_meta.is_empty();
     let rhs_starts_with_fragment_local = expr_leading_variable(rhs_expr)
         .is_some_and(|name| state.locals.fragment_values.contains_key(name));
-    state
-        .analysis
-        .chart_defaults
-        .extend(result.effects.chart_default_paths.clone());
-    state
-        .analysis
-        .add_type_hints(result.effects.type_hints.clone());
+    state.analysis.absorb_effect_hints(&result.effects);
     let nested = result.effects.helper_summary;
     let direct_helper_assignment = expr_starts_with_helper_call(rhs_expr);
     let rhs_merges_into_var = expr_merge_call_targets_var(rhs_expr, var);

@@ -298,12 +298,11 @@ fn suppressed_guard_path_provenance(
 ) -> BTreeMap<String, Vec<ContractProvenance>> {
     let mut by_path: BTreeMap<String, Vec<ContractProvenance>> = BTreeMap::new();
     for output in &helper.output_uses {
-        // Outputs without provenance must not create (empty) entries: key
-        // presence doubles as the "this path was suppressed here" signal for
-        // the guard-path emission checks below.
-        if output.meta.provenance.is_empty() {
-            continue;
-        }
+        // Key presence doubles as the "this path was suppressed here" signal
+        // for the guard-path emission checks below. Every summary row is
+        // stamped with its helper body's provenance at the end of
+        // `interpret_bound_helper_body`, so each entry names at least one
+        // site.
         for path in &output.meta.suppress_predicate_paths {
             merge_provenance_sites(
                 by_path.entry(path.clone()).or_default(),
@@ -328,16 +327,17 @@ fn append_fragment_output_contract_use(
     if !output.relative_path.0.is_empty() {
         meta.prune_truthy_ancestors_of_source(&output.source_expr);
     }
-    let mut sibling_sources = if meta.defaulted || meta.require_sibling_guards {
-        meta.sibling_sources.clone()
-    } else {
-        BTreeSet::new()
-    };
+    // `contract_guard_sets` must not see the sibling set (sibling guards are
+    // derived below in `structured_output_guard_sets`), so take it out of the
+    // meta here.
+    let mut sibling_sources = std::mem::take(&mut meta.sibling_sources);
+    if !meta.defaulted && !meta.require_sibling_guards {
+        sibling_sources.clear();
+    }
     if meta.defaulted {
         sibling_sources.extend(optional_ancestor_fragment_sources(output, helper));
     }
     let require_sibling_guards = meta.require_sibling_guards;
-    meta.sibling_sources.clear();
     let guard_sets = structured_output_guard_sets(
         &output.source_expr,
         &meta.contract_guard_sets(&output.source_expr),
