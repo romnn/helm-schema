@@ -78,22 +78,15 @@ pub(crate) fn lookup_root_metadata_path(
     path: &YamlPath,
     source_for_leaf: impl FnOnce(&LocalSchemaLeaf) -> Option<ProviderSchemaSource>,
 ) -> ProviderLookupResult {
-    fragment_for_root_metadata_path(root, path, source_for_leaf).map_or(
-        ProviderLookupResult::PathUnresolved,
-        |schema| ProviderLookupResult::Found {
-            schema,
-            resolved_k8s_version: None,
-        },
-    )
-}
-
-fn fragment_for_root_metadata_path(
-    root: &SchemaDoc,
-    path: &YamlPath,
-    source_for_leaf: impl FnOnce(&LocalSchemaLeaf) -> Option<ProviderSchemaSource>,
-) -> Option<ProviderSchemaFragment> {
-    let leaf = descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)?;
-    Some(fragment_for_source_leaf(root, source_for_leaf(&leaf), leaf))
+    let Some(leaf) =
+        descend_schema_path_expanding_leaf_with_root_metadata_source(root.root(), &path.0)
+    else {
+        return ProviderLookupResult::PathUnresolved;
+    };
+    ProviderLookupResult::Found {
+        schema: fragment_for_source_leaf(root, source_for_leaf(&leaf), leaf),
+        resolved_k8s_version: None,
+    }
 }
 
 #[tracing::instrument(skip_all, fields(path_len = path.len()))]

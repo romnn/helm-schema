@@ -141,11 +141,7 @@ where
             }
             if let Some(target) = (self.resolve_external_ref)(&node.location, reference) {
                 if self.root_location.as_ref() == Some(&target.location) {
-                    return Value::Object(
-                        [("$ref".to_string(), Value::String("#".to_string()))]
-                            .into_iter()
-                            .collect(),
-                    );
+                    return ref_object("#".to_string());
                 }
                 return self.bundle_root_node(target, depth + 1);
             }
@@ -204,22 +200,11 @@ where
         };
 
         if self.root_location.as_ref() == Some(&target.location) {
-            return Value::Object(
-                [("$ref".to_string(), Value::String("#".to_string()))]
-                    .into_iter()
-                    .collect(),
-            );
+            return ref_object("#".to_string());
         }
 
         let definition_name = self.definition_name_for_target(target, depth + 1);
-        Value::Object(
-            [(
-                "$ref".to_string(),
-                Value::String(format!("#/$defs/{definition_name}")),
-            )]
-            .into_iter()
-            .collect(),
-        )
+        ref_object(format!("#/$defs/{definition_name}"))
     }
 
     fn definition_name_for_target(&mut self, target: SourceBundleNode, depth: usize) -> String {
@@ -252,6 +237,14 @@ where
             }
         }
     }
+}
+
+fn ref_object(reference: String) -> Value {
+    Value::Object(
+        [("$ref".to_string(), Value::String(reference))]
+            .into_iter()
+            .collect(),
+    )
 }
 
 fn definition_base_name(pointer: &str) -> String {

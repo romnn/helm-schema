@@ -25,6 +25,12 @@ pub fn canonical_json_value(value: &Value) -> Value {
     }
 }
 
+/// Escape one JSON Pointer segment per RFC 6901 (`~` → `~0`, `/` → `~1`).
+#[must_use]
+pub fn escape_json_pointer_segment(segment: &str) -> String {
+    segment.replace('~', "~0").replace('/', "~1")
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SchemaTraversalContext {
     Schema,

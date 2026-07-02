@@ -145,14 +145,6 @@ impl<F: FnMut(&str) -> Option<SchemaDoc>> ResolveCtx<F> {
         }
     }
 
-    fn normalize_ref_filename(current_filename: &str, file: &str) -> String {
-        if file.is_empty() {
-            return current_filename.to_string();
-        }
-        let trimmed = file.trim().trim_start_matches("./");
-        trimmed.rsplit('/').next().unwrap_or(trimmed).to_string()
-    }
-
     pub fn doc(&self, filename: &str) -> Option<&Value> {
         self.docs.get(filename).map(SchemaDoc::root)
     }
@@ -166,52 +158,49 @@ impl<F: FnMut(&str) -> Option<SchemaDoc>> ResolveCtx<F> {
         self.doc(filename)
     }
 
-    fn resolve_ref(
+    pub(crate) fn resolve_ref(
         &mut self,
         current_filename: &str,
         reference: &str,
     ) -> Option<ResolvedSchemaNode> {
-        if let Some(pointer) = reference.strip_prefix('#') {
-            let doc = self.doc(current_filename)?;
-            return doc.pointer(pointer).cloned().map(|schema| {
-                ResolvedSchemaNode::at(
-                    SchemaNodeLocation {
-                        filename: current_filename.to_string(),
-                        pointer: pointer.to_string(),
-                    },
-                    schema,
-                )
-            });
-        }
-        let (file, pointer) = reference.split_once('#').unwrap_or((reference, ""));
-        let filename = Self::normalize_ref_filename(current_filename, file);
-        let doc = self.load_doc(&filename)?.clone();
-        if pointer.is_empty() {
-            Some(ResolvedSchemaNode::root(filename, doc))
+        let (filename, pointer) = split_reference(current_filename, reference);
+        let doc = self.load_doc(&filename)?;
+        let schema = if pointer.is_empty() {
+            doc.clone()
         } else {
-            doc.pointer(pointer).cloned().map(|schema| {
-                ResolvedSchemaNode::at(
-                    SchemaNodeLocation {
-                        filename,
-                        pointer: pointer.to_string(),
-                    },
-                    schema,
-                )
-            })
-        }
-    }
-
-    pub(crate) fn resolve_schema_reference(
-        &mut self,
-        current_filename: &str,
-        reference: &str,
-    ) -> Option<ResolvedSchemaNode> {
-        self.resolve_ref(current_filename, reference)
+            doc.pointer(&pointer)?.clone()
+        };
+        Some(ResolvedSchemaNode::at(
+            SchemaNodeLocation { filename, pointer },
+            schema,
+        ))
     }
 }
 
+/// Split a `$ref` into the `(filename, json-pointer)` pair it targets,
+/// resolving same-document references against `current_filename`. The pair is
+/// also the cycle-stack key for that reference.
+fn split_reference(current_filename: &str, reference: &str) -> (String, String) {
+    if let Some(pointer) = reference.strip_prefix('#') {
+        return (current_filename.to_string(), pointer.to_string());
+    }
+    let (file, pointer) = reference.split_once('#').unwrap_or((reference, ""));
+    (
+        normalize_ref_filename(current_filename, file),
+        pointer.to_string(),
+    )
+}
+
+fn normalize_ref_filename(current_filename: &str, file: &str) -> String {
+    if file.is_empty() {
+        return current_filename.to_string();
+    }
+    let trimmed = file.trim().trim_start_matches("./");
+    trimmed.rsplit('/').next().unwrap_or(trimmed).to_string()
+}
+
 fn append_json_pointer_segment(pointer: &str, segment: &str) -> String {
-    let escaped = segment.replace('~', "~0").replace('/', "~1");
+    let escaped = json_schema_walk::escape_json_pointer_segment(segment);
     if pointer.is_empty() {
         format!("/{escaped}")
     } else {
@@ -229,13 +218,7 @@ fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
     }
 
     if let Some(reference) = node.schema.get("$ref").and_then(|v| v.as_str()) {
-        let key = if let Some(pointer) = reference.strip_prefix('#') {
-            (node.location.filename().to_string(), format!("#{pointer}"))
-        } else {
-            let (file, pointer) = reference.split_once('#').unwrap_or((reference, ""));
-            let filename = ResolveCtx::<F>::normalize_ref_filename(node.location.filename(), file);
-            (filename, format!("#{pointer}"))
-        };
+        let key = split_reference(node.location.filename(), reference);
 
         if ctx.stack.contains(&key) {
             return ResolvedSchemaNode::at(node.location, strip_ref(&node.schema));
@@ -252,21 +235,11 @@ fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
         return out;
     }
 
-    for keyword in &["allOf", "anyOf", "oneOf"] {
-        if let Some(arr) = node.schema.get(*keyword).and_then(|v| v.as_array()) {
-            let mut out = Vec::new();
-            for (index, schema) in arr.iter().enumerate() {
-                out.push(
-                    expand_schema_node_at(
-                        ctx,
-                        node.nested_child(*keyword, index.to_string(), schema.clone()),
-                        depth + 1,
-                    )
-                    .into_schema(),
-                );
-            }
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        if let Some(branches) = node.schema.get(keyword).and_then(Value::as_array) {
+            let expanded = expand_schema_array_at(ctx, &node, keyword, branches, depth + 1);
             let mut obj = node.schema.as_object().cloned().unwrap_or_default();
-            obj.insert((*keyword).to_string(), Value::Array(out));
+            obj.insert(keyword.to_string(), expanded);
             return ResolvedSchemaNode::at(node.location, Value::Object(obj));
         }
     }
@@ -279,27 +252,16 @@ fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
     for (key, value) in node.schema.as_object().into_iter().flat_map(Map::iter) {
         let expanded = match schema_child_context_for_keyword(key) {
             SchemaTraversalContext::Schema if value.is_boolean() => continue,
-            SchemaTraversalContext::Schema => {
-                expand_schema_value_at(ctx, &node, key, value, depth + 1)
-            }
+            SchemaTraversalContext::Schema => match value {
+                Value::Array(values) => expand_schema_array_at(ctx, &node, key, values, depth + 1),
+                _ => expand_schema_node_at(ctx, node.child(key, value.clone()), depth + 1)
+                    .into_schema(),
+            },
             SchemaTraversalContext::SchemaArray => {
                 let Some(values) = value.as_array() else {
                     continue;
                 };
-                Value::Array(
-                    values
-                        .iter()
-                        .enumerate()
-                        .map(|(index, schema)| {
-                            expand_schema_node_at(
-                                ctx,
-                                node.nested_child(key, index.to_string(), schema.clone()),
-                                depth + 1,
-                            )
-                            .into_schema()
-                        })
-                        .collect(),
-                )
+                expand_schema_array_at(ctx, &node, key, values, depth + 1)
             }
             SchemaTraversalContext::SchemaMapValues => {
                 let Some(values) = value.as_object() else {
@@ -330,30 +292,27 @@ fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
     ResolvedSchemaNode::at(node.location, Value::Object(obj))
 }
 
-fn expand_schema_value_at<F: FnMut(&str) -> Option<SchemaDoc>>(
+fn expand_schema_array_at<F: FnMut(&str) -> Option<SchemaDoc>>(
     ctx: &mut ResolveCtx<F>,
     node: &ResolvedSchemaNode,
     key: &str,
-    value: &Value,
+    values: &[Value],
     depth: usize,
 ) -> Value {
-    match value {
-        Value::Array(values) => Value::Array(
-            values
-                .iter()
-                .enumerate()
-                .map(|(index, schema)| {
-                    expand_schema_node_at(
-                        ctx,
-                        node.nested_child(key, index.to_string(), schema.clone()),
-                        depth,
-                    )
-                    .into_schema()
-                })
-                .collect(),
-        ),
-        _ => expand_schema_node_at(ctx, node.child(key, value.clone()), depth).into_schema(),
-    }
+    Value::Array(
+        values
+            .iter()
+            .enumerate()
+            .map(|(index, schema)| {
+                expand_schema_node_at(
+                    ctx,
+                    node.nested_child(key, index.to_string(), schema.clone()),
+                    depth,
+                )
+                .into_schema()
+            })
+            .collect(),
+    )
 }
 
 pub fn descend_schema_path_expanding_leaf_with_location<F: FnMut(&str) -> Option<SchemaDoc>>(
@@ -363,7 +322,7 @@ pub fn descend_schema_path_expanding_leaf_with_location<F: FnMut(&str) -> Option
     path: &[String],
 ) -> Option<ResolvedSchemaLeaf> {
     let root = ResolvedSchemaNode::root(current_filename.to_string(), schema.clone());
-    let leaf = descend_schema_path_node(ctx, root, path, 0)?;
+    let leaf = descend_schema_path_node(ctx, root, path)?;
     let location = leaf.location.clone();
     let source_schema = leaf.schema.clone();
     let expanded = expand_schema_node_at(ctx, leaf, 0).into_schema();
@@ -372,20 +331,16 @@ pub fn descend_schema_path_expanding_leaf_with_location<F: FnMut(&str) -> Option
 
 fn descend_schema_path_node<F: FnMut(&str) -> Option<SchemaDoc>>(
     ctx: &mut ResolveCtx<F>,
-    node: ResolvedSchemaNode,
+    mut node: ResolvedSchemaNode,
     path: &[String],
-    depth: usize,
 ) -> Option<ResolvedSchemaNode> {
-    if depth > 64 {
-        return Some(node);
+    for (depth, segment) in path.iter().enumerate() {
+        if depth > 64 {
+            return Some(node);
+        }
+        node = descend_one_schema_path_segment(ctx, node, segment, depth)?;
     }
-
-    let Some((segment, remaining_path)) = path.split_first() else {
-        return Some(node);
-    };
-
-    let next = descend_one_schema_path_segment(ctx, node, segment, depth)?;
-    descend_schema_path_node(ctx, next, remaining_path, depth + 1)
+    Some(node)
 }
 
 fn descend_one_schema_path_segment<F: FnMut(&str) -> Option<SchemaDoc>>(
@@ -463,14 +418,7 @@ fn resolve_direct_ref<F: FnMut(&str) -> Option<SchemaDoc>>(
         return Some(node);
     };
 
-    let key = if let Some(pointer) = reference.strip_prefix('#') {
-        (node.location.filename().to_string(), format!("#{pointer}"))
-    } else {
-        let (file, pointer) = reference.split_once('#').unwrap_or((reference, ""));
-        let filename = ResolveCtx::<F>::normalize_ref_filename(node.location.filename(), file);
-        (filename, format!("#{pointer}"))
-    };
-
+    let key = split_reference(node.location.filename(), reference);
     if ctx.stack.contains(&key) {
         return Some(ResolvedSchemaNode::at(
             node.location,

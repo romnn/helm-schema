@@ -1,5 +1,7 @@
 use helm_schema_core::{ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment};
-use json_schema_walk::{SchemaTraversalContext, try_rewrite_schema_refs};
+use json_schema_walk::{
+    SchemaTraversalContext, escape_json_pointer_segment, try_rewrite_schema_refs,
+};
 use serde_json::Value;
 
 use crate::schema_model::schema_type;
@@ -129,10 +131,6 @@ fn rewrite_local_ref_for_root_definition(
 
 fn local_ref_points_inside(root: &Value, reference: &str) -> bool {
     json_schema_walk::ref_points_inside(root, reference)
-}
-
-fn escape_json_pointer_segment(segment: &str) -> String {
-    segment.replace('~', "~0").replace('/', "~1")
 }
 
 #[cfg(test)]

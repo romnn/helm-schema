@@ -573,7 +573,7 @@ fn bundled_definition_schema_for_source_leaf<F: FnMut(&str) -> Option<SchemaDoc>
         schema_leaf.location().pointer(),
         source_schema,
         |current_location, reference| {
-            ctx.resolve_schema_reference(&current_location.document, reference)
+            ctx.resolve_ref(&current_location.document, reference)
                 .map(|target| {
                     let filename = target.location().filename().to_string();
                     let pointer = target.location().pointer().to_string();

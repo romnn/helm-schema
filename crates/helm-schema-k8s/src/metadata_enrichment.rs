@@ -45,10 +45,10 @@ fn enrich_metadata_object(metadata: &mut Value) {
         return;
     };
 
-    strengthen_property(properties, "name", metadata_name_schema);
-    strengthen_property(properties, "namespace", metadata_namespace_schema);
-    strengthen_property(properties, "labels", metadata_labels_schema);
-    strengthen_property(properties, "annotations", metadata_annotations_schema);
+    strengthen_property(properties, "name", string_schema);
+    strengthen_property(properties, "namespace", string_schema);
+    strengthen_property(properties, "labels", string_map_schema);
+    strengthen_property(properties, "annotations", string_map_schema);
 }
 
 fn strengthen_property(properties: &mut Map<String, Value>, key: &str, desired: fn() -> Value) {
@@ -92,10 +92,10 @@ fn metadata_object_schema() -> Value {
                 "properties".to_string(),
                 Value::Object(
                     [
-                        ("name".to_string(), metadata_name_schema()),
-                        ("namespace".to_string(), metadata_namespace_schema()),
-                        ("labels".to_string(), metadata_labels_schema()),
-                        ("annotations".to_string(), metadata_annotations_schema()),
+                        ("name".to_string(), string_schema()),
+                        ("namespace".to_string(), string_schema()),
+                        ("labels".to_string(), string_map_schema()),
+                        ("annotations".to_string(), string_map_schema()),
                     ]
                     .into_iter()
                     .collect(),
@@ -107,42 +107,19 @@ fn metadata_object_schema() -> Value {
     )
 }
 
-fn metadata_name_schema() -> Value {
+fn string_schema() -> Value {
     Value::Object(
         [("type".to_string(), Value::String("string".to_string()))]
             .into_iter()
             .collect(),
     )
-}
-
-fn metadata_namespace_schema() -> Value {
-    Value::Object(
-        [("type".to_string(), Value::String("string".to_string()))]
-            .into_iter()
-            .collect(),
-    )
-}
-
-fn metadata_labels_schema() -> Value {
-    string_map_schema()
-}
-
-fn metadata_annotations_schema() -> Value {
-    string_map_schema()
 }
 
 fn string_map_schema() -> Value {
     Value::Object(
         [
             ("type".to_string(), Value::String("object".to_string())),
-            (
-                "additionalProperties".to_string(),
-                Value::Object(
-                    [("type".to_string(), Value::String("string".to_string()))]
-                        .into_iter()
-                        .collect(),
-                ),
-            ),
+            ("additionalProperties".to_string(), string_schema()),
         ]
         .into_iter()
         .collect(),
