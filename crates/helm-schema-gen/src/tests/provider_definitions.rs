@@ -42,7 +42,11 @@ fn sourced_provider_schema_candidate_with_source_schema(
     source_schema: Value,
 ) -> ProviderSchemaCandidate {
     ProviderSchemaCandidate::from_provider_fragment(
-        ProviderSchemaFragment::new(schema).with_source_schema(k8s_source(pointer), source_schema),
+        ProviderSchemaFragment::new(schema).with_source_definition_schema(
+            k8s_source(pointer),
+            source_schema.clone(),
+            source_schema,
+        ),
     )
 }
 

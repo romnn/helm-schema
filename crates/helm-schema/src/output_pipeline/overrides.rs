@@ -8,15 +8,6 @@ use crate::load_budget::read_to_end_capped;
 use crate::output_pipeline::PolicyInputOptions;
 use crate::schema_override;
 
-/// Override schema document after file loading and output-mode preparation.
-///
-/// The final output pipeline consumes these prepared documents as data, so
-/// override file IO and override merge policy stay separate.
-#[derive(Debug)]
-pub(super) struct PreparedOverrideSchema {
-    pub(super) schema: Value,
-}
-
 /// Output policy inputs loaded from the filesystem before final schema
 /// transforms run.
 ///
@@ -24,7 +15,11 @@ pub(super) struct PreparedOverrideSchema {
 /// transform path.
 #[derive(Debug, Default)]
 pub struct PolicyInputs {
-    prepared_override_schemas: Vec<PreparedOverrideSchema>,
+    /// Override schema documents after file loading and output-mode
+    /// preparation. The final output pipeline consumes these prepared
+    /// documents as data, so override file IO and override merge policy
+    /// stay separate.
+    prepared_override_schemas: Vec<Value>,
 }
 
 impl PolicyInputs {
@@ -32,7 +27,7 @@ impl PolicyInputs {
         self.prepared_override_schemas.len()
     }
 
-    pub(super) fn into_prepared_override_schemas(self) -> Vec<PreparedOverrideSchema> {
+    pub(super) fn into_prepared_override_schemas(self) -> Vec<Value> {
         self.prepared_override_schemas
     }
 }
@@ -52,10 +47,7 @@ pub fn load_policy_inputs(
 }
 
 #[tracing::instrument(skip_all)]
-fn load_prepared_override_schema(
-    path: &Path,
-    options: &PolicyInputOptions,
-) -> CliResult<PreparedOverrideSchema> {
+fn load_prepared_override_schema(path: &Path, options: &PolicyInputOptions) -> CliResult<Value> {
     let mut override_schema = load_json_file(path, options.load_budget.max_schema_document_bytes)?;
 
     // Tag every subtree that carries `$ref` with an internal "replace on
@@ -64,8 +56,7 @@ fn load_prepared_override_schema(
     // deep-merging it with inferred constraints for the same path.
     schema_override::mark_refs_for_replacement(&mut override_schema);
 
-    let schema = prepare_override_schema(override_schema, path, options)?;
-    Ok(PreparedOverrideSchema { schema })
+    prepare_override_schema(override_schema, path, options)
 }
 
 #[tracing::instrument(skip_all, fields(reference_mode = ?options.reference_mode))]

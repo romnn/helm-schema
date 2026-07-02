@@ -94,12 +94,6 @@ impl K8sArgs {
             }
         }
     }
-
-    /// Ordered K8s versions after applying the configured fallback policy.
-    pub fn ordered_k8s_versions(&self) -> Result<Vec<String>, String> {
-        let window = self.resolved_fallback_window()?;
-        Ok(helm_schema::provider::K8sVersionChain::new(self.k8s_version.clone(), window).ordered())
-    }
 }
 
 /// Default auto-fallback reach when `--k8s-version-fallback=auto` is set.

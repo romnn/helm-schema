@@ -35,7 +35,7 @@ fn mem_key(source_id: &str, relative_path: &str) -> MemKey {
 
 #[derive(Debug)]
 pub struct CrdsCatalogSchemaProvider {
-    pub mirrors: MirrorChain,
+    pub(crate) mirrors: MirrorChain,
     pub cache_dir: PathBuf,
     pub allow_download: bool,
     pub loose: bool,

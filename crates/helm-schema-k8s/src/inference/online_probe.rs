@@ -13,7 +13,7 @@ use super::shortlist::canonical_group_version_for_kind;
 /// is kind-scoped (no blind group sweep): without a shortlist entry
 /// for the kind we abstain.
 #[must_use]
-pub fn probe_crd_catalog(
+pub(crate) fn probe_crd_catalog(
     fetcher: &Arc<dyn HttpFetcher>,
     base_url: &str,
     kind: &str,

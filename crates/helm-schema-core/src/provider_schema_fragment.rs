@@ -132,20 +132,6 @@ impl ProviderSchemaFragment {
     }
 
     #[must_use]
-    pub fn with_source_schema(
-        mut self,
-        source: ProviderSchemaSource,
-        source_schema: Value,
-    ) -> Self {
-        self.source_fragment = Some(ProviderSourceFragment::new(
-            source,
-            source_schema.clone(),
-            source_schema,
-        ));
-        self
-    }
-
-    #[must_use]
     pub fn with_source_definition_schema(
         mut self,
         source: ProviderSchemaSource,

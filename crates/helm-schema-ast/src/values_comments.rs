@@ -1,21 +1,19 @@
 use std::collections::BTreeMap;
 
-use crate::{ParseError, first_mapping_colon_offset, mapping_colon_is_structural, parse_yaml_key};
+use crate::{parse_yaml_key, structural_mapping_colon};
 
 /// Extract chart-authored descriptions from comments in a values YAML document.
 ///
 /// The returned map is keyed by dotted `.Values` path without the leading
 /// `.Values`. This is documentation metadata only: commented-out examples stay
 /// comments and never become paths in this map.
-pub fn extract_values_yaml_descriptions(
-    src: &str,
-) -> std::result::Result<BTreeMap<String, String>, ParseError> {
+pub fn extract_values_yaml_descriptions(src: &str) -> BTreeMap<String, String> {
     let mut scanner = CommentScanner::default();
     for line in src.lines() {
         scanner.visit_line(line);
     }
     scanner.finish();
-    Ok(scanner.descriptions)
+    scanner.descriptions
 }
 
 #[derive(Default)]
@@ -56,16 +54,14 @@ impl CommentScanner {
     }
 
     fn visit_comment(&mut self, trimmed: &str) {
-        let Some(body) = comment_body(trimmed) else {
-            return;
-        };
+        let body = comment_body(trimmed);
         if let Some((path, description)) = explicit_comment_description(body) {
             self.flush_trailing_comments();
             insert_description(&mut self.descriptions, &[path], description);
             return;
         }
 
-        let starts_description = is_helm_docs_description_marker(body);
+        let starts_description = strip_helm_docs_description_marker(body).is_some();
         if starts_description {
             self.flush_trailing_comments();
         }
@@ -155,11 +151,7 @@ struct MappingEntry {
 
 fn mapping_entry(trimmed: &str) -> Option<MappingEntry> {
     let (sequence_item, text) = sequence_item_text(trimmed);
-    let colon = first_mapping_colon_offset(text)?;
-    if !mapping_colon_is_structural(text, colon) {
-        return None;
-    }
-
+    let colon = structural_mapping_colon(text)?;
     let key = parse_yaml_key(text)?;
     if key.contains("{{") || key.contains("}}") {
         return None;
@@ -204,18 +196,15 @@ fn inline_comment(value: &str) -> Option<String> {
     None
 }
 
-fn comment_body(text: &str) -> Option<&str> {
-    let mut line = text.trim_start();
+/// Body text of a `#`-leading comment line: every leading `#` and the
+/// surrounding whitespace stripped. Callers only pass lines that start
+/// with `#`.
+fn comment_body(text: &str) -> &str {
+    let mut line = text;
     while let Some(rest) = line.strip_prefix('#') {
         line = rest.trim_start();
     }
-
-    let line = line.trim_end();
-    if line.len() == text.trim_start().len() {
-        None
-    } else {
-        Some(line)
-    }
+    line.trim_end()
 }
 
 fn normalize_comment_body(line: &str) -> Option<String> {
@@ -241,10 +230,6 @@ fn explicit_comment_description(line: &str) -> Option<(String, String)> {
     } else {
         Some((path.to_string(), description.to_string()))
     }
-}
-
-fn is_helm_docs_description_marker(line: &str) -> bool {
-    line == "--" || line.starts_with("-- ") || line.starts_with("--\t")
 }
 
 fn strip_helm_docs_description_marker(line: &str) -> Option<&str> {

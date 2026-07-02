@@ -3,7 +3,7 @@ use serde_json::{Map, Value};
 use crate::schema_model::{empty_schema, is_annotation_keyword, is_empty_schema, schema_type};
 use crate::schema_node::SchemaNode;
 
-pub fn merge_schema_list(schemas: Vec<Value>) -> Value {
+pub(crate) fn merge_schema_list(schemas: Vec<Value>) -> Value {
     let mut it = dedup_schemas(schemas).into_iter();
     let Some(first) = it.next() else {
         return empty_schema();
@@ -11,7 +11,7 @@ pub fn merge_schema_list(schemas: Vec<Value>) -> Value {
     it.fold(first, merge_two_schemas)
 }
 
-pub fn union_schema_list(mut schemas: Vec<Value>) -> Value {
+pub(crate) fn union_schema_list(mut schemas: Vec<Value>) -> Value {
     match schemas.len() {
         0 => return empty_schema(),
         1 => return schemas.pop().unwrap_or_else(empty_schema),
@@ -28,7 +28,7 @@ pub fn union_schema_list(mut schemas: Vec<Value>) -> Value {
     deduped_sorted_any_of(out)
 }
 
-pub fn merge_two_schemas(a: Value, b: Value) -> Value {
+pub(crate) fn merge_two_schemas(a: Value, b: Value) -> Value {
     if a == b {
         return a;
     }

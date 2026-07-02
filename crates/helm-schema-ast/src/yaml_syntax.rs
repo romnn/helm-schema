@@ -81,6 +81,12 @@ pub(crate) fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
         .is_none_or(char::is_whitespace)
 }
 
+/// The offset of the first colon that YAML treats as a mapping key/value
+/// separator, or `None` when the line has no such colon.
+pub(crate) fn structural_mapping_colon(text: &str) -> Option<usize> {
+    first_mapping_colon_offset(text).filter(|&colon| mapping_colon_is_structural(text, colon))
+}
+
 pub fn first_mapping_colon_offset(line: &str) -> Option<usize> {
     let bytes = line.as_bytes();
     let mut idx = 0usize;

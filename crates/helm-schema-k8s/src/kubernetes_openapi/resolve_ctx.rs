@@ -13,7 +13,7 @@ use crate::schema_doc::{SchemaDoc, strip_ref};
 /// neighboring schema file by relative filename (typically by mapping
 /// the filename through the same provider fetch/cache path the
 /// resource doc came from).
-pub struct ResolveCtx<F: FnMut(&str) -> Option<SchemaDoc>> {
+pub(crate) struct ResolveCtx<F: FnMut(&str) -> Option<SchemaDoc>> {
     loader: F,
     docs: HashMap<String, SchemaDoc>,
     stack: HashSet<(String, String)>,
@@ -21,7 +21,7 @@ pub struct ResolveCtx<F: FnMut(&str) -> Option<SchemaDoc>> {
 
 /// Source location of a schema node inside the provider document graph.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SchemaNodeLocation {
+pub(crate) struct SchemaNodeLocation {
     filename: String,
     pointer: String,
 }
@@ -54,7 +54,7 @@ impl SchemaNodeLocation {
 
 /// Schema node plus the provider-document location it was read from.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ResolvedSchemaNode {
+pub(crate) struct ResolvedSchemaNode {
     location: SchemaNodeLocation,
     schema: Value,
 }
@@ -103,7 +103,7 @@ impl ResolvedSchemaNode {
 
 /// Path lookup result with both the materialized leaf and original source leaf.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ResolvedSchemaLeaf {
+pub(crate) struct ResolvedSchemaLeaf {
     location: SchemaNodeLocation,
     source_schema: Value,
     schema: Value,
@@ -315,7 +315,9 @@ fn expand_schema_array_at<F: FnMut(&str) -> Option<SchemaDoc>>(
     )
 }
 
-pub fn descend_schema_path_expanding_leaf_with_location<F: FnMut(&str) -> Option<SchemaDoc>>(
+pub(crate) fn descend_schema_path_expanding_leaf_with_location<
+    F: FnMut(&str) -> Option<SchemaDoc>,
+>(
     ctx: &mut ResolveCtx<F>,
     current_filename: &str,
     schema: &Value,

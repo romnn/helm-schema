@@ -32,18 +32,16 @@ mod source_cache;
 
 pub use builtin_groups::is_k8s_builtin_group;
 pub use cache::{
-    CACHE_LAYOUT_VERSION, LAYOUT_MARKER_FILENAME, LayoutCheckOutcome, LayoutChecker, NegativeCache,
-    default_source_id, source_id_for_url,
+    CACHE_LAYOUT_VERSION, LAYOUT_MARKER_FILENAME, LayoutChecker, NegativeCache, default_source_id,
+    source_id_for_url,
 };
 pub use crds_catalog::CrdsCatalogSchemaProvider;
 pub use diagnostic::{
     Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,
 };
-pub use fetch::{FetchError, HttpFetcher, UreqFetcher};
-pub use filename::{candidate_filenames_for_resource, ordered_api_versions_for_resource};
-pub use inference::{
-    ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
-};
+pub use fetch::{FetchError, HttpFetcher};
+pub use filename::ordered_api_versions_for_resource;
+pub use inference::{ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource};
 pub use kubernetes_openapi::{K8sVersionChain, KubernetesJsonSchemaProvider};
 pub use local_override::LocalSchemaProvider;
 pub use local_schema_universe::{
@@ -51,10 +49,9 @@ pub use local_schema_universe::{
     resource_schemas_from_crd_document_with_source,
 };
 pub use lookup::{
-    Chain, ChainLookupOutcome, K8sSchemaProvider, LookupTrace, LookupTraceEntry,
-    LookupTraceOutcome, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
-    ProviderSchemaSource, ProviderSourceFragment, SourceProbeTraceOutcome,
-    TracedApiPresenceOutcome, TracedLookupOutcome,
+    Chain, K8sSchemaProvider, LookupTrace, LookupTraceEntry, LookupTraceOutcome,
+    ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment, ProviderSchemaSource,
+    ProviderSourceFragment, SourceProbeTraceOutcome, TracedApiPresenceOutcome, TracedLookupOutcome,
 };
 
 #[cfg(test)]

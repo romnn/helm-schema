@@ -125,7 +125,7 @@ impl ContractIr {
     }
 
     /// Extend the graph with already-grouped path type hints.
-    pub fn extend_type_hints(
+    pub(crate) fn extend_type_hints(
         &mut self,
         type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
     ) {

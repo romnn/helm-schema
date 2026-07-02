@@ -4,7 +4,7 @@ use super::http_fetcher::{FetchError, HttpFetcher};
 
 /// Production [`HttpFetcher`] backed by [`ureq`].
 #[derive(Debug, Default)]
-pub struct UreqFetcher;
+pub(crate) struct UreqFetcher;
 
 impl UreqFetcher {
     #[must_use]

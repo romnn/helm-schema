@@ -8,7 +8,7 @@ use super::layout::{CACHE_LAYOUT_VERSION, layout_marker_path};
 
 /// Outcome of a per-root layout check.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LayoutCheckOutcome {
+pub(crate) enum LayoutCheckOutcome {
     /// Root was empty or had a matching marker — safe to use as-is.
     Ok,
     /// Root was wiped (legacy layout or older marker). Repopulate.
@@ -51,7 +51,7 @@ impl LayoutChecker {
     /// version dirs, the CRD provider checks for source-namespace dirs
     /// or group dirs. Returning `true` from this callback triggers a
     /// wipe when the marker is missing.
-    pub fn check_and_prepare<F: FnOnce(&Path) -> bool>(
+    pub(crate) fn check_and_prepare<F: FnOnce(&Path) -> bool>(
         &self,
         root: &Path,
         sink: Option<&DiagnosticSink>,

@@ -2,4 +2,4 @@ mod http_fetcher;
 mod ureq_fetcher;
 
 pub use http_fetcher::{FetchError, HttpFetcher};
-pub use ureq_fetcher::UreqFetcher;
+pub(crate) use ureq_fetcher::UreqFetcher;

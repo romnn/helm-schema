@@ -67,7 +67,7 @@ pub fn canonical_api_version_for_kind(kind: &str) -> Option<&'static str> {
 /// the online probe tier. Only kinds we know exactly which group they
 /// belong to. Tier 3 abstains for kinds not in this table.
 #[must_use]
-pub fn canonical_group_version_for_kind(kind: &str) -> Option<(&'static str, &'static str)> {
+pub(crate) fn canonical_group_version_for_kind(kind: &str) -> Option<(&'static str, &'static str)> {
     let api_version = canonical_api_version_for_kind(kind)?;
     if let Some((group, version)) = api_version.split_once('/') {
         Some((group, version))

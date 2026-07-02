@@ -9,7 +9,7 @@ use crate::cli::DiagFormat;
 /// The post-parse JSON-mode contract: every emission goes through
 /// here, so once `--diag-format=json` is selected, every stderr line
 /// is a `Diagnostic` JSON object.
-pub fn emit_to_stderr(sink: &DiagnosticSink, format: DiagFormat) {
+pub(crate) fn emit_to_stderr(sink: &DiagnosticSink, format: DiagFormat) {
     let mut stderr = std::io::stderr().lock();
     sink.for_each(|diagnostic| match format {
         DiagFormat::Text => {

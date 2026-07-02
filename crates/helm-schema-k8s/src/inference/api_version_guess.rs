@@ -12,7 +12,7 @@ use super::inference_outcome::ApiVersionInferenceOutcome;
 /// cache scan + online probe). This entry point owns the
 /// cross-provider aggregation only.
 #[must_use]
-pub fn infer_api_version(
+pub(crate) fn infer_api_version(
     providers: &[Box<dyn K8sSchemaProvider>],
     kind: &str,
 ) -> ApiVersionInferenceOutcome {

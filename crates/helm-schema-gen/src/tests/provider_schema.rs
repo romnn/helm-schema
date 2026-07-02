@@ -11,13 +11,14 @@ fn candidate_preserves_provider_source_leaf_schema() {
         "type": "object",
         "additionalProperties": { "type": "string" }
     }))
-    .with_source_schema(
+    .with_source_definition_schema(
         ProviderSchemaSource::kubernetes_openapi(
             "default",
             "v1.35.0",
             "source.json",
             "/definitions/Container/properties/env",
         ),
+        source_schema.clone(),
         source_schema.clone(),
     );
 
@@ -57,13 +58,14 @@ fn candidate_exposes_provider_source_leaf_with_only_internal_refs() {
             }
         }
     }))
-    .with_source_schema(
+    .with_source_definition_schema(
         ProviderSchemaSource::kubernetes_openapi(
             "default",
             "v1.35.0",
             "source.json",
             "/definitions/Metadata",
         ),
+        source_schema.clone(),
         source_schema.clone(),
     );
 

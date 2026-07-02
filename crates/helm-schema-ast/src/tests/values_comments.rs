@@ -18,7 +18,7 @@ fn extracts_leading_inline_and_nested_values_comments() {
           child: value
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     let expected = BTreeMap::from([
         (
@@ -42,7 +42,7 @@ fn comments_inside_parent_pair_document_first_nested_key() {
           imageRegistry: null
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     sim_assert_eq!(
         have: descriptions.get("global.imageRegistry").map(String::as_str),
@@ -63,7 +63,7 @@ fn commented_out_values_do_not_become_description_paths() {
           enabled: true
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     assert!(!descriptions.contains_key("config.disabled"));
     sim_assert_eq!(
@@ -81,7 +81,7 @@ fn forward_description_without_value_does_not_attach_to_previous_key() {
         # commentedOnly: true
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     sim_assert_eq!(
         have: descriptions.get("enabled").map(String::as_str),
@@ -102,7 +102,7 @@ fn helm_docs_marker_splits_previous_examples_from_next_description() {
           hosts: []
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     sim_assert_eq!(
         have: descriptions.get("ingress.annotations").map(String::as_str),
@@ -129,7 +129,7 @@ fn trailing_examples_at_end_of_mapping_document_previous_key() {
         # This detached comment is separated from the key above.
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     sim_assert_eq!(
         have: descriptions.get("ingress.annotations").map(String::as_str),
@@ -150,7 +150,7 @@ fn decorative_comment_headings_do_not_become_descriptions() {
             image: example
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     assert!(!descriptions.contains_key("section.operator"));
     sim_assert_eq!(
@@ -179,7 +179,7 @@ fn helm_docs_param_comments_attach_to_explicit_paths() {
           enabled: true
     "};
 
-    let descriptions = extract_values_yaml_descriptions(yaml).expect("parse yaml comments");
+    let descriptions = extract_values_yaml_descriptions(yaml);
 
     sim_assert_eq!(
         have: descriptions.get("global.imageRegistry").map(String::as_str),

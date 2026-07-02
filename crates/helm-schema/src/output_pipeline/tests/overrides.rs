@@ -19,7 +19,7 @@ fn test_temp_dir(name: &str) -> PathBuf {
 fn policy_options(reference_mode: ReferenceMode) -> PolicyInputOptions {
     PolicyInputOptions {
         reference_mode,
-        fetch_policy: crate::fetch_policy::FetchPolicy::local_files_only(),
+        fetch_policy: crate::fetch_policy::FetchPolicy::new(true, false),
         load_budget: crate::load_budget::LoadBudget::default(),
     }
 }

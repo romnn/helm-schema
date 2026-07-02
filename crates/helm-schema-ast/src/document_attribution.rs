@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use helm_schema_core::{ResourceRef, ValueKind, YamlPath, sequence_item_path};
 
 use crate::{
-    TemplateExpr, first_mapping_colon_offset, mapping_colon_is_structural, parse_expr_text,
-    range_body_mapping_entry_indent_from_source, unquote_yaml_scalar,
+    TemplateExpr, parse_expr_text, range_body_mapping_entry_indent_from_source,
+    structural_mapping_colon, unquote_yaml_scalar,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -235,11 +235,10 @@ pub fn build_attribution_index(source: &str, root: tree_sitter::Node<'_>) -> Att
 
     for control in controls {
         let control_context = document.line_context_at(control.context_byte, None);
-        let range_mapping_entry_path = control.mapping_entry_indent.and_then(|indent| {
+        let range_mapping_entry_path = control.mapping_entry_indent.map(|indent| {
             document
-                .structural_context_before(control.context_byte, indent)
-                .or_else(|| Some(control_context.clone()))
-                .map(|context| context.current_path)
+                .structural_path_before(control.context_byte, indent)
+                .unwrap_or_else(|| control_context.current_path.clone())
         });
         let control_path = if control_context.inside_block_scalar {
             YamlPath(Vec::new())
@@ -267,17 +266,14 @@ fn collect_spans(
     outputs: &mut Vec<OutputSpan>,
     controls: &mut Vec<ControlSpan>,
 ) {
-    if matches!(
-        node.kind(),
-        "if_action" | "with_action" | "range_action" | "define_action" | "block_action"
-    ) {
-        let kept_fields: &[&str] = match node.kind() {
-            "if_action" => &["consequence", "alternative", "option"],
-            "with_action" => &["consequence", "alternative"],
-            "range_action" => &["body", "alternative"],
-            "define_action" | "block_action" => &["body"],
-            _ => &[],
-        };
+    let control_kept_fields: Option<&[&str]> = match node.kind() {
+        "if_action" => Some(&["consequence", "alternative", "option"]),
+        "with_action" => Some(&["consequence", "alternative"]),
+        "range_action" => Some(&["body", "alternative"]),
+        "define_action" | "block_action" => Some(&["body"]),
+        _ => None,
+    };
+    if let Some(kept_fields) = control_kept_fields {
         let mut kept_children = Vec::new();
         let mut cursor = node.walk();
         if cursor.goto_first_child() {
@@ -409,29 +405,13 @@ fn output_slot_from_context(
         *last = stripped.to_string();
     }
 
-    let in_yaml_comment = document_site_is_yaml_comment_part(source, output.start);
-    let slot = output_slot_kind(output.kind, &path, context, in_yaml_comment);
-    OutputSlot {
-        kind: output.kind,
-        path,
-        resource: None,
-        slot,
-    }
-}
-
-fn output_slot_kind(
-    output_kind: ValueKind,
-    path: &YamlPath,
-    context: &ResolvedNodeContext,
-    in_yaml_comment: bool,
-) -> OutputSlotKind {
-    if context.in_mapping_key {
+    let slot = if context.in_mapping_key {
         OutputSlotKind::MappingKey
-    } else if in_yaml_comment {
+    } else if document_site_is_yaml_comment_part(source, output.start) {
         OutputSlotKind::YamlComment
     } else if context.inside_block_scalar {
         OutputSlotKind::BlockScalarSuppressed
-    } else if output_kind == ValueKind::Fragment {
+    } else if output.kind == ValueKind::Fragment {
         OutputSlotKind::FragmentInsertion
     } else if context.entire_scalar_value {
         OutputSlotKind::WholeScalar
@@ -439,6 +419,12 @@ fn output_slot_kind(
         OutputSlotKind::PartialScalar
     } else {
         OutputSlotKind::Opaque
+    };
+    OutputSlot {
+        kind: output.kind,
+        path,
+        resource: None,
+        slot,
     }
 }
 
@@ -471,8 +457,8 @@ impl<'a> StructuralDocument<'a> {
         }
         output
             .structural_indent
-            .and_then(|indent| self.structural_context_before(output.start, indent))
-            .unwrap_or(line_context)
+            .and_then(|indent| self.structural_path_before(output.start, indent))
+            .map_or(line_context, |path| path_context(&path))
     }
 
     fn line_context_at(
@@ -490,29 +476,29 @@ impl<'a> StructuralDocument<'a> {
             .last()
             .filter(|slot| slot.block_scalar && indent > slot.indent)
         {
-            return block_scalar_context(&slot.path);
+            return ResolvedNodeContext {
+                inside_block_scalar: true,
+                ..path_context(&slot.path)
+            };
         }
-        if trimmed.starts_with('#') {
-            return default_context(&YamlPath(Vec::new()));
-        }
-        if trimmed.is_empty() {
-            return self
-                .structural_context_for_line(line_start, 0, false)
-                .unwrap_or_default();
+        // A `#` line never carries an output slot; a blank line pops every
+        // open slot (indent 0 closes all), so both resolve to the empty
+        // default context.
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            return ResolvedNodeContext::default();
         }
 
         let is_sequence_item = valid_sequence_item(trimmed);
-        let parent_context = self
-            .structural_context_for_line(line_start, indent, is_sequence_item)
-            .unwrap_or_else(|| default_context(&YamlPath(Vec::new())));
-        let parent_path = parent_context.current_path;
+        let parent_path = self
+            .structural_path_for_line(line_start, indent, is_sequence_item)
+            .unwrap_or_else(|| YamlPath(Vec::new()));
 
         if is_sequence_item {
             let item_path = sequence_item_path(&parent_path);
             let after_dash = &trimmed[1..];
             let nested = after_dash.trim_start();
-            if action_span.is_none() && !starts_with_inline_mapping(nested) {
-                return default_context(&parent_path);
+            if action_span.is_none() && structural_mapping_colon(nested).is_none() {
+                return path_context(&parent_path);
             }
             let nested_start =
                 line_start + indent + 1 + after_dash.len().saturating_sub(nested.len());
@@ -522,13 +508,13 @@ impl<'a> StructuralDocument<'a> {
         context_from_line_text(trimmed, &parent_path, action_span, line_start + indent)
     }
 
-    fn structural_context_before(
+    fn structural_path_before(
         &self,
         insertion_byte: usize,
         output_indent: usize,
-    ) -> Option<ResolvedNodeContext> {
+    ) -> Option<YamlPath> {
         if output_indent == 0 {
-            return Some(default_context(&YamlPath(Vec::new())));
+            return Some(YamlPath(Vec::new()));
         }
         let slots = self.structural_slot_stack_before(insertion_byte.min(self.source.len()));
         let slot = slots
@@ -539,22 +525,22 @@ impl<'a> StructuralDocument<'a> {
                     || (slot.indent == output_indent && slot.allow_same_indent_output)
             })
             .or_else(|| slots.last())?;
-        Some(default_context(&slot.path))
+        Some(slot.path.clone())
     }
 
-    fn structural_context_for_line(
+    fn structural_path_for_line(
         &self,
         line_start: usize,
         indent: usize,
         is_sequence_item: bool,
-    ) -> Option<ResolvedNodeContext> {
+    ) -> Option<YamlPath> {
         let mut slots = self.structural_slot_stack_before(line_start);
         if is_sequence_item {
             pop_closed_slots_before_sequence_item(&mut slots, indent);
         } else {
             pop_closed_slots(&mut slots, indent);
         }
-        slots.last().map(|slot| default_context(&slot.path))
+        slots.pop().map(|slot| slot.path)
     }
 
     fn structural_slot_stack_before(&self, byte: usize) -> Vec<StructuralSlot> {
@@ -640,12 +626,9 @@ fn mark_parent_slot_with_child(slots: &mut [StructuralSlot], indent: usize) {
 }
 
 fn push_mapping_slot(text: &str, indent: usize, slots: &mut Vec<StructuralSlot>) {
-    let Some(colon) = first_mapping_colon_offset(text) else {
+    let Some(colon) = structural_mapping_colon(text) else {
         return;
     };
-    if !mapping_colon_is_structural(text, colon) {
-        return;
-    }
     let value = text[colon + 1..].trim();
     let block_scalar = value.starts_with('|') || value.starts_with('>');
     let template_value = value.contains("{{");
@@ -674,41 +657,29 @@ fn context_from_line_text(
     action_span: Option<(usize, usize)>,
     text_start: usize,
 ) -> ResolvedNodeContext {
-    let Some(colon) = first_mapping_colon_offset(text) else {
+    let Some(colon) = structural_mapping_colon(text) else {
         return scalar_line_context(text, parent_path, action_span, text_start);
     };
-    if !mapping_colon_is_structural(text, colon) {
-        return scalar_line_context(text, parent_path, action_span, text_start);
+
+    if action_span.is_some_and(|(start, _)| start >= text_start && start <= text_start + colon) {
+        return ResolvedNodeContext {
+            in_mapping_key: true,
+            ..path_context(parent_path)
+        };
     }
 
-    let key_start = text_start;
-    let key_end = text_start + colon;
     let key_text = unquote_yaml_scalar(text[..colon].trim());
     let key_path = if key_text.contains("{{") || key_text.contains("}}") {
         parent_path.clone()
     } else {
         append_mapping_segment(parent_path, key_text)
     };
-
-    if action_span.is_some_and(|(start, _)| start >= key_start && start <= key_end) {
-        return ResolvedNodeContext {
-            current_path: parent_path.clone(),
-            in_mapping_key: true,
-            entire_scalar_value: false,
-            inside_block_scalar: false,
-        };
-    }
-
-    let value = &text[colon + 1..];
-    let value_trimmed = value.trim();
-    let value_start = text_start + colon + 1 + value.len().saturating_sub(value.trim_start().len());
-    ResolvedNodeContext {
-        current_path: key_path,
-        in_mapping_key: false,
-        entire_scalar_value: action_span
-            .is_some_and(|span| span_is_entire_scalar(value_trimmed, value_start, span)),
-        inside_block_scalar: false,
-    }
+    scalar_line_context(
+        &text[colon + 1..],
+        &key_path,
+        action_span,
+        text_start + colon + 1,
+    )
 }
 
 fn scalar_line_context(
@@ -720,11 +691,9 @@ fn scalar_line_context(
     let value = text.trim();
     let value_start = text_start + text.len().saturating_sub(text.trim_start().len());
     ResolvedNodeContext {
-        current_path: path.clone(),
-        in_mapping_key: false,
         entire_scalar_value: action_span
             .is_some_and(|span| span_is_entire_scalar(value, value_start, span)),
-        inside_block_scalar: false,
+        ..path_context(path)
     }
 }
 
@@ -746,10 +715,6 @@ fn valid_sequence_item(trimmed: &str) -> bool {
     after_dash.is_empty() || after_dash.starts_with(char::is_whitespace)
 }
 
-fn starts_with_inline_mapping(text: &str) -> bool {
-    first_mapping_colon_offset(text).is_some_and(|colon| mapping_colon_is_structural(text, colon))
-}
-
 fn first_nonblank_byte(bytes: &[u8], start: usize, end: usize) -> Option<usize> {
     let end = end.min(bytes.len());
     let start = start.min(end);
@@ -759,19 +724,10 @@ fn first_nonblank_byte(bytes: &[u8], start: usize, end: usize) -> Option<usize> 
         .map(|offset| start + offset)
 }
 
-fn block_scalar_context(path: &YamlPath) -> ResolvedNodeContext {
-    ResolvedNodeContext {
-        inside_block_scalar: true,
-        ..default_context(path)
-    }
-}
-
-fn default_context(path: &YamlPath) -> ResolvedNodeContext {
+fn path_context(path: &YamlPath) -> ResolvedNodeContext {
     ResolvedNodeContext {
         current_path: path.clone(),
-        in_mapping_key: false,
-        entire_scalar_value: false,
-        inside_block_scalar: false,
+        ..ResolvedNodeContext::default()
     }
 }
 

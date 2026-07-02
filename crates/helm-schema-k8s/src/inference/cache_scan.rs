@@ -28,7 +28,7 @@ use super::candidate::{ApiVersionCandidate, InferenceSource};
 /// whose modern version lives at the primary, producing spurious
 /// `AmbiguousApiVersion` diagnostics (Finding 4, round 2).
 #[must_use]
-pub fn scan_k8s_cache(
+pub(crate) fn scan_k8s_cache(
     root: &Path,
     kind: &str,
     configured_source_ids: &HashSet<String>,
@@ -65,7 +65,7 @@ pub fn scan_k8s_cache(
 /// See [`scan_k8s_cache`] for the configured-source contract — stale
 /// mirror namespaces left behind on disk do NOT contribute candidates.
 #[must_use]
-pub fn scan_crd_cache(
+pub(crate) fn scan_crd_cache(
     root: &Path,
     kind: &str,
     origin: ProviderOrigin,
@@ -84,7 +84,7 @@ pub fn scan_crd_cache(
 
 /// Scan a single CRD source-namespace directory (or an override root).
 #[must_use]
-pub fn scan_crd_source_dir(
+pub(crate) fn scan_crd_source_dir(
     source_root: &Path,
     kind_lc: &str,
     origin: ProviderOrigin,

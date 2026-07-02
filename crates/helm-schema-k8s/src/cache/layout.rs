@@ -22,7 +22,7 @@ pub fn k8s_cache_path(root: &Path, source_id: &str, version_dir: &str, filename:
 /// canonical filesystem model: `<root>/<source_id>/<group>/<kind_lc>_<version>.json`.
 /// The caller passes the already-built relative path `<group>/<file>`.
 #[must_use]
-pub fn crd_cache_path(root: &Path, source_id: &str, relative_path: &str) -> PathBuf {
+pub(crate) fn crd_cache_path(root: &Path, source_id: &str, relative_path: &str) -> PathBuf {
     root.join(source_id).join(relative_path)
 }
 
@@ -33,7 +33,7 @@ pub fn crd_cache_path(root: &Path, source_id: &str, relative_path: &str) -> Path
 /// records that the upstream source confirmed this exact file absent, so
 /// callers can avoid repeating slow 404 fetches across CLI invocations.
 #[must_use]
-pub fn not_found_marker_path(schema_path: &Path) -> PathBuf {
+pub(crate) fn not_found_marker_path(schema_path: &Path) -> PathBuf {
     let mut file_name = schema_path
         .file_name()
         .map(OsString::from)
@@ -53,7 +53,7 @@ pub fn not_found_marker_exists(schema_path: &Path) -> bool {
 ///
 /// The marker is best-effort cache state: callers should still keep their
 /// in-process negative cache coherent even if this write fails.
-pub fn write_not_found_marker(schema_path: &Path) -> io::Result<()> {
+pub(crate) fn write_not_found_marker(schema_path: &Path) -> io::Result<()> {
     let marker = not_found_marker_path(schema_path);
     if let Some(parent) = marker.parent() {
         fs::create_dir_all(parent)?;
@@ -63,7 +63,7 @@ pub fn write_not_found_marker(schema_path: &Path) -> io::Result<()> {
 
 /// Path to the per-root layout marker file.
 #[must_use]
-pub fn layout_marker_path(root: &Path) -> PathBuf {
+pub(crate) fn layout_marker_path(root: &Path) -> PathBuf {
     root.join(LAYOUT_MARKER_FILENAME)
 }
 

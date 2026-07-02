@@ -30,13 +30,15 @@ pub fn apply_schema_output_pipeline(
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
     for override_schema in policy_inputs.into_prepared_override_schemas() {
-        schema = schema_override::apply_schema_override(schema, override_schema.schema);
+        schema = schema_override::apply_schema_override(schema, override_schema);
     }
 
     mirror_global_schema_into_subcharts(&mut schema, subchart_value_prefixes);
 
     schema = apply_output_transforms(schema, base_dir, options)?;
-    mark_generated_schema(&mut schema);
+    if let Value::Object(object) = &mut schema {
+        object.insert(GENERATED_SCHEMA_MARKER_KEY.to_string(), Value::Bool(true));
+    }
     Ok(schema)
 }
 
@@ -68,12 +70,6 @@ fn apply_output_transforms(
     }
 
     Ok(schema)
-}
-
-fn mark_generated_schema(schema: &mut Value) {
-    if let Value::Object(object) = schema {
-        object.insert(GENERATED_SCHEMA_MARKER_KEY.to_string(), Value::Bool(true));
-    }
 }
 
 #[cfg(test)]

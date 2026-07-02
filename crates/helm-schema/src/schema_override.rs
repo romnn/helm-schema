@@ -10,10 +10,6 @@ use serde_json::Value;
 /// produced for the same path. The marker is stripped from the final output.
 pub const REPLACE_MARKER: &str = "$ref-replace";
 
-pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
-    apply_override_inner(base, override_schema)
-}
-
 /// Walk the override and tag every object with `$ref` as
 /// "replace on merge". Run by the CLI before reference preparation so the
 /// marker rides through bundling or dereferencing and reaches the merge.
@@ -36,7 +32,7 @@ pub fn mark_refs_for_replacement(value: &mut Value) {
     }
 }
 
-fn apply_override_inner(base: Value, override_schema: Value) -> Value {
+pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
     let (mut base_obj, mut override_obj) = match (base, override_schema) {
         (Value::Object(base_obj), Value::Object(override_obj)) => (base_obj, override_obj),
         (_, ov) => return strip_replace_markers(ov),
@@ -79,7 +75,7 @@ fn apply_override_inner(base: Value, override_schema: Value) -> Value {
                 base_obj.insert(k, Value::Array(a));
             }
             (_, Some(bv), ov) => {
-                base_obj.insert(k, apply_override_inner(bv, ov));
+                base_obj.insert(k, apply_schema_override(bv, ov));
             }
             (_, None, ov) => {
                 base_obj.insert(k, strip_replace_markers(ov));

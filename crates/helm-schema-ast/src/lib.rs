@@ -33,7 +33,7 @@ pub use tree_sitter_utils::{
     children_with_field, parse_expr_text, parse_go_template, parse_helm_template,
 };
 pub use values_comments::extract_values_yaml_descriptions;
-pub(crate) use yaml_syntax::mapping_colon_is_structural;
+pub(crate) use yaml_syntax::structural_mapping_colon;
 pub use yaml_syntax::{first_mapping_colon_offset, parse_yaml_key, unquote_yaml_scalar};
 
 use std::collections::HashMap;
@@ -71,7 +71,7 @@ impl TemplateHeader {
     }
 
     #[must_use]
-    pub fn parse_range(raw: impl Into<String>) -> Self {
+    pub(crate) fn parse_range(raw: impl Into<String>) -> Self {
         let raw = raw.into();
         let wrapped = format!("{{{{ range {raw} }}}}{{{{ end }}}}");
         let expr = parse_action_expressions(&wrapped)

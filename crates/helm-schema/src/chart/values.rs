@@ -148,7 +148,7 @@ fn add_values_file_descriptions(
         return Ok(());
     }
 
-    let descriptions = extract_values_yaml_descriptions(&values_path.read_to_string()?)?;
+    let descriptions = extract_values_yaml_descriptions(&values_path.read_to_string()?);
 
     for (path, description) in descriptions {
         let scoped_path = scope_values_path(&path, prefix);
@@ -163,7 +163,7 @@ fn add_layered_values_file_descriptions(
     out: &mut BTreeMap<String, String>,
 ) -> CliResult<()> {
     let source = std::fs::read_to_string(values_path)?;
-    let descriptions = extract_values_yaml_descriptions(&source)?;
+    let descriptions = extract_values_yaml_descriptions(&source);
 
     for (path, description) in descriptions {
         out.insert(path, description);

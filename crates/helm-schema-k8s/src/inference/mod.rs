@@ -7,6 +7,6 @@ pub mod online_probe;
 pub mod shortlist;
 
 pub use aggregator::aggregate;
-pub use api_version_guess::infer_api_version;
+pub(crate) use api_version_guess::infer_api_version;
 pub use candidate::{ApiVersionCandidate, InferenceSource};
 pub use inference_outcome::ApiVersionInferenceOutcome;

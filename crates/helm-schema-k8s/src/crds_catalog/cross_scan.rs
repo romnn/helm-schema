@@ -17,7 +17,7 @@ use crate::inference::cache_scan::match_crd_filename;
 /// in this set are skipped (Finding 2 — stale removed-mirror caches
 /// MUST NOT feed live hints).
 #[must_use]
-pub fn collect_other_versions(
+pub(crate) fn collect_other_versions(
     cache_root: &Path,
     resource: &ResourceRef,
     requested_version: &str,

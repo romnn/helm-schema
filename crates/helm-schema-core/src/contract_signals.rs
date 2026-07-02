@@ -241,7 +241,7 @@ impl ContractValuePathFacts {
     }
 
     #[must_use]
-    pub fn has_non_self_guarded_render_use(self) -> bool {
+    pub(crate) fn has_non_self_guarded_render_use(self) -> bool {
         self.has_render_use
             && !self.has_self_guarded_render_use
             && !self.all_render_uses_self_guarded

@@ -10,8 +10,7 @@ pub fn assert_chart_values_comments_apply_to_existing_schema_paths(
 ) -> std::result::Result<(), Report> {
     let values_yaml = crate::schema_roundtrip::read_values_yaml_for_path(chart_relative_path)
         .wrap_err("read values.yaml")?;
-    let descriptions =
-        extract_values_yaml_descriptions(&values_yaml).wrap_err("extract values comments")?;
+    let descriptions = extract_values_yaml_descriptions(&values_yaml);
 
     let mut applied = 0;
     for (path, expected_description) in descriptions {

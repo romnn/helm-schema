@@ -286,7 +286,7 @@ pub fn try_visit_subschemas_mut<E>(
 
 /// Whether a JSON value can syntactically be a JSON Schema at a schema position.
 #[must_use]
-pub fn is_schema_position(value: &Value) -> bool {
+pub(crate) fn is_schema_position(value: &Value) -> bool {
     matches!(value, Value::Object(_) | Value::Bool(_))
 }
 

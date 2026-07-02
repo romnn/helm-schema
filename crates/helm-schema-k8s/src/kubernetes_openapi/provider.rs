@@ -52,7 +52,7 @@ fn mem_key(source_id: &str, version: &str, filename: &str) -> MemKey {
 #[derive(Debug)]
 pub struct KubernetesJsonSchemaProvider {
     pub versions: K8sVersionChain,
-    pub mirrors: MirrorChain,
+    pub(crate) mirrors: MirrorChain,
     pub cache_dir: PathBuf,
     pub allow_download: bool,
     pub use_cache: bool,

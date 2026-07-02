@@ -82,7 +82,7 @@ pub fn ordered_api_versions_for_resource(r: &ResourceRef) -> Vec<&str> {
 }
 
 #[must_use]
-pub fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
+pub(crate) fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
     let kind = resource.kind.to_ascii_lowercase();
     let (group, version) = match resource.api_version.split_once('/') {
         Some((g, v)) => (g.to_ascii_lowercase(), v.to_ascii_lowercase()),

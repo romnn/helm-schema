@@ -25,17 +25,6 @@ impl LoadBudget {
             max_chart_archive_unpacked_bytes: 256 * 1024 * 1024,
         }
     }
-
-    #[must_use]
-    pub const fn with_chart_archive_limits(
-        mut self,
-        max_chart_archive_entries: usize,
-        max_chart_archive_unpacked_bytes: usize,
-    ) -> Self {
-        self.max_chart_archive_entries = max_chart_archive_entries;
-        self.max_chart_archive_unpacked_bytes = max_chart_archive_unpacked_bytes;
-        self
-    }
 }
 
 impl Default for LoadBudget {

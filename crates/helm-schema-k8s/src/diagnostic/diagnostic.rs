@@ -198,7 +198,7 @@ impl Diagnostic {
     /// Canonicalise mutable list fields so two emissions of the same
     /// logical event produce identical payloads regardless of probe
     /// order.
-    pub fn canonicalise(&mut self) {
+    pub(crate) fn canonicalise(&mut self) {
         match self {
             Diagnostic::MissingSchema {
                 k8s_versions_tried,

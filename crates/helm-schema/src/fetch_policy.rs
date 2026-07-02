@@ -28,30 +28,8 @@ impl FetchPolicy {
         Self::new(true, allow_network)
     }
 
-    /// Policy for local-file-only preparation.
-    #[must_use]
-    pub const fn local_files_only() -> Self {
-        Self::new(true, false)
-    }
-
-    /// Policy that rejects all external retrieval.
-    #[must_use]
-    pub const fn deny_all() -> Self {
-        Self::new(false, false)
-    }
-
-    #[must_use]
-    pub const fn allows_file(self) -> bool {
-        self.allow_file
-    }
-
-    #[must_use]
-    pub const fn allows_network(self) -> bool {
-        self.allow_network
-    }
-
     pub(crate) fn validate_file_host(self, host: &str) -> Result<(), String> {
-        if !self.allows_file() {
+        if !self.allow_file {
             return Err("local file access is disabled by fetch policy".to_string());
         }
         if host.is_empty() {
@@ -63,7 +41,7 @@ impl FetchPolicy {
     }
 
     pub(crate) fn validate_network_host(self, host: Option<&str>) -> Result<(), String> {
-        if !self.allows_network() {
+        if !self.allow_network {
             return Err("network access is disabled by fetch policy".to_string());
         }
 

@@ -185,7 +185,10 @@ fn vendored_chart_archive_respects_expanded_budget() -> color_eyre::eyre::Result
 
     let err = discovery::discover_chart_contexts_with_budget(
         &chart_dir,
-        crate::load_budget::LoadBudget::new(16 * 1024, 1024).with_chart_archive_limits(16, 1024),
+        crate::load_budget::LoadBudget {
+            max_chart_archive_unpacked_bytes: 1024,
+            ..crate::load_budget::LoadBudget::new(16 * 1024, 1024)
+        },
     )
     .expect_err("archive should exceed expanded budget");
 
@@ -245,8 +248,10 @@ fn vendored_chart_archive_respects_entry_budget() -> color_eyre::eyre::Result<()
 
     let err = discovery::discover_chart_contexts_with_budget(
         &chart_dir,
-        crate::load_budget::LoadBudget::new(16 * 1024, 1024)
-            .with_chart_archive_limits(2, 16 * 1024),
+        crate::load_budget::LoadBudget {
+            max_chart_archive_entries: 2,
+            ..crate::load_budget::LoadBudget::new(16 * 1024, 1024)
+        },
     )
     .expect_err("archive should exceed entry budget");
 

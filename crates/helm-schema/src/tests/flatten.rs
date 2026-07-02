@@ -20,7 +20,7 @@ fn file_retrieval_respects_fetch_policy() {
     let canonical = path.canonicalize().expect("canonicalize test schema");
     let uri = Uri::parse(format!("file://{}", canonical.to_string_lossy())).expect("file uri");
 
-    let denied = FsHttpRetrieve::new(FetchPolicy::deny_all(), LoadBudget::default())
+    let denied = FsHttpRetrieve::new(FetchPolicy::new(false, false), LoadBudget::default())
         .retrieve(&uri)
         .expect_err("file retrieval should be denied");
     assert!(
@@ -30,7 +30,7 @@ fn file_retrieval_respects_fetch_policy() {
         "unexpected denial error: {denied}"
     );
 
-    let allowed = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
+    let allowed = FsHttpRetrieve::new(FetchPolicy::new(true, false), LoadBudget::default())
         .retrieve(&uri)
         .expect("file retrieval should succeed");
     sim_assert_eq!(have: allowed, want: json!({ "type": "string" }));
@@ -41,7 +41,7 @@ fn file_retrieval_respects_fetch_policy() {
 #[test]
 fn network_retrieval_respects_fetch_policy() {
     let uri = uri::from_str("https://example.com/schema.json").expect("https uri");
-    let err = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
+    let err = FsHttpRetrieve::new(FetchPolicy::new(true, false), LoadBudget::default())
         .retrieve(&uri)
         .expect_err("network retrieval should be denied");
     assert!(
@@ -54,7 +54,7 @@ fn network_retrieval_respects_fetch_policy() {
 #[test]
 fn file_retrieval_rejects_non_empty_file_authority_host() {
     let uri = uri::from_str("file://localhost/tmp/schema.json").expect("file uri");
-    let err = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::default())
+    let err = FsHttpRetrieve::new(FetchPolicy::new(true, false), LoadBudget::default())
         .retrieve(&uri)
         .expect_err("file retrieval should reject authority host");
     assert!(
@@ -90,7 +90,7 @@ fn file_retrieval_respects_load_budget() {
     let canonical = path.canonicalize().expect("canonicalize test schema");
     let uri = Uri::parse(format!("file://{}", canonical.to_string_lossy())).expect("file uri");
 
-    let err = FsHttpRetrieve::new(FetchPolicy::local_files_only(), LoadBudget::new(64, 4))
+    let err = FsHttpRetrieve::new(FetchPolicy::new(true, false), LoadBudget::new(64, 4))
         .retrieve(&uri)
         .expect_err("file retrieval should exceed budget");
     assert!(

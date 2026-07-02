@@ -4,7 +4,7 @@ use crate::cache::{default_source_id, source_id_for_url};
 
 /// A single upstream schema source (default catalog or user-supplied mirror).
 #[derive(Debug, Clone)]
-pub struct SchemaSource {
+pub(crate) struct SchemaSource {
     pub source_id: String,
     pub base_url: String,
 }
@@ -12,7 +12,7 @@ pub struct SchemaSource {
 impl SchemaSource {
     /// The built-in default catalog source for a provider.
     #[must_use]
-    pub fn default_source(base_url: &str) -> Self {
+    pub(crate) fn default_source(base_url: &str) -> Self {
         Self {
             source_id: default_source_id().to_string(),
             base_url: base_url.to_string(),
@@ -34,7 +34,7 @@ impl SchemaSource {
 /// The ordered list of sources to probe. The default catalog always comes
 /// first; user-supplied mirrors append in user-supplied order.
 #[derive(Debug, Clone)]
-pub struct MirrorChain {
+pub(crate) struct MirrorChain {
     pub sources: Vec<SchemaSource>,
 }
 
@@ -54,7 +54,7 @@ impl MirrorChain {
     /// on-disk dirs from previously-removed mirrors are stale and must not
     /// influence live inference or cross-version hints (Finding 2).
     #[must_use]
-    pub fn source_ids(&self) -> HashSet<String> {
+    pub(crate) fn source_ids(&self) -> HashSet<String> {
         self.sources
             .iter()
             .map(|source| source.source_id.clone())

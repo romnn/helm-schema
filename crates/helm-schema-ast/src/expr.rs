@@ -142,7 +142,7 @@ impl TemplateExpr {
     }
 
     #[must_use]
-    pub fn fragment_indent_width(&self) -> Option<usize> {
+    pub(crate) fn fragment_indent_width(&self) -> Option<usize> {
         match self {
             TemplateExpr::Call { function, args }
                 if matches!(function.as_str(), "indent" | "nindent") =>

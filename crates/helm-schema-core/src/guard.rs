@@ -136,7 +136,7 @@ pub enum Guard {
 }
 
 impl Guard {
-    pub fn canonicalize_all(guards: &mut Vec<Self>) {
+    pub(crate) fn canonicalize_all(guards: &mut Vec<Self>) {
         for guard in guards.iter_mut() {
             guard.canonicalize();
         }

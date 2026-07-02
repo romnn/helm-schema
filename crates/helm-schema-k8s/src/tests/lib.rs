@@ -1,4 +1,4 @@
-use super::*;
+use crate::filename::candidate_filenames_for_resource;
 use helm_schema_core::ResourceRef;
 use test_util::prelude::sim_assert_eq;
 
