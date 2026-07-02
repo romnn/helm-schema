@@ -275,8 +275,8 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
             return;
         };
 
-        let meta =
-            HelperOutputMeta::with_predicates(self.control.active_fragment_predicates(), false);
+        let meta = HelperOutputMeta::default()
+            .with_output_site_predicates(self.control.active_fragment_predicates());
         for source_expr in range_binding.fragment_source_paths() {
             self.outputs.push(HelperFragmentOutputUse::new(
                 source_expr,

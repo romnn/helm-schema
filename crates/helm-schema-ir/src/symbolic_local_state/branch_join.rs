@@ -80,7 +80,7 @@ fn join_meta_by_path(
     let mut merged: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
     for meta_by_path in metas {
         for (path, meta) in meta_by_path {
-            merged.entry(path.clone()).or_default().merge_ref(meta);
+            merged.entry(path.clone()).or_default().merge(meta);
         }
     }
     Some(merged)

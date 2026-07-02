@@ -8,6 +8,7 @@ use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_
 use crate::contract_sink::ContractUseContext;
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
 use crate::fragment_expr_eval::fragment_value_from_expr;
+use crate::helper_summary::merge_output_use_meta;
 use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, activate_if_condition_plan, activate_range_action_plan,
     activate_with_condition_plan,
@@ -108,16 +109,7 @@ impl SymbolicWalker<'_> {
         let output_effects = self.value_path_context().expression_output_effects(exprs);
         let helper = self.summarize_bound_helper_calls_in_exprs(exprs);
         let mut output_meta = output_effects.local_output_meta.clone();
-        for output in helper
-            .output_uses
-            .iter()
-            .filter(|output| output.is_rendered())
-        {
-            output_meta
-                .entry(output.source_expr.clone())
-                .or_default()
-                .merge_ref(&output.meta);
-        }
+        merge_output_use_meta(&mut output_meta, &helper.output_uses);
         self.scope
             .locals_mut()
             .set_default_paths(&variable, output_effects.defaults.clone());

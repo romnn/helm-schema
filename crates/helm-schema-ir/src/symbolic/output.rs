@@ -184,9 +184,6 @@ fn append_helper_contract_uses(
         .filter(|output| output.is_scalar_summary_output())
     {
         let value = &output.source_expr;
-        if helper.has_structured_fragment_source(value) {
-            continue;
-        }
         let mut meta = output.meta.clone();
         meta.note_sibling_sources(value, &helper_output_sources);
         for extra_guards in meta.contract_guard_sets(value) {
@@ -237,19 +234,14 @@ fn append_helper_contract_uses(
         let value = &output.source_expr;
         let mut meta = output.meta.clone();
         meta.note_sibling_sources(value, &helper_output_sources);
+        // Every summary row is stamped with its helper body's provenance at
+        // the end of `interpret_bound_helper_body`, so `provenance` is never
+        // empty here.
         let mut provenance = meta.provenance.clone();
         if let Some(suppressed) = suppressed_guard_path_provenance.get(value) {
             merge_provenance_sites(&mut provenance, suppressed);
         }
-        let structured_scalar_guard_sets = structured_scalar_output_guard_sets(helper, value);
-        let defaulted_scalar_guard_sets = defaulted_scalar_summary_guard_sets(helper, value);
         for extra_guards in meta.contract_guard_sets(value) {
-            if provenance.is_empty()
-                && (structured_scalar_guard_sets.contains(&extra_guards)
-                    || defaulted_scalar_guard_sets.contains(&extra_guards))
-            {
-                continue;
-            }
             contract.push_dependency_use(context.pathless_contract_use_with_extra_provenance(
                 value.clone(),
                 ValueKind::Scalar,
@@ -271,17 +263,9 @@ fn append_helper_contract_uses(
         if let Some(suppressed) = suppressed_guard_path_provenance.get(value) {
             merge_provenance_sites(&mut guard_path_meta.provenance, suppressed);
         }
-        let guard_path_has_own_context =
-            !guard_path_meta.predicates.is_empty() || guard_path_meta.defaulted;
-        if !guard_path_has_own_context
-            && defaulted_scalar_summary_guard_sets(helper, value)
-                .iter()
-                .any(Vec::is_empty)
-        {
-            continue;
-        }
-        let guard_path_meta_has_context =
-            guard_path_has_own_context || context.has_ambient_guards();
+        let guard_path_meta_has_context = !guard_path_meta.predicates.is_empty()
+            || guard_path_meta.defaulted
+            || context.has_ambient_guards();
         if site.path.0.is_empty()
             && site.resource.is_none()
             && helper_output_sources.contains(value)
@@ -328,48 +312,6 @@ fn suppressed_guard_path_provenance(
         }
     }
     by_path
-}
-
-fn structured_scalar_output_guard_sets(helper: &HelperSummary, value: &str) -> Vec<Vec<Guard>> {
-    let mut guard_sets = Vec::new();
-    for output in helper.output_uses.iter().filter(|output| {
-        output.is_rendered()
-            && output.source_expr == value
-            && output.kind == ValueKind::Scalar
-            && !output.relative_path.0.is_empty()
-    }) {
-        for guards in output.meta.contract_guard_sets(value) {
-            if !guard_sets.contains(&guards) {
-                guard_sets.push(guards);
-            }
-        }
-    }
-    guard_sets
-}
-
-fn defaulted_scalar_summary_guard_sets(helper: &HelperSummary, value: &str) -> Vec<Vec<Guard>> {
-    let mut guard_sets = Vec::new();
-    for output in helper.output_uses.iter().filter(|output| {
-        output.is_scalar_summary_output() && output.source_expr == value && output.meta.defaulted
-    }) {
-        for guards in output.meta.contract_guard_sets(value) {
-            let stripped = guards
-                .into_iter()
-                .filter(|guard| !is_self_default_or_truthy_guard(guard, value))
-                .collect::<Vec<_>>();
-            if !guard_sets.contains(&stripped) {
-                guard_sets.push(stripped);
-            }
-        }
-    }
-    guard_sets
-}
-
-fn is_self_default_or_truthy_guard(guard: &Guard, value: &str) -> bool {
-    matches!(
-        guard,
-        Guard::Default { path } | Guard::Truthy { path } if path == value
-    )
 }
 
 fn append_fragment_output_contract_use(

@@ -17,14 +17,6 @@ pub(crate) struct HelperOutputMeta {
 }
 
 impl HelperOutputMeta {
-    pub(crate) fn with_predicates(predicates: &BTreeSet<Predicate>, defaulted: bool) -> Self {
-        Self {
-            defaulted,
-            ..Self::default()
-        }
-        .with_output_site_predicates(predicates)
-    }
-
     pub(crate) fn with_output_site_predicates(mut self, predicates: &BTreeSet<Predicate>) -> Self {
         if predicates.is_empty() {
             return self;
@@ -46,12 +38,8 @@ impl HelperOutputMeta {
         self
     }
 
-    pub(crate) fn merge(&mut self, other: Self) {
-        self.merge_ref(&other);
-    }
-
-    pub(crate) fn merge_ref(&mut self, other: &Self) {
-        self.merge_predicate_branches(other);
+    pub(crate) fn merge(&mut self, other: &Self) {
+        self.predicates.extend(other.predicates.iter().cloned());
         self.defaulted |= other.defaulted;
         merge_provenance_sites(&mut self.provenance, &other.provenance);
         self.suppress_predicate_paths
@@ -153,10 +141,6 @@ impl HelperOutputMeta {
         if self.predicates.is_empty() {
             self.predicates.insert(BTreeSet::new());
         }
-    }
-
-    fn merge_predicate_branches(&mut self, other: &Self) {
-        self.predicates.extend(other.predicates.iter().cloned());
     }
 
     pub(crate) fn contract_guard_sets(&self, source_expr: &str) -> Vec<Vec<Guard>> {
@@ -269,28 +253,21 @@ fn predicate_truthiness(predicate: &Predicate) -> Option<(&str, bool)> {
 
 /// The active output-site predicates that may apply to one nested row. A
 /// predicate about another nested source is dropped unless the paths are
-/// related (it describes a sibling's branch, not this row's), and a
-/// not-truthy predicate about the row's own defaulted source is dropped (the
-/// default admits that branch).
+/// related (it describes a sibling's branch, not this row's).
 fn nested_output_site_predicates(
     source_expr: &str,
-    meta: &HelperOutputMeta,
     active_output_predicates: &BTreeSet<Predicate>,
     sibling_sources: &BTreeSet<String>,
 ) -> BTreeSet<Predicate> {
     active_output_predicates
         .iter()
         .filter(|predicate| {
-            let Some((path, truthy)) = predicate_truthiness(predicate) else {
+            let Some((path, _)) = predicate_truthiness(predicate) else {
                 return true;
             };
-            if sibling_sources.contains(path)
-                && path != source_expr
-                && !values_paths_are_related(path, source_expr)
-            {
-                return false;
-            }
-            truthy || path != source_expr || !meta.defaulted
+            !sibling_sources.contains(path)
+                || path == source_expr
+                || values_paths_are_related(path, source_expr)
         })
         .cloned()
         .collect()
@@ -398,15 +375,21 @@ impl HelperFragmentOutputUse {
     }
 }
 
-pub(crate) fn relate_outputs_to_sources(
-    outputs: &mut [HelperFragmentOutputUse],
-    sources: &BTreeSet<String>,
+/// Merges the meta of every rendered row into a per-source meta map. The
+/// fragment-output assignment path and the symbolic walker's assignment-fact
+/// refresh both carry helper output meta on local bindings this way.
+pub(crate) fn merge_output_use_meta(
+    output_meta: &mut BTreeMap<String, HelperOutputMeta>,
+    outputs: &[HelperFragmentOutputUse],
 ) {
-    if sources.len() < 2 {
-        return;
-    }
-    for output in outputs.iter_mut().filter(|output| output.is_rendered()) {
-        output.meta.relate_sources(&sources);
+    for output in outputs {
+        if output.is_dependency() {
+            continue;
+        }
+        output_meta
+            .entry(output.source_expr.clone())
+            .or_default()
+            .merge(&output.meta);
     }
 }
 
@@ -453,10 +436,6 @@ impl HelperSummary {
         self.chart_defaults.extend(other.chart_defaults);
     }
 
-    /// Absorbs a nested helper call's site-independent hint facts: chart-level
-    /// default declarations and schema type hints. These describe the values
-    /// shape regardless of where the nested output lands, so direct output
-    /// sites and assignment sites absorb them alike.
     /// Absorbs a nested helper call's read facts: guard-path meta rows first,
     /// then the selected output rows as dependency rows. Each dependency row
     /// keeps the nested meta, gains the active output-site predicates that
@@ -484,7 +463,6 @@ impl HelperSummary {
             }
             let output_site_predicates = nested_output_site_predicates(
                 &output.source_expr,
-                &output.meta,
                 active_output_predicates,
                 &nested_site_sources,
             );
@@ -512,7 +490,7 @@ impl HelperSummary {
         if path.trim().is_empty() {
             return;
         }
-        self.guard_path_meta.entry(path).or_default().merge(meta);
+        self.guard_path_meta.entry(path).or_default().merge(&meta);
     }
 
     pub(crate) fn add_output_use(&mut self, output: HelperFragmentOutputUse) {
@@ -533,23 +511,12 @@ impl HelperSummary {
         {
             output.meta.require_sibling_guards();
         }
-        if self
-            .output_uses
-            .iter()
-            .any(|existing| sibling_required_output_covers(existing, &output))
-        {
-            return;
-        }
-        if output.meta.require_sibling_guards {
-            self.output_uses
-                .retain(|existing| !sibling_required_output_covers(&output, existing));
-        }
         if let Some(existing) = self
             .output_uses
             .iter_mut()
             .find(|existing| helper_output_use_identity_matches(existing, &output))
         {
-            existing.meta.merge(output.meta);
+            existing.meta.merge(&output.meta);
             return;
         }
         self.output_uses.push(output);
@@ -625,12 +592,6 @@ impl HelperSummary {
         }
     }
 
-    pub(crate) fn has_structured_fragment_source(&self, path: &str) -> bool {
-        self.output_uses
-            .iter()
-            .any(|output| output.is_structured_output() && output.source_expr == path)
-    }
-
     pub(crate) fn has_rendered_source_descendant(&self, path: &str) -> bool {
         self.output_uses.iter().any(|output| {
             output.is_rendered()
@@ -690,12 +651,6 @@ impl HelperSummary {
             .filter(|output| output.is_rendered())
             .cloned()
         {
-            if output.is_scalar_summary_output()
-                && (self.has_structured_fragment_source(&output.source_expr)
-                    || self.has_rendered_source_descendant(&output.source_expr))
-            {
-                continue;
-            }
             values.push(AbstractValue::for_output_path(
                 output.source_expr,
                 &output.relative_path,
@@ -738,22 +693,6 @@ fn helper_output_use_identity_matches(
             || (existing.relative_path == output.relative_path
                 && existing.kind == output.kind
                 && existing.encoded == output.encoded))
-}
-
-fn sibling_required_output_covers(
-    required: &HelperFragmentOutputUse,
-    candidate: &HelperFragmentOutputUse,
-) -> bool {
-    required.rendered
-        && candidate.rendered
-        && required.source_expr == candidate.source_expr
-        && required.relative_path == candidate.relative_path
-        && required.kind == candidate.kind
-        && required.encoded == candidate.encoded
-        && required.meta.require_sibling_guards
-        && !candidate.meta.require_sibling_guards
-        && required.meta.sibling_sources == candidate.meta.sibling_sources
-        && required.meta.provenance == candidate.meta.provenance
 }
 
 fn prune_pathless_sibling_predicates_for_meta(

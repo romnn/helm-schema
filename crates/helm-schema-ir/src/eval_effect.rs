@@ -44,7 +44,7 @@ impl Effects {
         self.local_source_paths.extend(other.local_source_paths);
         self.local_rendered_paths.extend(other.local_rendered_paths);
         for (path, meta) in other.local_output_meta {
-            self.local_output_meta.entry(path).or_default().merge(meta);
+            self.local_output_meta.entry(path).or_default().merge(&meta);
         }
         for (name, entries) in other.local_set_mutations {
             self.local_set_mutations
@@ -105,7 +105,7 @@ impl Effects {
             self.local_output_meta
                 .entry(path.clone())
                 .or_default()
-                .merge_ref(meta);
+                .merge(meta);
         }
     }
 

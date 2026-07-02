@@ -682,7 +682,7 @@ fn push_output_path(
     let local_root_row = relative_path == scope.root && scope.local_rendered_paths.contains(path);
     let mut meta = meta.cloned().unwrap_or_default();
     if let Some(path_meta) = scope.path_meta.get(path) {
-        meta.merge_ref(path_meta);
+        meta.merge(path_meta);
     }
     meta.defaulted |= if local_root_row {
         scope.local_defaulted_paths.contains(path)

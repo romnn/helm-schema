@@ -219,7 +219,7 @@ fn merge_output_meta(
     for (key, other_paths) in other {
         let base_paths = base.entry(key).or_default();
         for (path, meta) in other_paths {
-            base_paths.entry(path).or_default().merge(meta);
+            base_paths.entry(path).or_default().merge(&meta);
         }
     }
     base
