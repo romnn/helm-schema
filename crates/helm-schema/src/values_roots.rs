@@ -2,77 +2,55 @@ use std::collections::BTreeSet;
 
 use serde_yaml::Value as YamlValue;
 
-/// Return the explicit top-level keys present in the composed values.yaml.
-///
-/// These keys are structural evidence that the chart accepts the root value
-/// path, but they do not imply that any nested key should exist.
-pub(crate) fn top_level_value_paths(values_yaml: Option<&str>) -> BTreeSet<String> {
-    let mut paths = BTreeSet::new();
-    let Some(values_yaml) = values_yaml else {
-        return paths;
-    };
-    let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
-        return paths;
-    };
-    let YamlValue::Mapping(mapping) = doc else {
-        return paths;
-    };
-
-    for (key, _) in mapping {
-        let Some(key) = key.as_str() else {
-            continue;
-        };
-        let key = key.trim();
-        if !key.is_empty() {
-            paths.insert(key.to_string());
-        }
-    }
-
-    paths
+/// Structural evidence extracted from the composed values.yaml in one parse.
+#[derive(Debug, Default)]
+pub(crate) struct ValuesRoots {
+    /// The explicit top-level keys present in the composed values.yaml.
+    ///
+    /// These keys are structural evidence that the chart accepts the root
+    /// value path, but they do not imply that any nested key should exist.
+    pub(crate) top_level_paths: BTreeSet<String>,
+    /// The subset of top-level keys whose default value is a mapping.
+    pub(crate) top_level_mapping_paths: BTreeSet<String>,
+    /// Every explicit mapping-backed values path present in the composed
+    /// values.yaml.
+    ///
+    /// This includes nested object keys such as `controller.kind` and
+    /// `controller.admissionWebhooks.enabled`, which are structural evidence
+    /// that the chart already ships a default at that path and therefore must
+    /// not infer it as user-required later.
+    pub(crate) explicit_paths: BTreeSet<String>,
 }
 
-pub(crate) fn top_level_mapping_value_paths(values_yaml: Option<&str>) -> BTreeSet<String> {
-    let mut paths = BTreeSet::new();
-    let Some(values_yaml) = values_yaml else {
-        return paths;
-    };
-    let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
-        return paths;
-    };
-    let YamlValue::Mapping(mapping) = doc else {
-        return paths;
-    };
-
-    for (key, value) in mapping {
-        let Some(key) = key.as_str() else {
-            continue;
+impl ValuesRoots {
+    pub(crate) fn from_values_yaml(values_yaml: Option<&str>) -> Self {
+        let mut roots = Self::default();
+        let Some(values_yaml) = values_yaml else {
+            return roots;
         };
-        let key = key.trim();
-        if !key.is_empty() && matches!(value, YamlValue::Mapping(_)) {
-            paths.insert(key.to_string());
+        let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
+            return roots;
+        };
+
+        if let YamlValue::Mapping(mapping) = &doc {
+            for (key, value) in mapping {
+                let Some(key) = key.as_str() else {
+                    continue;
+                };
+                let key = key.trim();
+                if key.is_empty() {
+                    continue;
+                }
+                roots.top_level_paths.insert(key.to_string());
+                if matches!(value, YamlValue::Mapping(_)) {
+                    roots.top_level_mapping_paths.insert(key.to_string());
+                }
+            }
         }
+
+        collect_explicit_paths(&doc, &mut Vec::new(), &mut roots.explicit_paths);
+        roots
     }
-
-    paths
-}
-
-/// Return every explicit mapping-backed values path present in the composed
-/// values.yaml.
-///
-/// This includes nested object keys such as `controller.kind` and
-/// `controller.admissionWebhooks.enabled`, which are structural evidence that
-/// the chart already ships a default at that path and therefore must not infer
-/// it as user-required later.
-pub(crate) fn explicit_value_paths(values_yaml: Option<&str>) -> BTreeSet<String> {
-    let mut paths = BTreeSet::new();
-    let Some(values_yaml) = values_yaml else {
-        return paths;
-    };
-    let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
-        return paths;
-    };
-    collect_explicit_paths(&doc, &mut Vec::new(), &mut paths);
-    paths
 }
 
 fn collect_explicit_paths(

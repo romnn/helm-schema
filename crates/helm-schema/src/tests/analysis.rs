@@ -50,14 +50,13 @@ spec:
 "#,
     )?;
 
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let path = "kid.controller.ingressClassResource.parameters";
 
@@ -81,14 +80,13 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
         .join("signoz-signoz");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let path = "clickhouse.zookeeper.nameOverride";
 
@@ -111,14 +109,13 @@ fn signoz_clickhouse_operator_image_helper_type_hints_flow_into_contract_schema_
         .join("signoz-signoz");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let path = "clickhouse.clickhouseOperator.image.repository";
 
@@ -141,14 +138,13 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_ey
         .join("signoz-signoz");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "signoz.smtpVars.existingSecret.name";
@@ -202,14 +198,13 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
         .join("signoz-signoz");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "clickhouse.clickhouseOperator.serviceAccount.name";
@@ -288,14 +283,13 @@ fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
         .join("signoz-signoz");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "signoz.serviceAccount.name";
@@ -342,15 +336,14 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
         .join("signoz-signoz");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
-    let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let values_yaml = chart::build_composed_values_yaml(&charts, true)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
-        &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
+        &crate::values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref()),
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "signoz-otel-gateway.serviceAccount.name";
@@ -393,15 +386,14 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
         .join("signoz-signoz");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
-    let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let values_yaml = chart::build_composed_values_yaml(&charts, true)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
-        &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
+        &crate::values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref()),
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "clickhouse.securityContext";
@@ -493,14 +485,13 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
         "#},
     )?;
 
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let projection = collection.contract.clone().finalize();
     let name_override_uses = projection
@@ -532,14 +523,13 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
         .join("cert-manager");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let path = "fullnameOverride";
     let projection = collection.contract.clone().finalize();
@@ -571,15 +561,14 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment()
         .join("cert-manager");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
-    let values_yaml = chart::build_composed_values_yaml(&discovery.charts, true)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let values_yaml = chart::build_composed_values_yaml(&charts, true)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(values_yaml.as_deref()),
-        &crate::values_roots::top_level_mapping_value_paths(values_yaml.as_deref()),
+        &crate::values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref()),
     )?;
     let path = "webhook";
     let signals = contract_schema_signals!(collection);
@@ -677,14 +666,13 @@ data:
 "#,
     )?;
 
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let projection = collection.contract.finalize();
     let uses = projection
@@ -801,14 +789,13 @@ spec:
 "#,
     )?;
 
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef {
@@ -880,14 +867,13 @@ spec:
 "#,
     )?;
 
-    let discovery = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&discovery.charts, false)?;
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
     let collection = analyze_charts(
-        &discovery.charts,
+        &charts,
         &defines,
         false,
-        &crate::values_roots::top_level_value_paths(None),
-        &crate::values_roots::top_level_mapping_value_paths(None),
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef {

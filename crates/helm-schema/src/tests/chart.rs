@@ -39,9 +39,8 @@ dependencies:
         "apiVersion: v2\nname: leaf\nversion: 0.1.0\n",
     )?;
 
-    let discovery = discover_chart_contexts(&chart_dir)?;
-    let child = discovery
-        .charts
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let child = charts
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string()])
         .ok_or_else(|| color_eyre::eyre::eyre!("discover child chart"))?;
@@ -54,8 +53,7 @@ dependencies:
         want: vec!["tags.observability".to_string()]
     );
 
-    let leaf = discovery
-        .charts
+    let leaf = charts
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string(), "leaf".to_string()])
         .ok_or_else(|| color_eyre::eyre::eyre!("discover nested leaf chart"))?;

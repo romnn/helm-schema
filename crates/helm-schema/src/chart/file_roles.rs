@@ -32,6 +32,19 @@ impl ChartFile {
 
 type ChartFileMap = BTreeMap<String, ChartFile>;
 
+/// List the chart files that play `role`, in stable path order.
+pub(crate) fn files_with_role(
+    chart_dir: &VfsPath,
+    include_tests: bool,
+    role: FileRole,
+) -> CliResult<Vec<VfsPath>> {
+    Ok(list_chart_files(chart_dir, include_tests)?
+        .into_iter()
+        .filter(|file| file.has_role(role))
+        .map(|file| file.path)
+        .collect())
+}
+
 #[tracing::instrument(skip_all)]
 pub(crate) fn list_chart_files(
     chart_dir: &VfsPath,
@@ -69,7 +82,7 @@ fn collect_template_roles(
     }
 
     let mut paths = Vec::new();
-    list_templates_recursive(&templates_dir, include_tests, &mut paths)?;
+    list_files_recursive(&templates_dir, include_tests, &mut paths)?;
 
     for path in paths {
         if is_define_index_template(&path) {
@@ -96,7 +109,7 @@ fn collect_directory_roles(
     }
 
     let mut paths = Vec::new();
-    list_files_recursive(&dir, &mut paths)?;
+    list_files_recursive(&dir, true, &mut paths)?;
 
     for path in paths.into_iter().filter(accept) {
         insert_role(files, path, role);
@@ -151,19 +164,7 @@ fn extension_is_one_of(path: &VfsPath, extensions: &[&str]) -> bool {
     })
 }
 
-fn list_files_recursive(dir: &VfsPath, out: &mut Vec<VfsPath>) -> CliResult<()> {
-    for ent in dir.read_dir()? {
-        if ent.is_dir()? {
-            list_files_recursive(&ent, out)?;
-        } else if ent.is_file()? {
-            out.push(ent);
-        }
-    }
-
-    Ok(())
-}
-
-fn list_templates_recursive(
+fn list_files_recursive(
     dir: &VfsPath,
     include_tests: bool,
     out: &mut Vec<VfsPath>,
@@ -180,7 +181,7 @@ fn list_templates_recursive(
                 }
             }
 
-            list_templates_recursive(&ent, include_tests, out)?;
+            list_files_recursive(&ent, include_tests, out)?;
         } else if ent.is_file()? {
             out.push(ent);
         }

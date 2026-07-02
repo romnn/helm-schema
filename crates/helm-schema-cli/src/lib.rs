@@ -25,17 +25,7 @@ pub use helm_schema::{CliError, flatten, schema_override};
 pub fn run(cli: Cli) -> CliResult<()> {
     let trace_output = cli.perf.trace_output.clone();
     if let Some(trace_output) = trace_output {
-        if let Some(parent) = trace_output.parent() {
-            std::fs::create_dir_all(parent).map_err(|err| CliError::CreateOutputDir {
-                path: parent.to_path_buf(),
-                source: err,
-            })?;
-        }
-        let trace_file =
-            std::fs::File::create(&trace_output).map_err(|err| CliError::WriteOutput {
-                path: trace_output.clone(),
-                source: err,
-            })?;
+        let trace_file = create_output_file(&trace_output)?;
         let perfetto_layer =
             tracing_perfetto::PerfettoLayer::new(std::sync::Mutex::new(trace_file))
                 .with_debug_annotations(true)
@@ -110,17 +100,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     let json_format = cli.output.json_format();
 
     if let Some(path) = cli.output.output {
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).map_err(|e| CliError::CreateOutputDir {
-                path: parent.to_path_buf(),
-                source: e,
-            })?;
-        }
-        let file = std::fs::File::create(&path).map_err(|err| CliError::WriteOutput {
-            path: path.clone(),
-            source: err,
-        })?;
-        let mut out = BufWriter::new(file);
+        let mut out = BufWriter::new(create_output_file(&path)?);
         write_schema_json(&mut out, &schema, json_format)
             .map_err(|err| write_output_error_with_path(err, &path))?;
         out.flush().map_err(|err| CliError::WriteOutput {
@@ -135,6 +115,19 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     }
 
     Ok(())
+}
+
+fn create_output_file(path: &Path) -> CliResult<std::fs::File> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|err| CliError::CreateOutputDir {
+            path: parent.to_path_buf(),
+            source: err,
+        })?;
+    }
+    std::fs::File::create(path).map_err(|err| CliError::WriteOutput {
+        path: path.to_path_buf(),
+        source: err,
+    })
 }
 
 fn write_output_error_with_path(err: CliError, path: &Path) -> CliError {

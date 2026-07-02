@@ -14,7 +14,7 @@ fn yaml_pointer<'a>(doc: &'a serde_yaml::Value, path: &[&str]) -> Option<&'a ser
 }
 
 fn discover(chart_dir: &VfsPath) -> color_eyre::eyre::Result<Vec<ChartContext>> {
-    Ok(discover_chart_contexts(chart_dir)?.charts)
+    Ok(discover_chart_contexts(chart_dir)?)
 }
 
 #[test]

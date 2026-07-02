@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use helm_schema_ast::extract_values_yaml_descriptions;
@@ -20,9 +19,7 @@ pub fn build_composed_values_yaml(
 
     let root_values_path = root.chart_dir.join("values.yaml")?;
     let mut doc = if root_values_path.is_file()? {
-        let mut bytes = Vec::new();
-        root_values_path.open_file()?.read_to_end(&mut bytes)?;
-        serde_yaml::from_slice::<YamlValue>(&bytes)?
+        serde_yaml::from_str::<YamlValue>(&root_values_path.read_to_string()?)?
     } else {
         YamlValue::Mapping(serde_yaml::Mapping::default())
     };
@@ -86,9 +83,7 @@ fn compose_subchart_values(charts: &[ChartContext], doc: &mut YamlValue) -> CliR
             continue;
         }
 
-        let mut bytes = Vec::new();
-        path.open_file()?.read_to_end(&mut bytes)?;
-        let mut sub_doc: YamlValue = serde_yaml::from_slice(&bytes)?;
+        let mut sub_doc: YamlValue = serde_yaml::from_str(&path.read_to_string()?)?;
 
         if let Some(global_doc) = take_global_key(&mut sub_doc) {
             merge_global_values(doc, global_doc);
@@ -140,13 +135,7 @@ fn merge_global_values(root: &mut YamlValue, global_doc: YamlValue) {
         return;
     };
 
-    for (key, value) in sub_mapping {
-        if let Some(existing) = mapping.get(&key).cloned() {
-            mapping.insert(key, merge_yaml_existing_prefers_left(existing, value));
-        } else {
-            mapping.insert(key, value);
-        }
-    }
+    merge_mapping_existing_prefers_left(mapping, sub_mapping);
 }
 
 fn add_values_file_descriptions(
@@ -159,9 +148,7 @@ fn add_values_file_descriptions(
         return Ok(());
     }
 
-    let mut source = String::new();
-    values_path.open_file()?.read_to_string(&mut source)?;
-    let descriptions = extract_values_yaml_descriptions(&source)?;
+    let descriptions = extract_values_yaml_descriptions(&values_path.read_to_string()?)?;
 
     for (path, description) in descriptions {
         let scoped_path = scope_values_path(&path, prefix);
@@ -191,13 +178,7 @@ fn merge_values_at_prefix(root: &mut YamlValue, prefix: &[String], sub: YamlValu
     if let YamlValue::Mapping(mapping) = target
         && let YamlValue::Mapping(sub_mapping) = sub
     {
-        for (key, value) in sub_mapping {
-            if let Some(existing) = mapping.get(&key).cloned() {
-                mapping.insert(key, merge_yaml_existing_prefers_left(existing, value));
-            } else {
-                mapping.insert(key, value);
-            }
-        }
+        merge_mapping_existing_prefers_left(mapping, sub_mapping);
     }
 }
 
@@ -225,16 +206,23 @@ fn ensure_mapping_path<'a>(root: &'a mut YamlValue, path: &[String]) -> &'a mut 
 fn merge_yaml_existing_prefers_left(left: YamlValue, right: YamlValue) -> YamlValue {
     match (left, right) {
         (YamlValue::Mapping(mut left), YamlValue::Mapping(right)) => {
-            for (key, right_value) in right {
-                if let Some(existing) = left.get(&key).cloned() {
-                    left.insert(key, merge_yaml_existing_prefers_left(existing, right_value));
-                } else {
-                    left.insert(key, right_value);
-                }
-            }
+            merge_mapping_existing_prefers_left(&mut left, right);
             YamlValue::Mapping(left)
         }
         (left, _) => left,
+    }
+}
+
+fn merge_mapping_existing_prefers_left(
+    target: &mut serde_yaml::Mapping,
+    incoming: serde_yaml::Mapping,
+) {
+    for (key, value) in incoming {
+        if let Some(existing) = target.get(&key).cloned() {
+            target.insert(key, merge_yaml_existing_prefers_left(existing, value));
+        } else {
+            target.insert(key, value);
+        }
     }
 }
 

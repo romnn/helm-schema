@@ -57,27 +57,17 @@ pub(crate) struct PreparedSession {
 
 impl PreparedSession {
     pub(crate) fn from_generate_options(opts: &GenerateOptions) -> CliResult<Self> {
-        let discovery = chart::discover_chart_contexts(&opts.chart_dir)?;
-        let charts = &discovery.charts;
+        let charts = &chart::discover_chart_contexts(&opts.chart_dir)?;
 
         let defines = chart::build_define_index(charts, opts.include_tests)?;
         let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
-        let top_level_value_paths = values_roots::top_level_value_paths(values_yaml.as_deref());
-        let top_level_mapping_value_paths =
-            values_roots::top_level_mapping_value_paths(values_yaml.as_deref());
-        let explicit_value_paths = values_roots::explicit_value_paths(values_yaml.as_deref());
+        let values_roots = values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref());
         let values_descriptions = chart::build_composed_values_descriptions(
             charts,
             opts.include_subchart_values,
             &opts.values_files,
         )?;
-        let chart_analysis = analyze_charts(
-            charts,
-            &defines,
-            opts.include_tests,
-            &top_level_value_paths,
-            &top_level_mapping_value_paths,
-        )?;
+        let chart_analysis = analyze_charts(charts, &defines, opts.include_tests, &values_roots)?;
 
         Ok(Self {
             analysis: Analysis {
@@ -85,7 +75,7 @@ impl PreparedSession {
                 local_schemas: chart_analysis.local_schema_universe,
             },
             values_yaml,
-            explicit_value_paths,
+            explicit_value_paths: values_roots.explicit_paths,
             values_descriptions,
             subchart_value_prefixes: charts
                 .iter()
@@ -93,10 +83,6 @@ impl PreparedSession {
                 .map(|chart| chart.values_prefix.clone())
                 .collect(),
         })
-    }
-
-    pub(crate) fn analysis(&self) -> Analysis {
-        self.analysis.clone()
     }
 }
 
@@ -159,12 +145,7 @@ impl AnalysisSession {
 
     /// Return the memoized chart analysis artifact.
     pub fn analysis(&self) -> CliResult<Analysis> {
-        Ok(self.prepared()?.analysis())
-    }
-
-    /// Return the guarded contract graph for the chart tree.
-    pub fn contract(&self) -> CliResult<ContractIr> {
-        Ok(self.prepared()?.analysis.contract.clone())
+        Ok(self.prepared()?.analysis.clone())
     }
 
     /// Return typed schema-lowering evidence derived from the guarded contract.
@@ -175,11 +156,6 @@ impl AnalysisSession {
     /// Return the stable versioned contract export document.
     pub fn contract_document(&self) -> CliResult<ContractDocument> {
         Ok(self.finalized_contract()?.document())
-    }
-
-    #[must_use]
-    pub fn diagnostics(&self) -> DiagnosticSink {
-        self.diagnostics.clone()
     }
 
     /// Return the provider-resolved contract schema prior to optional

@@ -13,8 +13,3 @@ pub struct ChartDependencyActivation {
     pub condition_paths: Vec<String>,
     pub tag_paths: Vec<String>,
 }
-
-#[derive(Debug)]
-pub struct ChartDiscovery {
-    pub charts: Vec<ChartContext>,
-}

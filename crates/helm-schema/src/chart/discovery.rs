@@ -1,5 +1,4 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::io::Read;
 use std::path::{Component, Path};
 
 use flate2::read::GzDecoder;
@@ -8,7 +7,7 @@ use tracing::instrument;
 use vfs::VfsPath;
 
 use super::paths::scope_values_path;
-use super::types::{ChartContext, ChartDependencyActivation, ChartDiscovery};
+use super::types::{ChartContext, ChartDependencyActivation};
 use crate::error::{CliError, CliResult};
 use crate::load_budget::{LoadBudget, read_to_end_capped};
 
@@ -37,7 +36,7 @@ struct DependencyMetadata {
 }
 
 #[instrument(skip_all)]
-pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<ChartDiscovery> {
+pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<Vec<ChartContext>> {
     discover_chart_contexts_with_budget(root_chart_dir, LoadBudget::default())
 }
 
@@ -45,7 +44,7 @@ pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<ChartDisco
 pub(crate) fn discover_chart_contexts_with_budget(
     root_chart_dir: &VfsPath,
     load_budget: LoadBudget,
-) -> CliResult<ChartDiscovery> {
+) -> CliResult<Vec<ChartContext>> {
     let mut out = Vec::new();
     discover_chart_contexts_inner(
         root_chart_dir,
@@ -54,7 +53,7 @@ pub(crate) fn discover_chart_contexts_with_budget(
         load_budget,
         &mut out,
     )?;
-    Ok(ChartDiscovery { charts: out })
+    Ok(out)
 }
 
 fn discover_chart_contexts_inner(
@@ -341,8 +340,5 @@ fn read_chart_yaml(chart_dir: &VfsPath) -> CliResult<ChartYaml> {
         chart_yaml
     };
 
-    let mut bytes = Vec::new();
-    path.open_file()?.read_to_end(&mut bytes)?;
-
-    Ok(serde_yaml::from_slice(&bytes)?)
+    Ok(serde_yaml::from_str(&path.read_to_string()?)?)
 }

@@ -74,8 +74,9 @@ fn prepare_override_schema(
     override_path: &Path,
     options: &PolicyInputOptions,
 ) -> CliResult<Value> {
+    let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
+
     if options.reference_mode.bundles_refs() {
-        let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
         return flatten::bundle_refs(
             schema,
             override_base,
@@ -88,7 +89,6 @@ fn prepare_override_schema(
         return Ok(schema);
     }
 
-    let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
     flatten::flatten_refs(
         schema,
         override_base,

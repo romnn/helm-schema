@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use helm_schema_ast::DefineIndex;
 use tracing::instrument;
 use vfs::VfsPath;
@@ -20,7 +18,10 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
             .filter(|file| file.has_role(FileRole::DefineIndexTemplate))
             .map(|file| &file.path)
         {
-            add_template_source(&mut index, chart, path)?;
+            index.add_file_source(
+                &define_source_logical_path(chart, path),
+                &path.read_to_string()?,
+            );
         }
 
         for path in chart_files
@@ -28,33 +29,14 @@ pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliRe
             .filter(|file| file.has_role(FileRole::FilesGetSource))
             .map(|file| &file.path)
         {
-            add_files_get_source(&mut index, &chart.chart_dir, path)?;
+            index.add_file_source(
+                &files_get_relative_path(&chart.chart_dir, path),
+                &path.read_to_string()?,
+            );
         }
     }
 
     Ok(index)
-}
-
-fn add_template_source(
-    index: &mut DefineIndex,
-    chart: &ChartContext,
-    path: &VfsPath,
-) -> CliResult<()> {
-    let mut source = String::new();
-    path.open_file()?.read_to_string(&mut source)?;
-    index.add_file_source(&define_source_logical_path(chart, path), &source);
-    Ok(())
-}
-
-fn add_files_get_source(
-    index: &mut DefineIndex,
-    chart_dir: &VfsPath,
-    path: &VfsPath,
-) -> CliResult<()> {
-    let mut source = String::new();
-    path.open_file()?.read_to_string(&mut source)?;
-    index.add_file_source(&files_get_relative_path(chart_dir, path), &source);
-    Ok(())
 }
 
 fn chart_relative_path(chart_dir: &VfsPath, path: &VfsPath) -> String {

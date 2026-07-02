@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use helm_schema_ast::{DefineIndex, contains_template_action};
 use helm_schema_ir::{ContractIr, Guard, SymbolicIrContext};
 use helm_schema_k8s::LocalResourceSchema;
@@ -20,7 +18,11 @@ pub(crate) fn collect_manifest_contract_for_chart(
     let mut local_resource_schemas = Vec::new();
     let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation);
 
-    let manifests = chart::list_manifest_templates(&chart.chart_dir, include_tests)?;
+    let manifests = chart::files_with_role(
+        &chart.chart_dir,
+        include_tests,
+        chart::FileRole::ManifestTemplate,
+    )?;
     for path in manifests {
         let TemplateManifestAnalysis {
             contract: mut manifest_contract,
@@ -56,8 +58,7 @@ fn collect_manifest_contract_for_template(
     defines: &DefineIndex,
     symbolic_context: &SymbolicIrContext,
 ) -> CliResult<TemplateManifestAnalysis> {
-    let mut source = String::new();
-    path.open_file()?.read_to_string(&mut source)?;
+    let source = path.read_to_string()?;
     let contract =
         symbolic_context.generate_contract_ir_for_source(&source, path.as_str(), defines);
     let local_resource_schemas = local_resource_schemas_from_template_source(

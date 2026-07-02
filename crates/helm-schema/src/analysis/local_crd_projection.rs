@@ -1,11 +1,39 @@
 use helm_schema_ast::{ParseError, parse_helm_template};
-use helm_schema_k8s::{LocalResourceSchema, resource_schemas_from_crd_document_with_source};
+use helm_schema_k8s::{
+    LocalResourceSchema, LocalSchemaUniverse, resource_schemas_from_crd_document_with_source,
+};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+use crate::chart::{self, ChartContext, FileRole};
 use crate::error::CliResult;
 
 const TEMPLATE_CRD_SOURCE_ID: &str = "chart-template-crd";
+const STATIC_CRD_SOURCE_ID: &str = "chart-static-crd";
+
+/// Collect chart-local resource schemas from static CRD documents under
+/// each chart's `crds/` directory.
+#[tracing::instrument(skip_all)]
+pub(crate) fn collect_static_crd_universe(
+    charts: &[ChartContext],
+) -> CliResult<LocalSchemaUniverse> {
+    let mut universe = LocalSchemaUniverse::default();
+
+    for chart in charts {
+        for path in chart::files_with_role(&chart.chart_dir, false, FileRole::StaticCrd)? {
+            let source = path.read_to_string()?;
+            for resource_schema in resource_schemas_from_literal_documents(
+                &source,
+                STATIC_CRD_SOURCE_ID,
+                path.as_str(),
+            )? {
+                universe.insert_resource_schema(resource_schema);
+            }
+        }
+    }
+
+    Ok(universe)
+}
 
 pub(crate) fn local_resource_schemas_from_template_source(
     source: &str,
@@ -13,7 +41,7 @@ pub(crate) fn local_resource_schemas_from_template_source(
     contains_template_action: bool,
 ) -> CliResult<Vec<LocalResourceSchema>> {
     if !contains_template_action {
-        return local_resource_schemas_from_literal_template(source, filename);
+        return resource_schemas_from_literal_documents(source, TEMPLATE_CRD_SOURCE_ID, filename);
     }
 
     let tree = parse_helm_template(source).ok_or(ParseError::TreeSitterParseFailed)?;
@@ -24,8 +52,9 @@ pub(crate) fn local_resource_schemas_from_template_source(
     ))
 }
 
-fn local_resource_schemas_from_literal_template(
+fn resource_schemas_from_literal_documents(
     source: &str,
+    source_id: &str,
     filename: &str,
 ) -> CliResult<Vec<LocalResourceSchema>> {
     let mut resource_schemas = Vec::new();
@@ -36,7 +65,7 @@ fn local_resource_schemas_from_literal_template(
         }
         resource_schemas.extend(resource_schemas_from_crd_document_with_source(
             document,
-            TEMPLATE_CRD_SOURCE_ID,
+            source_id,
             filename.to_string(),
         ));
     }

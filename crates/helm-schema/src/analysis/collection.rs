@@ -4,10 +4,12 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractIr, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
 
+use super::local_crd_projection::collect_static_crd_universe;
 use super::manifest_contract::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
 use super::values_seed::seed_top_level_values_yaml_keys;
 use crate::chart;
 use crate::error::CliResult;
+use crate::values_roots::ValuesRoots;
 
 /// Contract and auxiliary signals collected from a chart tree.
 pub(crate) struct ChartAnalysis {
@@ -20,11 +22,10 @@ pub(crate) fn analyze_charts(
     charts: &[chart::ChartContext],
     defines: &DefineIndex,
     include_tests: bool,
-    top_level_value_paths: &BTreeSet<String>,
-    top_level_mapping_value_paths: &BTreeSet<String>,
+    values_roots: &ValuesRoots,
 ) -> CliResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
-    let mut local_schema_universe = chart::collect_static_crd_universe(charts)?;
+    let mut local_schema_universe = collect_static_crd_universe(charts)?;
     let symbolic_context = SymbolicIrContext::new(defines);
 
     for chart in charts {
@@ -59,12 +60,7 @@ pub(crate) fn analyze_charts(
         .iter()
         .filter_map(|chart| chart.values_prefix.first().cloned())
         .collect::<BTreeSet<_>>();
-    seed_top_level_values_yaml_keys(
-        &mut contract,
-        top_level_value_paths,
-        top_level_mapping_value_paths,
-        &dependency_root_paths,
-    );
+    seed_top_level_values_yaml_keys(&mut contract, values_roots, &dependency_root_paths);
 
     Ok(ChartAnalysis {
         contract,
