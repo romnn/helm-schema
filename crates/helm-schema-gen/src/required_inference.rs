@@ -79,7 +79,7 @@ impl RequiredInferencePolicy {
 /// inferred shape may not include every path that drives required-
 /// inference (e.g. when the path is referenced only via a guard).
 fn add_path_to_required(schema: &mut Value, vp: &str) {
-    let parts: Vec<&str> = vp.split('.').filter(|s| !s.is_empty()).collect();
+    let parts = crate::split_value_path(vp);
     let Some((leaf, parents)) = parts.split_last() else {
         return;
     };
@@ -93,7 +93,7 @@ fn add_path_to_required(schema: &mut Value, vp: &str) {
 /// `None` if any intermediate level is missing or isn't an object.
 fn navigate_to_object_property<'a>(
     schema: &'a mut Value,
-    segments: &[&str],
+    segments: &[String],
 ) -> Option<&'a mut Value> {
     let mut node = schema;
     for seg in segments {
@@ -101,7 +101,7 @@ fn navigate_to_object_property<'a>(
             .as_object_mut()?
             .get_mut("properties")?
             .as_object_mut()?
-            .get_mut(*seg)?;
+            .get_mut(seg.as_str())?;
     }
     Some(node)
 }

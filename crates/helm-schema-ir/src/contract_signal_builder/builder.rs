@@ -139,16 +139,6 @@ fn record_contract_use(
         .collect::<Vec<_>>();
     let has_source = !contract_use.source_expr.trim().is_empty();
     let path_is_empty = contract_use.path.0.is_empty();
-    let self_range_guarded = predicates.iter().any(|predicate| {
-        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == &contract_use.source_expr)
-    });
-    let has_matching_self_guard = predicates
-        .iter()
-        .any(|predicate| predicate_is_self_guarding(predicate, &contract_use.source_expr));
-    let pathless_self_default_guarded = path_is_empty
-        && predicates.iter().any(|predicate| {
-            matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
-        });
     let range_guard_paths = predicates
         .iter()
         .filter_map(|predicate| match predicate {
@@ -156,6 +146,14 @@ fn record_contract_use(
             _ => None,
         })
         .collect::<BTreeSet<_>>();
+    let self_range_guarded = range_guard_paths.contains(contract_use.source_expr.as_str());
+    let has_matching_self_guard = predicates
+        .iter()
+        .any(|predicate| predicate_is_self_guarding(predicate, &contract_use.source_expr));
+    let pathless_self_default_guarded = path_is_empty
+        && predicates.iter().any(|predicate| {
+            matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
+        });
 
     if has_source {
         let mut facts = ContractValuePathFacts {
@@ -182,7 +180,6 @@ fn record_contract_use(
             });
         let metadata_field_kind = metadata_field_kind_from_yaml_path(&contract_use.path.0);
         let acc = path_accumulator(paths, &contract_use.source_expr);
-        acc.referenced = true;
         acc.requiredness.is_positive_header |= positive_header;
         acc.facts.record_metadata_field_kind(metadata_field_kind);
         acc.record_source_use(
@@ -258,23 +255,10 @@ fn finish_schema_signals(
         path_accumulator(&mut paths, path);
     }
 
-    let value_path_facts = paths
-        .iter()
-        .map(|(path, acc)| {
-            (
-                path.clone(),
-                acc.facts(paths_with_referenced_descendants.contains(path)),
-            )
-        })
-        .collect::<BTreeMap<_, _>>();
-
     let schema_evidence_by_value_path = paths
         .into_iter()
         .map(|(value_path, acc)| {
-            let facts = value_path_facts
-                .get(&value_path)
-                .copied()
-                .unwrap_or_default();
+            let facts = acc.facts(paths_with_referenced_descendants.contains(&value_path));
             let evidence = acc.into_schema_evidence(value_path.clone(), facts);
             (value_path, evidence)
         })
@@ -340,7 +324,6 @@ impl ContractPathAccumulator {
             conditional_overlay_branches,
             has_unconditional_overlay_peer,
             saw_unsupported_overlay,
-            ..
         } = self;
         let conditional_overlays = conditional_overlays(
             conditional_overlay_branches,

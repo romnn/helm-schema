@@ -139,6 +139,8 @@ impl ContractPathSchemaEvidence {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractSchemaSignals {
     schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
+    referenced_value_paths: BTreeSet<String>,
+    pruned_parent_value_paths: BTreeSet<String>,
 }
 
 impl ContractSchemaSignals {
@@ -146,14 +148,41 @@ impl ContractSchemaSignals {
     pub fn new(
         schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
     ) -> Self {
+        let referenced_value_paths = schema_evidence_by_value_path
+            .iter()
+            .filter(|(_, evidence)| evidence.is_referenced_value_path)
+            .map(|(path, _)| path.clone())
+            .collect();
+        let pruned_parent_value_paths = schema_evidence_by_value_path
+            .iter()
+            .filter(|(_, evidence)| {
+                evidence.facts.has_referenced_descendants && !evidence.facts.used_as_fragment
+            })
+            .map(|(path, _)| path.clone())
+            .collect();
         Self {
             schema_evidence_by_value_path,
+            referenced_value_paths,
+            pruned_parent_value_paths,
         }
     }
 
     #[must_use]
     pub fn schema_evidence_by_value_path(&self) -> &BTreeMap<String, ContractPathSchemaEvidence> {
         &self.schema_evidence_by_value_path
+    }
+
+    /// Values paths the contract directly referenced, in stable order.
+    #[must_use]
+    pub fn referenced_value_paths(&self) -> &BTreeSet<String> {
+        &self.referenced_value_paths
+    }
+
+    /// Non-fragment parent paths whose referenced descendants own their own
+    /// schema evidence, so parent-level defaults must not restate them.
+    #[must_use]
+    pub fn pruned_parent_value_paths(&self) -> &BTreeSet<String> {
+        &self.pruned_parent_value_paths
     }
 
     #[must_use]

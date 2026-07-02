@@ -198,12 +198,7 @@ impl DescriptionPathIndex {
         let paths = descriptions
             .iter()
             .filter(|(_, description)| !description.trim().is_empty())
-            .map(|(path, _)| {
-                path.split('.')
-                    .filter(|segment| !segment.is_empty())
-                    .map(std::string::ToString::to_string)
-                    .collect()
-            })
+            .map(|(path, _)| crate::split_value_path(path))
             .collect();
         Self { paths }
     }

@@ -282,11 +282,7 @@ pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMa
         if description.trim().is_empty() {
             continue;
         }
-        let path_segments: Vec<String> = path
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .map(std::string::ToString::to_string)
-            .collect();
+        let path_segments = crate::split_value_path(path);
         visit_schema_values_at_path_mut(root, &path_segments, &mut |node| {
             set_schema_description(node, description);
         });

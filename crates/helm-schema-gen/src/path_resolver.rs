@@ -11,9 +11,7 @@ use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, is_empty_schema, type_schema};
-use crate::values_yaml::{
-    ValuePathCaches, ValuesYamlPathFacts, ValuesYamlPathInfo, build_value_path_caches,
-};
+use crate::values_yaml::{ValuesYamlPathFacts, ValuesYamlPathInfo, build_values_yaml_path_info};
 
 pub(crate) struct ResolvedPathSchema {
     pub(crate) value_path: String,
@@ -35,8 +33,8 @@ struct ProviderSchemaLookupKey {
 
 pub(crate) struct PathSchemaResolver<'a> {
     schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
-    referenced_value_paths: BTreeSet<String>,
-    path_caches: ValuePathCaches,
+    referenced_value_paths: &'a BTreeSet<String>,
+    values_yaml_info: BTreeMap<String, ValuesYamlPathInfo>,
     resolve_policy: ResolvePolicy,
     provider: &'a dyn ResourceSchemaOracle,
     provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<ProviderSchemaCandidate>>>,
@@ -48,27 +46,19 @@ impl<'a> PathSchemaResolver<'a> {
         values_yaml_doc: &YamlValue,
         provider: &'a dyn ResourceSchemaOracle,
     ) -> Self {
-        let schema_evidence_by_value_path = contract_signals.schema_evidence_by_value_path();
-        let referenced_value_paths = schema_evidence_by_value_path
-            .iter()
-            .filter(|(_, evidence)| evidence.is_referenced_value_path)
-            .map(|(path, _)| path.clone())
-            .collect();
-        let pruned_parent_value_paths = schema_evidence_by_value_path
-            .iter()
-            .filter_map(|(path, evidence)| {
-                (evidence.facts.has_referenced_descendants && !evidence.facts.used_as_fragment)
-                    .then_some(path.clone())
-            })
-            .collect();
-
-        Self::from_schema_evidence(
-            schema_evidence_by_value_path,
-            referenced_value_paths,
+        let values_yaml_info = build_values_yaml_path_info(
             values_yaml_doc,
-            pruned_parent_value_paths,
+            contract_signals.referenced_value_paths(),
+            contract_signals.pruned_parent_value_paths(),
+        );
+        Self {
+            schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
+            referenced_value_paths: contract_signals.referenced_value_paths(),
+            values_yaml_info,
+            resolve_policy: ResolvePolicy,
             provider,
-        )
+            provider_schema_cache: HashMap::new(),
+        }
     }
 
     /// Resolve overlay/branch evidence in isolation, without a values.yaml
@@ -89,49 +79,26 @@ impl<'a> PathSchemaResolver<'a> {
     }
 
     pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
-        let referenced_value_paths = std::mem::take(&mut self.referenced_value_paths);
+        let referenced_value_paths = self.referenced_value_paths;
         referenced_value_paths
-            .into_iter()
+            .iter()
             .filter_map(|value_path| self.resolve_path(value_path))
             .collect()
     }
 
-    fn resolve_path(&mut self, value_path: String) -> Option<ResolvedPathSchema> {
-        let path_segments = self.path_caches.path_segments.get(&value_path)?.clone();
+    fn resolve_path(&mut self, value_path: &str) -> Option<ResolvedPathSchema> {
         let evidence = self
             .schema_evidence_by_value_path
-            .get(&value_path)
+            .get(value_path)
             .cloned()?;
         Some(resolve_path_evidence(
             evidence,
-            path_segments,
-            self.path_caches.values_yaml.get(&value_path),
+            crate::split_value_path(value_path),
+            self.values_yaml_info.get(value_path),
             self.provider,
             &self.resolve_policy,
             &mut self.provider_schema_cache,
         ))
-    }
-
-    fn from_schema_evidence(
-        schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
-        referenced_value_paths: BTreeSet<String>,
-        values_yaml_doc: &YamlValue,
-        pruned_parent_value_paths: BTreeSet<String>,
-        provider: &'a dyn ResourceSchemaOracle,
-    ) -> Self {
-        let path_caches = build_value_path_caches(
-            values_yaml_doc,
-            &referenced_value_paths,
-            &pruned_parent_value_paths,
-        );
-        Self {
-            schema_evidence_by_value_path,
-            referenced_value_paths,
-            path_caches,
-            resolve_policy: ResolvePolicy,
-            provider,
-            provider_schema_cache: HashMap::new(),
-        }
     }
 }
 

@@ -45,34 +45,17 @@ impl ValuesYamlPathInfo {
     }
 }
 
-pub(crate) struct ValuePathCaches {
-    pub(crate) path_segments: BTreeMap<String, Vec<String>>,
-    pub(crate) values_yaml: BTreeMap<String, ValuesYamlPathInfo>,
-}
-
 #[tracing::instrument(skip_all)]
-pub(crate) fn build_value_path_caches(
+pub(crate) fn build_values_yaml_path_info(
     values_yaml_doc: &YamlValue,
     referenced_value_paths: &BTreeSet<String>,
     pruned_parent_value_paths: &BTreeSet<String>,
-) -> ValuePathCaches {
-    let path_segments: BTreeMap<String, Vec<String>> = referenced_value_paths
+) -> BTreeMap<String, ValuesYamlPathInfo> {
+    referenced_value_paths
         .iter()
-        .map(|path| {
-            (
-                path.clone(),
-                path.split('.')
-                    .filter(|segment| !segment.is_empty())
-                    .map(std::string::ToString::to_string)
-                    .collect(),
-            )
-        })
-        .collect();
-
-    let values_yaml = path_segments
-        .iter()
-        .filter_map(|(path, segments)| {
-            lookup_values_yaml_path_info(values_yaml_doc, segments)
+        .filter_map(|path| {
+            let segments = crate::split_value_path(path);
+            lookup_values_yaml_path_info(values_yaml_doc, &segments)
                 .map(|mut path_info| {
                     if pruned_parent_value_paths.contains(path) {
                         prune_referenced_descendant_schemas(
@@ -85,12 +68,7 @@ pub(crate) fn build_value_path_caches(
                 })
                 .map(|path_info| (path.clone(), path_info))
         })
-        .collect();
-
-    ValuePathCaches {
-        path_segments,
-        values_yaml,
-    }
+        .collect()
 }
 
 fn lookup_values_yaml_path_info(
@@ -145,12 +123,7 @@ pub(crate) fn yaml_value_at_path<'a>(
     doc: &'a YamlValue,
     value_path: &str,
 ) -> Option<&'a YamlValue> {
-    let segments = value_path
-        .split('.')
-        .filter(|segment| !segment.is_empty())
-        .map(std::string::ToString::to_string)
-        .collect::<Vec<_>>();
-    yaml_value_at_segments(doc, &segments)
+    yaml_value_at_segments(doc, &crate::split_value_path(value_path))
 }
 
 fn lookup_values_yaml_values<'a>(
@@ -194,11 +167,7 @@ fn prune_referenced_descendant_schemas(
         let Some(relative_path) = descendant.strip_prefix(&descendant_prefix) else {
             continue;
         };
-        let relative_segments: Vec<String> = relative_path
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .map(std::string::ToString::to_string)
-            .collect();
+        let relative_segments = crate::split_value_path(relative_path);
         if relative_segments.is_empty() {
             continue;
         }
