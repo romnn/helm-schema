@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::is_merge_function;
 use helm_schema_ast::{Literal, TemplateExpr, parse_yaml_key};
 
-use crate::abstract_value::AbstractValue;
+use crate::abstract_value::{AbstractValue, OutputProjectionScope};
 use crate::expr_eval::{eval_helper_exprs_direct_effects, expr_starts_with_helper_call};
 use crate::fragment_assignment::{
     AssignmentKind, apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
@@ -85,7 +85,6 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         state.context,
         state.seen,
     );
-    let fallback_paths = result.effects.defaults.clone();
     let local_effects = &result.effects;
     state
         .analysis
@@ -101,30 +100,27 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             .extend(result.value.iter().flat_map(AbstractValue::strings));
     }
 
-    let handled_outputs: BTreeSet<String> = local_effects.local_rendered_paths();
-
-    let mut local_output_uses =
-        local_effects.local_output_uses(&output_path, kind, active_output_predicates);
-    relate_outputs_to_active_sources(&mut local_output_uses, active_source_relations);
-
     let mut expression_output_uses = Vec::new();
-    let mut expression_default_paths = fallback_paths.clone();
-    expression_default_paths.extend(local_effects.local_default_paths.iter().cloned());
+    let expression_default_paths = local_effects.default_paths_with_local();
     if let Some(binding) = &result.value {
-        binding.collect_output_uses_with_encoding(
+        binding.collect_output_uses(
             &mut expression_output_uses,
             &output_path,
             kind,
-            &local_effects.encoded_paths,
-            active_output_predicates,
-            &expression_default_paths,
-            true,
+            &OutputProjectionScope {
+                root: &output_path,
+                encoded_paths: &local_effects.encoded_paths,
+                active_output_predicates,
+                defaulted_paths: &expression_default_paths,
+                path_meta: &local_effects.local_output_meta,
+                local_rendered_paths: &local_effects.local_rendered_paths,
+                local_defaulted_paths: &local_effects.local_default_paths,
+            },
         );
         relate_outputs_to_active_sources(&mut expression_output_uses, active_source_relations);
     }
-    let expression_sources =
-        rendered_sources(local_output_uses.iter().chain(&expression_output_uses));
-    note_outputs_sibling_sources(&mut local_output_uses, &expression_sources);
+    let mut expression_sources = rendered_sources(expression_output_uses.iter());
+    expression_sources.extend(local_effects.local_rendered_paths.iter().cloned());
     note_outputs_sibling_sources(&mut expression_output_uses, &expression_sources);
     let nested_summary = result.effects.helper_summary;
     if kind == ValueKind::Scalar {
@@ -217,11 +213,9 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .map(|output| output.source_expr.clone())
         .collect();
 
-    state.outputs.extend(local_output_uses);
     for output in expression_output_uses {
         if output.relative_path.0.is_empty()
-            && (handled_outputs.contains(&output.source_expr)
-                || nested_structured_sources.contains(&output.source_expr)
+            && (nested_structured_sources.contains(&output.source_expr)
                 || nested_scalar_sources.contains(&output.source_expr))
         {
             continue;
@@ -418,14 +412,19 @@ fn collect_bound_fragment_output_assignment_uses(
         && let Some(binding) = &binding
     {
         let mut assigned_outputs = Vec::new();
-        binding.collect_output_uses_with_encoding(
+        binding.collect_output_uses(
             &mut assigned_outputs,
             &YamlPath(Vec::new()),
             ValueKind::Scalar,
-            &result.effects.encoded_paths,
-            active_output_predicates,
-            &defaulted_paths,
-            true,
+            &OutputProjectionScope {
+                root: &YamlPath(Vec::new()),
+                encoded_paths: &result.effects.encoded_paths,
+                active_output_predicates,
+                defaulted_paths: &defaulted_paths,
+                path_meta: &BTreeMap::new(),
+                local_rendered_paths: &BTreeSet::new(),
+                local_defaulted_paths: &BTreeSet::new(),
+            },
         );
         relate_outputs_to_active_sources(&mut assigned_outputs, active_source_relations);
         merge_output_use_meta(&mut output_meta, &assigned_outputs);

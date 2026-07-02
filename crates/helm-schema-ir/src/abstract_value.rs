@@ -536,41 +536,20 @@ impl AbstractValue {
         paths
     }
 
-    pub(crate) fn collect_output_uses_with_encoding(
+    pub(crate) fn collect_output_uses(
         &self,
         outputs: &mut Vec<HelperFragmentOutputUse>,
         relative_path: &YamlPath,
         kind: ValueKind,
-        encoded_paths: &BTreeSet<String>,
-        active_output_predicates: &BTreeSet<Predicate>,
-        defaulted_paths: &BTreeSet<String>,
-        suppress_values_root: bool,
+        scope: &OutputProjectionScope<'_>,
     ) {
         match self {
-            Self::ValuesPath(path) if !suppress_values_root || !path.is_empty() => {
-                push_output_path(
-                    outputs,
-                    path,
-                    relative_path,
-                    kind,
-                    None,
-                    encoded_paths,
-                    active_output_predicates,
-                    defaulted_paths,
-                );
+            Self::ValuesPath(path) if !path.is_empty() => {
+                push_output_path(outputs, path, relative_path, kind, None, scope);
             }
             Self::ValuesPath(_) => {}
             Self::OutputPath(path, meta) => {
-                push_output_path(
-                    outputs,
-                    path,
-                    relative_path,
-                    kind,
-                    Some(meta),
-                    encoded_paths,
-                    active_output_predicates,
-                    defaulted_paths,
-                );
+                push_output_path(outputs, path, relative_path, kind, Some(meta), scope);
             }
             Self::Dict(entries) => {
                 for (key, value) in entries {
@@ -578,73 +557,43 @@ impl AbstractValue {
                         relative_path,
                         &YamlPath(vec![key.clone()]),
                     );
-                    value.collect_output_uses_with_encoding(
+                    value.collect_output_uses(
                         outputs,
                         &child_path,
                         value.output_child_kind(),
-                        encoded_paths,
-                        active_output_predicates,
-                        defaulted_paths,
-                        suppress_values_root,
+                        scope,
                     );
                 }
             }
             Self::Overlay { entries, fallback } => {
-                fallback.collect_output_uses_with_encoding(
-                    outputs,
-                    relative_path,
-                    kind,
-                    encoded_paths,
-                    active_output_predicates,
-                    defaulted_paths,
-                    suppress_values_root,
-                );
+                fallback.collect_output_uses(outputs, relative_path, kind, scope);
                 for (key, value) in entries {
                     let child_path = output_path::append_relative_path(
                         relative_path,
                         &YamlPath(vec![key.clone()]),
                     );
-                    value.collect_output_uses_with_encoding(
+                    value.collect_output_uses(
                         outputs,
                         &child_path,
                         value.output_child_kind(),
-                        encoded_paths,
-                        active_output_predicates,
-                        defaulted_paths,
-                        suppress_values_root,
+                        scope,
                     );
                 }
             }
             Self::Choice(choices) => {
                 for choice in choices {
-                    choice.collect_output_uses_with_encoding(
-                        outputs,
-                        relative_path,
-                        kind,
-                        encoded_paths,
-                        active_output_predicates,
-                        defaulted_paths,
-                        suppress_values_root,
-                    );
+                    choice.collect_output_uses(outputs, relative_path, kind, scope);
                 }
             }
             Self::List(items) => {
                 let item_path = output_path::sequence_item_path(relative_path);
                 for item in items {
-                    item.collect_output_uses_with_encoding(
-                        outputs,
-                        &item_path,
-                        item.output_child_kind(),
-                        encoded_paths,
-                        active_output_predicates,
-                        defaulted_paths,
-                        suppress_values_root,
-                    );
+                    item.collect_output_uses(outputs, &item_path, item.output_child_kind(), scope);
                 }
             }
             Self::Widened(paths) => {
                 for path in paths {
-                    if suppress_values_root && path.is_empty() {
+                    if path.is_empty() {
                         continue;
                     }
                     // A range item (`path.*`) that reaches a scalar slot only
@@ -655,16 +604,7 @@ impl AbstractValue {
                     } else {
                         relative_path.clone()
                     };
-                    push_output_path(
-                        outputs,
-                        path,
-                        &path_for_output,
-                        kind,
-                        None,
-                        encoded_paths,
-                        active_output_predicates,
-                        defaulted_paths,
-                    );
+                    push_output_path(outputs, path, &path_for_output, kind, None, scope);
                 }
             }
             Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => {}
@@ -713,26 +653,48 @@ fn item_path(path: &str) -> String {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+/// Effect-derived, path-keyed enrichment under which a value projects its
+/// output rows: encodings, admitted defaults, local output metadata, and the
+/// predicates active at the output site.
+pub(crate) struct OutputProjectionScope<'a> {
+    /// The relative path the projection starts from. A row landing exactly
+    /// here for a local-rendered source renders the local's binding.
+    pub(crate) root: &'a YamlPath,
+    pub(crate) encoded_paths: &'a BTreeSet<String>,
+    pub(crate) active_output_predicates: &'a BTreeSet<Predicate>,
+    pub(crate) defaulted_paths: &'a BTreeSet<String>,
+    pub(crate) path_meta: &'a BTreeMap<String, HelperOutputMeta>,
+    /// Paths rendered by locals read in the projected expression. Root rows
+    /// for these take their defaultedness from the local binding (not from
+    /// read-site `default` wrapping) and stay unencoded.
+    pub(crate) local_rendered_paths: &'a BTreeSet<String>,
+    pub(crate) local_defaulted_paths: &'a BTreeSet<String>,
+}
+
 fn push_output_path(
     outputs: &mut Vec<HelperFragmentOutputUse>,
     path: &str,
     relative_path: &YamlPath,
     kind: ValueKind,
     meta: Option<&HelperOutputMeta>,
-    encoded_paths: &BTreeSet<String>,
-    active_output_predicates: &BTreeSet<Predicate>,
-    defaulted_paths: &BTreeSet<String>,
+    scope: &OutputProjectionScope<'_>,
 ) {
-    let base_meta = meta.cloned().unwrap_or_default();
-    let mut meta = base_meta;
-    meta.defaulted |= defaulted_paths.contains(path);
-    let meta = meta.with_output_site_predicates(path, active_output_predicates);
+    let local_root_row = relative_path == scope.root && scope.local_rendered_paths.contains(path);
+    let mut meta = meta.cloned().unwrap_or_default();
+    if let Some(path_meta) = scope.path_meta.get(path) {
+        meta.merge_ref(path_meta);
+    }
+    meta.defaulted |= if local_root_row {
+        scope.local_defaulted_paths.contains(path)
+    } else {
+        scope.defaulted_paths.contains(path)
+    };
+    let meta = meta.with_output_site_predicates(path, scope.active_output_predicates);
     outputs.push(HelperFragmentOutputUse::with_encoding(
         path.to_string(),
         relative_path.clone(),
         kind,
-        path_is_encoded(path, encoded_paths),
+        !local_root_row && path_is_encoded(path, scope.encoded_paths),
         meta,
     ));
 }

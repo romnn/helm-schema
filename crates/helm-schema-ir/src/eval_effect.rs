@@ -1,11 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
-use crate::helper_summary::{
-    HelperFragmentOutputUse, HelperOutputMeta, HelperSummary, insert_type_hint,
-};
-use crate::{ValueKind, YamlPath};
-use helm_schema_core::Predicate;
+use crate::helper_summary::{HelperOutputMeta, HelperSummary, insert_type_hint};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
@@ -17,7 +13,15 @@ pub(crate) struct Effects {
     pub(crate) chart_default_paths: BTreeSet<String>,
     pub(crate) local_default_paths: BTreeSet<String>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
-    pub(crate) local_output_values: Vec<AbstractValue>,
+    /// Shallow (non-descending) `.Values` source paths of locals that were
+    /// read by the expression. Guard-path seeding and expression path
+    /// resolution consume this; output rows ride the value itself.
+    pub(crate) local_source_paths: BTreeSet<String>,
+    /// All `.Values` paths rendered by locals that were read by the
+    /// expression. A row at the projection root for one of these paths
+    /// renders the local's binding, so it keeps the binding-time default
+    /// and encoding semantics instead of the read site's.
+    pub(crate) local_rendered_paths: BTreeSet<String>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
     pub(crate) helper_summary: HelperSummary,
 }
@@ -37,7 +41,8 @@ impl Effects {
         self.encoded_paths.extend(other.encoded_paths);
         self.chart_default_paths.extend(other.chart_default_paths);
         self.local_default_paths.extend(other.local_default_paths);
-        self.local_output_values.extend(other.local_output_values);
+        self.local_source_paths.extend(other.local_source_paths);
+        self.local_rendered_paths.extend(other.local_rendered_paths);
         for (path, meta) in other.local_output_meta {
             self.local_output_meta.entry(path).or_default().merge(meta);
         }
@@ -79,7 +84,7 @@ impl Effects {
 
     pub(crate) fn output_value_paths(&self) -> BTreeSet<String> {
         let mut paths = self.output_paths.clone();
-        paths.extend(self.local_source_paths());
+        paths.extend(self.local_source_paths.iter().cloned());
         paths.extend(self.local_output_meta.keys().cloned());
         paths.retain(|path| !path.trim().is_empty());
         paths
@@ -90,20 +95,6 @@ impl Effects {
         paths.extend(self.local_default_paths.iter().cloned());
         paths.retain(|path| !path.trim().is_empty());
         paths
-    }
-
-    pub(crate) fn local_source_paths(&self) -> BTreeSet<String> {
-        self.local_output_values
-            .iter()
-            .flat_map(AbstractValue::fragment_source_paths)
-            .collect()
-    }
-
-    pub(crate) fn local_rendered_paths(&self) -> BTreeSet<String> {
-        self.local_output_values
-            .iter()
-            .flat_map(AbstractValue::fragment_rendered_paths)
-            .collect()
     }
 
     pub(crate) fn merge_local_output_meta<'a>(
@@ -136,58 +127,6 @@ impl Effects {
             .or_default()
             .extend(entries);
     }
-
-    pub(crate) fn local_output_uses(
-        &self,
-        output_path: &YamlPath,
-        kind: ValueKind,
-        active_output_predicates: &BTreeSet<Predicate>,
-    ) -> Vec<HelperFragmentOutputUse> {
-        let empty_predicates = BTreeSet::new();
-        let mut outputs = output_uses_from_values(
-            &self.local_output_values,
-            output_path,
-            kind,
-            &BTreeSet::new(),
-            &empty_predicates,
-            &self.local_default_paths,
-            true,
-        );
-        for output in &mut outputs {
-            if let Some(meta) = self.local_output_meta.get(&output.source_expr) {
-                output.meta.merge_ref(meta);
-            }
-            output.meta = output
-                .meta
-                .clone()
-                .with_output_site_predicates(&output.source_expr, active_output_predicates);
-        }
-        outputs
-    }
-}
-
-fn output_uses_from_values(
-    values: &[AbstractValue],
-    output_path: &YamlPath,
-    kind: ValueKind,
-    encoded_paths: &BTreeSet<String>,
-    active_output_predicates: &BTreeSet<Predicate>,
-    defaulted_paths: &BTreeSet<String>,
-    suppress_values_root: bool,
-) -> Vec<HelperFragmentOutputUse> {
-    let mut outputs = Vec::new();
-    for value in values {
-        value.collect_output_uses_with_encoding(
-            &mut outputs,
-            output_path,
-            kind,
-            encoded_paths,
-            active_output_predicates,
-            defaulted_paths,
-            suppress_values_root,
-        );
-    }
-    outputs
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

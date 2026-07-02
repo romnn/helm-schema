@@ -282,7 +282,7 @@ fn branch_guard_paths_for_expr(
         skip_helper_call_args: true,
         ..EvalEnv::default()
     };
-    branch_guard_paths.extend(eval_expr(expr, &local_env).effects.local_source_paths());
+    branch_guard_paths.extend(eval_expr(expr, &local_env).effects.local_source_paths);
 
     branch_guard_paths.extend(
         helper_result_from_expr_with_fragment_locals(

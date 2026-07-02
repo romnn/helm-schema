@@ -38,6 +38,8 @@ pub(crate) fn eval_call_with_helper_calls(
         "ternary" => eval_first_arg_values(args, 2, env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
+        "tpl" if args.len() == 2 => eval_tpl(args, env, resolver),
+        "cat" => eval_cat(args, env, resolver),
         "index" => eval_index(args, env, resolver),
         "typeIs" if args.len() >= 2 => eval_type_is(args, env, resolver),
         function if is_string_transform_function(function) => {
@@ -630,6 +632,61 @@ fn eval_print(
         rendered = next;
     }
     EvalResult::with_effects(Some(AbstractValue::StringSet(rendered)), effects)
+}
+
+/// `tpl` renders its first argument as a template against the given context.
+/// Statically the rendered output is the template argument's content, so the
+/// value transfers from the first argument (literal template text carries no
+/// attributable content and is dropped).
+fn eval_tpl(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let template = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let mut effects = template.effects;
+    effects.merge(eval_expr_with_helper_calls(&args[1], env, resolver).effects);
+    let value = template.value.and_then(rendered_content_value);
+    EvalResult::with_effects(value, effects)
+}
+
+/// `cat` joins its arguments into one string, so the output content is the
+/// union of the arguments' contents. Literal strings are joined text, not
+/// standalone alternatives, and carry no attributable content.
+fn eval_cat(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = Effects::default();
+    let mut values = Vec::new();
+    for arg in args {
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        effects.merge(result.effects);
+        if let Some(value) = result.value.and_then(rendered_content_value) {
+            values.push(value);
+        }
+    }
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+/// Content of a value that a string-rendering call (`tpl`, `cat`) passes
+/// through: path-attributed and structured members survive, literal text and
+/// contexts do not.
+fn rendered_content_value(value: AbstractValue) -> Option<AbstractValue> {
+    match value {
+        AbstractValue::StringSet(_)
+        | AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RootContext => None,
+        AbstractValue::Choice(choices) => AbstractValue::choice(
+            choices
+                .into_iter()
+                .filter_map(rendered_content_value)
+                .collect(),
+        ),
+        other => Some(other),
+    }
 }
 
 fn eval_merge(

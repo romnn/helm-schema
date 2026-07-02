@@ -1,21 +1,14 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::abstract_value::AbstractValue;
-use crate::helper_summary::HelperFragmentOutputUse;
+use crate::abstract_value::{AbstractValue, OutputProjectionScope};
+use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::{ValueKind, YamlPath};
 use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
-fn direct_and_fragment_values_share_structural_output_projection() {
-    let direct_value = AbstractValue::List(vec![
-        AbstractValue::Dict(BTreeMap::from([(
-            "name".to_string(),
-            AbstractValue::ValuesPath("containers.name".to_string()),
-        )])),
-        AbstractValue::ValuesPath("containers.image".to_string()),
-    ]);
-    let fragment_value = AbstractValue::List(vec![
+fn structural_values_project_rows_at_slot_relative_paths() {
+    let value = AbstractValue::List(vec![
         AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             AbstractValue::ValuesPath("containers.name".to_string()),
@@ -25,31 +18,27 @@ fn direct_and_fragment_values_share_structural_output_projection() {
     let relative_path = YamlPath(vec!["spec".to_string(), "containers".to_string()]);
     let predicates = BTreeSet::from([Predicate::truthy_path("containers.enabled".to_string())]);
     let defaulted_paths = BTreeSet::from(["containers.image".to_string()]);
+    let no_paths = BTreeSet::new();
+    let no_meta = BTreeMap::new();
 
-    let mut helper_outputs = Vec::new();
-    direct_value.collect_output_uses_with_encoding(
-        &mut helper_outputs,
+    let mut outputs = Vec::new();
+    value.collect_output_uses(
+        &mut outputs,
         &relative_path,
         ValueKind::Fragment,
-        &BTreeSet::new(),
-        &predicates,
-        &defaulted_paths,
-        false,
-    );
-
-    let mut fragment_outputs = Vec::new();
-    fragment_value.collect_output_uses_with_encoding(
-        &mut fragment_outputs,
-        &relative_path,
-        ValueKind::Fragment,
-        &BTreeSet::new(),
-        &predicates,
-        &defaulted_paths,
-        true,
+        &OutputProjectionScope {
+            root: &relative_path,
+            encoded_paths: &no_paths,
+            active_output_predicates: &predicates,
+            defaulted_paths: &defaulted_paths,
+            path_meta: &no_meta,
+            local_rendered_paths: &no_paths,
+            local_defaulted_paths: &no_paths,
+        },
     );
 
     sim_assert_eq!(
-        have: output_rows(&helper_outputs),
+        have: output_rows(&outputs),
         want: vec![
             (
                 "containers.name".to_string(),
@@ -69,7 +58,56 @@ fn direct_and_fragment_values_share_structural_output_projection() {
             ),
         ]
     );
-    sim_assert_eq!(have: output_rows(&fragment_outputs), want: output_rows(&helper_outputs));
+}
+
+#[test]
+fn path_meta_scope_enriches_matching_source_rows() {
+    let value = AbstractValue::Dict(BTreeMap::from([(
+        "tag".to_string(),
+        AbstractValue::ValuesPath("image.tag".to_string()),
+    )]));
+    let tag_meta = HelperOutputMeta {
+        defaulted: true,
+        predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+            "image.enabled".to_string(),
+        )])]),
+        ..HelperOutputMeta::default()
+    };
+    let path_meta = BTreeMap::from([("image.tag".to_string(), tag_meta)]);
+    let no_paths = BTreeSet::new();
+    let no_predicates = BTreeSet::new();
+
+    let mut outputs = Vec::new();
+    value.collect_output_uses(
+        &mut outputs,
+        &YamlPath(Vec::new()),
+        ValueKind::Fragment,
+        &OutputProjectionScope {
+            root: &YamlPath(Vec::new()),
+            encoded_paths: &no_paths,
+            active_output_predicates: &no_predicates,
+            defaulted_paths: &no_paths,
+            path_meta: &path_meta,
+            local_rendered_paths: &no_paths,
+            local_defaulted_paths: &no_paths,
+        },
+    );
+
+    sim_assert_eq!(
+        have: output_rows(&outputs),
+        want: vec![(
+            "image.tag".to_string(),
+            vec!["tag".to_string()],
+            ValueKind::Scalar,
+            true,
+        )]
+    );
+    sim_assert_eq!(
+        have: outputs[0].meta.predicates,
+        want: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+            "image.enabled".to_string(),
+        )])])
+    );
 }
 
 #[test]
@@ -78,16 +116,24 @@ fn nested_fragment_values_root_still_abstains_from_output_projection() {
         "values".to_string(),
         AbstractValue::values_root(),
     )]));
+    let no_paths = BTreeSet::new();
+    let no_predicates = BTreeSet::new();
+    let no_meta = BTreeMap::new();
     let mut outputs = Vec::new();
 
-    fragment_value.collect_output_uses_with_encoding(
+    fragment_value.collect_output_uses(
         &mut outputs,
         &YamlPath(Vec::new()),
         ValueKind::Fragment,
-        &BTreeSet::new(),
-        &BTreeSet::new(),
-        &BTreeSet::new(),
-        true,
+        &OutputProjectionScope {
+            root: &YamlPath(Vec::new()),
+            encoded_paths: &no_paths,
+            active_output_predicates: &no_predicates,
+            defaulted_paths: &no_paths,
+            path_meta: &no_meta,
+            local_rendered_paths: &no_paths,
+            local_defaulted_paths: &no_paths,
+        },
     );
 
     assert!(outputs.is_empty());
