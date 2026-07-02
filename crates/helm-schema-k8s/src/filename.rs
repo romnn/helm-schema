@@ -112,14 +112,6 @@ pub fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
     out
 }
 
-#[must_use]
-pub fn filename_for_resource(resource: &ResourceRef) -> String {
-    candidate_filenames_for_resource(resource)
-        .into_iter()
-        .next()
-        .unwrap_or_else(|| "unknown.json".to_string())
-}
-
 /// Compute the catalog-relative path `<group>/<kind_lc>_<version>.json` for a
 /// grouped resource. Returns `None` for resources without a `group/version`
 /// apiVersion. Callers that only serve custom resources filter built-in K8s

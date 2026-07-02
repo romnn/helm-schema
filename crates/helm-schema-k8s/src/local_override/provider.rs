@@ -1,10 +1,9 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Mutex;
 
 use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
+use crate::cache::SourceDocCache;
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
 use crate::inference::cache_scan::scan_crd_source_dir;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
@@ -18,7 +17,7 @@ use crate::schema_doc::SchemaDoc;
 pub struct LocalSchemaProvider {
     root_dir: PathBuf,
     allow_api_version_guess: bool,
-    docs: Mutex<HashMap<ResourceDocKey, SchemaDoc>>,
+    docs: SourceDocCache<ResourceDocKey>,
 }
 
 impl LocalSchemaProvider {
@@ -27,7 +26,7 @@ impl LocalSchemaProvider {
         Self {
             root_dir: root_dir.into(),
             allow_api_version_guess: false,
-            docs: Mutex::new(HashMap::new()),
+            docs: SourceDocCache::new(),
         }
     }
 
@@ -53,10 +52,8 @@ impl LocalSchemaProvider {
         }
 
         let cache_key = ResourceDocKey::from_resource(resource);
-        if let Ok(guard) = self.docs.lock()
-            && let Some(doc) = guard.get(&cache_key)
-        {
-            return LocalSchemaDocLoad::Loaded(doc.clone());
+        if let Some(doc) = self.docs.read(&cache_key) {
+            return LocalSchemaDocLoad::Loaded(doc);
         }
 
         let source_path = local.display().to_string();
@@ -78,9 +75,7 @@ impl LocalSchemaProvider {
                 };
             }
         };
-        if let Ok(mut guard) = self.docs.lock() {
-            guard.insert(cache_key, doc.clone());
-        }
+        self.docs.write(cache_key, doc.clone());
         LocalSchemaDocLoad::Loaded(doc)
     }
 

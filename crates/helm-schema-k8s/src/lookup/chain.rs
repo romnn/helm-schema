@@ -4,12 +4,11 @@ use helm_schema_core::{
 };
 
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
-use crate::inference::ApiVersionInferenceOutcome;
+use crate::inference::{ApiVersionInferenceOutcome, infer_api_version};
 
-use super::api_version_inference_cache::ApiVersionInferenceCache;
 use super::chain_outcome::ChainLookupOutcome;
+use super::memo_cache::MemoCache;
 use super::miss_diagnostics::MissingLookupDiagnostics;
-use super::provider_lookup_cache::ProviderLookupCache;
 use super::provider_result::ProviderLookupResult;
 use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::resource_lookup_plan::resource_lookup_candidates;
@@ -23,8 +22,8 @@ pub struct Chain {
     providers: Vec<Box<dyn K8sSchemaProvider>>,
     sink: Option<DiagnosticSink>,
     inference_enabled: bool,
-    inference_cache: ApiVersionInferenceCache,
-    provider_lookup_cache: ProviderLookupCache,
+    inference_cache: MemoCache<String, ApiVersionInferenceOutcome>,
+    provider_lookup_cache: MemoCache<ProviderLookupCacheKey, ProviderLookupResult>,
 }
 
 impl Chain {
@@ -34,8 +33,8 @@ impl Chain {
             providers,
             sink: None,
             inference_enabled: false,
-            inference_cache: ApiVersionInferenceCache::default(),
-            provider_lookup_cache: ProviderLookupCache::default(),
+            inference_cache: MemoCache::default(),
+            provider_lookup_cache: MemoCache::default(),
         }
     }
 
@@ -122,7 +121,9 @@ impl Chain {
     ) -> Option<ProviderSchemaFragment> {
         let inferred = if self.inference_enabled {
             self.inference_cache
-                .infer(self.providers.as_slice(), &resource.kind)
+                .get_or_compute(resource.kind.clone(), || {
+                    infer_api_version(self.providers.as_slice(), &resource.kind)
+                })
         } else {
             ApiVersionInferenceOutcome::NoMatch
         };
@@ -186,11 +187,9 @@ impl Chain {
     ) -> TracedLookupOutcome {
         let mut trace = LookupTrace::default();
         for (provider_index, provider) in self.providers.iter().enumerate() {
-            let result = self.provider_lookup_cache.lookup(
-                provider_index,
-                provider.as_ref(),
-                resource,
-                path,
+            let result = self.provider_lookup_cache.get_or_compute(
+                ProviderLookupCacheKey::new(provider_index, resource, path),
+                || provider.lookup(resource, path),
             );
             trace.record_provider(resource, provider.origin(), &result);
 
@@ -345,3 +344,27 @@ fn needs_inference(resource: &ResourceRef) -> bool {
         .iter()
         .any(|version| !version.trim().is_empty())
 }
+
+/// Cache key for one provider's `(resource, path)` lookup result.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct ProviderLookupCacheKey {
+    provider_index: usize,
+    api_version: String,
+    kind: String,
+    path: Vec<String>,
+}
+
+impl ProviderLookupCacheKey {
+    fn new(provider_index: usize, resource: &ResourceRef, path: &YamlPath) -> Self {
+        Self {
+            provider_index,
+            api_version: resource.api_version.clone(),
+            kind: resource.kind.clone(),
+            path: path.0.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+#[path = "tests/chain.rs"]
+mod tests;

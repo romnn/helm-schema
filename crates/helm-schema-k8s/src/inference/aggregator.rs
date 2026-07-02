@@ -27,9 +27,7 @@ pub fn aggregate(mut candidates: Vec<ApiVersionCandidate>) -> ApiVersionInferenc
 
     // Stable canonicalisation: same input order = same output.
     sort_candidates(&mut candidates);
-    candidates.dedup_by(|a, b| {
-        a.api_version == b.api_version && a.source == b.source && a.origin == b.origin
-    });
+    candidates.dedup();
 
     for authoritative_origin in [ProviderOrigin::LocalOverride, ProviderOrigin::ChartLocalCrd] {
         let authoritative: Vec<&ApiVersionCandidate> = candidates
@@ -46,24 +44,25 @@ pub fn aggregate(mut candidates: Vec<ApiVersionCandidate>) -> ApiVersionInferenc
         }
     }
 
-    let mut distinct = candidates
-        .iter()
-        .map(|c| c.api_version.clone())
-        .collect::<Vec<_>>();
-    distinct.sort();
-    distinct.dedup();
-    if distinct.len() == 1 {
-        // Pick the highest-priority source for the reported source field.
-        let api_version = distinct.into_iter().next().unwrap_or_default();
-        let chosen = best_source_candidate(&candidates);
-        return ApiVersionInferenceOutcome::Resolved {
-            api_version,
-            source: chosen.source,
-            origin: chosen.origin,
-        };
+    // Exactly one distinct api_version ⇒ resolved. The list is sorted
+    // with `api_version` as the primary key, so first == last decides,
+    // and the first candidate reports the highest-priority
+    // (source, origin) pair for it.
+    let single_api_version = candidates
+        .first()
+        .zip(candidates.last())
+        .is_some_and(|(first, last)| first.api_version == last.api_version);
+    if !single_api_version {
+        return ApiVersionInferenceOutcome::Ambiguous { candidates };
     }
-
-    ApiVersionInferenceOutcome::Ambiguous { candidates }
+    let Some(chosen) = candidates.into_iter().next() else {
+        return ApiVersionInferenceOutcome::NoMatch;
+    };
+    ApiVersionInferenceOutcome::Resolved {
+        api_version: chosen.api_version,
+        source: chosen.source,
+        origin: chosen.origin,
+    }
 }
 
 fn aggregate_authoritative_partition(
@@ -71,16 +70,16 @@ fn aggregate_authoritative_partition(
     authoritative: &[&ApiVersionCandidate],
     candidates: &[ApiVersionCandidate],
 ) -> ApiVersionInferenceOutcome {
-    let mut distinct = authoritative
-        .iter()
-        .map(|c| c.api_version.clone())
-        .collect::<Vec<_>>();
-    distinct.sort();
-    distinct.dedup();
-    if distinct.len() == 1 {
-        let chosen = authoritative[0].clone();
+    // Same first == last shortcut as in `aggregate`: the partition is
+    // a filtered projection of the sorted candidate list, so it stays
+    // sorted with `api_version` as the primary key.
+    let single_api_version = authoritative
+        .first()
+        .zip(authoritative.last())
+        .is_some_and(|(first, last)| first.api_version == last.api_version);
+    if single_api_version && let Some(chosen) = authoritative.first() {
         return ApiVersionInferenceOutcome::Resolved {
-            api_version: chosen.api_version,
+            api_version: chosen.api_version.clone(),
             source: chosen.source,
             origin: chosen.origin,
         };
@@ -123,20 +122,6 @@ fn origin_rank(origin: ProviderOrigin) -> u8 {
         ProviderOrigin::DefaultCatalog => 2,
         ProviderOrigin::KubernetesOpenApi => 3,
     }
-}
-
-fn best_source_candidate(candidates: &[ApiVersionCandidate]) -> ApiVersionCandidate {
-    let mut best = candidates.first().cloned().unwrap_or(ApiVersionCandidate {
-        api_version: String::new(),
-        source: InferenceSource::Shortlist,
-        origin: ProviderOrigin::DefaultCatalog,
-    });
-    for c in candidates.iter().skip(1) {
-        if source_rank(c.source) < source_rank(best.source) {
-            best = c.clone();
-        }
-    }
-    best
 }
 
 #[cfg(test)]

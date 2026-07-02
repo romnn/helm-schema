@@ -15,8 +15,8 @@ use std::sync::Arc;
 
 use helm_schema_core::ApiPresenceQuery;
 use helm_schema_k8s::{
-    K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry, SourceProbeTraceOutcome,
-    default_source_id,
+    K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry,
+    SourceProbeTraceOutcome, default_source_id,
 };
 use test_util::prelude::sim_assert_eq;
 

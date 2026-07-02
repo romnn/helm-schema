@@ -61,13 +61,4 @@ impl DiagnosticSink {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
-
-    /// True if a diagnostic with the given key has been recorded.
-    #[must_use]
-    pub fn contains_key(&self, key: &DiagnosticKey) -> bool {
-        self.inner
-            .lock()
-            .map(|g| g.contains_key(key))
-            .unwrap_or(false)
-    }
 }

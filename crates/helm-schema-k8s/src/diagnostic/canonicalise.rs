@@ -16,7 +16,5 @@ pub(super) fn canonicalise_candidates(v: &mut Vec<ApiVersionCandidate>) {
             .then_with(|| format!("{:?}", a.source).cmp(&format!("{:?}", b.source)))
             .then_with(|| format!("{:?}", a.origin).cmp(&format!("{:?}", b.origin)))
     });
-    v.dedup_by(|a, b| {
-        a.api_version == b.api_version && a.source == b.source && a.origin == b.origin
-    });
+    v.dedup();
 }

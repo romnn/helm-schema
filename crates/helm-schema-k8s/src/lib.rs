@@ -40,9 +40,7 @@ pub use diagnostic::{
     Diagnostic, DiagnosticKey, DiagnosticSink, format_diagnostic_json, format_diagnostic_text,
 };
 pub use fetch::{FetchError, HttpFetcher, UreqFetcher};
-pub use filename::{
-    candidate_filenames_for_resource, filename_for_resource, ordered_api_versions_for_resource,
-};
+pub use filename::{candidate_filenames_for_resource, ordered_api_versions_for_resource};
 pub use inference::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource, infer_api_version,
 };

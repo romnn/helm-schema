@@ -1,8 +1,10 @@
 use std::collections::HashSet;
-use std::fs;
 use std::path::Path;
 
 use helm_schema_core::ResourceRef;
+
+use crate::cache::{json_files, subdirs};
+use crate::inference::cache_scan::match_crd_filename;
 
 /// Walk every CONFIGURED `<crd_cache_root>/<source_id>/<group>/`
 /// directory and collect the version suffixes of files that match
@@ -27,36 +29,20 @@ pub fn collect_other_versions(
     };
     let kind_lc = resource.kind.to_ascii_lowercase();
 
-    let Ok(source_entries) = fs::read_dir(cache_root) else {
-        return out;
-    };
-    for source_entry in source_entries.flatten() {
-        let Some(source_id) = source_entry.file_name().to_str().map(str::to_string) else {
-            continue;
-        };
+    for (source_id, source_path) in subdirs(cache_root) {
         if !configured_source_ids.contains(&source_id) {
             continue;
         }
-        let group_dir = source_entry.path().join(group);
-        let Ok(files) = fs::read_dir(&group_dir) else {
-            continue;
-        };
-        for file in files.flatten() {
-            let path = file.path();
+        for path in json_files(&source_path.join(group)) {
             let Some(filename) = path.file_name().and_then(|s| s.to_str()) else {
                 continue;
             };
-            let Some(stem) = filename.strip_suffix(".json") else {
+            let Some(version) = match_crd_filename(filename, &kind_lc) else {
                 continue;
             };
-            let prefix = format!("{kind_lc}_");
-            let Some(version) = stem.strip_prefix(&prefix) else {
-                continue;
-            };
-            if version == requested_version {
-                continue;
+            if version != requested_version {
+                out.push(version);
             }
-            out.push(version.to_string());
         }
     }
     out.sort();

@@ -24,12 +24,9 @@ pub fn probe_crd_catalog(
     if group.is_empty() {
         return Vec::new();
     }
-    let url = format!(
-        "{}/{}/{}_{}.json",
-        base_url.trim_end_matches('/'),
-        group,
-        kind.to_ascii_lowercase(),
-        version
+    let url = crate::source_cache::source_url(
+        base_url,
+        &format!("{group}/{}_{version}.json", kind.to_ascii_lowercase()),
     );
     match fetcher.fetch(&url) {
         Ok(Some(_)) => vec![ApiVersionCandidate {

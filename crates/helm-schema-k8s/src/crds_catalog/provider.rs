@@ -17,7 +17,7 @@ use crate::lookup::{
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
-    AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc, source_url,
+    CachedSchemaDocRequest, allow_download_from_env, load_source_schema_doc, source_url,
 };
 
 use super::cross_scan::collect_other_versions;
@@ -56,9 +56,7 @@ impl CrdsCatalogSchemaProvider {
         Self {
             mirrors: MirrorChain::with_mirrors(CRD_DEFAULT_BASE_URL, Vec::new()),
             cache_dir: default_crd_schema_cache_dir(),
-            allow_download: std::env::var("HELM_SCHEMA_ALLOW_NET")
-                .ok()
-                .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true")),
+            allow_download: allow_download_from_env(),
             loose: false,
             allow_api_version_guess: false,
             record_source: false,
@@ -173,38 +171,23 @@ impl CrdsCatalogSchemaProvider {
         source: &SchemaSource,
         relative_path: &str,
     ) -> Option<SchemaDoc> {
-        let local = crd_cache_path(&self.cache_dir, &source.source_id, relative_path);
-        let url = source_url(&source.base_url, relative_path);
         load_source_schema_doc(
             CachedSchemaDocRequest {
-                local: &local,
-                url: &url,
+                local: crd_cache_path(&self.cache_dir, &source.source_id, relative_path),
+                url: source_url(&source.base_url, relative_path),
                 source_id: &source.source_id,
                 cache_namespace: "",
                 cache_key: relative_path,
                 allow_download: self.allow_download,
                 use_cache: true,
                 record_source: self.record_source,
+                use_not_found_marker: false,
                 fetcher: self.fetcher.as_ref(),
                 negative_cache: &self.negative_cache,
             },
             &self.mem,
             mem_key(&source.source_id, relative_path),
-            AuthoritativeAbsence::None,
         )
-    }
-
-    fn local_owns_resource(&self, resource: &ResourceRef) -> bool {
-        let Some(relative_path) = relative_path_for_resource(resource) else {
-            return false;
-        };
-        for source in &self.mirrors.sources {
-            let local = crd_cache_path(&self.cache_dir, &source.source_id, &relative_path);
-            if local.exists() {
-                return true;
-            }
-        }
-        false
     }
 
     fn source_for_leaf(
@@ -253,7 +236,12 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
     }
 
     fn has_resource(&self, resource: &ResourceRef) -> bool {
-        self.local_owns_resource(resource)
+        let Some(relative_path) = relative_path_for_resource(resource) else {
+            return false;
+        };
+        self.mirrors.sources.iter().any(|source| {
+            crd_cache_path(&self.cache_dir, &source.source_id, &relative_path).exists()
+        })
     }
 
     fn missing_schema_provider_diagnostics(&self, resource: &ResourceRef) -> Vec<Diagnostic> {

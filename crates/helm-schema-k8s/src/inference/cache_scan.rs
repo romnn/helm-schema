@@ -4,6 +4,7 @@ use std::path::Path;
 
 use serde_json::Value;
 
+use crate::cache::{json_files, subdirs};
 use crate::lookup::ProviderOrigin;
 
 use super::candidate::{ApiVersionCandidate, InferenceSource};
@@ -34,42 +35,15 @@ pub fn scan_k8s_cache(
     inference_versions: &HashSet<String>,
 ) -> Vec<ApiVersionCandidate> {
     let mut out = Vec::new();
-    let Ok(source_entries) = fs::read_dir(root) else {
-        return out;
-    };
-    for source_entry in source_entries.flatten() {
-        let source_path = source_entry.path();
-        if !source_path.is_dir() {
-            continue;
-        }
-        let Some(source_id) = source_entry.file_name().to_str().map(str::to_string) else {
-            continue;
-        };
+    for (source_id, source_path) in subdirs(root) {
         if !configured_source_ids.contains(&source_id) {
             continue;
         }
-        let Ok(version_entries) = fs::read_dir(&source_path) else {
-            continue;
-        };
-        for version_entry in version_entries.flatten() {
-            let version_path = version_entry.path();
-            if !version_path.is_dir() {
-                continue;
-            }
-            let Some(version_name) = version_entry.file_name().to_str().map(str::to_string) else {
-                continue;
-            };
+        for (version_name, version_path) in subdirs(&source_path) {
             if !inference_versions.contains(&version_name) {
                 continue;
             }
-            let Ok(files) = fs::read_dir(&version_path) else {
-                continue;
-            };
-            for file in files.flatten() {
-                let p = file.path();
-                if p.extension().and_then(|s| s.to_str()) != Some("json") {
-                    continue;
-                }
+            for p in json_files(&version_path) {
                 if let Some(api_version) = read_k8s_api_version(&p, kind) {
                     out.push(ApiVersionCandidate {
                         api_version,
@@ -98,18 +72,8 @@ pub fn scan_crd_cache(
     configured_source_ids: &HashSet<String>,
 ) -> Vec<ApiVersionCandidate> {
     let mut out = Vec::new();
-    let Ok(source_entries) = fs::read_dir(root) else {
-        return out;
-    };
     let kind_lc = kind.to_ascii_lowercase();
-    for source_entry in source_entries.flatten() {
-        let source_path = source_entry.path();
-        if !source_path.is_dir() {
-            continue;
-        }
-        let Some(source_id) = source_entry.file_name().to_str().map(str::to_string) else {
-            continue;
-        };
+    for (source_id, source_path) in subdirs(root) {
         if !configured_source_ids.contains(&source_id) {
             continue;
         }
@@ -126,29 +90,8 @@ pub fn scan_crd_source_dir(
     origin: ProviderOrigin,
 ) -> Vec<ApiVersionCandidate> {
     let mut out = Vec::new();
-    let Ok(group_entries) = fs::read_dir(source_root) else {
-        return out;
-    };
-    for group_entry in group_entries.flatten() {
-        let group_path = group_entry.path();
-        if !group_path.is_dir() {
-            continue;
-        }
-        let Some(group_name) = group_path
-            .file_name()
-            .and_then(|s| s.to_str())
-            .map(str::to_string)
-        else {
-            continue;
-        };
-        let Ok(files) = fs::read_dir(&group_path) else {
-            continue;
-        };
-        for file in files.flatten() {
-            let p = file.path();
-            if p.extension().and_then(|s| s.to_str()) != Some("json") {
-                continue;
-            }
+    for (group_name, group_path) in subdirs(source_root) {
+        for p in json_files(&group_path) {
             let Some(filename) = p.file_name().and_then(|s| s.to_str()) else {
                 continue;
             };
@@ -187,7 +130,9 @@ fn read_k8s_api_version(path: &Path, kind: &str) -> Option<String> {
     None
 }
 
-fn match_crd_filename(filename: &str, kind_lc: &str) -> Option<String> {
+/// Match a CRD catalog filename `<kind_lc>_<version>.json` and return
+/// the version suffix.
+pub(crate) fn match_crd_filename(filename: &str, kind_lc: &str) -> Option<String> {
     let prefix = format!("{kind_lc}_");
     let stem = filename.strip_suffix(".json")?;
     let version = stem.strip_prefix(&prefix)?;

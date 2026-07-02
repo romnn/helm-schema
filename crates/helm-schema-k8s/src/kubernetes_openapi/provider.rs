@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -7,11 +6,11 @@ use serde_json::Value;
 
 use crate::cache::{
     LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, cache_root_has_legacy_layout,
-    default_cache_dir, k8s_cache_path, not_found_marker_exists,
+    default_cache_dir, k8s_cache_path, subdirs,
 };
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
-use crate::filename::{candidate_filenames_for_resource, filename_for_resource};
+use crate::filename::candidate_filenames_for_resource;
 use crate::inference::cache_scan::scan_k8s_cache;
 use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
@@ -22,7 +21,8 @@ use crate::lookup::{
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
-    AuthoritativeAbsence, CachedSchemaDocRequest, load_source_schema_doc, source_url,
+    CachedSchemaDocRequest, SourceDocOutcome, allow_download_from_env, load_source_schema_doc,
+    probe_source_schema_doc, source_url,
 };
 
 use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
@@ -67,33 +67,11 @@ pub struct KubernetesJsonSchemaProvider {
     mem: SourceDocCache<MemKey>,
 }
 
-/// Tri-state outcome for the capability-oracle probe path. See
-/// [`KubernetesJsonSchemaProvider::probe_at`] for the per-source
-/// semantics and [`KubernetesJsonSchemaProvider::capability_has_query_at_primary_version`]
-/// for how the per-source outcomes aggregate into the final
-/// `Option<bool>` answer.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ProbeOutcome {
-    Found,
-    AuthoritativelyAbsent,
-    Uncertain,
-}
-
 struct LoadedK8sSchemaDoc {
     source: SchemaSource,
     version: String,
     filename: String,
     doc: SchemaDoc,
-}
-
-impl From<ProbeOutcome> for SourceProbeTraceOutcome {
-    fn from(outcome: ProbeOutcome) -> Self {
-        match outcome {
-            ProbeOutcome::Found => Self::Found,
-            ProbeOutcome::AuthoritativelyAbsent => Self::AuthoritativelyAbsent,
-            ProbeOutcome::Uncertain => Self::Uncertain,
-        }
-    }
 }
 
 impl KubernetesJsonSchemaProvider {
@@ -109,9 +87,7 @@ impl KubernetesJsonSchemaProvider {
             versions,
             mirrors: MirrorChain::with_mirrors(K8S_DEFAULT_BASE_URL, Vec::new()),
             cache_dir: default_k8s_schema_cache_dir(),
-            allow_download: std::env::var("HELM_SCHEMA_ALLOW_NET")
-                .ok()
-                .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true")),
+            allow_download: allow_download_from_env(),
             use_cache: true,
             allow_api_version_guess: false,
             record_source: false,
@@ -191,10 +167,9 @@ impl KubernetesJsonSchemaProvider {
             return None;
         }
 
-        let mut candidates = candidate_filenames_for_resource(resource);
-        if candidates.is_empty() {
-            candidates.push(filename_for_resource(resource));
-        }
+        // `candidate_filenames_for_resource` always yields at least one
+        // filename for a non-empty apiVersion.
+        let candidates = candidate_filenames_for_resource(resource);
 
         let layout = self.run_layout_check();
         if layout == LayoutCheckOutcome::ForwardIncompatible {
@@ -218,30 +193,37 @@ impl KubernetesJsonSchemaProvider {
         None
     }
 
+    fn doc_request<'a>(
+        &'a self,
+        source: &'a SchemaSource,
+        version: &'a str,
+        filename: &'a str,
+    ) -> CachedSchemaDocRequest<'a> {
+        CachedSchemaDocRequest {
+            local: k8s_cache_path(&self.cache_dir, &source.source_id, version, filename),
+            url: source_url(&source.base_url, &format!("{version}/{filename}")),
+            source_id: &source.source_id,
+            cache_namespace: version,
+            cache_key: filename,
+            allow_download: self.allow_download,
+            use_cache: self.use_cache,
+            record_source: self.record_source,
+            use_not_found_marker: true,
+            fetcher: self.fetcher.as_ref(),
+            negative_cache: &self.negative_cache,
+        }
+    }
+
     fn try_load_from_source(
         &self,
         source: &SchemaSource,
         version: &str,
         filename: &str,
     ) -> Option<SchemaDoc> {
-        let local = k8s_cache_path(&self.cache_dir, &source.source_id, version, filename);
-        let url = source_url(&source.base_url, &format!("{version}/{filename}"));
         load_source_schema_doc(
-            CachedSchemaDocRequest {
-                local: &local,
-                url: &url,
-                source_id: &source.source_id,
-                cache_namespace: version,
-                cache_key: filename,
-                allow_download: self.allow_download,
-                use_cache: self.use_cache,
-                record_source: self.record_source,
-                fetcher: self.fetcher.as_ref(),
-                negative_cache: &self.negative_cache,
-            },
+            self.doc_request(source, version, filename),
             &self.mem,
             mem_key(&source.source_id, version, filename),
-            AuthoritativeAbsence::MarkerPath(&local),
         )
     }
 
@@ -291,275 +273,28 @@ impl KubernetesJsonSchemaProvider {
         Some((version, fragment))
     }
 
-    /// Authoritative answer to `.Capabilities.APIVersions.Has "api"`
-    /// against the primary K8s version. Upstream-first: probes the
-    /// local cache, falling back to a real fetch if the file is
-    /// absent and downloads are enabled.
-    ///
-    /// `api` is the literal Helm argument: `group/version` or
-    /// `group/version/Kind` or `version` (core API).
-    ///
-    /// Returns:
-    ///   - `Some(true)` — probe was positively found (in-mem cache hit,
-    ///     disk cache hit, or successful upstream fetch).
-    ///   - `Some(false)` — probe is authoritatively absent (the
-    ///     upstream fetcher reported "not found", which recorded a
-    ///     negative-cache entry). Includes negative-cache hits from a
-    ///     prior online run even when downloads are now disabled —
-    ///     those represent a confirmed past 404.
-    ///   - `None` — uncertain. We can't reach a conclusion either way:
-    ///     no primary version configured, unknown probe target (no
-    ///     canonical kind for this 2-part api version), downloads
-    ///     disabled with the probe absent from both the local cache
-    ///     AND the negative cache (offline + the probe was never
-    ///     previously attempted), or a network error during fetch.
-    ///
-    /// The branch selector treats `None` as "potentially live" so
-    /// uncertainty never silently drops a branch — the cache
-    /// completeness of a partial offline run doesn't get to vote on
-    /// what the chart would emit.
-    #[must_use]
-    pub fn capability_has_query_at_primary_version(
-        &self,
-        query: &ApiPresenceQuery,
-    ) -> Option<bool> {
-        self.capability_has_query_at_primary_version_traced(query)
-            .answer
-    }
-
-    /// Traced form of [`Self::capability_has_query_at_primary_version`].
-    #[must_use]
-    pub fn capability_has_query_at_primary_version_traced(
-        &self,
-        query: &ApiPresenceQuery,
-    ) -> TracedApiPresenceOutcome {
-        let mut trace = LookupTrace::default();
-        let Some(primary) = self.versions.primary() else {
-            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
-            return TracedApiPresenceOutcome {
-                answer: None,
-                trace,
-            };
-        };
-        let Some(probe) = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(query) else {
-            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
-            return TracedApiPresenceOutcome {
-                answer: None,
-                trace,
-            };
-        };
-        let candidates = candidate_filenames_for_resource(&probe);
-        // Aggregate the outcome across (source × filename) pairs.
-        // Found-ness short-circuits to `Some(true)`. Without that, the
-        // worst case across all probes decides — any uncertain probe
-        // beats an authoritative absent, since one source might have
-        // it even if the other authoritatively doesn't.
-        let mut worst: ProbeOutcome = ProbeOutcome::AuthoritativelyAbsent;
-        for filename in &candidates {
-            for source in &self.mirrors.sources {
-                let outcome = self.probe_at(&source.source_id, primary, filename);
-                trace.record_api_presence_source_probe(
-                    ProviderOrigin::KubernetesOpenApi,
-                    &source.source_id,
-                    primary,
-                    filename,
-                    SourceProbeTraceOutcome::from(outcome),
-                );
-                match outcome {
-                    ProbeOutcome::Found => {
-                        trace.record_api_presence_provider(
-                            ProviderOrigin::KubernetesOpenApi,
-                            Some(true),
-                        );
-                        return TracedApiPresenceOutcome {
-                            answer: Some(true),
-                            trace,
-                        };
-                    }
-                    ProbeOutcome::Uncertain => worst = ProbeOutcome::Uncertain,
-                    ProbeOutcome::AuthoritativelyAbsent => {
-                        // worst stays at AuthoritativelyAbsent unless
-                        // some other probe already set it to Uncertain.
-                    }
-                }
-            }
-        }
-        let answer = match worst {
-            ProbeOutcome::Found => unreachable!("Found short-circuits above"),
-            ProbeOutcome::AuthoritativelyAbsent => Some(false),
-            ProbeOutcome::Uncertain => None,
-        };
-        trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, answer);
-        TracedApiPresenceOutcome { answer, trace }
-    }
-
     /// Single-probe upstream-first lookup with tri-state outcome. The
-    /// authoritative-vs-uncertain distinction is the heart of the
-    /// capability oracle's offline-safety contract:
-    ///   - `Found`: schema is loadable (mem cache, disk cache, or
-    ///     successful fetch).
-    ///   - `AuthoritativelyAbsent`: the fetcher confirmed the schema
-    ///     does not exist upstream (recorded in negative cache).
-    ///     Includes negative-cache hits from a prior online run, since
-    ///     those represent a confirmed past 404 — still authoritative.
-    ///   - `Uncertain`: no cache hit, no fetch attempted (offline AND
-    ///     no negative-cache record), or fetch failed with a network
-    ///     error. The probe gives no information either way.
-    fn probe_at(&self, source_id: &str, version: &str, filename: &str) -> ProbeOutcome {
-        let local = k8s_cache_path(&self.cache_dir, source_id, version, filename);
-        if self.use_cache {
-            if self
-                .mem
-                .read(&mem_key(source_id, version, filename))
-                .is_some()
-            {
-                return ProbeOutcome::Found;
+    /// per-outcome semantics — the heart of the capability oracle's
+    /// offline-safety contract — live on
+    /// [`crate::source_cache::SourceDocOutcome`], which this probe
+    /// shares with resource lookup.
+    fn probe_at(
+        &self,
+        source: &SchemaSource,
+        version: &str,
+        filename: &str,
+    ) -> SourceProbeTraceOutcome {
+        match probe_source_schema_doc(
+            self.doc_request(source, version, filename),
+            &self.mem,
+            mem_key(&source.source_id, version, filename),
+        ) {
+            SourceDocOutcome::Found(_) => SourceProbeTraceOutcome::Found,
+            SourceDocOutcome::AuthoritativelyAbsent => {
+                SourceProbeTraceOutcome::AuthoritativelyAbsent
             }
-            if local.exists() {
-                return ProbeOutcome::Found;
-            }
-            // Negative cache is set ONLY when the fetcher returns a clean
-            // "not found" — treat as authoritative even offline. A prior
-            // online run already proved upstream doesn't have this file.
-            if self.negative_cache.contains(source_id, version, filename)
-                || not_found_marker_exists(&local)
-            {
-                return ProbeOutcome::AuthoritativelyAbsent;
-            }
+            SourceDocOutcome::Uncertain => SourceProbeTraceOutcome::Uncertain,
         }
-        if !self.allow_download {
-            // Offline + no cache + no negative-cache record: nothing
-            // to base an answer on.
-            return ProbeOutcome::Uncertain;
-        }
-        // Online: try the fetcher and let it disambiguate.
-        let source = self
-            .mirrors
-            .sources
-            .iter()
-            .find(|s| s.source_id == source_id);
-        let Some(source) = source else {
-            return ProbeOutcome::Uncertain;
-        };
-        let url = format!(
-            "{}/{version}/{filename}",
-            source.base_url.trim_end_matches('/')
-        );
-        match self.fetcher.fetch(&url) {
-            Ok(Some(bytes)) => {
-                let Some(doc) = crate::cache_write::write_fetched_schema_doc(
-                    &local,
-                    &url,
-                    &bytes,
-                    self.record_source,
-                ) else {
-                    // Couldn't persist or parse — we still proved the
-                    // schema exists upstream, but treat as Uncertain so
-                    // a later run probes again rather than locking in a
-                    // cache miss.
-                    return ProbeOutcome::Uncertain;
-                };
-                AuthoritativeAbsence::MarkerPath(&local).clear();
-                self.mem.write(mem_key(source_id, version, filename), doc);
-                ProbeOutcome::Found
-            }
-            Ok(None) => {
-                self.negative_cache.record(source_id, version, filename);
-                AuthoritativeAbsence::MarkerPath(&local).record();
-                ProbeOutcome::AuthoritativelyAbsent
-            }
-            // Network error: uncertain. Don't pollute the negative
-            // cache, since the failure isn't proof of absence.
-            Err(_) => ProbeOutcome::Uncertain,
-        }
-    }
-
-    /// Schema for a resource is owned by us if any (version, source)
-    /// has its file already cached or recorded as negative-cache; no
-    /// fetches issued during ownership probe (PR 0e contract).
-    fn local_owns_resource(&self, resource: &ResourceRef) -> bool {
-        if !self.use_cache {
-            return false;
-        }
-        if resource.api_version.trim().is_empty() {
-            return false;
-        }
-        let candidates = candidate_filenames_for_resource(resource);
-        for version in self.versions.ordered() {
-            for filename in &candidates {
-                for source in &self.mirrors.sources {
-                    let local =
-                        k8s_cache_path(&self.cache_dir, &source.source_id, &version, filename);
-                    if local.exists() {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// Scan the cache for K8s versions that hold this resource's file
-    /// in any CONFIGURED source namespace. Used by the chain layer to
-    /// populate `Diagnostic::MissingSchema.available_in_cache_versions`
-    /// when the configured chain didn't resolve the resource.
-    ///
-    /// Stale `<source_id>` dirs left on disk from removed mirrors are
-    /// skipped (Finding 2 — only currently-configured sources may
-    /// surface inference / hint signals).
-    ///
-    /// Returns a sorted+deduped list of `version_dir` strings.
-    #[must_use]
-    pub fn cache_versions_holding(&self, resource: &ResourceRef) -> Vec<String> {
-        let mut out: Vec<String> = Vec::new();
-        if resource.api_version.trim().is_empty() {
-            return out;
-        }
-        let candidates = candidate_filenames_for_resource(resource);
-        let Ok(source_entries) = fs::read_dir(&self.cache_dir) else {
-            return out;
-        };
-        let configured_versions: std::collections::HashSet<String> =
-            self.versions.ordered().into_iter().collect();
-        let configured_source_ids = self.mirrors.source_ids();
-        for source_entry in source_entries.flatten() {
-            let source_path = source_entry.path();
-            if !source_path.is_dir() {
-                continue;
-            }
-            let Some(source_id) = source_entry.file_name().to_str().map(str::to_string) else {
-                continue;
-            };
-            if !configured_source_ids.contains(&source_id) {
-                continue;
-            }
-            let Ok(version_entries) = fs::read_dir(&source_path) else {
-                continue;
-            };
-            for version_entry in version_entries.flatten() {
-                let version_path = version_entry.path();
-                if !version_path.is_dir() {
-                    continue;
-                }
-                let Some(version_name) = version_entry.file_name().to_str().map(str::to_string)
-                else {
-                    continue;
-                };
-                if configured_versions.contains(&version_name) {
-                    // Configured versions were already probed — skip them.
-                    continue;
-                }
-                for filename in &candidates {
-                    if version_path.join(filename).exists() {
-                        out.push(version_name.clone());
-                        break;
-                    }
-                }
-            }
-        }
-        out.sort();
-        out.dedup();
-        out
     }
 }
 
@@ -616,8 +351,29 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         }
     }
 
+    /// Schema for a resource is owned by us if any (version, source)
+    /// has its file already cached or recorded as negative-cache; no
+    /// fetches issued during ownership probe (PR 0e contract).
     fn has_resource(&self, resource: &ResourceRef) -> bool {
-        self.local_owns_resource(resource)
+        if !self.use_cache {
+            return false;
+        }
+        if resource.api_version.trim().is_empty() {
+            return false;
+        }
+        let candidates = candidate_filenames_for_resource(resource);
+        for version in self.versions.ordered() {
+            for filename in &candidates {
+                for source in &self.mirrors.sources {
+                    let local =
+                        k8s_cache_path(&self.cache_dir, &source.source_id, &version, filename);
+                    if local.exists() {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 
     fn primary_k8s_version(&self) -> Option<&str> {
@@ -628,19 +384,145 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         Some(self.versions.ordered())
     }
 
+    /// Scan the cache for K8s versions that hold this resource's file
+    /// in any CONFIGURED source namespace. Used by the chain layer to
+    /// populate `Diagnostic::MissingSchema.available_in_cache_versions`
+    /// when the configured chain didn't resolve the resource.
+    ///
+    /// Stale `<source_id>` dirs left on disk from removed mirrors are
+    /// skipped (Finding 2 — only currently-configured sources may
+    /// surface inference / hint signals).
+    ///
+    /// Returns a sorted+deduped list of `version_dir` strings.
     fn cache_versions_holding(&self, resource: &ResourceRef) -> Vec<String> {
-        KubernetesJsonSchemaProvider::cache_versions_holding(self, resource)
+        let mut out: Vec<String> = Vec::new();
+        if resource.api_version.trim().is_empty() {
+            return out;
+        }
+        let candidates = candidate_filenames_for_resource(resource);
+        let configured_versions: std::collections::HashSet<String> =
+            self.versions.ordered().into_iter().collect();
+        let configured_source_ids = self.mirrors.source_ids();
+        for (source_id, source_path) in subdirs(&self.cache_dir) {
+            if !configured_source_ids.contains(&source_id) {
+                continue;
+            }
+            for (version_name, version_path) in subdirs(&source_path) {
+                if configured_versions.contains(&version_name) {
+                    // Configured versions were already probed — skip them.
+                    continue;
+                }
+                for filename in &candidates {
+                    if version_path.join(filename).exists() {
+                        out.push(version_name.clone());
+                        break;
+                    }
+                }
+            }
+        }
+        out.sort();
+        out.dedup();
+        out
     }
 
+    /// Authoritative answer to `.Capabilities.APIVersions.Has "api"`
+    /// against the primary K8s version. Upstream-first: probes the
+    /// local cache, falling back to a real fetch if the file is
+    /// absent and downloads are enabled.
+    ///
+    /// `api` is the literal Helm argument: `group/version` or
+    /// `group/version/Kind` or `version` (core API).
+    ///
+    /// Returns:
+    ///   - `Some(true)` — probe was positively found (in-mem cache hit,
+    ///     disk cache hit, or successful upstream fetch).
+    ///   - `Some(false)` — probe is authoritatively absent (the
+    ///     upstream fetcher reported "not found", which recorded a
+    ///     negative-cache entry). Includes negative-cache hits from a
+    ///     prior online run even when downloads are now disabled —
+    ///     those represent a confirmed past 404.
+    ///   - `None` — uncertain. We can't reach a conclusion either way:
+    ///     no primary version configured, unknown probe target (no
+    ///     canonical kind for this 2-part api version), downloads
+    ///     disabled with the probe absent from both the local cache
+    ///     AND the negative cache (offline + the probe was never
+    ///     previously attempted), or a network error during fetch.
+    ///
+    /// The branch selector treats `None` as "potentially live" so
+    /// uncertainty never silently drops a branch — the cache
+    /// completeness of a partial offline run doesn't get to vote on
+    /// what the chart would emit.
     fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
-        KubernetesJsonSchemaProvider::capability_has_query_at_primary_version(self, query)
+        self.capability_has_query_at_primary_version_traced(query)
+            .answer
     }
 
+    /// Traced form of
+    /// [`K8sSchemaProvider::capability_has_query_at_primary_version`].
     fn capability_has_query_at_primary_version_traced(
         &self,
         query: &ApiPresenceQuery,
     ) -> TracedApiPresenceOutcome {
-        KubernetesJsonSchemaProvider::capability_has_query_at_primary_version_traced(self, query)
+        let mut trace = LookupTrace::default();
+        let Some(primary) = self.versions.primary() else {
+            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
+            return TracedApiPresenceOutcome {
+                answer: None,
+                trace,
+            };
+        };
+        let Some(probe) = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(query) else {
+            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
+            return TracedApiPresenceOutcome {
+                answer: None,
+                trace,
+            };
+        };
+        let candidates = candidate_filenames_for_resource(&probe);
+        // Aggregate the outcome across (source × filename) pairs.
+        // Found-ness short-circuits to `Some(true)`. Without that, the
+        // worst case across all probes decides — any uncertain probe
+        // beats an authoritative absent, since one source might have
+        // it even if the other authoritatively doesn't.
+        let mut worst = SourceProbeTraceOutcome::AuthoritativelyAbsent;
+        for filename in &candidates {
+            for source in &self.mirrors.sources {
+                let outcome = self.probe_at(source, primary, filename);
+                trace.record_api_presence_source_probe(
+                    ProviderOrigin::KubernetesOpenApi,
+                    &source.source_id,
+                    primary,
+                    filename,
+                    outcome,
+                );
+                match outcome {
+                    SourceProbeTraceOutcome::Found => {
+                        trace.record_api_presence_provider(
+                            ProviderOrigin::KubernetesOpenApi,
+                            Some(true),
+                        );
+                        return TracedApiPresenceOutcome {
+                            answer: Some(true),
+                            trace,
+                        };
+                    }
+                    SourceProbeTraceOutcome::Uncertain => {
+                        worst = SourceProbeTraceOutcome::Uncertain;
+                    }
+                    SourceProbeTraceOutcome::AuthoritativelyAbsent => {
+                        // worst stays at AuthoritativelyAbsent unless
+                        // some other probe already set it to Uncertain.
+                    }
+                }
+            }
+        }
+        let answer = match worst {
+            SourceProbeTraceOutcome::Found => unreachable!("Found short-circuits above"),
+            SourceProbeTraceOutcome::AuthoritativelyAbsent => Some(false),
+            SourceProbeTraceOutcome::Uncertain => None,
+        };
+        trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, answer);
+        TracedApiPresenceOutcome { answer, trace }
     }
 
     fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {
