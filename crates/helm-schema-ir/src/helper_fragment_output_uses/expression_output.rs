@@ -129,7 +129,6 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             .string_output
             .extend(nested_summary.string_output.iter().cloned());
     }
-    state.analysis.absorb_nested_hints(&nested_summary);
     state.analysis.absorb_nested_dependencies(
         &nested_summary,
         NestedDependencyRows::DependenciesOnly,
@@ -309,7 +308,6 @@ fn collect_bound_fragment_output_assignment_uses(
         if direct_helper_assignment {
             merge_output_use_meta(&mut output_meta, &nested.output_uses);
         }
-        state.analysis.absorb_nested_hints(&nested);
         if emit_nested_dependencies {
             state.analysis.absorb_nested_dependencies(
                 &nested,

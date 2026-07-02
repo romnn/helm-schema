@@ -52,7 +52,11 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             self.params.seen,
         );
         let value = analysis.project_value();
+        // The resolver boundary is the one place nested summary hints enter
+        // expression effects; collectors read the Effects fields only.
         let effects = Effects {
+            chart_default_paths: analysis.chart_defaults.clone(),
+            type_hints: analysis.type_hints.clone(),
             helper_summary: analysis,
             ..Effects::default()
         };

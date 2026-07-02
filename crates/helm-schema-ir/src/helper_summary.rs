@@ -457,12 +457,6 @@ impl HelperSummary {
     /// default declarations and schema type hints. These describe the values
     /// shape regardless of where the nested output lands, so direct output
     /// sites and assignment sites absorb them alike.
-    pub(crate) fn absorb_nested_hints(&mut self, nested: &HelperSummary) {
-        self.chart_defaults
-            .extend(nested.chart_defaults.iter().cloned());
-        self.add_type_hints(nested.type_hints.clone());
-    }
-
     /// Absorbs a nested helper call's read facts: guard-path meta rows first,
     /// then the selected output rows as dependency rows. Each dependency row
     /// keeps the nested meta, gains the active output-site predicates that
