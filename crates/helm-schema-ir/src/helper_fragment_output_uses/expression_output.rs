@@ -8,7 +8,8 @@ use crate::expr_eval::{
     eval_helper_exprs_direct_effects, expr_leading_variable, expr_starts_with_helper_call,
 };
 use crate::fragment_assignment::{
-    AssignmentKind, apply_local_set_mutations_from_exprs, parse_helper_assignment_from_exprs,
+    AssignmentKind, ParsedHelperAssignment, apply_local_set_mutations_from_exprs,
+    parse_helper_assignment_from_exprs,
 };
 use crate::fragment_expr_eval::{
     FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
@@ -50,9 +51,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
 
     if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
         collect_bound_fragment_output_assignment_uses(
-            &assignment.variable,
-            assignment.kind,
-            &assignment.rhs_expr,
+            &assignment,
             bindings,
             current_dot,
             current_dot_fragment,
@@ -228,9 +227,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
 }
 
 fn collect_bound_fragment_output_assignment_uses(
-    var: &str,
-    assignment_kind: AssignmentKind,
-    rhs_expr: &TemplateExpr,
+    assignment: &ParsedHelperAssignment,
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
     current_dot_fragment: Option<&AbstractValue>,
@@ -238,6 +235,11 @@ fn collect_bound_fragment_output_assignment_uses(
     active_source_relations: &[BTreeSet<String>],
     state: &mut FragmentOutputWalkState<'_, '_>,
 ) {
+    let ParsedHelperAssignment {
+        variable: var,
+        kind: assignment_kind,
+        rhs_expr,
+    } = assignment;
     let mut seen_rhs = state.seen.clone();
     let result = helper_result_from_expr_with_fragment_locals(
         rhs_expr,
@@ -253,7 +255,7 @@ fn collect_bound_fragment_output_assignment_uses(
     let mut binding = result.value.and_then(AbstractValue::without_widened);
     let mut output_meta = result.effects.local_output_meta.clone();
     let branch_predicates_apply_to_assignment =
-        assignment_kind == AssignmentKind::Assignment && !active_output_predicates.is_empty();
+        *assignment_kind == AssignmentKind::Assignment && !active_output_predicates.is_empty();
     if branch_predicates_apply_to_assignment {
         output_meta = output_meta
             .into_iter()

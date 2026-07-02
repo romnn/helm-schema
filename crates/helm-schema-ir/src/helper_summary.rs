@@ -22,15 +22,9 @@ impl HelperOutputMeta {
             return self;
         }
         let active_predicates = predicates.iter().cloned().collect::<Vec<_>>();
-        let base_branches = if self.predicates.is_empty() {
-            vec![BTreeSet::new()]
-        } else {
-            self.predicates.into_iter().collect::<Vec<_>>()
-        };
-        self.predicates = base_branches
+        self.predicates = branches_or_unconditional(self.predicates)
             .into_iter()
-            .map(|base_branch| {
-                let mut branch = base_branch.clone();
+            .map(|mut branch| {
                 branch.extend(active_predicates.iter().cloned());
                 branch
             })
@@ -115,7 +109,7 @@ impl HelperOutputMeta {
             });
             if has_truthy_sibling {
                 predicate_branch.retain(|predicate| {
-                    !predicate_not_truthy_path(predicate).is_some_and(|path| path == source_expr)
+                    predicate_not_truthy_path(predicate).is_none_or(|path| path != source_expr)
                 });
             }
         });
@@ -144,11 +138,7 @@ impl HelperOutputMeta {
     }
 
     pub(crate) fn contract_guard_sets(&self, source_expr: &str) -> Vec<Vec<Guard>> {
-        let predicate_branches = if self.predicates.is_empty() {
-            vec![BTreeSet::new()]
-        } else {
-            self.predicates.iter().cloned().collect::<Vec<_>>()
-        };
+        let predicate_branches = branches_or_unconditional(self.predicates.clone());
         let mut guard_sets = Vec::new();
         for predicate_branch in predicate_branches {
             let predicate_branch = self.prune_suppressed_predicates(predicate_branch, source_expr);
@@ -226,6 +216,16 @@ pub(crate) fn merge_provenance_sites(
         if !target.contains(site) {
             target.push(site.clone());
         }
+    }
+}
+
+/// A meta with no recorded predicates means one unconditional branch, not
+/// zero branches.
+fn branches_or_unconditional(branches: BTreeSet<BTreeSet<Predicate>>) -> Vec<BTreeSet<Predicate>> {
+    if branches.is_empty() {
+        vec![BTreeSet::new()]
+    } else {
+        branches.into_iter().collect()
     }
 }
 
@@ -723,7 +723,7 @@ fn prune_pathless_sibling_predicates_for_meta(
         });
         if meta.defaulted && (has_source_truthy || has_truthy_sibling || !relative_path_empty) {
             predicate_branch.retain(|predicate| {
-                !predicate_not_truthy_path(predicate).is_some_and(|path| path == source_expr)
+                predicate_not_truthy_path(predicate).is_none_or(|path| path != source_expr)
             });
         }
     });

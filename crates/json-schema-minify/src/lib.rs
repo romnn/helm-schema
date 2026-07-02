@@ -51,16 +51,9 @@ fn can_insert_generated_definitions(schema: &Value) -> bool {
     }
 }
 
-fn collect_candidates(
-    schema: &Value,
-    is_root: bool,
-    candidates: &mut BTreeMap<String, (usize, usize)>,
-) {
-    if !is_root && let Some((canonical, bytes)) = candidate_fingerprint(schema) {
-        candidates
-            .entry(canonical)
-            .and_modify(|candidate| candidate.0 += 1)
-            .or_insert((1, bytes));
+fn collect_candidates(schema: &Value, is_root: bool, candidates: &mut BTreeMap<String, usize>) {
+    if !is_root && let Some(canonical) = candidate_fingerprint(schema) {
+        *candidates.entry(canonical).or_insert(0) += 1;
     }
 
     visit_subschemas(schema, &mut |subschema| {
@@ -70,26 +63,28 @@ fn collect_candidates(
 
 fn plan_definitions(
     schema: &Value,
-    candidates: BTreeMap<String, (usize, usize)>,
+    candidates: BTreeMap<String, usize>,
 ) -> BTreeMap<String, String> {
     let mut existing_names = existing_definition_names(schema);
-    let mut repeated: Vec<(String, (usize, usize))> = candidates
+    let mut repeated: Vec<(String, usize)> = candidates
         .into_iter()
-        .filter(|(_, (occurrences, _bytes))| *occurrences > 1)
+        .filter(|(_, occurrences)| *occurrences > 1)
         .collect();
-    repeated.sort_by(|(left_key, left), (right_key, right)| {
-        right
-            .1
-            .cmp(&left.1)
-            .then_with(|| right.0.cmp(&left.0))
-            .then_with(|| left_key.cmp(right_key))
+    // Largest subtree first (the canonical string is the subtree, so its
+    // length is the subtree's byte size), then most occurrences.
+    repeated.sort_by(|(left_canonical, left), (right_canonical, right)| {
+        right_canonical
+            .len()
+            .cmp(&left_canonical.len())
+            .then_with(|| right.cmp(left))
+            .then_with(|| left_canonical.cmp(right_canonical))
     });
 
     let mut planned = BTreeMap::new();
     let mut next_id = 1usize;
-    for (canonical, (occurrences, bytes)) in repeated {
+    for (canonical, occurrences) in repeated {
         let (name, following_id) = next_definition_name(&existing_names, next_id);
-        if estimated_savings(bytes, occurrences, &name) <= 0 {
+        if estimated_savings(canonical.len(), occurrences, &name) <= 0 {
             continue;
         }
         existing_names.insert(name.clone());
@@ -128,7 +123,7 @@ fn rewrite_schema(
     definitions: &mut BTreeMap<String, Value>,
 ) {
     if !is_root
-        && let Some((canonical, _bytes)) = candidate_fingerprint(schema)
+        && let Some(canonical) = candidate_fingerprint(schema)
         && let Some(definition_name) = planned.get(&canonical)
     {
         definitions
@@ -158,13 +153,11 @@ fn insert_definitions(schema: &mut Value, definitions: BTreeMap<String, Value>) 
     }
 }
 
-fn candidate_fingerprint(schema: &Value) -> Option<(String, usize)> {
+fn candidate_fingerprint(schema: &Value) -> Option<String> {
     if !matches!(schema, Value::Object(_)) || contains_reference_scope_keyword(schema) {
         return None;
     }
-    let canonical = json_schema_walk::canonical_json_string(schema);
-    let bytes = canonical.len();
-    Some((canonical, bytes))
+    Some(json_schema_walk::canonical_json_string(schema))
 }
 
 fn contains_reference_scope_keyword(value: &Value) -> bool {

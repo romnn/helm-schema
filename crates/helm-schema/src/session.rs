@@ -47,16 +47,16 @@ pub struct ValuePathExplanation {
     pub has_default_fallback: bool,
 }
 
-pub(crate) struct PreparedSession {
-    pub(crate) analysis: Analysis,
-    pub(crate) values_yaml: Option<String>,
-    pub(crate) explicit_value_paths: BTreeSet<String>,
-    pub(crate) values_descriptions: BTreeMap<String, String>,
-    pub(crate) subchart_value_prefixes: Vec<Vec<String>>,
+struct PreparedSession {
+    analysis: Analysis,
+    values_yaml: Option<String>,
+    explicit_value_paths: BTreeSet<String>,
+    values_descriptions: BTreeMap<String, String>,
+    subchart_value_prefixes: Vec<Vec<String>>,
 }
 
 impl PreparedSession {
-    pub(crate) fn from_generate_options(opts: &GenerateOptions) -> CliResult<Self> {
+    fn from_generate_options(opts: &GenerateOptions) -> CliResult<Self> {
         let charts = &chart::discover_chart_contexts(&opts.chart_dir)?;
 
         let defines = chart::build_define_index(charts, opts.include_tests)?;
@@ -169,18 +169,25 @@ impl AnalysisSession {
         Ok((*self.resolved()?).clone())
     }
 
-    /// Return the memoized generated values schema.
+    /// Return the memoized generated values schema: the resolved contract
+    /// schema plus the optional `--infer-required` post-pass.
     pub fn generated_schema(&self) -> CliResult<GeneratedSchema> {
         Ok((*self.generated_schema.get_or_try_init(|| {
-            let prepared = self.prepared()?;
             let resolved = self.resolved()?;
-            let finalized_contract = self.finalized_contract()?;
-            Ok(generate_schema_from_resolved_contract(
-                &resolved,
-                &prepared,
-                finalized_contract.schema_signals(),
-                &self.opts,
-            ))
+            let mut schema = resolved.schema.clone();
+            if self.opts.infer_required {
+                helm_schema_gen::required_inference::apply_required_inference(
+                    &mut schema,
+                    self.finalized_contract()?
+                        .schema_signals()
+                        .schema_evidence_by_value_path(),
+                    &self.prepared()?.explicit_value_paths,
+                );
+            }
+            Ok(GeneratedSchema {
+                schema,
+                subchart_value_prefixes: resolved.subchart_value_prefixes.clone(),
+            })
         })?)
         .clone())
     }
@@ -290,57 +297,22 @@ impl AnalysisSession {
         self.resolved_contract.get_or_try_init(|| {
             let prepared = self.prepared()?;
             let finalized_contract = self.finalized_contract()?;
-            resolve_contract_from_prepared(
-                &prepared,
-                finalized_contract.schema_signals(),
-                &self.opts,
-                Some(&self.diagnostics),
-            )
+            let mut provider_options = self.opts.provider.clone();
+            provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
+            let provider =
+                provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
+
+            let schema = generate_values_schema(
+                ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
+                    .with_values_yaml(prepared.values_yaml.as_deref())
+                    .with_values_descriptions(&prepared.values_descriptions),
+            );
+
+            Ok(ResolvedContract {
+                schema,
+                subchart_value_prefixes: prepared.subchart_value_prefixes.clone(),
+            })
         })
-    }
-}
-
-pub(crate) fn resolve_contract_from_prepared(
-    prepared: &PreparedSession,
-    contract_schema_signals: &ContractSchemaSignals,
-    opts: &GenerateOptions,
-    diagnostic_sink: Option<&DiagnosticSink>,
-) -> CliResult<ResolvedContract> {
-    let mut provider_options = opts.provider.clone();
-    provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
-    let provider = provider_builder::build_provider(&provider_options, diagnostic_sink);
-
-    let schema = generate_values_schema(
-        ValuesSchemaInput::new(contract_schema_signals, &provider)
-            .with_values_yaml(prepared.values_yaml.as_deref())
-            .with_values_descriptions(&prepared.values_descriptions),
-    );
-
-    Ok(ResolvedContract {
-        schema,
-        subchart_value_prefixes: prepared.subchart_value_prefixes.clone(),
-    })
-}
-
-pub(crate) fn generate_schema_from_resolved_contract(
-    resolved: &ResolvedContract,
-    prepared: &PreparedSession,
-    contract_schema_signals: &ContractSchemaSignals,
-    opts: &GenerateOptions,
-) -> GeneratedSchema {
-    let mut schema = resolved.schema.clone();
-
-    if opts.infer_required {
-        helm_schema_gen::required_inference::apply_required_inference(
-            &mut schema,
-            contract_schema_signals.schema_evidence_by_value_path(),
-            &prepared.explicit_value_paths,
-        );
-    }
-
-    GeneratedSchema {
-        schema,
-        subchart_value_prefixes: resolved.subchart_value_prefixes.clone(),
     }
 }
 

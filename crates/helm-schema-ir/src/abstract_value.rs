@@ -100,28 +100,14 @@ impl AbstractValue {
     }
 
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
-        self.range_item(false)
-    }
-
-    fn range_item(&self, include_map_values: bool) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
             Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
-            Self::Dict(entries) if include_map_values => {
-                Self::choice(entries.values().cloned().collect())
-            }
             Self::List(items) => Self::choice(items.clone()),
-            Self::Overlay { entries, fallback } if include_map_values => {
-                let mut choices: Vec<_> = entries.values().cloned().collect();
-                if let Some(fallback_item) = fallback.range_item(include_map_values) {
-                    choices.push(fallback_item);
-                }
-                Self::choice(choices)
-            }
             Self::Choice(choices) => Self::choice(
                 choices
                     .iter()
-                    .filter_map(|choice| choice.range_item(include_map_values))
+                    .filter_map(Self::fragment_range_item)
                     .collect(),
             ),
             Self::Top
@@ -263,6 +249,20 @@ impl AbstractValue {
         }
     }
 
+    /// Merges `entries` into `map`, joining values that land on an existing
+    /// key. Both merge folds share this per-key rule.
+    fn merge_entries(map: &mut BTreeMap<String, Self>, entries: BTreeMap<String, Self>) {
+        for (key, value) in entries {
+            let merged = match map.remove(&key) {
+                Some(existing) => Self::choice(vec![existing, value]),
+                None => Some(value),
+            };
+            if let Some(merged) = merged {
+                map.insert(key, merged);
+            }
+        }
+    }
+
     pub(crate) fn merge_all(values: Vec<Self>) -> Option<Self> {
         let mut map = BTreeMap::new();
         let mut non_dict_values = Vec::new();
@@ -271,23 +271,10 @@ impl AbstractValue {
         while let Some(value) = pending.pop() {
             match value {
                 Self::Choice(choices) => pending.extend(choices),
-                Self::Dict(entries) => {
-                    for (key, value) in entries {
-                        let merged = match map.remove(&key) {
-                            Some(existing) => Self::choice(vec![existing, value]),
-                            None => Some(value),
-                        };
-                        if let Some(merged) = merged {
-                            map.insert(key, merged);
-                        }
-                    }
-                }
-                Self::Top => {
-                    non_dict_values.push(Self::Top);
-                }
-                Self::Unknown => {
-                    non_dict_values.push(Self::Unknown);
-                }
+                Self::Dict(entries) => Self::merge_entries(&mut map, entries),
+                // Top/Unknown deliberately survive as fallback members here,
+                // unlike merge_context_values, which keeps only values-backed
+                // members.
                 other => non_dict_values.push(other),
             }
         }
@@ -372,28 +359,10 @@ impl AbstractValue {
         while let Some(binding) = pending.pop() {
             match binding {
                 Self::Choice(choices) => pending.extend(choices),
-                Self::Dict(entries) => {
-                    for (key, value) in entries {
-                        let merged = match map.remove(&key) {
-                            Some(existing) => Self::choice(vec![existing, value]),
-                            None => Some(value),
-                        };
-                        if let Some(merged) = merged {
-                            map.insert(key, merged);
-                        }
-                    }
-                }
+                Self::Dict(entries) => Self::merge_entries(&mut map, entries),
                 Self::Overlay { entries, fallback } => {
                     pending.push(*fallback);
-                    for (key, value) in entries {
-                        let merged = match map.remove(&key) {
-                            Some(existing) => Self::choice(vec![existing, value]),
-                            None => Some(value),
-                        };
-                        if let Some(merged) = merged {
-                            map.insert(key, merged);
-                        }
-                    }
+                    Self::merge_entries(&mut map, entries);
                 }
                 Self::ValuesPath(path) => {
                     non_dict_value_paths.insert(path);
@@ -449,14 +418,7 @@ impl AbstractValue {
             | Self::StringSet(_) => Some(self),
             Self::Widened(paths) => Self::widened(paths.difference(remove).cloned().collect()),
             Self::Dict(entries) => {
-                let entries = entries
-                    .into_iter()
-                    .filter_map(|(key, value)| {
-                        value
-                            .remove_fragment_paths(remove)
-                            .map(|value| (key, value))
-                    })
-                    .collect::<BTreeMap<_, _>>();
+                let entries = Self::remove_fragment_paths_from_entries(entries, remove);
                 if entries.is_empty() {
                     None
                 } else {
@@ -475,14 +437,7 @@ impl AbstractValue {
                 }
             }
             Self::Overlay { entries, fallback } => {
-                let entries = entries
-                    .into_iter()
-                    .filter_map(|(key, value)| {
-                        value
-                            .remove_fragment_paths(remove)
-                            .map(|value| (key, value))
-                    })
-                    .collect::<BTreeMap<_, _>>();
+                let entries = Self::remove_fragment_paths_from_entries(entries, remove);
                 match (entries.is_empty(), fallback.remove_fragment_paths(remove)) {
                     (true, fallback) => fallback,
                     (false, Some(fallback)) => Some(Self::Overlay {
@@ -499,6 +454,20 @@ impl AbstractValue {
                     .collect(),
             ),
         }
+    }
+
+    fn remove_fragment_paths_from_entries(
+        entries: BTreeMap<String, Self>,
+        remove: &BTreeSet<String>,
+    ) -> BTreeMap<String, Self> {
+        entries
+            .into_iter()
+            .filter_map(|(key, value)| {
+                value
+                    .remove_fragment_paths(remove)
+                    .map(|value| (key, value))
+            })
+            .collect()
     }
 
     pub(crate) fn to_context_value(&self) -> Self {
@@ -552,33 +521,11 @@ impl AbstractValue {
                 push_output_path(outputs, path, relative_path, kind, Some(meta), scope);
             }
             Self::Dict(entries) => {
-                for (key, value) in entries {
-                    let child_path = output_path::append_relative_path(
-                        relative_path,
-                        &YamlPath(vec![key.clone()]),
-                    );
-                    value.collect_output_uses(
-                        outputs,
-                        &child_path,
-                        value.output_child_kind(),
-                        scope,
-                    );
-                }
+                Self::collect_entry_output_uses(entries, outputs, relative_path, scope);
             }
             Self::Overlay { entries, fallback } => {
                 fallback.collect_output_uses(outputs, relative_path, kind, scope);
-                for (key, value) in entries {
-                    let child_path = output_path::append_relative_path(
-                        relative_path,
-                        &YamlPath(vec![key.clone()]),
-                    );
-                    value.collect_output_uses(
-                        outputs,
-                        &child_path,
-                        value.output_child_kind(),
-                        scope,
-                    );
-                }
+                Self::collect_entry_output_uses(entries, outputs, relative_path, scope);
             }
             Self::Choice(choices) => {
                 for choice in choices {
@@ -608,6 +555,19 @@ impl AbstractValue {
                 }
             }
             Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => {}
+        }
+    }
+
+    fn collect_entry_output_uses(
+        entries: &BTreeMap<String, Self>,
+        outputs: &mut Vec<HelperFragmentOutputUse>,
+        relative_path: &YamlPath,
+        scope: &OutputProjectionScope<'_>,
+    ) {
+        for (key, value) in entries {
+            let child_path =
+                output_path::append_relative_path(relative_path, &YamlPath(vec![key.clone()]));
+            value.collect_output_uses(outputs, &child_path, value.output_child_kind(), scope);
         }
     }
 

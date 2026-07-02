@@ -28,8 +28,10 @@ fn extract_bound_values(
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
-    let mut env = EvalEnv::default();
-    env.bound_values = BoundValueContext::new(range_domains, get_bindings);
+    let env = EvalEnv {
+        bound_values: BoundValueContext::new(range_domains, get_bindings),
+        ..EvalEnv::default()
+    };
     eval_exprs_effects(&parse_expr_text(text), &env)
         .bound_output_paths
         .into_iter()

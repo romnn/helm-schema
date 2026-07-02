@@ -181,7 +181,6 @@ fn record_contract_use(
         let metadata_field_kind = metadata_field_kind_from_yaml_path(&contract_use.path.0);
         let acc = path_accumulator(paths, &contract_use.source_expr);
         acc.requiredness.is_positive_header |= positive_header;
-        acc.facts.record_metadata_field_kind(metadata_field_kind);
         acc.record_source_use(
             facts,
             path_is_empty || has_matching_self_guard,
@@ -189,7 +188,6 @@ fn record_contract_use(
             provider_schema_use(contract_use, self_range_guarded),
             metadata_field_kind,
         );
-        acc.facts.record_facts(facts);
     }
 
     for path in predicates
@@ -232,12 +230,13 @@ fn record_contract_use(
     }
     if has_source {
         for path in range_guard_paths {
-            let mut facts = ContractValuePathFacts {
+            // No render-use flags ride along here, so record_facts leaves the
+            // accumulator's self-guarded default untouched.
+            let facts = ContractValuePathFacts {
                 is_ranged_source: true,
                 is_nullable: true,
                 ..ContractValuePathFacts::default()
             };
-            facts.all_render_uses_self_guarded = true;
             path_accumulator(paths, &path).facts.record_facts(facts);
         }
     }
@@ -258,8 +257,8 @@ fn finish_schema_signals(
     let schema_evidence_by_value_path = paths
         .into_iter()
         .map(|(value_path, acc)| {
-            let facts = acc.facts(paths_with_referenced_descendants.contains(&value_path));
-            let evidence = acc.into_schema_evidence(value_path.clone(), facts);
+            let has_descendants = paths_with_referenced_descendants.contains(&value_path);
+            let evidence = acc.into_schema_evidence(value_path.clone(), has_descendants);
             (value_path, evidence)
         })
         .collect();
@@ -286,6 +285,8 @@ impl ContractPathAccumulator {
             self.facts.record_provider_schema_use(provider_use);
         }
         self.referenced = true;
+        self.facts.record_metadata_field_kind(metadata_field_kind);
+        self.facts.record_facts(facts);
         if facts.has_render_use {
             if facts.has_unconditional_render_use {
                 self.has_unconditional_overlay_peer = true;
@@ -306,15 +307,12 @@ impl ContractPathAccumulator {
         self.facts.record_nullable_observation(source_null_tolerant);
     }
 
-    fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
-        self.facts.facts(has_referenced_descendants)
-    }
-
     fn into_schema_evidence(
         self,
         value_path: String,
-        facts: ContractValuePathFacts,
+        has_referenced_descendants: bool,
     ) -> ContractPathSchemaEvidence {
+        let facts = self.facts.facts(has_referenced_descendants);
         let ContractPathAccumulator {
             referenced,
             guard_predicates,
@@ -325,13 +323,21 @@ impl ContractPathAccumulator {
             has_unconditional_overlay_peer,
             saw_unsupported_overlay,
         } = self;
-        let conditional_overlays = conditional_overlays(
-            conditional_overlay_branches,
-            has_unconditional_overlay_peer,
-            saw_unsupported_overlay,
-            &type_hints,
-            facts,
-        );
+        // An overlay whose guards could not be lowered poisons every overlay
+        // for the path: emitting only the lowerable branches would understate
+        // the conditional shape.
+        let conditional_overlays = if saw_unsupported_overlay {
+            Vec::new()
+        } else {
+            conditional_overlay_branches
+                .into_iter()
+                .map(|(guards, branch)| ConditionalPathOverlay {
+                    guards,
+                    evidence: branch.conditional_overlay_evidence(facts, type_hints.clone()),
+                    preserve_base_schema: has_unconditional_overlay_peer,
+                })
+                .collect()
+        };
         ContractPathSchemaEvidence {
             value_path,
             is_referenced_value_path: referenced,
@@ -550,26 +556,6 @@ fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {
 
 fn path_contains_wildcard(path: &str) -> bool {
     path.split('.').any(|segment| segment == "*")
-}
-
-fn conditional_overlays(
-    branches: BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
-    preserve_base_schema: bool,
-    saw_unsupported_overlay: bool,
-    type_hints: &BTreeSet<String>,
-    global_facts: ContractValuePathFacts,
-) -> Vec<ConditionalPathOverlay> {
-    if saw_unsupported_overlay {
-        return Vec::new();
-    }
-    branches
-        .into_iter()
-        .map(|(guards, branch)| ConditionalPathOverlay {
-            guards,
-            evidence: branch.conditional_overlay_evidence(global_facts, type_hints.clone()),
-            preserve_base_schema,
-        })
-        .collect()
 }
 
 fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
