@@ -41,8 +41,6 @@ pub(crate) fn collect_resource_spans(
         spans.extend(resource_spans_for_manifest_source(
             document_source,
             start,
-            start,
-            end,
             Vec::new(),
             analysis_db,
         ));
@@ -84,13 +82,14 @@ impl OutputEvaluator {
         if depth >= MAX_RECURSION_DEPTH {
             return HelperBranchBody::literals(Vec::new());
         }
-        self.evaluate_template_body(
+        self.evaluate_output(
             source,
             node,
             analysis_db,
             depth,
             BodyOutputMode::WholeHelper,
         )
+        .1
     }
 
     fn action_body(
@@ -101,16 +100,15 @@ impl OutputEvaluator {
     ) -> Option<HelperBranchBody> {
         let helper_names = helper_call_names(exprs);
         if !helper_names.is_empty() {
-            let mut literals = Vec::new();
-            let mut branches = Vec::new();
+            let mut parts = OutputParts::default();
             for name in helper_names {
                 if let Some(body) = self.with_helper_body(&name, analysis_db, |this, body| {
                     this.evaluate_body(body.source, body.tree.root_node(), analysis_db, depth + 1)
                 }) {
-                    append_body(body, &mut literals, &mut branches);
+                    parts.append_body(body);
                 }
             }
-            return nonempty_body(literals, branches);
+            return nonempty_body(parts.literals, parts.branches);
         }
 
         let literals =
@@ -134,14 +132,14 @@ impl OutputEvaluator {
         result
     }
 
-    fn evaluate_template_body(
+    fn evaluate_output(
         &mut self,
         source: &str,
         node: tree_sitter::Node<'_>,
         analysis_db: &IrAnalysisDb,
         depth: usize,
         mode: BodyOutputMode,
-    ) -> HelperBranchBody {
+    ) -> (Option<String>, HelperBranchBody) {
         let mut runtime = ResourceOutputRuntime {
             evaluator: self,
             source,
@@ -152,26 +150,8 @@ impl OutputEvaluator {
             no_output_depth: 0,
         };
         eval_template_body(&mut runtime, node);
-        runtime.into_body()
-    }
-
-    fn evaluate_resource_output(
-        &mut self,
-        source: &str,
-        node: tree_sitter::Node<'_>,
-        analysis_db: &IrAnalysisDb,
-    ) -> (Option<String>, HelperBranchBody) {
-        let mut runtime = ResourceOutputRuntime {
-            evaluator: self,
-            source,
-            analysis_db,
-            depth: 0,
-            mode: BodyOutputMode::ApiVersionHeader,
-            parts: OutputParts::default(),
-            no_output_depth: 0,
-        };
-        eval_template_body(&mut runtime, node);
-        runtime.into_output()
+        let kind = runtime.parts.kind.take();
+        (kind, runtime.parts.into_body(mode))
     }
 }
 
@@ -229,12 +209,6 @@ impl OutputParts {
 }
 
 #[derive(Clone)]
-struct ResourceOutputSnapshot {
-    parts: OutputParts,
-    no_output_depth: usize,
-}
-
-#[derive(Clone)]
 struct ResourceConditionPlan {
     output_guard: Option<CapabilityGuard>,
 }
@@ -249,17 +223,6 @@ struct ResourceOutputRuntime<'a, 'source> {
     no_output_depth: usize,
 }
 
-impl ResourceOutputRuntime<'_, '_> {
-    fn into_body(self) -> HelperBranchBody {
-        self.parts.into_body(self.mode)
-    }
-
-    fn into_output(self) -> (Option<String>, HelperBranchBody) {
-        let kind = self.parts.kind.clone();
-        (kind, self.into_body())
-    }
-}
-
 impl NodeActionEffectSink for ResourceOutputRuntime<'_, '_> {
     fn push_predicate_if_absent(&mut self, _predicate: Predicate) {}
 
@@ -267,7 +230,11 @@ impl NodeActionEffectSink for ResourceOutputRuntime<'_, '_> {
 }
 
 impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
-    type ScopeSnapshot = ResourceOutputSnapshot;
+    /// `no_output_depth` is deliberately not part of the snapshot: the only
+    /// enter/exit_no_output caller (`eval_assignment_node`) is strictly
+    /// balanced, so the depth at every snapshot/restore point already equals
+    /// the current value.
+    type ScopeSnapshot = OutputParts;
     type ConditionPlan = ResourceConditionPlan;
     type RangePlan = ();
 
@@ -282,24 +249,25 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
         match node_action(self.source, node) {
             NodeAction::Text if matches!(self.mode, BodyOutputMode::WholeHelper) => {
                 if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
-                    push_nonempty(text, &mut self.parts.literals);
+                    let trimmed = text.trim();
+                    if !trimmed.is_empty() {
+                        self.parts.literals.push(trimmed.to_string());
+                    }
                 }
             }
             NodeAction::Text => {
-                for body in api_version_outputs_in_span(
-                    self.source,
-                    node.start_byte(),
-                    node.end_byte(),
-                    self.analysis_db,
-                ) {
-                    self.parts.append_body(body);
-                }
-                if self.parts.kind.is_none()
-                    && let Some(kind) =
-                        header_lines_in_span(self.source, node.start_byte(), node.end_byte())
-                            .find_map(|line| header_line_value(line, "kind"))
-                {
-                    self.parts.kind = Some(unquote_yaml_scalar(kind).to_string());
+                for line in header_lines_in_span(self.source, node.start_byte(), node.end_byte()) {
+                    if let Some(value) = header_line_value(line, "apiVersion") {
+                        self.parts.append_body(api_version_body_from_header_value(
+                            value,
+                            self.analysis_db,
+                        ));
+                    }
+                    if self.parts.kind.is_none()
+                        && let Some(kind) = header_line_value(line, "kind")
+                    {
+                        self.parts.kind = Some(unquote_yaml_scalar(kind).to_string());
+                    }
                 }
             }
             NodeAction::Suppressed
@@ -313,15 +281,11 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
     }
 
     fn scope_snapshot(&self) -> Self::ScopeSnapshot {
-        ResourceOutputSnapshot {
-            parts: self.parts.clone(),
-            no_output_depth: self.no_output_depth,
-        }
+        self.parts.clone()
     }
 
     fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
-        self.parts = snapshot.parts;
-        self.no_output_depth = snapshot.no_output_depth;
+        self.parts = snapshot;
     }
 
     fn join_branch_scopes(
@@ -329,12 +293,10 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
         entry: &Self::ScopeSnapshot,
         outcomes: Vec<Self::ScopeSnapshot>,
     ) {
-        self.parts = entry.parts.clone();
+        self.parts = entry.clone();
         for outcome in outcomes {
-            self.parts
-                .append_parts(outcome.parts.delta_after(&entry.parts));
+            self.parts.append_parts(outcome.delta_after(entry));
         }
-        self.no_output_depth = entry.no_output_depth;
     }
 
     fn join_condition_branch_scopes(
@@ -357,12 +319,12 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
             return;
         }
 
-        self.parts = entry.parts.clone();
+        self.parts = entry.clone();
         for branch in branches {
             if self.parts.kind.is_none() {
-                self.parts.kind = branch.outcome.parts.kind.clone();
+                self.parts.kind = branch.outcome.kind.clone();
             }
-            let parts = branch.outcome.parts.delta_after(&entry.parts);
+            let parts = branch.outcome.delta_after(entry);
             if parts.is_empty() {
                 continue;
             }
@@ -371,7 +333,6 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
                 body: parts.into_body(self.mode),
             });
         }
-        self.no_output_depth = entry.no_output_depth;
     }
 
     fn enter_no_output(&mut self) {
@@ -395,8 +356,10 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
     }
 
     fn plan_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan {
+        let guard = decode_guard_expr(header.expr(), header.raw())
+            .unwrap_or_else(|| decode_guard(header.raw()));
         ResourceConditionPlan {
-            output_guard: Some(guard_from_header(header)),
+            output_guard: Some(guard),
         }
     }
 
@@ -431,8 +394,6 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
 fn resource_spans_for_manifest_source(
     source: &str,
     base_offset: usize,
-    span_start: usize,
-    span_end: usize,
     path_prefix: Vec<String>,
     analysis_db: &IrAnalysisDb,
 ) -> Vec<ResourceSpan> {
@@ -446,8 +407,6 @@ fn resource_spans_for_manifest_source(
                 resource_spans_for_manifest_source(
                     item.source,
                     item.start,
-                    item.start,
-                    item.end,
                     item.path_prefix,
                     analysis_db,
                 )
@@ -455,8 +414,8 @@ fn resource_spans_for_manifest_source(
             .collect();
     }
     vec![ResourceSpan {
-        start: span_start,
-        end: span_end,
+        start: base_offset,
+        end: base_offset + source.len(),
         resource,
         path_prefix,
     }]
@@ -475,8 +434,13 @@ fn detect_manifest_resource(source: &str, analysis_db: &IrAnalysisDb) -> Option<
 
 fn detect_resource_in_source(source: &str, analysis_db: &IrAnalysisDb) -> Option<ResourceRef> {
     let tree = parse_go_template(source)?;
-    let (kind, api_version_output) =
-        OutputEvaluator::default().evaluate_resource_output(source, tree.root_node(), analysis_db);
+    let (kind, api_version_output) = OutputEvaluator::default().evaluate_output(
+        source,
+        tree.root_node(),
+        analysis_db,
+        0,
+        BodyOutputMode::ApiVersionHeader,
+    );
     resource_from_parts(kind, api_version_output)
 }
 
@@ -509,34 +473,24 @@ fn record_api_version_output(
     versions: &mut Vec<String>,
     branches: &mut Vec<HelperBranch>,
 ) {
-    match output {
-        HelperBranchBody::Literals { values } => insert_api_versions(values, versions),
-        HelperBranchBody::Nested { branches: nested } => {
-            record_api_version_branches(nested, versions, branches);
+    let nested = match output {
+        HelperBranchBody::Literals { values } => return insert_api_versions(values, versions),
+        HelperBranchBody::Nested { branches } => branches,
+    };
+    match nested.len() {
+        0 => {}
+        // A single branch carries no alternative; unwrap it into the summary.
+        1 => {
+            let branch = nested.into_iter().next().expect("single branch");
+            record_api_version_output(branch.body, versions, branches);
+        }
+        _ => {
+            for branch in &nested {
+                insert_api_versions(branch.body.all_literals(), versions);
+            }
+            branches.extend(nested);
         }
     }
-}
-
-fn record_api_version_branches(
-    nested: Vec<HelperBranch>,
-    versions: &mut Vec<String>,
-    branches: &mut Vec<HelperBranch>,
-) {
-    if nested.is_empty() {
-        return;
-    }
-    if nested.len() == 1 {
-        record_api_version_output(
-            nested.into_iter().next().expect("single branch").body,
-            versions,
-            branches,
-        );
-        return;
-    }
-    for branch in &nested {
-        insert_api_versions(branch.body.all_literals(), versions);
-    }
-    branches.extend(nested);
 }
 
 fn insert_api_versions(values: impl IntoIterator<Item = String>, versions: &mut Vec<String>) {
@@ -545,20 +499,6 @@ fn insert_api_versions(values: impl IntoIterator<Item = String>, versions: &mut 
             versions.push(value);
         }
     }
-}
-
-fn api_version_outputs_in_span(
-    source: &str,
-    start: usize,
-    end: usize,
-    analysis_db: &IrAnalysisDb,
-) -> Vec<HelperBranchBody> {
-    header_lines_in_span(source, start, end)
-        .filter_map(|line| {
-            let value = header_line_value(line, "apiVersion")?;
-            Some(api_version_body_from_header_value(value, analysis_db))
-        })
-        .collect()
 }
 
 fn api_version_body_from_header_value(value: &str, analysis_db: &IrAnalysisDb) -> HelperBranchBody {
@@ -613,7 +553,6 @@ fn is_kubernetes_list_envelope(resource: &ResourceRef) -> bool {
 struct ListItemSource<'source> {
     source: &'source str,
     start: usize,
-    end: usize,
     path_prefix: Vec<String>,
 }
 
@@ -648,7 +587,6 @@ fn list_item_sources<'source>(
         items.push(ListItemSource {
             source: item_source,
             start: base_offset + content.start_byte(),
-            end: base_offset + content.end_byte(),
             path_prefix: item_prefix,
         });
     }
@@ -731,11 +669,8 @@ fn top_level_mapping_node(node: tree_sitter::Node<'_>) -> Option<tree_sitter::No
 }
 
 fn sequence_node(node: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
-    match node.kind() {
-        "block_sequence" | "flow_sequence" => Some(node),
-        "block_node" | "flow_node" => node.named_child(0).and_then(sequence_node),
-        _ => None,
-    }
+    let node = unwrap_yaml_value_node(node);
+    matches!(node.kind(), "block_sequence" | "flow_sequence").then_some(node)
 }
 
 fn sequence_item_content_node(item: tree_sitter::Node<'_>) -> tree_sitter::Node<'_> {
@@ -834,28 +769,6 @@ fn nonempty_body(literals: Vec<String>, branches: Vec<HelperBranch>) -> Option<H
         let literals = dedup_preserve_order(literals);
         (!literals.is_empty()).then_some(HelperBranchBody::literals(literals))
     }
-}
-
-fn append_body(
-    body: HelperBranchBody,
-    literals: &mut Vec<String>,
-    branches: &mut Vec<HelperBranch>,
-) {
-    match body {
-        HelperBranchBody::Literals { values } => literals.extend(values),
-        HelperBranchBody::Nested { branches: nested } => branches.extend(nested),
-    }
-}
-
-fn push_nonempty(text: &str, out: &mut Vec<String>) {
-    let trimmed = text.trim();
-    if !trimmed.is_empty() {
-        out.push(trimmed.to_string());
-    }
-}
-
-fn guard_from_header(header: &TemplateHeader) -> CapabilityGuard {
-    decode_guard_expr(header.expr(), header.raw()).unwrap_or_else(|| decode_guard(header.raw()))
 }
 
 fn helper_call_names(exprs: &[TemplateExpr]) -> Vec<String> {
