@@ -174,6 +174,13 @@ pub(crate) fn is_empty_schema(value: &Value) -> bool {
     value.as_object().is_some_and(serde_json::Map::is_empty)
 }
 
+pub(crate) fn is_annotation_keyword(key: &str) -> bool {
+    matches!(
+        key,
+        "description" | "title" | "default" | "examples" | "deprecated" | "readOnly" | "writeOnly"
+    )
+}
+
 pub(crate) fn empty_schema() -> Value {
     SchemaNode::empty().into_value()
 }

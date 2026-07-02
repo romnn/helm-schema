@@ -1,5 +1,6 @@
 use serde_json::{Map, Value};
 
+use crate::schema_model::is_annotation_keyword;
 use crate::schema_node::JsonSchemaType;
 
 const ARRAY_KEYWORDS: &[&str] = &[
@@ -139,7 +140,7 @@ impl ForeignSchemaObject {
     }
 
     fn into_annotations_only(mut self) -> Self {
-        self.raw.retain(|key, _| is_schema_annotation_keyword(key));
+        self.raw.retain(|key, _| is_annotation_keyword(key));
         self
     }
 
@@ -226,13 +227,6 @@ impl ForeignSchemaRestriction {
         }
         rewrite_array_schema(schema, Self::Scalar)
     }
-}
-
-fn is_schema_annotation_keyword(key: &str) -> bool {
-    matches!(
-        key,
-        "description" | "title" | "default" | "examples" | "deprecated" | "readOnly" | "writeOnly"
-    )
 }
 
 fn rewrite_array_schema(

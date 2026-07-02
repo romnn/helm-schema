@@ -85,9 +85,7 @@ impl SchemaNode {
     }
 
     pub(crate) fn type_named(name: &str) -> Self {
-        JsonSchemaType::from_name(name)
-            .map(Self::typed)
-            .unwrap_or_else(|| Self::Foreign(type_name_schema(name)))
+        Self::keyword_schema("type", Value::String(name.to_string()))
     }
 
     pub(crate) fn typed_keyword(mut self, key: impl Into<String>, value: Value) -> Self {
@@ -206,40 +204,32 @@ impl SchemaNode {
         self
     }
 
-    pub(crate) fn enum_values(values: Vec<Value>) -> Self {
+    fn keyword_schema(key: &str, value: Value) -> Self {
         Self::foreign(Value::Object(
-            [("enum".to_string(), Value::Array(values))]
-                .into_iter()
-                .collect(),
+            [(key.to_string(), value)].into_iter().collect(),
         ))
+    }
+
+    pub(crate) fn enum_values(values: Vec<Value>) -> Self {
+        Self::keyword_schema("enum", Value::Array(values))
     }
 
     pub(crate) fn const_value(value: Value) -> Self {
-        Self::foreign(Value::Object(
-            [("const".to_string(), value)].into_iter().collect(),
-        ))
+        Self::keyword_schema("const", value)
     }
 
     pub(crate) fn not(value: SchemaNode) -> Self {
-        Self::foreign(Value::Object(
-            [("not".to_string(), value.into_value())]
-                .into_iter()
-                .collect(),
-        ))
+        Self::keyword_schema("not", value.into_value())
     }
 
     pub(crate) fn all_of(values: Vec<SchemaNode>) -> Self {
         match values.len() {
             0 => Self::empty(),
             1 => values.into_iter().next().expect("single allOf value"),
-            _ => Self::foreign(Value::Object(
-                [(
-                    "allOf".to_string(),
-                    Value::Array(values.into_iter().map(Self::into_value).collect()),
-                )]
-                .into_iter()
-                .collect(),
-            )),
+            _ => Self::keyword_schema(
+                "allOf",
+                Value::Array(values.into_iter().map(Self::into_value).collect()),
+            ),
         }
     }
 
@@ -247,14 +237,10 @@ impl SchemaNode {
         match values.len() {
             0 => Self::empty(),
             1 => values.into_iter().next().expect("single anyOf value"),
-            _ => Self::foreign(Value::Object(
-                [(
-                    "anyOf".to_string(),
-                    Value::Array(values.into_iter().map(Self::into_value).collect()),
-                )]
-                .into_iter()
-                .collect(),
-            )),
+            _ => Self::keyword_schema(
+                "anyOf",
+                Value::Array(values.into_iter().map(Self::into_value).collect()),
+            ),
         }
     }
 
@@ -397,7 +383,7 @@ impl SchemaNode {
         }
     }
 
-    pub(crate) fn path_exists(&self, path_segments: &[String], map_wildcard_segment: &str) -> bool {
+    pub(crate) fn path_exists(&self, path_segments: &[String]) -> bool {
         if path_segments.is_empty() {
             return !self.is_empty_slot();
         }
@@ -408,30 +394,19 @@ impl SchemaNode {
 
         match self {
             Self::Object {
-                properties,
-                all_of,
-                additional_properties,
-                ..
+                properties, all_of, ..
             } => {
-                if all_of
-                    .iter()
-                    .any(|child| child.path_exists(path_segments, map_wildcard_segment))
-                {
+                if all_of.iter().any(|child| child.path_exists(path_segments)) {
                     return true;
-                }
-                if head == map_wildcard_segment {
-                    return additional_properties
-                        .as_deref()
-                        .is_some_and(|child| child.path_exists(tail, map_wildcard_segment));
                 }
                 properties
                     .get(head)
-                    .is_some_and(|child| child.path_exists(tail, map_wildcard_segment))
+                    .is_some_and(|child| child.path_exists(tail))
             }
             Self::Array { items, .. } if head == "*" => items
                 .as_deref()
-                .is_some_and(|child| child.path_exists(tail, map_wildcard_segment)),
-            Self::Foreign(value) => foreign_path_exists(value, path_segments, map_wildcard_segment),
+                .is_some_and(|child| child.path_exists(tail)),
+            Self::Foreign(value) => foreign_path_exists(value, path_segments),
             _ => false,
         }
     }
@@ -531,14 +506,6 @@ fn push_all_of_value(schema: &mut Value, value: SchemaNode) {
     }
 }
 
-fn type_name_schema(name: &str) -> Value {
-    Value::Object(
-        [("type".to_string(), Value::String(name.to_string()))]
-            .into_iter()
-            .collect(),
-    )
-}
-
 fn foreign_property_entries(value: &Value) -> Vec<(String, SchemaNode)> {
     value
         .as_object()
@@ -553,12 +520,8 @@ fn foreign_property_entries(value: &Value) -> Vec<(String, SchemaNode)> {
         .unwrap_or_default()
 }
 
-fn foreign_schema_type(value: &Value) -> Option<&str> {
-    value.as_object()?.get("type")?.as_str()
-}
-
 fn foreign_is_array_like(value: &Value) -> bool {
-    match foreign_schema_type(value) {
+    match crate::schema_model::schema_type(value) {
         Some("array") => true,
         Some(_) => false,
         None => value
@@ -608,11 +571,7 @@ fn foreign_is_plain_closed_values_object(object: &Map<String, Value>) -> bool {
             .any(|key| key.starts_with("x-kubernetes-") || key == "$ref")
 }
 
-fn foreign_path_exists(
-    value: &Value,
-    path_segments: &[String],
-    map_wildcard_segment: &str,
-) -> bool {
+fn foreign_path_exists(value: &Value, path_segments: &[String]) -> bool {
     if path_segments.is_empty() {
         return !crate::schema_model::is_empty_schema(value);
     }
@@ -628,7 +587,7 @@ fn foreign_path_exists(
         if let Some(entries) = object.get(composition_key).and_then(Value::as_array)
             && entries
                 .iter()
-                .any(|entry| foreign_path_exists(entry, path_segments, map_wildcard_segment))
+                .any(|entry| foreign_path_exists(entry, path_segments))
         {
             return true;
         }
@@ -637,19 +596,14 @@ fn foreign_path_exists(
     if head == "*" {
         return object
             .get("items")
-            .is_some_and(|child| foreign_path_exists(child, tail, map_wildcard_segment));
-    }
-    if head == map_wildcard_segment {
-        return object
-            .get("additionalProperties")
-            .is_some_and(|child| foreign_path_exists(child, tail, map_wildcard_segment));
+            .is_some_and(|child| foreign_path_exists(child, tail));
     }
 
     object
         .get("properties")
         .and_then(Value::as_object)
         .and_then(|properties| properties.get(head))
-        .is_some_and(|child| foreign_path_exists(child, tail, map_wildcard_segment))
+        .is_some_and(|child| foreign_path_exists(child, tail))
 }
 
 fn type_map(ty: JsonSchemaType) -> Map<String, Value> {

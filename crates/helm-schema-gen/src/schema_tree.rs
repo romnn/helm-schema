@@ -6,9 +6,9 @@ use serde_yaml::Value as YamlValue;
 use crate::merge::merge_two_schemas;
 use crate::schema_model::is_empty_schema;
 use crate::schema_node::SchemaNode;
-use crate::values_yaml::{schema_node_from_yaml_value_with_skips, yaml_value_at_segments};
-
-const MAP_WILDCARD_SEGMENT: &str = "__any__";
+use crate::values_yaml::{
+    child_value_path, schema_node_from_yaml_value_with_skips, yaml_value_at_segments,
+};
 
 pub(crate) struct SchemaDocument {
     root: SchemaNode,
@@ -22,9 +22,7 @@ impl SchemaDocument {
     }
 
     pub(crate) fn insert_path_schema(&mut self, path_segments: &[String], schema: SchemaNode) {
-        if !path_segments.is_empty() {
-            insert_schema_at_parts(&mut self.root, path_segments, schema);
-        }
+        insert_schema_at_parts(&mut self.root, path_segments, schema);
     }
 
     pub(crate) fn replace_path_schema(&mut self, path_segments: &[String], schema: SchemaNode) {
@@ -117,20 +115,15 @@ fn append_conditional_at_parts(
         return;
     }
 
-    if path_segments.len() == 1 {
-        let properties = ensure_object_properties(node);
-        let child = properties
-            .entry(path_segments[0].clone())
-            .or_insert_with(SchemaNode::closed_object);
-        push_conditional_entry(child, condition, then_schema, true);
-        return;
-    }
-
     let properties = ensure_object_properties(node);
     let child = properties
         .entry(path_segments[0].clone())
         .or_insert_with(SchemaNode::closed_object);
-    append_conditional_at_parts(child, &path_segments[1..], condition, then_schema);
+    if path_segments.len() == 1 {
+        push_conditional_entry(child, condition, then_schema, true);
+    } else {
+        append_conditional_at_parts(child, &path_segments[1..], condition, then_schema);
+    }
 }
 
 fn merge_conditional_fragment_into_foreign_slot(node: &mut SchemaNode, fragment: SchemaNode) {
@@ -229,52 +222,37 @@ fn collect_missing_yaml_default_insertions(
     insertions: &mut Vec<(Vec<String>, SchemaNode)>,
 ) {
     if skip_paths.contains(current_path) {
-        if !root_schema.path_exists(current_path, MAP_WILDCARD_SEGMENT) {
+        if !root_schema.path_exists(current_path) {
             insertions.push((current_path.to_vec(), SchemaNode::empty()));
         }
         return;
     }
 
-    match yaml {
-        YamlValue::Mapping(mapping) if !mapping.is_empty() => {
-            if !root_schema.path_exists(current_path, MAP_WILDCARD_SEGMENT) {
-                if let Some(schema) =
-                    schema_node_from_yaml_value_with_skips(yaml, current_path, skip_paths)
-                {
-                    insertions.push((current_path.to_vec(), schema));
-                }
-                return;
-            }
-
-            for (key, value_yaml) in mapping {
-                let Some(key) = key.as_str() else {
-                    continue;
-                };
-                let child_path = child_value_path(current_path, key);
-                collect_missing_yaml_default_insertions(
-                    root_schema,
-                    &child_path,
-                    value_yaml,
-                    skip_paths,
-                    insertions,
-                );
-            }
+    if let YamlValue::Mapping(mapping) = yaml
+        && !mapping.is_empty()
+        && root_schema.path_exists(current_path)
+    {
+        for (key, value_yaml) in mapping {
+            let Some(key) = key.as_str() else {
+                continue;
+            };
+            let child_path = child_value_path(current_path, key);
+            collect_missing_yaml_default_insertions(
+                root_schema,
+                &child_path,
+                value_yaml,
+                skip_paths,
+                insertions,
+            );
         }
-        _ => {
-            if !root_schema.path_exists(current_path, MAP_WILDCARD_SEGMENT)
-                && let Some(schema) =
-                    schema_node_from_yaml_value_with_skips(yaml, current_path, skip_paths)
-            {
-                insertions.push((current_path.to_vec(), schema));
-            }
-        }
+        return;
     }
-}
 
-fn child_value_path(parent: &[String], child: &str) -> Vec<String> {
-    let mut path = parent.to_vec();
-    path.push(child.to_string());
-    path
+    if !root_schema.path_exists(current_path)
+        && let Some(schema) = schema_node_from_yaml_value_with_skips(yaml, current_path, skip_paths)
+    {
+        insertions.push((current_path.to_vec(), schema));
+    }
 }
 
 pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMap<String, String>) {
@@ -327,13 +305,6 @@ fn visit_schema_values_at_path_mut(
         return visited;
     }
 
-    if head == MAP_WILDCARD_SEGMENT {
-        if let Some(additional_properties) = obj.get_mut("additionalProperties") {
-            visited |= visit_schema_values_at_path_mut(additional_properties, tail, visit);
-        }
-        return visited;
-    }
-
     if let Some(child) = obj
         .get_mut("properties")
         .and_then(Value::as_object_mut)
@@ -353,14 +324,15 @@ fn set_schema_description(node: &mut Value, description: &str) {
     }
 }
 
-fn ensure_array_schema(node: &mut SchemaNode) {
-    if !matches!(node, SchemaNode::Array { .. }) {
-        *node = SchemaNode::array().items(SchemaNode::foreign(Value::Null));
-    }
+fn new_array_slot() -> SchemaNode {
+    SchemaNode::array().items(SchemaNode::foreign(Value::Null))
 }
 
-fn ensure_items_schema(array_schema: &mut SchemaNode) -> &mut SchemaNode {
-    let SchemaNode::Array { items, .. } = array_schema else {
+fn ensure_array_items_schema(node: &mut SchemaNode) -> &mut SchemaNode {
+    if !matches!(node, SchemaNode::Array { .. }) {
+        *node = new_array_slot();
+    }
+    let SchemaNode::Array { items, .. } = node else {
         unreachable!("array schema must be normalized before accessing items");
     };
     items
@@ -386,25 +358,6 @@ fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, Sche
     properties
 }
 
-fn ensure_additional_properties(node: &mut SchemaNode) -> &mut SchemaNode {
-    if !matches!(node, SchemaNode::Object { .. }) {
-        *node = SchemaNode::closed_object();
-    }
-    let SchemaNode::Object {
-        additional_properties,
-        ..
-    } = node
-    else {
-        unreachable!("object schema must be normalized before accessing additionalProperties");
-    };
-    let additional_properties =
-        additional_properties.get_or_insert_with(|| Box::new(SchemaNode::empty()));
-    if additional_properties.is_false_schema() {
-        **additional_properties = SchemaNode::empty();
-    }
-    additional_properties.as_mut()
-}
-
 fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
     if slot.is_empty_slot() {
         *slot = schema;
@@ -425,14 +378,6 @@ fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
     }
 }
 
-fn new_union_variant_for_head(head: &str) -> SchemaNode {
-    if head == "*" {
-        SchemaNode::array().items(SchemaNode::foreign(Value::Null))
-    } else {
-        SchemaNode::closed_object()
-    }
-}
-
 fn replace_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf: SchemaNode) {
     if path_segments.is_empty() {
         *node = leaf;
@@ -441,17 +386,6 @@ fn replace_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf
 
     let head = path_segments[0].as_str();
     let replaced = match node {
-        SchemaNode::Object {
-            additional_properties,
-            ..
-        } if head == MAP_WILDCARD_SEGMENT => {
-            if let Some(child) = additional_properties.as_deref_mut() {
-                replace_schema_at_parts(child, &path_segments[1..], leaf.clone());
-                true
-            } else {
-                false
-            }
-        }
         SchemaNode::Object { properties, .. } => {
             if let Some(child) = properties.get_mut(head) {
                 replace_schema_at_parts(child, &path_segments[1..], leaf.clone());
@@ -501,30 +435,15 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         return;
     }
 
-    if path_segments[0] == MAP_WILDCARD_SEGMENT {
-        if path_segments.len() > 1 {
-            node.clear_exact_empty_constraint_for_descendant();
-        }
-        let additional_properties = ensure_additional_properties(node);
-        if path_segments.len() == 1 {
-            merge_into_schema_slot(additional_properties, leaf);
-        } else {
-            additional_properties.clear_exact_empty_constraint_for_descendant();
-            insert_schema_at_parts(additional_properties, &path_segments[1..], leaf);
-        }
-        return;
-    }
-
     if path_segments[0] == "*" {
         if !node.is_empty_slot() && !node.is_array_like() {
             let existing = std::mem::replace(node, SchemaNode::empty());
-            let mut array_variant = new_union_variant_for_head("*");
+            let mut array_variant = new_array_slot();
             insert_schema_at_parts(&mut array_variant, path_segments, leaf);
             *node = SchemaNode::any_of(vec![existing, array_variant]);
             return;
         }
-        ensure_array_schema(node);
-        let items = ensure_items_schema(node);
+        let items = ensure_array_items_schema(node);
         if path_segments.len() == 1 {
             merge_into_schema_slot(items, leaf);
         } else {
@@ -551,7 +470,7 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
     let properties = ensure_object_properties(node);
     let child = properties.entry(key).or_insert_with(|| {
         if next_is_array {
-            new_union_variant_for_head("*")
+            new_array_slot()
         } else {
             SchemaNode::closed_object()
         }

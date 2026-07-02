@@ -1,14 +1,7 @@
 use serde_json::{Map, Value};
 
-use crate::schema_model::schema_type;
+use crate::schema_model::{empty_schema, is_annotation_keyword, is_empty_schema, schema_type};
 use crate::schema_node::SchemaNode;
-
-fn is_annotation_keyword(key: &str) -> bool {
-    matches!(
-        key,
-        "description" | "title" | "default" | "examples" | "deprecated" | "readOnly" | "writeOnly"
-    )
-}
 
 pub fn merge_schema_list(mut schemas: Vec<Value>) -> Value {
     match schemas.len() {
@@ -41,14 +34,11 @@ pub fn union_schema_list(mut schemas: Vec<Value>) -> Value {
     for schema in schemas {
         out.extend(flatten_union_variants(schema));
     }
-    if out
-        .iter()
-        .any(|schema| !schema.as_object().is_some_and(Map::is_empty))
-    {
-        out.retain(|schema| !schema.as_object().is_some_and(Map::is_empty));
+    if out.iter().any(|schema| !is_empty_schema(schema)) {
+        out.retain(|schema| !is_empty_schema(schema));
     }
     out = dedup_schemas(out);
-    out.sort_by_key(canonical_json_string);
+    out.sort_by_key(json_schema_walk::canonical_json_string);
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
     } else {
@@ -61,10 +51,10 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
         return a;
     }
 
-    if a.as_object().is_some_and(serde_json::Map::is_empty) {
+    if is_empty_schema(&a) {
         return b;
     }
-    if b.as_object().is_some_and(serde_json::Map::is_empty) {
+    if is_empty_schema(&b) {
         return a;
     }
 
@@ -88,16 +78,12 @@ pub fn merge_two_schemas(a: Value, b: Value) -> Value {
     out.extend(flatten_union_variants(b));
     out = collapse_compatible_variants(out);
     out = dedup_schemas(out);
-    out.sort_by_key(canonical_json_string);
+    out.sort_by_key(json_schema_walk::canonical_json_string);
     if out.len() == 1 {
         out.into_iter().next().expect("len == 1")
     } else {
         any_of_schema(out)
     }
-}
-
-fn empty_schema() -> Value {
-    SchemaNode::empty().into_value()
 }
 
 fn any_of_schema(schemas: Vec<Value>) -> Value {
@@ -206,10 +192,6 @@ fn dedup_schemas(schemas: Vec<Value>) -> Vec<Value> {
         out.push(schema);
     }
     out
-}
-
-fn canonical_json_string(v: &Value) -> String {
-    json_schema_walk::canonical_json_string(v)
 }
 
 fn is_exact_empty_object_schema(v: &Value) -> bool {

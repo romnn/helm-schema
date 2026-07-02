@@ -487,18 +487,13 @@ fn build_condition_fragment(
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
 ) -> SchemaNode {
-    let mut clauses = guards
+    let clauses = guards
         .iter()
         .filter_map(|guard| {
             build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
         })
         .collect::<Vec<_>>();
-
-    if clauses.len() == 1 {
-        clauses.pop().unwrap_or_else(SchemaNode::empty)
-    } else {
-        SchemaNode::all_of(clauses)
-    }
+    SchemaNode::all_of(clauses)
 }
 
 fn build_single_condition_fragment(
@@ -552,34 +547,22 @@ fn build_single_condition_fragment(
             values_yaml_doc,
         )?)),
         ConditionalGuard::AllOf(guards) => {
-            let mut clauses = guards
+            let clauses = guards
                 .iter()
                 .filter_map(|guard| {
                     build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
                 })
                 .collect::<Vec<_>>();
-            if clauses.is_empty() {
-                None
-            } else if clauses.len() == 1 {
-                clauses.pop()
-            } else {
-                Some(SchemaNode::all_of(clauses))
-            }
+            (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
-            let mut clauses = guards
+            let clauses = guards
                 .iter()
                 .filter_map(|guard| {
                     build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
                 })
                 .collect::<Vec<_>>();
-            if clauses.is_empty() {
-                None
-            } else if clauses.len() == 1 {
-                clauses.pop()
-            } else {
-                Some(SchemaNode::any_of(clauses))
-            }
+            (!clauses.is_empty()).then(|| SchemaNode::any_of(clauses))
         }
     }
 }

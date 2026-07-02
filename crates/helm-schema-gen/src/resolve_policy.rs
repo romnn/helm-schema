@@ -343,21 +343,8 @@ impl ResolvePolicy {
             empty_schema()
         };
 
-        let base = if is_empty_schema(&input.type_hint_schema) {
-            base
-        } else if is_empty_schema(&base) {
-            input.type_hint_schema
-        } else {
-            merge_two_schemas(base, input.type_hint_schema)
-        };
-
-        if is_empty_schema(&input.guard_predicate_schema) {
-            base
-        } else if is_empty_schema(&base) {
-            input.guard_predicate_schema
-        } else {
-            merge_two_schemas(base, input.guard_predicate_schema)
-        }
+        let base = merge_two_schemas(base, input.type_hint_schema);
+        merge_two_schemas(base, input.guard_predicate_schema)
     }
 }
 

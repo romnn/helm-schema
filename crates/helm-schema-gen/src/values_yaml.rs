@@ -305,7 +305,7 @@ pub(crate) fn schema_node_from_yaml_value_with_skips(
     }
 }
 
-fn child_value_path(parent: &[String], child: &str) -> Vec<String> {
+pub(crate) fn child_value_path(parent: &[String], child: &str) -> Vec<String> {
     let mut path = parent.to_vec();
     path.push(child.to_string());
     path
