@@ -1,7 +1,45 @@
 use std::collections::BTreeSet;
 
-use crate::contract::ContractUse;
+use crate::contract::{ContractIr, ContractUse};
 use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan, ValueKind, YamlPath};
+
+/// One output row's lowered contract claims: every emission site in the
+/// symbolic walker reduces its row class to this shape, and
+/// [`ContractUseContext::emit`] is the single terminal that fans it out to
+/// one `ContractUse` per guard set.
+///
+/// `emit_path: Some(path)` claims a rendered document path and keeps the
+/// site's resource scope even when the path is empty; `None` is a pathless
+/// claim that drops the resource.
+pub(crate) struct EmissionWitness {
+    pub(crate) source_expr: String,
+    pub(crate) emit_path: Option<YamlPath>,
+    pub(crate) kind: ValueKind,
+    pub(crate) guard_sets: Vec<Vec<Guard>>,
+    pub(crate) provenance: Vec<ContractProvenance>,
+    pub(crate) dependency: bool,
+}
+
+impl EmissionWitness {
+    /// A non-dependency witness with no extra provenance; pass
+    /// `vec![Vec::new()]` as `guard_sets` for a single claim without extra
+    /// guards.
+    pub(crate) fn new(
+        source_expr: String,
+        emit_path: Option<YamlPath>,
+        kind: ValueKind,
+        guard_sets: Vec<Vec<Guard>>,
+    ) -> Self {
+        Self {
+            source_expr,
+            emit_path,
+            kind,
+            guard_sets,
+            provenance: Vec::new(),
+            dependency: false,
+        }
+    }
+}
 
 /// Context applied when semantic facts are lowered to contract claims.
 ///
@@ -40,91 +78,48 @@ impl<'a> ContractUseContext<'a> {
         }
     }
 
-    pub(crate) fn contract_use(
-        &self,
-        source_expr: String,
-        path: YamlPath,
-        kind: ValueKind,
-        extra_guards: &[Guard],
-    ) -> ContractUse {
-        self.contract_use_with_extra_provenance(source_expr, path, kind, extra_guards, &[])
-    }
-
-    pub(crate) fn contract_use_with_extra_provenance(
-        &self,
-        source_expr: String,
-        path: YamlPath,
-        kind: ValueKind,
-        extra_guards: &[Guard],
-        extra_provenance: &[ContractProvenance],
-    ) -> ContractUse {
-        self.contract_use_with_resource(
-            source_expr,
-            path,
-            kind,
-            extra_guards,
-            self.resource.clone(),
-            extra_provenance,
-        )
-    }
-
-    fn contract_use_with_resource(
-        &self,
-        source_expr: String,
-        mut path: YamlPath,
-        mut kind: ValueKind,
-        extra_guards: &[Guard],
-        resource: Option<ResourceRef>,
-        extra_provenance: &[ContractProvenance],
-    ) -> ContractUse {
+    /// Terminal for all contract emission: pushes one claim per guard set,
+    /// routed to the dependency lane when the witness says so. This is where
+    /// the ambient projection policy applies: document-path suppression,
+    /// pathless partial-scalar normalization, ambient guards, chart-level
+    /// default admission, and the site's provenance.
+    pub(crate) fn emit(&self, witness: EmissionWitness, contract: &mut ContractIr) {
+        let (mut path, resource) = match witness.emit_path {
+            Some(path) => (path, self.resource.clone()),
+            None => (YamlPath(Vec::new()), None),
+        };
         if self.suppress_document_path {
             path = YamlPath(Vec::new());
         }
+        let mut kind = witness.kind;
         if kind == ValueKind::PartialScalar && path.0.is_empty() {
             kind = ValueKind::Scalar;
         }
-
-        let mut guards = self.guards_with(extra_guards);
-        if !path.0.is_empty() && self.chart_value_defaults.contains(&source_expr) {
-            let default_guard = Guard::Default {
-                path: source_expr.clone(),
-            };
-            merge_guards(&mut guards, std::slice::from_ref(&default_guard));
+        let provenance = self.provenance_sites(&witness.provenance);
+        let chart_default_guard = (!path.0.is_empty()
+            && self.chart_value_defaults.contains(&witness.source_expr))
+        .then(|| Guard::Default {
+            path: witness.source_expr.clone(),
+        });
+        for extra_guards in &witness.guard_sets {
+            let mut guards = self.guards_with(extra_guards);
+            if let Some(default_guard) = &chart_default_guard {
+                merge_guards(&mut guards, std::slice::from_ref(default_guard));
+            }
+            let contract_use = ContractUse::with_provenances(
+                witness.source_expr.clone(),
+                path.clone(),
+                kind,
+                guards,
+                resource.clone(),
+                provenance.clone(),
+            );
+            if witness.dependency {
+                contract.push_dependency_use(contract_use);
+            } else {
+                contract.push(contract_use);
+            }
         }
-        ContractUse::with_provenances(
-            source_expr,
-            path,
-            kind,
-            guards,
-            resource,
-            self.provenance_sites(extra_provenance),
-        )
-    }
-
-    pub(crate) fn pathless_contract_use(
-        &self,
-        source_expr: String,
-        kind: ValueKind,
-        extra_guards: &[Guard],
-    ) -> ContractUse {
-        self.pathless_contract_use_with_extra_provenance(source_expr, kind, extra_guards, &[])
-    }
-
-    pub(crate) fn pathless_contract_use_with_extra_provenance(
-        &self,
-        source_expr: String,
-        kind: ValueKind,
-        extra_guards: &[Guard],
-        extra_provenance: &[ContractProvenance],
-    ) -> ContractUse {
-        self.contract_use_with_resource(
-            source_expr,
-            YamlPath(Vec::new()),
-            kind,
-            extra_guards,
-            None,
-            extra_provenance,
-        )
     }
 
     pub(crate) fn has_ambient_guards(&self) -> bool {

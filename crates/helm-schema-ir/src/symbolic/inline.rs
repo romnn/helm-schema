@@ -1,11 +1,13 @@
 use std::collections::HashSet;
 
+use crate::ValueKind;
+use crate::contract::ContractIr;
+use crate::contract_sink::ContractUseContext;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr, expr_literal_helper_call_callee};
 use crate::static_file_template::{
     StaticFileTemplate, collect_template_requests_from_helper, literal_helper_calls_from_exprs,
 };
-use crate::{ContractUse, ValueKind, YamlPath};
 use helm_schema_ast::TemplateExpr;
 use helm_schema_ast::parse_go_template;
 
@@ -142,24 +144,27 @@ impl<'a> SymbolicWalker<'a> {
         }
         self.contract.append(contract);
         let outer_guards = self.contract_guards();
+        let context = ContractUseContext::new(
+            &outer_guards,
+            &self.scope.locals().chart_value_defaults,
+            self.no_output_depth > 0,
+            None,
+            None,
+            None,
+            Vec::new(),
+        );
+        let mut dependency_contract = ContractIr::default();
         for output in inline_dependency_outputs {
             let value = output.source_expr;
             if suppress_roots.contains(&value) {
                 continue;
             }
-            for extra_guards in output.meta.contract_guard_sets(&value) {
-                let mut guards = outer_guards.clone();
-                crate::contract_sink::merge_guards(&mut guards, &extra_guards);
-                self.contract.push(ContractUse::with_provenances(
-                    value.clone(),
-                    YamlPath(Vec::new()),
-                    ValueKind::Scalar,
-                    guards,
-                    None,
-                    output.meta.provenance.clone(),
-                ));
-            }
+            let witness = output
+                .meta
+                .emission_witness(&value, None, ValueKind::Scalar);
+            context.emit(witness, &mut dependency_contract);
         }
+        self.contract.append(dependency_contract);
         true
     }
 }

@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
+use crate::contract_sink::EmissionWitness;
 use crate::eval_effect::Effects;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 use helm_schema_core as output_path;
@@ -160,6 +161,24 @@ impl HelperOutputMeta {
             }
         }
         guard_sets
+    }
+
+    /// Lowers this meta to the witness for one emitted row: one guard set
+    /// per predicate branch plus this meta's provenance sites.
+    pub(crate) fn emission_witness(
+        &self,
+        source_expr: &str,
+        emit_path: Option<YamlPath>,
+        kind: ValueKind,
+    ) -> EmissionWitness {
+        EmissionWitness {
+            source_expr: source_expr.to_string(),
+            emit_path,
+            kind,
+            guard_sets: self.contract_guard_sets(source_expr),
+            provenance: self.provenance.clone(),
+            dependency: false,
+        }
     }
 
     fn prune_defaulted_sibling_guards(&self, guards: &mut Vec<Guard>, source_expr: &str) {

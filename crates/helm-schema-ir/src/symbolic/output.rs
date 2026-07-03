@@ -4,7 +4,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::SourceSpan;
 use crate::contract::ContractIr;
-use crate::contract_sink::ContractUseContext;
+use crate::contract_sink::{ContractUseContext, EmissionWitness};
 use crate::eval_effect::Effects;
 use crate::helper_summary::{
     HelperFragmentOutputUse, HelperSummary, merge_provenance_sites, values_paths_are_related,
@@ -102,15 +102,16 @@ fn output_contract(
         {
             let provenance = suppressed_guard_path_provenance
                 .get(&value)
-                .map(Vec::as_slice)
+                .cloned()
                 .unwrap_or_default();
-            contract.push(context.contract_use_with_extra_provenance(
+            let mut witness = EmissionWitness::new(
                 value,
-                YamlPath(Vec::new()),
+                Some(YamlPath(Vec::new())),
                 ValueKind::Scalar,
-                &[],
-                provenance,
-            ));
+                vec![Vec::new()],
+            );
+            witness.provenance = provenance;
+            context.emit(witness, &mut contract);
             continue;
         }
 
@@ -129,22 +130,28 @@ fn output_contract(
             .get(&value)
             .map(|meta| meta.contract_guard_sets(&value))
             .unwrap_or_else(|| vec![Vec::new()]);
-        for extra_guards in &mut guard_sets {
-            if output_effects.defaults.contains(&value) && !extra_guards.contains(&default_guard) {
-                extra_guards.push(default_guard.clone());
+        if output_effects.defaults.contains(&value) {
+            for extra_guards in &mut guard_sets {
+                if !extra_guards.contains(&default_guard) {
+                    extra_guards.push(default_guard.clone());
+                }
             }
-            contract.push(context.contract_use(
-                value.clone(),
-                emit_path.clone(),
-                emit_kind,
-                extra_guards,
-            ));
         }
+        context.emit(
+            EmissionWitness::new(value, Some(emit_path), emit_kind, guard_sets),
+            &mut contract,
+        );
     }
 
     let bound_output_values = std::mem::take(&mut output_effects.bound_output_paths);
     for value in bound_output_values {
-        contract.push(context.contract_use(value, YamlPath(Vec::new()), ValueKind::Scalar, &[]));
+        let witness = EmissionWitness::new(
+            value,
+            Some(YamlPath(Vec::new())),
+            ValueKind::Scalar,
+            vec![Vec::new()],
+        );
+        context.emit(witness, &mut contract);
     }
 
     contract.extend_type_hints(output_effects.type_hints.clone());
@@ -186,28 +193,16 @@ fn append_helper_contract_uses(
         let value = &output.source_expr;
         let mut meta = output.meta.clone();
         meta.note_sibling_sources(value, &helper_output_sources);
-        for extra_guards in meta.contract_guard_sets(value) {
+        let witness = if helper_has_only_scalar_outputs
+            && site.can_project_scalar_helper_to_caller_path()
+            && !helper.has_rendered_source_descendant(value)
+        {
             let emit_kind = encoded_kind(site.kind, encoded_output_values.contains(value));
-            if helper_has_only_scalar_outputs
-                && site.can_project_scalar_helper_to_caller_path()
-                && !helper.has_rendered_source_descendant(value)
-            {
-                contract.push(context.contract_use_with_extra_provenance(
-                    value.clone(),
-                    site.path.clone(),
-                    emit_kind,
-                    &extra_guards,
-                    &output.meta.provenance,
-                ));
-            } else {
-                contract.push(context.pathless_contract_use_with_extra_provenance(
-                    value.clone(),
-                    ValueKind::Scalar,
-                    &extra_guards,
-                    &output.meta.provenance,
-                ));
-            }
-        }
+            meta.emission_witness(value, Some(site.path.clone()), emit_kind)
+        } else {
+            meta.emission_witness(value, None, ValueKind::Scalar)
+        };
+        context.emit(witness, contract);
     }
 
     for output in helper
@@ -215,15 +210,44 @@ fn append_helper_contract_uses(
         .iter()
         .filter(|output| output.is_structured_output())
     {
-        append_fragment_output_contract_use(
-            output,
-            helper,
-            &helper_output_sources,
-            encoded_output_values,
-            site,
-            contract,
-            context,
+        let mut meta = output.meta.clone();
+        meta.prune_source_not_for_sibling_truthy(&output.source_expr, &helper_output_sources);
+        if !output.relative_path.0.is_empty() {
+            meta.prune_truthy_ancestors_of_source(&output.source_expr);
+        }
+        // `contract_guard_sets` must not see the sibling set (sibling guards
+        // are derived below in `structured_output_guard_sets`), so take it out
+        // of the meta here.
+        let mut sibling_sources = std::mem::take(&mut meta.sibling_sources);
+        if !meta.defaulted && !meta.require_sibling_guards {
+            sibling_sources.clear();
+        }
+        if meta.defaulted {
+            sibling_sources.extend(optional_ancestor_fragment_sources(output, helper));
+        }
+        let output_encoded = output.encoded || encoded_output_values.contains(&output.source_expr);
+        let emit_path = if site.can_project_structured_helper_to_caller_path()
+            && !helper.has_rendered_source_descendant(&output.source_expr)
+        {
+            Some(output_path::append_relative_path(
+                &site.path,
+                &output.relative_path,
+            ))
+        } else {
+            None
+        };
+        let mut witness = meta.emission_witness(
+            &output.source_expr,
+            emit_path,
+            encoded_kind(output.kind, output_encoded),
         );
+        witness.guard_sets = structured_output_guard_sets(
+            &output.source_expr,
+            &witness.guard_sets,
+            &sibling_sources,
+            meta.require_sibling_guards,
+        );
+        context.emit(witness, contract);
     }
 
     for output in helper
@@ -237,18 +261,12 @@ fn append_helper_contract_uses(
         // Every summary row is stamped with its helper body's provenance at
         // the end of `interpret_bound_helper_body`, so `provenance` is never
         // empty here.
-        let mut provenance = meta.provenance.clone();
         if let Some(suppressed) = suppressed_guard_path_provenance.get(value) {
-            merge_provenance_sites(&mut provenance, suppressed);
+            merge_provenance_sites(&mut meta.provenance, suppressed);
         }
-        for extra_guards in meta.contract_guard_sets(value) {
-            contract.push_dependency_use(context.pathless_contract_use_with_extra_provenance(
-                value.clone(),
-                ValueKind::Scalar,
-                &extra_guards,
-                &provenance,
-            ));
-        }
+        let mut witness = meta.emission_witness(value, None, ValueKind::Scalar);
+        witness.dependency = true;
+        context.emit(witness, contract);
     }
 
     for (value, base_meta) in &helper.guard_path_meta {
@@ -275,18 +293,12 @@ fn append_helper_contract_uses(
         }
         let lower_guard_path_meta = site.path.0.is_empty()
             && (site.resource.is_none() || suppressed_guard_path_provenance.contains_key(value));
-        if lower_guard_path_meta && guard_path_meta_has_context {
-            for extra_guards in guard_path_meta.contract_guard_sets(value) {
-                contract.push(context.pathless_contract_use_with_extra_provenance(
-                    value.clone(),
-                    ValueKind::Scalar,
-                    &extra_guards,
-                    &guard_path_meta.provenance,
-                ));
-            }
+        let witness = if lower_guard_path_meta && guard_path_meta_has_context {
+            guard_path_meta.emission_witness(value, None, ValueKind::Scalar)
         } else {
-            contract.push(context.pathless_contract_use(value.clone(), ValueKind::Scalar, &[]));
-        }
+            EmissionWitness::new(value.clone(), None, ValueKind::Scalar, vec![Vec::new()])
+        };
+        context.emit(witness, contract);
     }
 }
 
@@ -311,62 +323,6 @@ fn suppressed_guard_path_provenance(
         }
     }
     by_path
-}
-
-fn append_fragment_output_contract_use(
-    output: &HelperFragmentOutputUse,
-    helper: &HelperSummary,
-    helper_output_sources: &BTreeSet<String>,
-    encoded_output_values: &BTreeSet<String>,
-    site: &OutputSlot,
-    contract: &mut ContractIr,
-    context: &ContractUseContext<'_>,
-) {
-    let mut meta = output.meta.clone();
-    meta.prune_source_not_for_sibling_truthy(&output.source_expr, helper_output_sources);
-    if !output.relative_path.0.is_empty() {
-        meta.prune_truthy_ancestors_of_source(&output.source_expr);
-    }
-    // `contract_guard_sets` must not see the sibling set (sibling guards are
-    // derived below in `structured_output_guard_sets`), so take it out of the
-    // meta here.
-    let mut sibling_sources = std::mem::take(&mut meta.sibling_sources);
-    if !meta.defaulted && !meta.require_sibling_guards {
-        sibling_sources.clear();
-    }
-    if meta.defaulted {
-        sibling_sources.extend(optional_ancestor_fragment_sources(output, helper));
-    }
-    let require_sibling_guards = meta.require_sibling_guards;
-    let guard_sets = structured_output_guard_sets(
-        &output.source_expr,
-        &meta.contract_guard_sets(&output.source_expr),
-        &sibling_sources,
-        require_sibling_guards,
-    );
-    for extra_guards in guard_sets {
-        let output_encoded = output.encoded || encoded_output_values.contains(&output.source_expr);
-        let emit_kind = encoded_kind(output.kind, output_encoded);
-        if site.can_project_structured_helper_to_caller_path()
-            && !helper.has_rendered_source_descendant(&output.source_expr)
-        {
-            let emit_path = output_path::append_relative_path(&site.path, &output.relative_path);
-            contract.push(context.contract_use_with_extra_provenance(
-                output.source_expr.clone(),
-                emit_path,
-                emit_kind,
-                &extra_guards,
-                &output.meta.provenance,
-            ));
-        } else {
-            contract.push(context.pathless_contract_use_with_extra_provenance(
-                output.source_expr.clone(),
-                emit_kind,
-                &extra_guards,
-                &output.meta.provenance,
-            ));
-        }
-    }
 }
 
 fn optional_ancestor_fragment_sources(

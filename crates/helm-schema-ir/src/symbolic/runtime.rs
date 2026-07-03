@@ -5,7 +5,8 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader};
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_get_binding_from_exprs;
 use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract_sink::ContractUseContext;
+use crate::contract::ContractIr;
+use crate::contract_sink::{ContractUseContext, EmissionWitness};
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
 use crate::helper_summary::merge_output_use_meta;
 use crate::node_eval::{
@@ -64,8 +65,11 @@ impl SymbolicWalker<'_> {
             self.current_source_span,
             self.provenance_helper_chain(),
         );
-        self.contract
-            .push(context.contract_use(source_expr, path, kind, extra_guards));
+        let mut contract = ContractIr::default();
+        let witness =
+            EmissionWitness::new(source_expr, Some(path), kind, vec![extra_guards.to_vec()]);
+        context.emit(witness, &mut contract);
+        self.contract.append(contract);
     }
 
     fn observe_symbolic_assignment(&mut self, exprs: &[TemplateExpr]) {
