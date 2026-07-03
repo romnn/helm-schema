@@ -38,6 +38,7 @@ impl SchemaDocument {
         append_conditional_at_parts(&mut self.root, ancestor_segments, condition, then_schema);
     }
 
+    #[tracing::instrument(skip_all)]
     pub(crate) fn merge_missing_values_yaml_defaults_under_roots(
         &mut self,
         values_yaml_doc: &YamlValue,

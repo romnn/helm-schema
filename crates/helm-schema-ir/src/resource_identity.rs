@@ -1,18 +1,37 @@
+//! Resource identity: the kind/apiVersion of each manifest document, read
+//! structurally off the templated-YAML CST.
+//!
+//! Documents are the CST's document windows; a document's identity comes
+//! from its top-level `kind:` / `apiVersion:` mapping entries, looking
+//! through control regions branch-aware (each `if` arm becomes a
+//! [`HelperBranch`] whose guard decodes from the branch header, so
+//! capability-gated apiVersion chains keep their exact guard trees).
+//! `kind: List` / `apiVersion: v1` envelopes are transparent: the resources
+//! are the `items:` sequence entries, whose emitted paths rebase below
+//! `items[*]`.
+//!
+//! Helper-resolved apiVersion values (`apiVersion: {{ include "x" . }}`)
+//! evaluate the helper body's Go-template tree directly instead of the
+//! fragment summary: the branch trees need each `if` header's raw
+//! capability condition ([`CapabilityGuard`], including `Opaque` texts),
+//! which the fragment domain's `PathCondition` lattice intentionally does
+//! not carry.
+
 use std::collections::HashSet;
 
 use helm_schema_ast::{
-    ResourceSpan, TemplateExpr, TemplateHeader, decode_guard, decode_guard_expr, parse_expr_text,
-    parse_go_template, unquote_yaml_scalar,
+    ResourceSpan, TemplateExpr, TemplateHeader, children_with_field, decode_guard,
+    decode_guard_expr, parse_expr_text, unquote_yaml_scalar,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
-use helm_schema_syntax::{MappingEntry, Node as CstNode, TemplatedDocument};
+use helm_schema_syntax::{
+    ControlKind, ControlRegion, MappingEntry, Node as CstNode, Span, TemplatedDocument,
+};
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, literal_helper_call_callee};
-use crate::node_eval::{
-    BranchOutcome, NodeAction, NodeEvalRuntime, eval_template_body, node_action,
-};
+use crate::node_eval::{NodeAction, else_if_pairs, node_action};
 
 const MAX_RECURSION_DEPTH: usize = 12;
 
@@ -21,17 +40,10 @@ pub(crate) fn collect_resource_spans(
     analysis_db: &IrAnalysisDb,
 ) -> Vec<ResourceSpan> {
     let source = document.source();
+    let roots = sorted_nodes(document.roots());
     let mut spans = Vec::new();
-    for span in document.document_spans() {
-        let Some(document_source) = source.get(span.start..span.end) else {
-            continue;
-        };
-        spans.extend(resource_spans_for_manifest_source(
-            document_source,
-            span.start,
-            Vec::new(),
-            analysis_db,
-        ));
+    for window in document.document_spans() {
+        collect_window_spans(&roots, *window, source, Vec::new(), analysis_db, &mut spans);
     }
     spans.sort_by(|left, right| {
         left.start
@@ -41,109 +53,110 @@ pub(crate) fn collect_resource_spans(
     spans
 }
 
-#[derive(Default)]
-pub(crate) struct OutputEvaluator {
-    seen: HashSet<String>,
+/// CST child lists append siblings escaping ill-nested regions at
+/// container-close time; span order is document order, and first-seen
+/// (kind, primary apiVersion) semantics depend on it.
+fn sorted_nodes(nodes: &[CstNode]) -> Vec<&CstNode> {
+    let mut out: Vec<&CstNode> = nodes.iter().collect();
+    out.sort_by_key(|node| node.span_start());
+    out
 }
 
-#[derive(Clone, Copy)]
-enum BodyOutputMode {
-    WholeHelper,
-    ApiVersionHeader,
+fn node_intersects(node: &CstNode, window: Span) -> bool {
+    node.span_start() < window.end && node.subtree_end() > window.start
 }
 
-impl OutputEvaluator {
-    pub(crate) fn evaluate_body(
-        &mut self,
-        source: &str,
-        node: tree_sitter::Node<'_>,
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-    ) -> HelperBranchBody {
-        if depth >= MAX_RECURSION_DEPTH {
-            return HelperBranchBody::literals(Vec::new());
-        }
-        self.evaluate_output(
-            source,
-            node,
-            analysis_db,
-            depth,
-            BodyOutputMode::WholeHelper,
-        )
-        .1
-    }
+fn starts_in(byte: usize, window: Span) -> bool {
+    window.start <= byte && byte < window.end
+}
 
-    fn action_body(
-        &mut self,
-        exprs: &[TemplateExpr],
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-    ) -> Option<HelperBranchBody> {
-        let helper_names = helper_call_names(exprs);
-        if !helper_names.is_empty() {
-            let mut parts = OutputParts::default();
-            for name in helper_names {
-                if let Some(body) = self.with_helper_body(&name, analysis_db, |this, body| {
-                    this.evaluate_body(body.source, body.tree.root_node(), analysis_db, depth + 1)
-                }) {
-                    parts.append_body(body);
-                }
-            }
-            return nonempty_body(parts.literals, parts.branches);
-        }
-
-        let literals =
-            dedup_preserve_order(exprs.iter().flat_map(static_literal_outputs).collect());
-        (!literals.is_empty()).then_some(HelperBranchBody::literals(literals))
-    }
-
-    fn with_helper_body<T>(
-        &mut self,
-        name: &str,
-        analysis_db: &IrAnalysisDb,
-        f: impl FnOnce(&mut Self, crate::analysis_db::ParsedHelperBody<'_>) -> T,
-    ) -> Option<T> {
-        if !self.seen.insert(name.to_string()) {
-            return None;
-        }
-        let result = analysis_db
-            .parsed_helper_body(name)
-            .map(|body| f(self, body));
-        self.seen.remove(name);
-        result
-    }
-
-    fn evaluate_output(
-        &mut self,
-        source: &str,
-        node: tree_sitter::Node<'_>,
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-        mode: BodyOutputMode,
-    ) -> (Option<String>, HelperBranchBody) {
-        let mut runtime = ResourceOutputRuntime {
-            evaluator: self,
-            source,
-            analysis_db,
-            depth,
-            mode,
-            parts: OutputParts::default(),
-            no_output_depth: 0,
+fn collect_window_spans(
+    nodes: &[&CstNode],
+    window: Span,
+    source: &str,
+    path_prefix: Vec<String>,
+    analysis_db: &IrAnalysisDb,
+    out: &mut Vec<ResourceSpan>,
+) {
+    let Some(top_indent) = min_entry_indent(nodes, window) else {
+        return;
+    };
+    let mut parts = HeaderParts::default();
+    collect_header_parts(nodes, window, top_indent, source, analysis_db, &mut parts);
+    let Some(resource) = resource_from_parts(parts.kind.take(), parts.into_api_version_body())
+    else {
+        return;
+    };
+    if is_kubernetes_list_envelope(&resource) {
+        let Some(entry) = items_entry(nodes, window, source) else {
+            return;
         };
-        eval_template_body(&mut runtime, node);
-        let kind = runtime.parts.kind.take();
-        (kind, runtime.parts.into_body(mode))
+        for item in entry.sequence_items() {
+            if !starts_in(item.span.start, window) {
+                continue;
+            }
+            let children = sorted_nodes(&item.children);
+            let mut item_prefix = path_prefix.clone();
+            item_prefix.push("items[*]".to_string());
+            collect_window_spans(
+                &children,
+                item.content_span(),
+                source,
+                item_prefix,
+                analysis_db,
+                out,
+            );
+        }
+        return;
     }
+    out.push(ResourceSpan {
+        start: window.start,
+        end: window.end,
+        resource,
+        path_prefix,
+    });
 }
 
-#[derive(Clone, Default)]
-struct OutputParts {
+/// The document's header indent: the shallowest mapping-entry indent among
+/// the window's top-level nodes (looking through control regions). Normal
+/// manifests put headers at column zero; List items put them at the item's
+/// content indent.
+fn min_entry_indent(nodes: &[&CstNode], window: Span) -> Option<usize> {
+    let mut min: Option<usize> = None;
+    for node in nodes {
+        if !node_intersects(node, window) {
+            continue;
+        }
+        let candidate = match node {
+            CstNode::Mapping(entry) if starts_in(entry.span.start, window) => Some(entry.indent),
+            CstNode::Control(region) => region
+                .branches
+                .iter()
+                .filter_map(|branch| {
+                    let children = sorted_nodes(&branch.body);
+                    min_entry_indent(&children, window)
+                })
+                .min(),
+            _ => None,
+        };
+        min = match (min, candidate) {
+            (Some(current), Some(new)) => Some(current.min(new)),
+            (current, new) => current.or(new),
+        };
+    }
+    min
+}
+
+/// Accumulated header facts of one document window: apiVersion literals and
+/// guarded branch trees in source order, plus the first captured kind.
+#[derive(Default)]
+struct HeaderParts {
     literals: Vec<String>,
     branches: Vec<HelperBranch>,
     kind: Option<String>,
 }
 
-impl OutputParts {
+impl HeaderParts {
     fn append_body(&mut self, body: HelperBranchBody) {
         match body {
             HelperBranchBody::Literals { values } => self.literals.extend(values),
@@ -151,250 +164,207 @@ impl OutputParts {
         }
     }
 
-    fn append_parts(&mut self, other: Self) {
-        self.literals.extend(other.literals);
-        self.branches.extend(other.branches);
-        if self.kind.is_none() {
-            self.kind = other.kind;
-        }
-    }
-
-    fn delta_after(&self, base: &Self) -> Self {
-        Self {
-            literals: self
-                .literals
-                .iter()
-                .skip(base.literals.len())
-                .cloned()
-                .collect(),
-            branches: self
-                .branches
-                .iter()
-                .skip(base.branches.len())
-                .cloned()
-                .collect(),
-            kind: base.kind.is_none().then(|| self.kind.clone()).flatten(),
-        }
-    }
-
     fn is_empty(&self) -> bool {
         self.literals.is_empty() && self.branches.is_empty()
     }
 
-    fn into_body(self, mode: BodyOutputMode) -> HelperBranchBody {
-        match mode {
-            BodyOutputMode::WholeHelper => body_from_helper_parts(self.literals, self.branches),
-            BodyOutputMode::ApiVersionHeader => body_from_parts(self.literals, self.branches),
-        }
+    fn into_api_version_body(self) -> HelperBranchBody {
+        body_from_parts(self.literals, self.branches)
     }
 }
 
-#[derive(Clone)]
-struct ResourceConditionPlan {
-    output_guard: Option<CapabilityGuard>,
-}
-
-struct ResourceOutputRuntime<'a, 'source> {
-    evaluator: &'a mut OutputEvaluator,
-    source: &'source str,
-    analysis_db: &'a IrAnalysisDb,
-    depth: usize,
-    mode: BodyOutputMode,
-    parts: OutputParts,
-    no_output_depth: usize,
-}
-
-impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
-    /// `no_output_depth` is deliberately not part of the snapshot: the only
-    /// enter/exit_no_output caller (`eval_assignment_node`) is strictly
-    /// balanced, so the depth at every snapshot/restore point already equals
-    /// the current value.
-    type ScopeSnapshot = OutputParts;
-    type ConditionPlan = ResourceConditionPlan;
-
-    fn source(&self) -> &str {
-        self.source
-    }
-
-    fn enter_node(&mut self, node: tree_sitter::Node<'_>) {
-        if self.no_output_depth > 0 {
-            return;
-        }
-        match node_action(self.source, node) {
-            NodeAction::Text if matches!(self.mode, BodyOutputMode::WholeHelper) => {
-                if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
-                    let trimmed = text.trim();
-                    if !trimmed.is_empty() {
-                        self.parts.literals.push(trimmed.to_string());
-                    }
-                }
-            }
-            NodeAction::Text => {
-                for line in header_lines_in_span(self.source, node.start_byte(), node.end_byte()) {
-                    if let Some(value) = header_line_value(line, "apiVersion") {
-                        self.parts.append_body(api_version_body_from_header_value(
-                            value,
-                            self.analysis_db,
-                        ));
-                    }
-                    if self.parts.kind.is_none()
-                        && let Some(kind) = header_line_value(line, "kind")
-                    {
-                        self.parts.kind = Some(unquote_yaml_scalar(kind).to_string());
-                    }
-                }
-            }
-            NodeAction::Suppressed
-            | NodeAction::Assignment(_)
-            | NodeAction::If(_)
-            | NodeAction::With(_)
-            | NodeAction::Range(_)
-            | NodeAction::Output(_)
-            | NodeAction::Descend => {}
-        }
-    }
-
-    fn scope_snapshot(&self) -> Self::ScopeSnapshot {
-        self.parts.clone()
-    }
-
-    fn restore_scope(&mut self, snapshot: Self::ScopeSnapshot) {
-        self.parts = snapshot;
-    }
-
-    fn join_branch_scopes(
-        &mut self,
-        entry: &Self::ScopeSnapshot,
-        outcomes: Vec<Self::ScopeSnapshot>,
-    ) {
-        self.parts = entry.clone();
-        for outcome in outcomes {
-            self.parts.append_parts(outcome.delta_after(entry));
-        }
-    }
-
-    fn join_condition_branch_scopes(
-        &mut self,
-        entry: &Self::ScopeSnapshot,
-        branches: Vec<BranchOutcome<Self::ConditionPlan, Self::ScopeSnapshot>>,
-    ) {
-        let has_output_guards = branches.iter().any(|branch| {
-            branch
-                .plan
-                .as_ref()
-                .and_then(|plan| plan.output_guard.as_ref())
-                .is_some()
-        });
-        if !has_output_guards {
-            self.join_branch_scopes(
-                entry,
-                branches.into_iter().map(|branch| branch.outcome).collect(),
-            );
-            return;
-        }
-
-        self.parts = entry.clone();
-        for branch in branches {
-            if self.parts.kind.is_none() {
-                self.parts.kind = branch.outcome.kind.clone();
-            }
-            let parts = branch.outcome.delta_after(entry);
-            if parts.is_empty() {
-                continue;
-            }
-            self.parts.branches.push(HelperBranch {
-                guard: branch.plan.and_then(|plan| plan.output_guard),
-                body: parts.into_body(self.mode),
-            });
-        }
-    }
-
-    fn enter_no_output(&mut self) {
-        self.no_output_depth += 1;
-    }
-
-    fn exit_no_output(&mut self) {
-        self.no_output_depth = self.no_output_depth.saturating_sub(1);
-    }
-
-    fn handle_output_node(&mut self, _node: tree_sitter::Node<'_>, exprs: &[TemplateExpr]) {
-        if self.no_output_depth > 0 || !matches!(self.mode, BodyOutputMode::WholeHelper) {
-            return;
-        }
-        if let Some(body) = self
-            .evaluator
-            .action_body(exprs, self.analysis_db, self.depth)
-        {
-            self.parts.append_body(body);
-        }
-    }
-
-    fn enter_if_condition(&mut self, header: &TemplateHeader) -> Self::ConditionPlan {
-        let guard = decode_guard_expr(header.expr(), header.raw())
-            .unwrap_or_else(|| decode_guard(header.raw()));
-        ResourceConditionPlan {
-            output_guard: Some(guard),
-        }
-    }
-
-    fn enter_with_condition(&mut self, _header: &TemplateHeader) -> Self::ConditionPlan {
-        ResourceConditionPlan { output_guard: None }
-    }
-
-    fn activate_condition_alternative(&mut self, _plan: &Self::ConditionPlan) {}
-}
-
-fn resource_spans_for_manifest_source(
+fn collect_header_parts(
+    nodes: &[&CstNode],
+    window: Span,
+    top_indent: usize,
     source: &str,
-    base_offset: usize,
-    path_prefix: Vec<String>,
     analysis_db: &IrAnalysisDb,
-) -> Vec<ResourceSpan> {
-    let Some(resource) = detect_manifest_resource(source, analysis_db) else {
-        return Vec::new();
+    parts: &mut HeaderParts,
+) {
+    for node in nodes {
+        if !node_intersects(node, window) {
+            continue;
+        }
+        match node {
+            CstNode::Mapping(entry) => {
+                if entry.indent == top_indent && starts_in(entry.span.start, window) {
+                    capture_header_entry(entry, source, analysis_db, parts);
+                }
+                // Layout recovery can hang same-indent siblings under an
+                // open entry (ill-nested regions); the line scan this walk
+                // replaces saw those header lines, so descend for them.
+                let children = sorted_nodes(&entry.children);
+                collect_header_parts(&children, window, top_indent, source, analysis_db, parts);
+            }
+            CstNode::Sequence(item) => {
+                let children = sorted_nodes(&item.children);
+                collect_header_parts(&children, window, top_indent, source, analysis_db, parts);
+            }
+            CstNode::Control(region) => match region.kind {
+                // Define/block bodies render nothing at document scope.
+                ControlKind::Define | ControlKind::Block => {}
+                ControlKind::If => {
+                    collect_if_region(region, window, top_indent, source, analysis_db, parts);
+                }
+                // `with`/`range` bodies contribute headers unguarded (the
+                // branch structure never carried apiVersion guards).
+                ControlKind::With | ControlKind::Range => {
+                    for branch in &region.branches {
+                        let children = sorted_nodes(&branch.body);
+                        collect_header_parts(
+                            &children,
+                            window,
+                            top_indent,
+                            source,
+                            analysis_db,
+                            parts,
+                        );
+                    }
+                }
+            },
+            CstNode::Output(_) | CstNode::Comment(_) | CstNode::Scalar(_) | CstNode::Opaque(_) => {}
+        }
+    }
+}
+
+/// One `if` region: each arm's header contributions become a
+/// [`HelperBranch`] under the arm's decoded guard (`None` for bare `else`);
+/// arms without header contributions vanish. Kind is not branch-alternative
+/// data: the first captured kind wins in source order.
+fn collect_if_region(
+    region: &ControlRegion,
+    window: Span,
+    top_indent: usize,
+    source: &str,
+    analysis_db: &IrAnalysisDb,
+    parts: &mut HeaderParts,
+) {
+    for branch in &region.branches {
+        let mut sub = HeaderParts::default();
+        let children = sorted_nodes(&branch.body);
+        collect_header_parts(&children, window, top_indent, source, analysis_db, &mut sub);
+        if parts.kind.is_none() {
+            parts.kind = sub.kind.take();
+        }
+        if sub.is_empty() {
+            continue;
+        }
+        parts.branches.push(HelperBranch {
+            guard: branch_condition_guard(source, branch.header),
+            body: sub.into_api_version_body(),
+        });
+    }
+}
+
+fn capture_header_entry(
+    entry: &MappingEntry,
+    source: &str,
+    analysis_db: &IrAnalysisDb,
+    parts: &mut HeaderParts,
+) {
+    let Some(key) = source.get(entry.key.span.start..entry.key.span.end) else {
+        return;
     };
-    if is_kubernetes_list_envelope(&resource) {
-        return list_item_sources(source, base_offset, path_prefix)
-            .into_iter()
-            .flat_map(|item| {
-                resource_spans_for_manifest_source(
-                    item.source,
-                    item.start,
-                    item.path_prefix,
-                    analysis_db,
-                )
-            })
-            .collect();
+    let value = entry
+        .value
+        .as_ref()
+        .and_then(|value| source.get(value.span.start..value.span.end))
+        .map(str::trim)
+        .filter(|text| !text.is_empty());
+    match key.trim() {
+        "apiVersion" => {
+            if let Some(text) = value {
+                parts.append_body(api_version_value_body(text, analysis_db));
+            }
+        }
+        "kind" => {
+            if parts.kind.is_none()
+                && let Some(text) = value
+            {
+                parts.kind = Some(unquote_yaml_scalar(text).to_string());
+            }
+        }
+        _ => {}
     }
-    vec![ResourceSpan {
-        start: base_offset,
-        end: base_offset + source.len(),
-        resource,
-        path_prefix,
-    }]
 }
 
-fn detect_manifest_resource(source: &str, analysis_db: &IrAnalysisDb) -> Option<ResourceRef> {
-    if let Some(resource) = detect_resource_in_source(source, analysis_db) {
-        return Some(resource);
+fn api_version_value_body(value: &str, analysis_db: &IrAnalysisDb) -> HelperBranchBody {
+    if value.contains("{{") || value.contains("}}") {
+        let exprs = parse_expr_text(value);
+        return HelperOutputEvaluator::default()
+            .action_body(&exprs, analysis_db, 0)
+            .unwrap_or_else(|| HelperBranchBody::literals(Vec::new()));
     }
-    let normalized = normalize_sequence_item_source(source);
-    if normalized == source {
-        return None;
-    }
-    detect_resource_in_source(&normalized, analysis_db)
+    HelperBranchBody::literals(vec![unquote_yaml_scalar(value).to_string()])
 }
 
-fn detect_resource_in_source(source: &str, analysis_db: &IrAnalysisDb) -> Option<ResourceRef> {
-    let tree = parse_go_template(source)?;
-    let (kind, api_version_output) = OutputEvaluator::default().evaluate_output(
-        source,
-        tree.root_node(),
-        analysis_db,
-        0,
-        BodyOutputMode::ApiVersionHeader,
-    );
-    resource_from_parts(kind, api_version_output)
+fn branch_condition_guard(source: &str, header: Span) -> Option<CapabilityGuard> {
+    let text = source.get(header.start..header.end)?;
+    let condition = action_condition_text(text)?;
+    let header = TemplateHeader::parse_control(condition);
+    Some(
+        decode_guard_expr(header.expr(), header.raw())
+            .unwrap_or_else(|| decode_guard(header.raw())),
+    )
+}
+
+/// The condition text of an `{{ if … }}` / `{{ else if … }}` branch header
+/// action; `None` for a bare `{{ else }}`.
+fn action_condition_text(text: &str) -> Option<&str> {
+    let mut inner = text.trim();
+    if let Some(rest) = inner.strip_prefix("{{") {
+        inner = rest.trim_start_matches('-').trim_start();
+    }
+    if let Some(rest) = inner.strip_suffix("}}") {
+        inner = rest.trim_end_matches('-').trim_end();
+    }
+    if let Some(rest) = inner.strip_prefix("else") {
+        inner = rest.trim_start();
+    }
+    let rest = inner.strip_prefix("if")?;
+    rest.starts_with(|character: char| character.is_whitespace() || character == '(')
+        .then(|| rest.trim())
+}
+
+fn is_kubernetes_list_envelope(resource: &ResourceRef) -> bool {
+    resource.kind == "List"
+        && resource.api_version == "v1"
+        && resource.api_version_candidates.is_empty()
+        && resource.api_version_branches.is_empty()
+}
+
+/// The window's top-level `items:` mapping entry (looking through control
+/// regions, which overlay container structure).
+fn items_entry<'nodes>(
+    nodes: &[&'nodes CstNode],
+    window: Span,
+    source: &str,
+) -> Option<&'nodes MappingEntry> {
+    for node in nodes {
+        if !node_intersects(node, window) {
+            continue;
+        }
+        match node {
+            CstNode::Mapping(entry) if starts_in(entry.span.start, window) => {
+                let Some(key) = source.get(entry.key.span.start..entry.key.span.end) else {
+                    continue;
+                };
+                if unquote_yaml_scalar(key.trim()) == "items" {
+                    return Some(entry);
+                }
+            }
+            CstNode::Control(region) => {
+                for branch in &region.branches {
+                    let children = sorted_nodes(&branch.body);
+                    if let Some(entry) = items_entry(&children, window, source) {
+                        return Some(entry);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 fn resource_from_parts(
@@ -454,136 +424,174 @@ fn insert_api_versions(values: impl IntoIterator<Item = String>, versions: &mut 
     }
 }
 
-fn api_version_body_from_header_value(value: &str, analysis_db: &IrAnalysisDb) -> HelperBranchBody {
-    if value.contains("{{") || value.contains("}}") {
-        let exprs = parse_expr_text(value);
-        return OutputEvaluator::default()
-            .action_body(&exprs, analysis_db, 0)
-            .unwrap_or_else(|| HelperBranchBody::literals(Vec::new()));
+/// Helper-body output evaluation for apiVersion values: literal text runs
+/// and statically resolvable expression outputs, with `if` chains preserved
+/// as guarded branch trees and nested helper calls resolved recursively
+/// (cycle-guarded, depth-capped).
+#[derive(Default)]
+pub(crate) struct HelperOutputEvaluator {
+    seen: HashSet<String>,
+}
+
+#[derive(Default)]
+struct HelperParts {
+    literals: Vec<String>,
+    branches: Vec<HelperBranch>,
+}
+
+impl HelperParts {
+    fn append_body(&mut self, body: HelperBranchBody) {
+        match body {
+            HelperBranchBody::Literals { values } => self.literals.extend(values),
+            HelperBranchBody::Nested { branches } => self.branches.extend(branches),
+        }
     }
-    HelperBranchBody::literals(vec![unquote_yaml_scalar(value).to_string()])
-}
 
-fn header_lines_in_span(source: &str, start: usize, end: usize) -> impl Iterator<Item = &str> {
-    let mut byte = 0usize;
-    source.split_inclusive('\n').filter_map(move |line| {
-        let line_start = byte;
-        byte += line.len();
-        (start <= line_start && line_start < end).then_some(line.trim_end_matches(['\r', '\n']))
-    })
-}
-
-fn header_line_value<'source>(line: &'source str, key: &str) -> Option<&'source str> {
-    let trimmed = line.trim_start();
-    if line.len() != trimmed.len() || trimmed.starts_with('#') {
-        return None;
+    fn is_empty(&self) -> bool {
+        self.literals.is_empty() && self.branches.is_empty()
     }
-    let colon = helm_schema_ast::first_mapping_colon_offset(trimmed)?;
-    (trimmed[..colon].trim() == key)
-        .then(|| trimmed[colon + 1..].trim())
-        .filter(|value| !value.is_empty())
-}
 
-fn is_kubernetes_list_envelope(resource: &ResourceRef) -> bool {
-    resource.kind == "List"
-        && resource.api_version == "v1"
-        && resource.api_version_candidates.is_empty()
-        && resource.api_version_branches.is_empty()
-}
-
-struct ListItemSource<'source> {
-    source: &'source str,
-    start: usize,
-    path_prefix: Vec<String>,
-}
-
-fn list_item_sources<'source>(
-    source: &'source str,
-    base_offset: usize,
-    path_prefix: Vec<String>,
-) -> Vec<ListItemSource<'source>> {
-    let document = TemplatedDocument::parse(source);
-    let Some(entry) = top_level_items_entry(document.roots(), source) else {
-        return Vec::new();
-    };
-    let mut items = Vec::new();
-    for item in entry.sequence_items() {
-        let span = item.content_span();
-        let Some(item_source) = source.get(span.start..span.end) else {
-            continue;
-        };
-        let mut item_prefix = path_prefix.clone();
-        item_prefix.push("items[*]".to_string());
-        items.push(ListItemSource {
-            source: item_source,
-            start: base_offset + span.start,
-            path_prefix: item_prefix,
-        });
+    fn into_body(self) -> HelperBranchBody {
+        body_from_helper_parts(self.literals, self.branches)
     }
-    items
 }
 
-/// The root-level `items:` mapping entry of one manifest document. Control
-/// regions overlay container structure in the CST, so the entry (or the
-/// items below it) can sit inside a region branch; look through branches.
-fn top_level_items_entry<'nodes>(
-    nodes: &'nodes [CstNode],
-    source: &str,
-) -> Option<&'nodes MappingEntry> {
-    for node in nodes {
-        match node {
-            CstNode::Mapping(entry) => {
-                let Some(key) = source.get(entry.key.span.start..entry.key.span.end) else {
-                    continue;
-                };
-                if unquote_yaml_scalar(key.trim()) == "items" {
-                    return Some(entry);
-                }
-            }
-            CstNode::Control(region) => {
-                for branch in &region.branches {
-                    if let Some(entry) = top_level_items_entry(&branch.body, source) {
-                        return Some(entry);
+impl HelperOutputEvaluator {
+    pub(crate) fn evaluate_body(
+        &mut self,
+        source: &str,
+        node: tree_sitter::Node<'_>,
+        analysis_db: &IrAnalysisDb,
+        depth: usize,
+    ) -> HelperBranchBody {
+        if depth >= MAX_RECURSION_DEPTH {
+            return HelperBranchBody::literals(Vec::new());
+        }
+        let mut parts = HelperParts::default();
+        self.collect_body_parts(source, node, analysis_db, depth, &mut parts);
+        parts.into_body()
+    }
+
+    fn collect_body_parts(
+        &mut self,
+        source: &str,
+        node: tree_sitter::Node<'_>,
+        analysis_db: &IrAnalysisDb,
+        depth: usize,
+        parts: &mut HelperParts,
+    ) {
+        match node_action(source, node) {
+            NodeAction::Text => {
+                if let Ok(text) = node.utf8_text(source.as_bytes()) {
+                    let trimmed = text.trim();
+                    if !trimmed.is_empty() {
+                        parts.literals.push(trimmed.to_string());
                     }
                 }
             }
-            _ => {}
+            // Assignment right-hand sides render nothing; nested defines are
+            // suppressed bodies.
+            NodeAction::Suppressed | NodeAction::Assignment(_) => {}
+            NodeAction::Output(exprs) => {
+                if let Some(exprs) = exprs
+                    && let Some(body) = self.action_body(&exprs, analysis_db, depth)
+                {
+                    parts.append_body(body);
+                }
+            }
+            NodeAction::If(header) => {
+                let mut arms = vec![(header, children_with_field(node, "consequence"))];
+                arms.extend(else_if_pairs(node, source));
+                arms.push((None, children_with_field(node, "alternative")));
+                for (arm_header, children) in arms {
+                    let mut sub = HelperParts::default();
+                    for child in children {
+                        self.collect_body_parts(source, child, analysis_db, depth, &mut sub);
+                    }
+                    if sub.is_empty() {
+                        continue;
+                    }
+                    let guard = arm_header.as_ref().map(|header| {
+                        decode_guard_expr(header.expr(), header.raw())
+                            .unwrap_or_else(|| decode_guard(header.raw()))
+                    });
+                    parts.branches.push(HelperBranch {
+                        guard,
+                        body: sub.into_body(),
+                    });
+                }
+            }
+            // `with`/`range` branch bodies contribute unguarded.
+            NodeAction::With(_) => {
+                for child in children_with_field(node, "consequence") {
+                    self.collect_body_parts(source, child, analysis_db, depth, parts);
+                }
+                for (_, children) in else_if_pairs(node, source) {
+                    for child in children {
+                        self.collect_body_parts(source, child, analysis_db, depth, parts);
+                    }
+                }
+                for child in children_with_field(node, "alternative") {
+                    self.collect_body_parts(source, child, analysis_db, depth, parts);
+                }
+            }
+            NodeAction::Range(_) => {
+                for child in children_with_field(node, "body") {
+                    self.collect_body_parts(source, child, analysis_db, depth, parts);
+                }
+                for child in children_with_field(node, "alternative") {
+                    self.collect_body_parts(source, child, analysis_db, depth, parts);
+                }
+            }
+            NodeAction::Descend => {
+                let mut cursor = node.walk();
+                let children: Vec<_> = node.children(&mut cursor).collect();
+                for child in children {
+                    self.collect_body_parts(source, child, analysis_db, depth, parts);
+                }
+            }
         }
     }
-    None
-}
 
-fn normalize_sequence_item_source(source: &str) -> String {
-    let mut lines = source.lines();
-    let Some(first) = lines.next() else {
-        return source.to_string();
-    };
-    let rest = lines.collect::<Vec<_>>();
-    let Some(indent) = rest
-        .iter()
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| line.len() - line.trim_start_matches(' ').len())
-        .filter(|indent| *indent > 0)
-        .min()
-    else {
-        return source.to_string();
-    };
-
-    let mut normalized = String::with_capacity(source.len());
-    normalized.push_str(first);
-    for line in rest {
-        normalized.push('\n');
-        let line_indent = line.len() - line.trim_start_matches(' ').len();
-        if line_indent >= indent {
-            normalized.push_str(&line[indent..]);
-        } else {
-            normalized.push_str(line);
+    fn action_body(
+        &mut self,
+        exprs: &[TemplateExpr],
+        analysis_db: &IrAnalysisDb,
+        depth: usize,
+    ) -> Option<HelperBranchBody> {
+        let helper_names = helper_call_names(exprs);
+        if !helper_names.is_empty() {
+            let mut parts = HelperParts::default();
+            for name in helper_names {
+                if let Some(body) = self.with_helper_body(&name, analysis_db, |this, body| {
+                    this.evaluate_body(body.source, body.tree.root_node(), analysis_db, depth + 1)
+                }) {
+                    parts.append_body(body);
+                }
+            }
+            return nonempty_body(parts.literals, parts.branches);
         }
+
+        let literals =
+            dedup_preserve_order(exprs.iter().flat_map(static_literal_outputs).collect());
+        (!literals.is_empty()).then_some(HelperBranchBody::literals(literals))
     }
-    if source.ends_with('\n') {
-        normalized.push('\n');
+
+    fn with_helper_body<T>(
+        &mut self,
+        name: &str,
+        analysis_db: &IrAnalysisDb,
+        f: impl FnOnce(&mut Self, crate::analysis_db::ParsedHelperBody<'_>) -> T,
+    ) -> Option<T> {
+        if !self.seen.insert(name.to_string()) {
+            return None;
+        }
+        let result = analysis_db
+            .parsed_helper_body(name)
+            .map(|body| f(self, body));
+        self.seen.remove(name);
+        result
     }
-    normalized
 }
 
 fn body_from_parts(literals: Vec<String>, mut branches: Vec<HelperBranch>) -> HelperBranchBody {
@@ -603,6 +611,9 @@ fn body_from_parts(literals: Vec<String>, mut branches: Vec<HelperBranch>) -> He
     HelperBranchBody::Nested { branches }
 }
 
+/// A whole helper's output: a mixed-content body (literal text around
+/// branches) is not a pure delegation, so it flattens to candidate
+/// literals; branch-only bodies keep their typed structure.
 fn body_from_helper_parts(literals: Vec<String>, branches: Vec<HelperBranch>) -> HelperBranchBody {
     if literals.is_empty() || branches.is_empty() {
         return body_from_parts(literals, branches);

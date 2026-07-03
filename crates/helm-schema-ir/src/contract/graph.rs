@@ -149,6 +149,7 @@ impl ContractIr {
     /// Finalize the contract once and derive downstream artifacts from that
     /// one normalized contract representation.
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn finalize(self) -> FinalizedContract {
         let Self {
             mut uses,

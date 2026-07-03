@@ -264,10 +264,8 @@ fn local_value_result(
     env: &EvalEnv,
 ) -> EvalResult {
     let source_paths = value.fragment_source_paths();
-    let rendered_paths = value.fragment_rendered_paths();
     let mut result = EvalResult::from_value(value);
     result.effects.local_source_paths = source_paths;
-    result.effects.local_rendered_paths = rendered_paths;
     if let Some(default_paths) = env.local_default_paths.get(var) {
         result
             .effects

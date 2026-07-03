@@ -7,12 +7,12 @@ use helm_schema_core as output_path;
 /// Apply semantic finalization to claims produced by the interpreter.
 ///
 /// This removes duplicates that are equivalent after chart-default lowering,
-/// collapses transparent `kind: List` envelope projections, prefers resource
-/// evidence for pathless duplicate roots, and then canonicalizes ordering.
+/// prefers resource evidence for pathless duplicate roots, and then
+/// canonicalizes ordering.
+#[tracing::instrument(skip_all)]
 pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
     canonicalize_contract_use_inputs(uses);
     drop_default_guard_subsumed_duplicates(uses);
-    drop_values_list_envelope_duplicates(uses);
     drop_self_truthy_subsumed_duplicates(uses);
     merge_pathless_resource_variants(uses);
     drop_self_truthy_subsumed_duplicates(uses);
@@ -24,6 +24,7 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
 /// Tests and expert callers use this when they provide already-structured
 /// claims and need deterministic ordering without losing raw evidence such as
 /// one nullable and one non-nullable render site.
+#[tracing::instrument(skip_all)]
 pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
     canonicalize_contract_use_inputs(uses);
     uses.sort_by(contract_use_semantic_cmp);
@@ -47,6 +48,7 @@ fn canonicalize_contract_use_inputs(uses: &mut [ContractUse]) {
     }
 }
 
+#[tracing::instrument(skip_all)]
 fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
     let mut merged: Vec<ContractUse> = Vec::with_capacity(uses.len());
     let mut pathless_index_by_identity: BTreeMap<(String, ValueKind, Vec<Guard>), usize> =
@@ -80,6 +82,7 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
     *uses = merged;
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
     let defaulted_render_sites: BTreeSet<_> = uses
         .iter()
@@ -95,52 +98,72 @@ pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>
     });
 }
 
-fn drop_values_list_envelope_duplicates(uses: &mut Vec<ContractUse>) {
-    let render_sites: BTreeSet<_> = uses.iter().map(render_site).collect();
-
-    uses.retain(|contract_use| {
-        let Some(index) = contract_use
-            .path
-            .0
-            .iter()
-            .position(|segment| segment == "values[*]")
-        else {
-            return true;
-        };
-        let mut site = render_site(contract_use);
-        site.1.0.remove(index);
-        !render_sites.contains(&site)
-    });
-}
-
+#[tracing::instrument(skip_all)]
 fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
-    let all_uses = uses.clone();
-    uses.retain(|contract_use| {
-        let has_self_truthy = contract_use.guards.iter().any(
-            |guard| matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr),
-        );
-        if contract_use.guards.iter().any(
-            |guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr),
-        ) {
-            return true;
+    // The subsumption scan only ever compares rows sharing one render site
+    // (source, path, kind, resource), so group indices once and keep the
+    // quadratic candidate scan inside those buckets instead of over all rows.
+    let mut buckets: BTreeMap<(&String, &YamlPath, ValueKind, Option<&ResourceRef>), Vec<usize>> =
+        BTreeMap::new();
+    for (index, contract_use) in uses.iter().enumerate() {
+        buckets
+            .entry((
+                &contract_use.source_expr,
+                &contract_use.path,
+                contract_use.kind,
+                contract_use.resource.as_ref(),
+            ))
+            .or_default()
+            .push(index);
+    }
+
+    let mut keep = vec![true; uses.len()];
+    for indices in buckets.values() {
+        if indices.len() < 2 {
+            continue;
         }
-        !all_uses.iter().any(|other| {
-            other.source_expr == contract_use.source_expr
-                && render_site(other) == render_site(contract_use)
-                && !other.provenance.is_empty()
-                && ((contract_use.provenance.is_empty() && contract_use.resource.is_some())
-                    || other.provenance == contract_use.provenance)
-                && other.guards.len() > contract_use.guards.len()
-                && contract_use
-                    .guards
-                    .iter()
-                    .all(|guard| other.guards.contains(guard))
-                && ((!has_self_truthy
-                    && other.guards.iter().any(|guard| {
-                        matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr)
-                    }))
-                    || extra_guards_are_truthy_parents(contract_use, other))
-        })
+        for &index in indices {
+            let Some(contract_use) = uses.get(index) else {
+                continue;
+            };
+            let has_self_truthy = contract_use.guards.iter().any(
+                |guard| matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr),
+            );
+            if contract_use.guards.iter().any(
+                |guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr),
+            ) {
+                continue;
+            }
+            let subsumed = indices
+                .iter()
+                .filter_map(|&other_index| uses.get(other_index))
+                .any(|other| {
+                    !other.provenance.is_empty()
+                        && ((contract_use.provenance.is_empty()
+                            && contract_use.resource.is_some())
+                            || other.provenance == contract_use.provenance)
+                        && other.guards.len() > contract_use.guards.len()
+                        && contract_use
+                            .guards
+                            .iter()
+                            .all(|guard| other.guards.contains(guard))
+                        && ((!has_self_truthy
+                            && other.guards.iter().any(|guard| {
+                                matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr)
+                            }))
+                            || extra_guards_are_truthy_parents(contract_use, other))
+                });
+            if subsumed && let Some(flag) = keep.get_mut(index) {
+                *flag = false;
+            }
+        }
+    }
+
+    let mut index = 0;
+    uses.retain(|_| {
+        let kept = keep.get(index).copied().unwrap_or(true);
+        index += 1;
+        kept
     });
 }
 

@@ -7,6 +7,7 @@ use helm_schema_core::{
     ContractValuePathFacts, MetadataFieldKind, Predicate,
 };
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     type_hints: &BTreeMap<String, BTreeSet<String>>,

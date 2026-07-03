@@ -78,6 +78,7 @@ impl<'a> PathSchemaResolver<'a> {
         )
     }
 
+    #[tracing::instrument(skip_all)]
     pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
         let referenced_value_paths = self.referenced_value_paths;
         referenced_value_paths

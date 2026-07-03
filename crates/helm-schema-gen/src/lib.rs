@@ -283,6 +283,7 @@ struct ConditionalResolvedSchema {
     target_is_fragment: bool,
 }
 
+#[tracing::instrument(skip_all)]
 fn collect_conditional_schemas(
     resolved_paths: &[path_resolver::ResolvedPathSchema],
     contract_schema_signals: &ContractSchemaSignals,
@@ -442,6 +443,7 @@ fn schema_is_boolean_like(schema: &Value) -> bool {
         && !crate::schema_model::schema_allows_type(schema, "array")
 }
 
+#[tracing::instrument(skip_all)]
 fn append_conditional_schemas(
     root_schema: &mut SchemaDocument,
     conditionals: Vec<ConditionalResolvedSchema>,

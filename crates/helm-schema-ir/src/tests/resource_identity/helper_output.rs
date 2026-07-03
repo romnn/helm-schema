@@ -25,7 +25,7 @@ fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperBranchBody {
     let Some(body) = analysis_db.parsed_helper_body(name) else {
         return HelperBranchBody::literals(Vec::new());
     };
-    crate::resource_identity::OutputEvaluator::default().evaluate_body(
+    crate::resource_identity::HelperOutputEvaluator::default().evaluate_body(
         body.source,
         body.tree.root_node(),
         &analysis_db,

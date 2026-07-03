@@ -16,7 +16,7 @@ pub use expr_function_catalog::{
     type_is_schema_type,
 };
 pub(crate) use helm_schema_syntax::structural_mapping_colon;
-pub use helm_schema_syntax::{first_mapping_colon_offset, parse_yaml_key, unquote_yaml_scalar};
+pub use helm_schema_syntax::{parse_yaml_key, unquote_yaml_scalar};
 pub use literal_schema_type::expression_schema_type;
 pub use printf_eval::{literal_printf_format, render_printf_string_sets};
 pub use range_structure::{

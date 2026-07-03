@@ -51,7 +51,4 @@ pub use cst::{
     OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
     TemplatedDocument,
 };
-pub use yaml_scan::{
-    first_mapping_colon_offset, mapping_colon_is_structural, parse_yaml_key,
-    structural_mapping_colon, unquote_yaml_scalar,
-};
+pub use yaml_scan::{parse_yaml_key, structural_mapping_colon, unquote_yaml_scalar};

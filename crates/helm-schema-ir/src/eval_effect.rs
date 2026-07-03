@@ -18,11 +18,6 @@ pub(crate) struct Effects {
     /// read by the expression. Guard-path seeding and expression path
     /// resolution consume this; output rows ride the value itself.
     pub(crate) local_source_paths: BTreeSet<String>,
-    /// All `.Values` paths rendered by locals that were read by the
-    /// expression. A row at the projection root for one of these paths
-    /// renders the local's binding, so it keeps the binding-time default
-    /// and encoding semantics instead of the read site's.
-    pub(crate) local_rendered_paths: BTreeSet<String>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
     /// Pathless reads observed inside called helper bodies (guard reads and
     /// dependency-lane rows), carrying helper-internal guards only; the
@@ -52,7 +47,6 @@ impl Effects {
         self.chart_default_paths.extend(other.chart_default_paths);
         self.local_default_paths.extend(other.local_default_paths);
         self.local_source_paths.extend(other.local_source_paths);
-        self.local_rendered_paths.extend(other.local_rendered_paths);
         for (path, meta) in other.local_output_meta {
             self.local_output_meta.entry(path).or_default().merge(&meta);
         }

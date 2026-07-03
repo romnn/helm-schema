@@ -1,3 +1,8 @@
+//! Go-template node classification shared by the fragment interpreter's
+//! inline-region evaluation and the resource-identity helper walk: typed
+//! actions with parsed headers/expressions, and the if-chain's
+//! else-if (header, body) pairs.
+
 use helm_schema_ast::{TemplateExpr, TemplateHeader, range_header_from_source};
 
 use helm_schema_ast::parse_expr_text;
@@ -47,4 +52,40 @@ pub(crate) fn control_header(source: &str, node: tree_sitter::Node<'_>) -> Optio
         .utf8_text(source.as_bytes())
         .ok()
         .map(|text| TemplateHeader::parse_control(text.trim().to_string()))
+}
+
+pub(crate) fn else_if_pairs<'node>(
+    node: tree_sitter::Node<'node>,
+    source: &str,
+) -> Vec<(Option<TemplateHeader>, Vec<tree_sitter::Node<'node>>)> {
+    let mut pairs = Vec::new();
+    let mut seen_main_condition = false;
+    let mut walker = node.walk();
+    if !walker.goto_first_child() {
+        return pairs;
+    }
+
+    loop {
+        let child = walker.node();
+        match walker.field_name() {
+            Some("condition") => {
+                if seen_main_condition {
+                    pairs.push((control_header(source, child), Vec::new()));
+                } else {
+                    seen_main_condition = true;
+                }
+            }
+            Some("option") => {
+                if let Some((_condition, option_children)) = pairs.last_mut() {
+                    option_children.push(child);
+                }
+            }
+            _ => {}
+        }
+        if !walker.goto_next_sibling() {
+            break;
+        }
+    }
+
+    pairs
 }

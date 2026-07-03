@@ -14,6 +14,7 @@ const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
 /// Extract repeated provider-owned schema leaves into root `$defs`
 /// definitions, rewriting each extracted `resolved_path.schema` to an
 /// internal `$ref`. Returns the definitions keyed by definition name.
+#[tracing::instrument(skip_all)]
 pub(crate) fn extract_provider_definitions(
     resolved_paths: &mut [ResolvedPathSchema],
     values_descriptions: &BTreeMap<String, String>,
