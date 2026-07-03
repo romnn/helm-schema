@@ -41,17 +41,6 @@ impl<'a> FragmentLocalFacts<'a> {
             output_meta: Some(output_meta),
         }
     }
-
-    pub(crate) fn without_output_meta(
-        bindings: &'a HashMap<String, AbstractValue>,
-        default_paths: &'a HashMap<String, BTreeSet<String>>,
-    ) -> Self {
-        Self {
-            bindings,
-            default_paths: Some(default_paths),
-            output_meta: None,
-        }
-    }
 }
 
 pub(crate) fn context_value_from_outer_expr(

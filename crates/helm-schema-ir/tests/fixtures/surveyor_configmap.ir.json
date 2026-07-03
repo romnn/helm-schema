@@ -266,22 +266,6 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "config.jetstream.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
       "provenance": [
         {
           "helper_chain": [
@@ -302,10 +286,56 @@
         {
           "path": "config.jetstream.enabled",
           "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "surveyor.fullname"
+          ],
+          "span": {
+            "end": 777,
+            "start": 420
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "ConfigMap"
+      },
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
         }
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "surveyor.labels"
+          ],
+          "span": {
+            "end": 1358,
+            "start": 1052
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "global.labels"
     },
@@ -348,18 +378,6 @@
         {
           "path": "config.jetstream.enabled",
           "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
         }
       ],
       "kind": "Scalar",
@@ -424,6 +442,48 @@
           "span": {
             "end": 1541,
             "start": 1436
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "ConfigMap"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "config.jetstream.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "not"
+        },
+        {
+          "path": "nameOverride",
+          "type": "default"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "surveyor.fullname"
+          ],
+          "span": {
+            "end": 777,
+            "start": 420
           },
           "template_path": "<inline:0>"
         }

@@ -18,12 +18,10 @@ mod helper_runtime_plan;
 mod helper_summary;
 mod helper_walk_state;
 mod node_eval;
-mod range_action_plan;
 mod resource_identity;
 mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
-mod symbolic_scope_state;
 mod value_path_context;
 
 pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};

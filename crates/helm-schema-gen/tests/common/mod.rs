@@ -166,7 +166,7 @@ pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> Value {
 pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: &str) -> Value {
     let src = test_util::read_testdata(case.template_path);
     let idx = build_define_index(case.define_sources, case.helper_parse_mode);
-    let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src);
     let provider = match case.provider {
         ProviderKind::K8s(version) => production_k8s_chain(version),
         ProviderKind::CrdK8s(version) => production_crd_k8s_chain(version),

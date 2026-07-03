@@ -20,7 +20,7 @@ use test_util::prelude::sim_assert_eq;
 fn generate(template: &str) -> FinalizedContract {
     let idx = DefineIndex::new();
     SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &idx)
+        .generate_contract_ir(template)
         .finalize()
 }
 
@@ -379,7 +379,7 @@ fn detector_resolves_helper_returned_api_version() {
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &idx)
+        .generate_contract_ir(template)
         .finalize();
 
     let u = ir
@@ -425,7 +425,7 @@ fn detector_resolves_helper_with_if_else_branches() {
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &idx)
+        .generate_contract_ir(template)
         .finalize();
 
     let u = ir
@@ -470,7 +470,7 @@ fn detector_resolves_include_returned_api_version() {
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &idx)
+        .generate_contract_ir(template)
         .finalize();
 
     let u = ir

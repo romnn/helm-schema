@@ -34,7 +34,7 @@ pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
     let src = test_util::read_testdata(case.template_path);
     let idx = build_define_index(case.define_sources);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(&src, &idx)
+        .generate_contract_ir(&src)
         .finalize()
         .document();
 

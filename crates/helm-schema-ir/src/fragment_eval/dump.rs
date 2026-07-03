@@ -96,8 +96,8 @@ fn fmt_string(string: &AbstractString) -> String {
                 format!("text{{{}}}", rendered.join("|"))
             }
             StringPart::Splice(splice) => fmt_splice(splice),
-            StringPart::Taint(paths) => {
-                let rendered: Vec<&str> = paths.iter().map(String::as_str).collect();
+            StringPart::Taint(taint) => {
+                let rendered: Vec<&str> = taint.paths.iter().map(String::as_str).collect();
                 format!("taint{{{}}}", rendered.join(", "))
             }
         })

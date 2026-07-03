@@ -20,7 +20,7 @@ fn provider() -> Chain {
 
 fn parse_contract(src: &str) -> ContractIr {
     let idx = DefineIndex::new();
-    SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
+    SymbolicIrContext::new(&idx).generate_contract_ir(src)
 }
 
 fn contract_for(uses: Vec<ContractUse>) -> ContractIr {

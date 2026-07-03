@@ -233,11 +233,16 @@ fn collect_bound_fragment_output_assignment_uses(
         rhs_expr,
     } = assignment;
     let mut seen_rhs = state.seen.clone();
+    // The prior bindings' per-path meta rides through the right-hand side:
+    // a re-assignment under a new branch keeps each flowing path's earlier
+    // branch conditions (`$image` rebuilt under a registry guard still
+    // renders `.digest` only where the digest branch assigned it).
     let result = helper_result_from_expr_with_fragment_locals(
         rhs_expr,
-        FragmentLocalFacts::without_output_meta(
+        FragmentLocalFacts::with_output_meta(
             &state.locals.fragment_values,
             &state.locals.default_paths,
+            &state.locals.output_meta,
         ),
         Some(bindings),
         dot.helper.as_ref(),

@@ -93,11 +93,11 @@ fn range_over_values_splices_list_and_mapping_sources() {
                     when range(extraArgs):
                       splice extraArgs scalar
                   key "env":
+                    when range(env):
+                      splice env fragment
                     when always:
                       mapping:
                         key dynamic []:
-                    when range(env):
-                      splice env fragment
         reads:
           env [range(env)]
     "#};

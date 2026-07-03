@@ -124,6 +124,138 @@
       },
       "then": {
         "properties": {
+          "nameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "prometheus": {
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "const": true
+                          },
+                          {
+                            "not": {
+                              "const": 0
+                            },
+                            "type": "number"
+                          },
+                          {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          {
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          {
+                            "minProperties": 1,
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "podmonitor": {
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "const": true
+                            },
+                            {
+                              "not": {
+                                "const": 0
+                              },
+                              "type": "number"
+                            },
+                            {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            {
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "minProperties": 1,
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podmonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
           "namespace": {
             "anyOf": [
               {
@@ -433,13 +565,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "namespace": {},
     "prometheus": {
       "additionalProperties": false,

@@ -470,6 +470,14 @@ fn extend_lowerable_predicate(
         }
         Predicate::Guard(Guard::Range { .. }) => return None,
         Predicate::Guard(Guard::Default { path }) if path == target_value_path => {}
+        // Self-negation carries the branch's own-arm exclusion, not a
+        // conditional shape over *other* paths; the overlay keys stay on the
+        // foreign conditions.
+        Predicate::Not(inner)
+            if matches!(
+                inner.as_ref(),
+                Predicate::Guard(Guard::Truthy { path }) if path == target_value_path
+            ) => {}
         other => {
             out.push(predicate_to_guard(other, Some(target_value_path))?);
         }

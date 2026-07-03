@@ -67,6 +67,42 @@ mod resource_identity;
 mod symbolic_local_state;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
+use helm_schema_core::Predicate;
+
+/// The raw per-branch guard stacks of one helper meta (branch predicates in
+/// canonical guard order plus the defaulted marker), the same lowering the
+/// fragment projection's pathless reads use. Test-side replacement for the
+/// retired emission-side `contract_guard_sets` (which additionally applied
+/// the deleted sibling/suppression prune algebra).
+pub(crate) fn raw_guard_sets(
+    meta: &crate::helper_summary::HelperOutputMeta,
+    source_expr: &str,
+) -> Vec<Vec<Guard>> {
+    let branches: Vec<Vec<Predicate>> = if meta.predicates.is_empty() {
+        vec![Vec::new()]
+    } else {
+        meta.predicates
+            .iter()
+            .map(|branch| branch.iter().cloned().collect())
+            .collect()
+    };
+    let mut guard_sets = Vec::new();
+    for branch in branches {
+        let mut guards = Predicate::contract_guard_stack(&branch);
+        if meta.defaulted {
+            let default_guard = Guard::Default {
+                path: source_expr.to_string(),
+            };
+            if !guards.contains(&default_guard) {
+                guards.push(default_guard);
+            }
+        }
+        if !guard_sets.contains(&guards) {
+            guard_sets.push(guards);
+        }
+    }
+    guard_sets
+}
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;
 
@@ -79,7 +115,7 @@ foo: {{ .Values.name }}
 ";
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
+        .generate_contract_ir(src)
         .finalize();
 
     assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
@@ -106,7 +142,7 @@ metadata:
 ";
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
+        .generate_contract_ir(src)
         .finalize();
 
     let name_use = ir
@@ -140,7 +176,7 @@ metadata:
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
+        .generate_contract_ir(src)
         .finalize();
 
     let name_use = ir
@@ -176,7 +212,7 @@ metadata:
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
+        .generate_contract_ir(src)
         .finalize();
 
     let name_use = ir
@@ -218,7 +254,7 @@ spec:
         idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
     }
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
+        .generate_contract_ir(src)
         .finalize();
 
     let name_override_uses = ir
@@ -292,7 +328,7 @@ metadata:
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src, &idx)
+        .generate_contract_ir(src)
         .finalize();
 
     assert!(

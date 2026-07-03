@@ -54,9 +54,19 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         let value = analysis.project_value();
         // The resolver boundary is the one place nested summary hints enter
         // expression effects; collectors read the Effects fields only.
+        // Encoded rows surface as encoded paths so value-lattice lowerings
+        // keep the "sink does not constrain the value" semantics the row
+        // recorded (`project_value` output paths carry no encoding flag).
+        let encoded_paths = analysis
+            .output_uses
+            .iter()
+            .filter(|output| output.encoded)
+            .map(|output| output.source_expr.clone())
+            .collect();
         let effects = Effects {
             chart_default_paths: analysis.chart_defaults.clone(),
             type_hints: analysis.type_hints.clone(),
+            encoded_paths,
             helper_summary: analysis,
             ..Effects::default()
         };

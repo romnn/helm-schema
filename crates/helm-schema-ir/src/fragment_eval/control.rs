@@ -20,6 +20,7 @@ impl Interpreter<'_> {
         &mut self,
         region: &ControlRegion,
         adopted: &[Adopted<'_>],
+        escaped: Vec<DeferredNodes<'_>>,
     ) -> Contributions {
         if matches!(region.kind, ControlKind::Define | ControlKind::Block) {
             // Define/block bodies render nothing at document scope (they are
@@ -28,6 +29,7 @@ impl Interpreter<'_> {
             return Contributions::default();
         }
         let branch_nodes = branch_node_lists(region, adopted);
+        let (escaped_per_branch, escaped_after) = split_escaped(region, escaped);
 
         let entry_locals = self.locals.clone();
         let entry_predicates = self.active_predicates.len();
@@ -58,7 +60,12 @@ impl Interpreter<'_> {
                 has_unconditional_else = true;
             }
             let nodes = branch_nodes.get(index).map_or(&[][..], Vec::as_slice);
-            let (own_condition, extra) = self.activate_arm(&arm, nodes);
+            // Header reads carry the region's site: the unique resource the
+            // region intersects (none when it spans several documents).
+            let region_site = self.region_site(region.span);
+            let previous_site = std::mem::replace(&mut self.current_site, region_site);
+            let (own_condition, extra) = self.activate_arm(&arm, nodes, region.span.start);
+            self.current_site = previous_site;
             if let Some(own) = own_condition {
                 arm_condition = and_conditions(arm_condition, own.clone());
                 if !matches!(arm, ArmSpec::Range { .. }) {
@@ -68,6 +75,12 @@ impl Interpreter<'_> {
 
             self.locals.enter_local_scope();
             let mut contributions = self.eval_node_list(nodes);
+            // Escaped descendants of earlier siblings whose spans fall in
+            // this branch's window evaluate here, re-attached under their
+            // parent entry chain, so they carry this arm's condition.
+            for spec in escaped_per_branch.get(index).into_iter().flatten() {
+                self.eval_deferred(spec.clone(), &mut contributions);
+            }
             self.locals.exit_local_scope();
             outcomes.push(self.locals.clone());
 
@@ -84,10 +97,11 @@ impl Interpreter<'_> {
         }
         self.locals.join_branch_outcomes(&entry_locals, outcomes);
 
-        // Descendants of adopted nodes that start after the region end
-        // evaluate here, outside the branch scope, re-attached under their
-        // parent entry chain (source order: they follow `{{ end }}`).
-        let mut deferred_specs = Vec::new();
+        // Descendants of adopted or escaped nodes that start after the
+        // region end evaluate here, outside the branch scope, re-attached
+        // under their parent entry chain (source order: they follow
+        // `{{ end }}`).
+        let mut deferred_specs = escaped_after;
         for entry in adopted {
             let mut chain = Vec::new();
             collect_deferred(
@@ -170,6 +184,7 @@ impl Interpreter<'_> {
         &mut self,
         arm: &ArmSpec,
         nodes: &[NodeView<'_>],
+        region_start: usize,
     ) -> (Option<PathCondition>, Contributions) {
         match arm {
             ArmSpec::Else => (None, Contributions::default()),
@@ -181,7 +196,7 @@ impl Interpreter<'_> {
             ArmSpec::Range {
                 header,
                 destructured,
-            } => self.activate_range(header.as_ref(), *destructured, nodes),
+            } => self.activate_range(header.as_ref(), *destructured, nodes, region_start),
         }
     }
 
@@ -249,6 +264,7 @@ impl Interpreter<'_> {
         header: Option<&TemplateHeader>,
         destructured: bool,
         nodes: &[NodeView<'_>],
+        region_start: usize,
     ) -> (Option<PathCondition>, Contributions) {
         let Some(header) = header else {
             self.dot_stack.push(None);
@@ -286,12 +302,26 @@ impl Interpreter<'_> {
         }
         if renders_scalar_items {
             for path in &source_paths {
-                extra.push_value_arm(splice_arm(path, ValueKind::Scalar));
+                extra.push_value_arm(splice_arm(path, ValueKind::Scalar, &self.current_site));
             }
         }
         if renders_mapping_entries {
+            // Templated-key entries render at the body's own entry indent:
+            // the fragment attaches to the container that indent opens (the
+            // CST can nest a shallow-marker region under a preceding open
+            // entry), the same float rule as explicitly-indented output.
             for path in &source_paths {
-                extra.push_value_arm(splice_arm(path, ValueKind::Fragment));
+                let (condition, node) = splice_arm(path, ValueKind::Fragment, &self.current_site);
+                let mut value = super::domain::Guarded::empty();
+                value.arms.push((condition, node));
+                match shape.dynamic_entry_indent {
+                    Some(width) => extra.floating.push(super::eval::FloatingOutput {
+                        width,
+                        origin: region_start,
+                        value,
+                    }),
+                    None => extra.values.extend(value),
+                }
             }
         }
         let dot = direct_path.map(|path| AbstractValue::ValuesPath(format!("{path}.*")));
@@ -304,6 +334,7 @@ impl Interpreter<'_> {
             emits_sequence_items: false,
             items_all_scalar: true,
             has_dynamic_entries: false,
+            dynamic_entry_indent: None,
         };
         for view in nodes {
             self.observe_range_body_node(view.node, &mut shape);
@@ -340,6 +371,7 @@ impl Interpreter<'_> {
                     .any(|part| matches!(part, ScalarPart::Hole(_)))
                 {
                     shape.has_dynamic_entries = true;
+                    shape.dynamic_entry_indent.get_or_insert(entry.indent);
                 }
                 for child in &entry.children {
                     self.observe_range_body_node(child, shape);
@@ -359,19 +391,29 @@ impl Interpreter<'_> {
             {
                 // `{{ key }}…: value` line shape: a templated mapping entry.
                 shape.has_dynamic_entries = true;
+                shape
+                    .dynamic_entry_indent
+                    .get_or_insert(self.dynamic_entry_render_indent(opaque.span));
             }
             _ => {}
         }
     }
 }
 
-fn splice_arm(path: &str, kind: ValueKind) -> (PathCondition, AbstractFragment) {
+fn splice_arm(
+    path: &str,
+    kind: ValueKind,
+    site: &Option<std::rc::Rc<super::domain::SiteFacts>>,
+) -> (PathCondition, AbstractFragment) {
     (
         Predicate::True,
         AbstractFragment::Splice(Splice {
             values_path: path.to_string(),
             kind,
-            meta: SpliceMeta::default(),
+            meta: SpliceMeta {
+                site: site.clone(),
+                ..SpliceMeta::default()
+            },
         }),
     )
 }
@@ -438,15 +480,65 @@ fn parse_else_header(text: &str) -> ArmSpec {
 
 /// One batch of deferred descendants: the entry chain they nest under (in
 /// document order, outermost first) and the deferred nodes themselves.
-struct DeferredNodes<'n> {
+#[derive(Clone)]
+pub(super) struct DeferredNodes<'n> {
     chain: Vec<&'n helm_schema_syntax::MappingEntry>,
     nodes: Vec<&'n Node>,
+}
+
+/// Assign escaped batches to branch windows by span: branch `i` owns
+/// `[header.end, next header start or region end)`; nodes past the region
+/// end re-attach outside the branch scope.
+fn split_escaped<'n>(
+    region: &ControlRegion,
+    escaped: Vec<DeferredNodes<'n>>,
+) -> (Vec<Vec<DeferredNodes<'n>>>, Vec<DeferredNodes<'n>>) {
+    let mut per_branch: Vec<Vec<DeferredNodes<'n>>> =
+        region.branches.iter().map(|_| Vec::new()).collect();
+    let mut after = Vec::new();
+    for spec in escaped {
+        let mut buckets: Vec<Vec<&'n Node>> = region.branches.iter().map(|_| Vec::new()).collect();
+        let mut past = Vec::new();
+        for node in spec.nodes {
+            let start = node.span_start();
+            if start >= region.span.end {
+                past.push(node);
+                continue;
+            }
+            let mut target = 0;
+            for (index, branch) in region.branches.iter().enumerate() {
+                if start >= branch.header.end {
+                    target = index;
+                }
+            }
+            if let Some(bucket) = buckets.get_mut(target) {
+                bucket.push(node);
+            }
+        }
+        for (index, nodes) in buckets.into_iter().enumerate() {
+            if !nodes.is_empty()
+                && let Some(branch) = per_branch.get_mut(index)
+            {
+                branch.push(DeferredNodes {
+                    chain: spec.chain.clone(),
+                    nodes,
+                });
+            }
+        }
+        if !past.is_empty() {
+            after.push(DeferredNodes {
+                chain: spec.chain,
+                nodes: past,
+            });
+        }
+    }
+    (per_branch, after)
 }
 
 /// Collect descendants of an adopted node whose spans start at or beyond the
 /// adopting region's end (and below the enclosing bound, which the enclosing
 /// region's own deferral handles), with the mapping-entry chain above them.
-fn collect_deferred<'n>(
+pub(super) fn collect_deferred<'n>(
     node: &'n Node,
     limit: usize,
     upper: Option<usize>,
@@ -505,4 +597,7 @@ struct RangeBodyShape {
     emits_sequence_items: bool,
     items_all_scalar: bool,
     has_dynamic_entries: bool,
+    /// The rendered indent of the body's templated entries (the key hole's
+    /// explicit `nindent` width when present, else the line indent).
+    dynamic_entry_indent: Option<usize>,
 }

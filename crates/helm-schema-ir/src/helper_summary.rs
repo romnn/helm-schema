@@ -1,7 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
-use crate::contract_sink::EmissionWitness;
 use crate::eval_effect::Effects;
 use crate::{ContractProvenance, Guard, ValueKind, YamlPath};
 use helm_schema_core as output_path;
@@ -99,128 +98,10 @@ impl HelperOutputMeta {
             .collect();
     }
 
-    pub(crate) fn prune_source_not_for_sibling_truthy(
-        &mut self,
-        source_expr: &str,
-        sources: &BTreeSet<String>,
-    ) {
-        self.rewrite_predicate_branches(|meta, predicate_branch| {
-            let has_truthy_sibling = predicate_branch.iter().any(|predicate| {
-                predicate_truthy_path(predicate)
-                    .is_some_and(|path| unrelated_source_sibling(source_expr, path, meta, sources))
-            });
-            if has_truthy_sibling {
-                predicate_branch.retain(|predicate| {
-                    predicate_not_truthy_path(predicate).is_none_or(|path| path != source_expr)
-                });
-            }
-        });
-    }
-
-    pub(crate) fn prune_truthy_ancestors_of_source(&mut self, source_expr: &str) {
-        self.rewrite_predicate_branches(|_meta, predicate_branch| {
-            let has_source_truthy = predicate_branch.iter().any(|predicate| {
-                predicate_truthy_path(predicate).is_some_and(|path| path == source_expr)
-            });
-            if has_source_truthy {
-                predicate_branch.retain(|predicate| {
-                    !predicate_truthy_path(predicate).is_some_and(|path| {
-                        path != source_expr
-                            && output_path::values_path_is_descendant(source_expr, path)
-                    })
-                });
-            }
-        });
-    }
-
     fn record_unconditional_branch(&mut self) {
         if self.predicates.is_empty() {
             self.predicates.insert(BTreeSet::new());
         }
-    }
-
-    pub(crate) fn contract_guard_sets(&self, source_expr: &str) -> Vec<Vec<Guard>> {
-        let predicate_branches = branches_or_unconditional(self.predicates.clone());
-        let mut guard_sets = Vec::new();
-        for predicate_branch in predicate_branches {
-            let predicate_branch = self.prune_suppressed_predicates(predicate_branch, source_expr);
-            let mut guards =
-                Predicate::contract_guard_stack(&predicate_branch.into_iter().collect::<Vec<_>>());
-            drop_redundant_not_eq_guards(&mut guards);
-            if self.defaulted {
-                let default_guard = Guard::Default {
-                    path: source_expr.to_string(),
-                };
-                if !guards.contains(&default_guard) {
-                    guards.push(default_guard);
-                }
-                self.prune_defaulted_sibling_guards(&mut guards, source_expr);
-            }
-            if !guard_sets.contains(&guards) {
-                guard_sets.push(guards);
-            }
-        }
-        guard_sets
-    }
-
-    /// Lowers this meta to the witness for one emitted row: one guard set
-    /// per predicate branch plus this meta's provenance sites.
-    pub(crate) fn emission_witness(
-        &self,
-        source_expr: &str,
-        emit_path: Option<YamlPath>,
-        kind: ValueKind,
-    ) -> EmissionWitness {
-        EmissionWitness {
-            source_expr: source_expr.to_string(),
-            emit_path,
-            kind,
-            guard_sets: self.contract_guard_sets(source_expr),
-            provenance: self.provenance.clone(),
-            dependency: false,
-        }
-    }
-
-    fn prune_defaulted_sibling_guards(&self, guards: &mut Vec<Guard>, source_expr: &str) {
-        let unrelated_sibling_truthy = |guard: &Guard| {
-            let Guard::Truthy { path } = guard else {
-                return false;
-            };
-            unrelated_source_sibling(source_expr, path, self, &self.sibling_sources)
-        };
-        let has_source_truthy = guards
-            .iter()
-            .any(|guard| matches!(guard, Guard::Truthy { path } if path == source_expr));
-        let has_unrelated_sibling_truthy = guards.iter().any(unrelated_sibling_truthy);
-        if has_source_truthy {
-            guards.retain(|guard| !unrelated_sibling_truthy(guard));
-        }
-        if has_source_truthy || has_unrelated_sibling_truthy {
-            guards.retain(|guard| !matches!(guard, Guard::Not { path } if path == source_expr));
-        }
-    }
-
-    fn prune_suppressed_predicates(
-        &self,
-        predicate_branch: BTreeSet<Predicate>,
-        source_expr: &str,
-    ) -> BTreeSet<Predicate> {
-        let has_source_truthy = predicate_branch.iter().any(|predicate| {
-            predicate_truthy_path(predicate).is_some_and(|path| path == source_expr)
-        });
-        if !has_source_truthy || self.suppress_predicate_paths.is_empty() {
-            return predicate_branch;
-        }
-        predicate_branch
-            .into_iter()
-            .filter(|predicate| {
-                let Some(path) = predicate_truthy_path(predicate) else {
-                    return true;
-                };
-                !self.suppress_predicate_paths.contains(path)
-                    || !output_path::values_path_is_descendant(source_expr, path)
-            })
-            .collect()
     }
 }
 
@@ -291,25 +172,6 @@ fn nested_output_site_predicates(
         })
         .cloned()
         .collect()
-}
-
-fn drop_redundant_not_eq_guards(guards: &mut Vec<Guard>) {
-    let eq_guards = guards
-        .iter()
-        .filter_map(|guard| match guard {
-            Guard::Eq { path, value } => Some((path.clone(), value.clone())),
-            _ => None,
-        })
-        .collect::<BTreeSet<_>>();
-    if eq_guards.is_empty() {
-        return;
-    }
-    guards.retain(|guard| match guard {
-        Guard::NotEq { path, value } => !eq_guards
-            .iter()
-            .any(|(eq_path, eq_value)| eq_path == path && eq_value != value),
-        _ => true,
-    });
 }
 
 pub(crate) fn insert_type_hint(
@@ -606,12 +468,6 @@ impl HelperSummary {
         self.add_type_hints(effects.type_hints.clone());
     }
 
-    pub(crate) fn has_document_value_facts(&self) -> bool {
-        !self.output_uses.is_empty()
-            || !self.guard_path_meta.is_empty()
-            || !self.type_hints.is_empty()
-    }
-
     pub(crate) fn add_provenance(&mut self, provenance: ContractProvenance) {
         for output in &mut self.output_uses {
             output.meta.add_provenance_site(provenance.clone());
@@ -619,13 +475,6 @@ impl HelperSummary {
         for meta in self.guard_path_meta.values_mut() {
             meta.add_provenance_site(provenance.clone());
         }
-    }
-
-    pub(crate) fn has_rendered_source_descendant(&self, path: &str) -> bool {
-        self.output_uses.iter().any(|output| {
-            output.is_rendered()
-                && output_path::values_path_is_descendant(&output.source_expr, path)
-        })
     }
 
     pub(crate) fn dependency_relevant_paths(&self) -> BTreeSet<String> {
@@ -642,10 +491,6 @@ impl HelperSummary {
             .filter(|path| !output_path::values_path_has_descendant(path, &paths))
             .cloned()
             .collect()
-    }
-
-    pub(crate) fn take_chart_value_defaults(&mut self) -> BTreeSet<String> {
-        std::mem::take(&mut self.chart_defaults)
     }
 
     pub(crate) fn mark_suppressed_roots_for_bound_outputs(

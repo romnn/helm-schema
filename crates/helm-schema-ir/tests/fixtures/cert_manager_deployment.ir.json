@@ -41,6 +41,39 @@
           "type": "truthy"
         },
         {
+          "path": "acmesolver.image.registry",
+          "type": "truthy"
+        },
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.digest"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image.digest",
+          "type": "truthy"
+        },
+        {
+          "path": "acmesolver.image.registry",
+          "type": "not"
+        },
+        {
           "path": "acmesolver.image",
           "type": "with"
         }
@@ -81,6 +114,10 @@
     {
       "guards": [
         {
+          "path": "acmesolver.image.digest",
+          "type": "truthy"
+        },
+        {
           "path": "acmesolver.image.registry",
           "type": "truthy"
         },
@@ -106,6 +143,43 @@
     {
       "guards": [
         {
+          "path": "acmesolver.image.registry",
+          "type": "truthy"
+        },
+        {
+          "path": "acmesolver.image.digest",
+          "type": "not"
+        },
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.registry"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image.digest",
+          "type": "truthy"
+        },
+        {
+          "path": "acmesolver.image.registry",
+          "type": "truthy"
+        },
+        {
           "path": "acmesolver.image",
           "type": "with"
         }
@@ -128,6 +202,130 @@
       "guards": [
         {
           "path": "acmesolver.image.digest",
+          "type": "truthy"
+        },
+        {
+          "path": "acmesolver.image.registry",
+          "type": "not"
+        },
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.repository"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image.registry",
+          "type": "truthy"
+        },
+        {
+          "path": "acmesolver.image.digest",
+          "type": "not"
+        },
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.repository"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image.digest",
+          "type": "not"
+        },
+        {
+          "path": "acmesolver.image.registry",
+          "type": "not"
+        },
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.repository"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image.registry",
+          "type": "truthy"
+        },
+        {
+          "path": "acmesolver.image.digest",
+          "type": "not"
+        },
+        {
+          "path": "acmesolver.image",
+          "type": "with"
+        },
+        {
+          "path": "acmesolver.image.tag",
+          "type": "default"
+        }
+      ],
+      "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "args[*]"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "acmesolver.image.tag"
+    },
+    {
+      "guards": [
+        {
+          "path": "acmesolver.image.digest",
+          "type": "not"
+        },
+        {
+          "path": "acmesolver.image.registry",
           "type": "not"
         },
         {
@@ -384,6 +582,18 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "labels"
+          ],
+          "span": {
+            "end": 5015,
+            "start": 4722
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "creator"
     },
@@ -628,6 +838,28 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 767,
+            "start": 400
+          },
+          "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "cert-manager.serviceAccountName"
+          ],
+          "span": {
+            "end": 1089,
+            "start": 884
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -647,6 +879,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 767,
+            "start": 400
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -790,6 +1034,18 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "labels"
+          ],
+          "span": {
+            "end": 5015,
+            "start": 4722
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "global.commonLabels"
     },
@@ -1350,6 +1606,18 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "image"
+          ],
+          "span": {
+            "end": 6111,
+            "start": 5825
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "image"
     },
@@ -1357,6 +1625,18 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "image"
+          ],
+          "span": {
+            "end": 6111,
+            "start": 5825
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "image.digest"
     },
@@ -1417,6 +1697,18 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "image"
+          ],
+          "span": {
+            "end": 6111,
+            "start": 5825
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "image.registry"
     },
@@ -1923,6 +2215,28 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 767,
+            "start": 400
+          },
+          "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "cert-manager.serviceAccountName"
+          ],
+          "span": {
+            "end": 1089,
+            "start": 884
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -1942,6 +2256,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 767,
+            "start": 400
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -2676,6 +3002,18 @@
       "guards": [],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.serviceAccountName"
+          ],
+          "span": {
+            "end": 1089,
+            "start": 884
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": null,
       "source_expr": "serviceAccount.create"
     },

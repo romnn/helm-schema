@@ -32,7 +32,7 @@ fn production_chain_provider() -> Chain {
 
 fn parse_ir(src: &str) -> ContractIr {
     let idx = DefineIndex::new();
-    SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
+    SymbolicIrContext::new(&idx).generate_contract_ir(src)
 }
 
 fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
@@ -40,7 +40,7 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
     if !helpers.trim().is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
     }
-    SymbolicIrContext::new(&idx).generate_contract_ir(src, &idx)
+    SymbolicIrContext::new(&idx).generate_contract_ir(src)
 }
 
 fn with_type_hints(mut contract: ContractIr, hints: &[(&str, &str)]) -> ContractIr {
@@ -416,7 +416,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
         "charts/surveyor/templates/_helpers.tpl",
         &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
     );
-    let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src);
     let schema_signals = contract.finalize().into_schema_signals();
     let values_yaml: serde_yaml::Value =
         serde_yaml::from_str(&test_util::read_testdata("charts/surveyor/values.yaml"))
@@ -527,7 +527,7 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
         "charts/zalando-postgres-operator/templates/_helpers.tpl",
         &test_util::read_testdata("charts/zalando-postgres-operator/templates/_helpers.tpl"),
     );
-    let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src);
     let schema_signals = contract.finalize().into_schema_signals();
     let values_yaml: serde_yaml::Value = serde_yaml::from_str(&test_util::read_testdata(
         "charts/zalando-postgres-operator/values.yaml",
@@ -2166,7 +2166,7 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &define_index)
+        .generate_contract_ir(src)
         .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -2316,7 +2316,7 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &define_index)
+        .generate_contract_ir(src)
         .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -2414,7 +2414,7 @@ fn wrapper_helper_preserves_nested_local_assignment_outputs() {
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &define_index)
+        .generate_contract_ir(src)
         .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -2471,7 +2471,7 @@ fn wrapper_helper_digest_branch_keeps_explicit_null_nullable() {
 
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
-    let ir = SymbolicIrContext::new(&define_index).generate_contract_ir(src, &define_index);
+    let ir = SymbolicIrContext::new(&define_index).generate_contract_ir(src);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
     let digest = schema
@@ -3153,7 +3153,7 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
     let ir = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &define_index)
+        .generate_contract_ir(src)
         .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
@@ -3968,7 +3968,7 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
     let schema_signals = SymbolicIrContext::new(&define_index)
-        .generate_contract_ir(src, &define_index)
+        .generate_contract_ir(src)
         .finalize()
         .into_schema_signals();
     let schema = generate_values_schema(

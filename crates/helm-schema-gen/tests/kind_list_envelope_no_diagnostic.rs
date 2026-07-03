@@ -42,7 +42,7 @@ host: example.com
 #[test]
 fn kind_list_envelope_descends_into_inner_resource() {
     let idx = DefineIndex::new();
-    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(KIND_LIST_TEMPLATE, &idx);
+    let ir = SymbolicIrContext::new(&idx).generate_contract_ir(KIND_LIST_TEMPLATE);
     let projection = ir.clone().finalize();
     assert!(
         projection.uses().iter().any(|use_| {

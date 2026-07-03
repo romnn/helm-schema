@@ -25,27 +25,27 @@
 //! - local state: [`SymbolicLocalState`] with the same branch-join rules as
 //!   the symbolic walker.
 //!
-//! Known boundaries (kept honest in the differential scoreboard rather
-//! than patched around): document-scope ranges run one symbolic iteration
-//! (the current document walker's model); destructured range variables stay
-//! unbound at document scope (also the current model); exact helper-body
-//! inlining is not evaluated (helper calls flow through summaries); static
-//! file templates inline at output holes only (not partial-scalar or
-//! block-scalar holes); ill-nested regions re-adopt escaped siblings by
-//! span, so late children of a branch-opened container inherit the branch
-//! guard.
+//! Known boundaries: document-scope ranges run one symbolic iteration;
+//! destructured range variables stay unbound at document scope; helper
+//! calls flow through summaries except resource-defining helper bodies and
+//! static file templates, which evaluate exactly as nested fragments at
+//! output holes (not partial-scalar or block-scalar holes); ill-nested
+//! regions re-adopt escaped siblings by span in both directions, so
+//! branch-window content of a container opened before (or closed after)
+//! the region inherits the branch guard.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::rc::Rc;
 
 use helm_schema_ast::{
-    TemplateHeader, range_has_destructured_variable_definition, range_header_from_source,
+    ResourceSpan, TemplateHeader, range_has_destructured_variable_definition,
+    range_header_from_source,
 };
 use helm_schema_syntax as syntax;
 use helm_schema_syntax::{
     Node, OpaqueKind, ScalarPart, ScalarParts, Span, TemplatedDocument, parse_go_template,
 };
 
-use crate::Guard;
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::contract_sink::merge_guards;
@@ -54,11 +54,12 @@ use crate::helper_summary::HelperOutputMeta;
 use crate::node_eval::control_header;
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
+use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
 use helm_schema_core::Predicate;
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, PathCondition,
-    Sequence, StringPart,
+    Sequence, SiteFacts, StringPart,
 };
 
 /// The result of evaluating one template source: the abstract rendered
@@ -71,6 +72,8 @@ pub struct EvaluatedDocument {
     /// `.Values` reads that never render: condition reads, assignment
     /// right-hand sides, helper-internal guard reads, and range headers.
     pub reads: Vec<ValueRead>,
+    /// Declared input-type hints observed at rendered holes.
+    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
 }
 
 /// One pathless `.Values` read with the guards active at the read site.
@@ -78,22 +81,39 @@ pub struct EvaluatedDocument {
 pub struct ValueRead {
     /// The dotted `.Values` path that was read.
     pub values_path: String,
+    /// The value shape observed at the read (helper rows demoted at capture
+    /// sites keep their fragment/scalar kind).
+    pub kind: crate::ValueKind,
     /// The guards active at the read site (root-to-leaf, in push order).
     pub guards: Vec<Guard>,
+    /// The resource containing the read site, for site-scoped read classes
+    /// (condition, bound-value, templated-key, and rendered-effect reads);
+    /// helper-internal reads carry none.
+    pub resource: Option<ResourceRef>,
+    /// Source sites justifying the read.
+    pub provenance: Vec<ContractProvenance>,
+    /// Whether the read belongs to the dependency lane (helper rows demoted
+    /// at capture sites) instead of the document lane.
+    pub dependency: bool,
 }
 
 /// Evaluate one template source into its abstract fragment.
-pub(crate) fn eval_document(source: &str, db: &IrAnalysisDb) -> EvaluatedDocument {
+pub(crate) fn eval_document(
+    source: &str,
+    source_path: Option<&str>,
+    db: &IrAnalysisDb,
+) -> EvaluatedDocument {
     let Some(tree) = parse_go_template(source) else {
         return EvaluatedDocument::default();
     };
     let document = TemplatedDocument::parse_with_root(source, tree.root_node());
-    let mut interpreter = Interpreter::for_source(source, db, &tree, &document);
+    let mut interpreter = Interpreter::for_source(source, source_path, db, &tree, &document);
     let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
     let contributions = interpreter.eval_node_list(&roots);
     EvaluatedDocument {
         root: contributions.assemble(),
         reads: interpreter.reads,
+        type_hints: interpreter.type_hints,
     }
 }
 
@@ -103,6 +123,9 @@ pub(crate) fn eval_document(source: &str, db: &IrAnalysisDb) -> EvaluatedDocumen
 pub(super) struct ControlFacts {
     pub(super) header: Option<TemplateHeader>,
     pub(super) range_destructured: bool,
+    /// The whole region's end byte (through `{{ end }}`), for regions that
+    /// only surface as holes (block-scalar bodies).
+    pub(super) region_end: usize,
 }
 
 fn collect_control_facts(
@@ -117,6 +140,7 @@ fn collect_control_facts(
                 ControlFacts {
                     header: control_header(source, node),
                     range_destructured: false,
+                    region_end: node.end_byte(),
                 },
             );
         }
@@ -126,6 +150,7 @@ fn collect_control_facts(
                 ControlFacts {
                     header: range_header_from_source(node, source),
                     range_destructured: range_has_destructured_variable_definition(node),
+                    region_end: node.end_byte(),
                 },
             );
         }
@@ -347,9 +372,16 @@ pub(super) enum ArmSpec {
 
 pub(super) struct Interpreter<'a> {
     pub(super) source: &'a str,
+    pub(super) source_path: Option<&'a str>,
+    /// Byte offset of this source within its file (helper bodies evaluate
+    /// over the define body text; provenance spans stay file-absolute).
+    pub(super) source_offset: usize,
     pub(super) db: &'a IrAnalysisDb,
     pub(super) control_facts: HashMap<usize, ControlFacts>,
     pub(super) inline_regions: Vec<Span>,
+    /// The manifest resource spans of this source (each with its List-item
+    /// path prefix), resolved once by the resource-identity walk.
+    pub(super) resource_spans: Vec<ResourceSpan>,
     /// Static file templates currently being inlined (cycle prevention for
     /// `.Files.Get`-style template requests).
     pub(super) inline_files: Vec<String>,
@@ -358,14 +390,19 @@ pub(super) struct Interpreter<'a> {
     pub(super) root_bindings: HashMap<String, AbstractValue>,
     pub(super) active_predicates: Vec<Predicate>,
     pub(super) reads: Vec<ValueRead>,
+    pub(super) type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// The site facts of the hole or control region currently being
+    /// evaluated; reads recorded during that evaluation carry them.
+    pub(super) current_site: Option<Rc<SiteFacts>>,
 }
 
 impl<'a> Interpreter<'a> {
-    /// A fresh interpreter over one parsed source: control-header facts and
-    /// inline-region spans are collected up front; all evaluation state
-    /// starts empty.
+    /// A fresh interpreter over one parsed source: control-header facts,
+    /// inline-region spans, and resource spans are collected up front; all
+    /// evaluation state starts empty.
     pub(super) fn for_source(
         source: &'a str,
+        source_path: Option<&'a str>,
         db: &'a IrAnalysisDb,
         tree: &tree_sitter::Tree,
         document: &TemplatedDocument<'_>,
@@ -374,22 +411,118 @@ impl<'a> Interpreter<'a> {
         collect_control_facts(tree.root_node(), source, &mut control_facts);
         let mut inline_regions = Vec::new();
         collect_inline_regions(document.roots(), &mut inline_regions);
+        let resource_spans = crate::resource_identity::collect_resource_spans(document, db);
         Self {
             source,
+            source_path,
+            source_offset: 0,
             db,
             control_facts,
             inline_regions,
+            resource_spans,
             inline_files: Vec::new(),
             locals: SymbolicLocalState::default(),
             dot_stack: Vec::new(),
             root_bindings: HashMap::new(),
             active_predicates: Vec::new(),
             reads: Vec::new(),
+            type_hints: BTreeMap::new(),
+            current_site: None,
         }
     }
 
     pub(super) fn text(&self, span: Span) -> &'a str {
         self.source.get(span.start..span.end).unwrap_or("")
+    }
+
+    /// The site facts of one output hole: the smallest resource span
+    /// containing the hole's start byte plus the hole's own provenance.
+    pub(super) fn hole_site(&self, span: Span) -> Option<Rc<SiteFacts>> {
+        let resource_span = self
+            .resource_spans
+            .iter()
+            .filter(|resource| resource.start <= span.start && span.start < resource.end)
+            .min_by(|left, right| {
+                let left_len = left.end.saturating_sub(left.start);
+                let right_len = right.end.saturating_sub(right.start);
+                left_len
+                    .cmp(&right_len)
+                    .then_with(|| right.start.cmp(&left.start))
+            });
+        self.site_facts(
+            resource_span.map(|resource| (resource.resource.clone(), resource.path_prefix.clone())),
+            span,
+        )
+    }
+
+    /// The site facts of one control region: the region's resource is the
+    /// unique resource intersecting the region span (a region spanning
+    /// several manifest documents claims none).
+    pub(super) fn region_site(&self, span: Span) -> Option<Rc<SiteFacts>> {
+        let mut unique: Option<&ResourceSpan> = None;
+        for resource in &self.resource_spans {
+            if resource.start >= span.end || span.start >= resource.end {
+                continue;
+            }
+            match unique {
+                Some(existing) if existing.resource != resource.resource => {
+                    unique = None;
+                    break;
+                }
+                Some(_) => {}
+                None => unique = Some(resource),
+            }
+        }
+        self.site_facts(
+            unique.map(|resource| (resource.resource.clone(), resource.path_prefix.clone())),
+            span,
+        )
+    }
+
+    fn site_facts(
+        &self,
+        resource: Option<(ResourceRef, Vec<String>)>,
+        span: Span,
+    ) -> Option<Rc<SiteFacts>> {
+        let provenance = self.source_path.map(|source_path| {
+            let helper_chain = self
+                .inline_files
+                .iter()
+                .filter_map(|entry| entry.strip_prefix("define:"))
+                .map(std::string::ToString::to_string)
+                .collect();
+            ContractProvenance::new(
+                source_path,
+                SourceSpan::new(
+                    self.source_offset + span.start,
+                    self.source_offset + span.end,
+                ),
+                helper_chain,
+            )
+        });
+        let (resource, path_prefix) = match resource {
+            Some((resource, path_prefix)) => (Some(resource), path_prefix),
+            None => (None, Vec::new()),
+        };
+        if resource.is_none() && provenance.is_none() {
+            return None;
+        }
+        Some(Rc::new(SiteFacts {
+            resource,
+            path_prefix,
+            provenance,
+        }))
+    }
+
+    /// Run one evaluation step under the site facts of `span`, restoring the
+    /// previous site afterwards.
+    pub(super) fn enter_hole_site(&mut self, span: Span) -> Option<Rc<SiteFacts>> {
+        let site = self.hole_site(span);
+        std::mem::replace(&mut self.current_site, site)
+    }
+
+    pub(super) fn restore_site(&mut self, previous: Option<Rc<SiteFacts>>) {
+        self.current_site = previous;
     }
 
     pub(super) fn current_dot_fragment(&self) -> Option<AbstractValue> {
@@ -427,7 +560,37 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    /// A site-scoped pathless read: condition operands, bound-value reads,
+    /// templated-key splices, and rendered-effect reads carry the current
+    /// site's resource and provenance (the same scoping the emission
+    /// terminal applied to their rows).
     pub(super) fn push_read(&mut self, values_path: &str, extra_guards: &[Guard]) {
+        let (resource, provenance) = match &self.current_site {
+            Some(site) => (
+                site.resource.clone(),
+                site.provenance.iter().cloned().collect(),
+            ),
+            None => (None, Vec::new()),
+        };
+        self.push_read_row(
+            values_path,
+            crate::ValueKind::Scalar,
+            extra_guards,
+            resource,
+            provenance,
+            false,
+        );
+    }
+
+    pub(super) fn push_read_row(
+        &mut self,
+        values_path: &str,
+        kind: crate::ValueKind,
+        extra_guards: &[Guard],
+        resource: Option<ResourceRef>,
+        provenance: Vec<ContractProvenance>,
+        dependency: bool,
+    ) {
         if values_path.trim().is_empty() {
             return;
         }
@@ -435,7 +598,11 @@ impl<'a> Interpreter<'a> {
         merge_guards(&mut guards, extra_guards);
         let read = ValueRead {
             values_path: values_path.to_string(),
+            kind,
             guards,
+            resource,
+            provenance,
+            dependency,
         };
         if !self.reads.contains(&read) {
             self.reads.push(read);
@@ -462,8 +629,8 @@ impl<'a> Interpreter<'a> {
                     }
                     self.push_read(&splice.values_path, &extra);
                 }
-                StringPart::Taint(paths) => {
-                    for path in paths {
+                StringPart::Taint(taint) => {
+                    for path in &taint.paths {
                         self.push_read(path, &[]);
                     }
                 }
@@ -472,8 +639,16 @@ impl<'a> Interpreter<'a> {
     }
 
     /// Pathless reads for a helper meta row: one read per recorded predicate
-    /// branch, carrying the branch guards and defaultedness.
-    pub(super) fn push_meta_reads(&mut self, values_path: &str, meta: &HelperOutputMeta) {
+    /// branch, carrying the branch guards and defaultedness. Helper rows have
+    /// no site resource; their provenance is the read site's plus the helper
+    /// body sites recorded in the meta.
+    pub(super) fn push_meta_reads(
+        &mut self,
+        values_path: &str,
+        kind: crate::ValueKind,
+        meta: &HelperOutputMeta,
+        dependency: bool,
+    ) {
         let branches: Vec<Vec<Predicate>> = if meta.predicates.is_empty() {
             vec![Vec::new()]
         } else {
@@ -482,6 +657,13 @@ impl<'a> Interpreter<'a> {
                 .map(|branch| branch.iter().cloned().collect())
                 .collect()
         };
+        let mut provenance: Vec<ContractProvenance> = self
+            .current_site
+            .as_ref()
+            .and_then(|site| site.provenance.clone())
+            .into_iter()
+            .collect();
+        crate::helper_summary::merge_provenance_sites(&mut provenance, &meta.provenance);
         for branch in branches {
             let mut extra = Predicate::contract_guard_stack(&branch);
             if meta.defaulted {
@@ -492,7 +674,14 @@ impl<'a> Interpreter<'a> {
                     extra.push(default_guard);
                 }
             }
-            self.push_read(values_path, &extra);
+            self.push_read_row(
+                values_path,
+                kind,
+                &extra,
+                None,
+                provenance.clone(),
+                dependency,
+            );
         }
     }
 
@@ -513,6 +702,7 @@ impl<'a> Interpreter<'a> {
                     // to a branch body (with its guards and dot bindings).
                     // Children of an adopted node that start after the region
                     // end stay outside its scope via the child limit.
+                    let region_index = index;
                     let mut adopted = Vec::new();
                     while let Some(next) = nodes.get(index + 1) {
                         if next.node.span_start() < region.span.end {
@@ -535,14 +725,48 @@ impl<'a> Interpreter<'a> {
                             break;
                         }
                     }
-                    out.extend(self.eval_control(region, &adopted));
+                    // Descendants of *earlier* siblings that escaped forward
+                    // into the region (a branch contributing to a container
+                    // opened before it) belong to branch bodies too; their
+                    // in-place evaluation was bounded at the region start.
+                    let mut escaped = Vec::new();
+                    for prior in &nodes[..region_index] {
+                        if matches!(prior.node, Node::Control(_)) {
+                            continue;
+                        }
+                        let mut chain = Vec::new();
+                        super::control::collect_deferred(
+                            prior.node,
+                            region.span.start,
+                            prior.child_limit,
+                            &mut chain,
+                            &mut escaped,
+                        );
+                    }
+                    out.extend(self.eval_control(region, &adopted, escaped));
                 }
                 Node::Output(action) => {
                     let consumed = self.eval_output_with_lookahead(action, nodes, index, &mut out);
                     index += consumed;
                 }
                 _ => {
-                    let contributions = self.eval_node(*view);
+                    // Evaluation stops at the next control sibling's start:
+                    // descendants escaping into that region evaluate inside
+                    // its branches instead of unguarded in place.
+                    let mut bounded = *view;
+                    if let Some(region_start) =
+                        nodes[index + 1..].iter().find_map(|next| match next.node {
+                            Node::Control(region) => Some(region.span.start),
+                            _ => None,
+                        })
+                    {
+                        bounded.child_limit = Some(
+                            bounded
+                                .child_limit
+                                .map_or(region_start, |limit| limit.min(region_start)),
+                        );
+                    }
+                    let contributions = self.eval_node(bounded);
                     out.extend(contributions);
                 }
             }
@@ -576,7 +800,7 @@ impl<'a> Interpreter<'a> {
             _ => None,
         });
         let Some((text_span, key_suffix, rest)) = key_line else {
-            let (value, width) = self.eval_output_action(self.text(action.span));
+            let (value, width) = self.eval_output_action(action.span);
             match width {
                 Some(width) => out.floating.push(FloatingOutput {
                     width,
@@ -592,7 +816,8 @@ impl<'a> Interpreter<'a> {
         // literal key suffix before the structural colon) is the key; the
         // inline value is the literal text after the colon or a same-line
         // action.
-        let mut key_string = self.hole_string(self.text(action.span));
+        let previous_site = self.enter_hole_site(action.span);
+        let mut key_string = self.hole_string(action.span);
         if !key_suffix.is_empty() {
             key_string
                 .parts
@@ -600,6 +825,7 @@ impl<'a> Interpreter<'a> {
         }
         let key = EntryKey::Dynamic(key_string);
         self.push_key_reads(&key);
+        self.restore_site(previous_site);
         let mut consumed = 1;
         let value = if rest.trim().is_empty() {
             match nodes.get(index + 2).map(|view| view.node) {
@@ -607,7 +833,7 @@ impl<'a> Interpreter<'a> {
                     if self.same_line(text_span.end, value_action.span.start) =>
                 {
                     consumed = 2;
-                    self.eval_entire_hole(self.text(value_action.span))
+                    self.eval_entire_hole(value_action.span)
                 }
                 _ => Guarded::empty(),
             }
@@ -649,7 +875,7 @@ impl<'a> Interpreter<'a> {
             }
             match node {
                 Node::Output(action) => {
-                    for (_, hole_parts) in self.eval_hole_parts(self.text(action.span)) {
+                    for (_, hole_parts) in self.eval_hole_parts(action.span) {
                         parts.extend(hole_parts);
                     }
                 }
@@ -665,7 +891,7 @@ impl<'a> Interpreter<'a> {
                                 }
                             }
                             ScalarPart::Hole(span) => {
-                                for (_, hole_parts) in self.eval_hole_parts(self.text(*span)) {
+                                for (_, hole_parts) in self.eval_hole_parts(*span) {
                                     parts.extend(hole_parts);
                                 }
                             }
@@ -695,6 +921,28 @@ impl<'a> Interpreter<'a> {
             .is_some_and(|between| !between.contains('\n') && between.trim().is_empty())
     }
 
+    /// The rendered indent of a templated mapping-entry line (the key
+    /// hole's explicit `nindent` width when present, else the line indent).
+    pub(super) fn dynamic_entry_render_indent(&self, span: Span) -> usize {
+        let line_start = self
+            .source
+            .get(..span.start)
+            .and_then(|prefix| prefix.rfind('\n'))
+            .map_or(0, |newline| newline + 1);
+        let line_end = self
+            .source
+            .get(span.start..)
+            .and_then(|rest| rest.find('\n'))
+            .map_or(self.source.len(), |offset| span.start + offset);
+        let line = self.source.get(line_start..line_end).unwrap_or("");
+        for expr in helm_schema_ast::parse_action_expressions(line) {
+            if let Some(width) = expr.fragment_indent_width() {
+                return width;
+            }
+        }
+        self.line_indent(span.start)
+    }
+
     /// The indentation of the line containing `byte`.
     fn line_indent(&self, byte: usize) -> usize {
         let line_start = self
@@ -711,8 +959,10 @@ impl<'a> Interpreter<'a> {
         let mut out = Contributions::default();
         match view.node {
             Node::Mapping(entry) => {
+                let previous_site = self.enter_hole_site(entry.key.span);
                 let key = self.entry_key(&entry.key);
                 self.push_key_reads(&key);
+                self.restore_site(previous_site);
                 let mut value = Guarded::empty();
                 if let Some(block) = &entry.block {
                     value.extend(self.eval_block_scalar(block));
@@ -762,7 +1012,7 @@ impl<'a> Interpreter<'a> {
                 }
             }
             Node::Opaque(opaque) if opaque.kind == OpaqueKind::Assignment => {
-                self.eval_assignment_text(self.text(opaque.span));
+                self.eval_assignment_span(opaque.span);
             }
             Node::Control(_) | Node::Output(_) | Node::Comment(_) | Node::Opaque(_) => {}
         }
@@ -792,7 +1042,7 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 ScalarPart::Hole(span) => {
-                    let hole = self.hole_string(self.text(*span));
+                    let hole = self.hole_string(*span);
                     string.parts.extend(hole.parts);
                 }
             }
@@ -803,8 +1053,8 @@ impl<'a> Interpreter<'a> {
     /// Evaluate a hole into flattened string parts (conditions from
     /// alternatives are dropped; used for keys, where alternatives project
     /// pathlessly anyway).
-    fn hole_string(&mut self, text: &str) -> AbstractString {
-        let arms = self.eval_hole_parts(text);
+    fn hole_string(&mut self, span: Span) -> AbstractString {
+        let arms = self.eval_hole_parts(span);
         AbstractString {
             parts: arms.into_iter().flat_map(|(_, parts)| parts).collect(),
             suppressed: false,

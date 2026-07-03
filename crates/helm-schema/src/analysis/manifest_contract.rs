@@ -1,4 +1,4 @@
-use helm_schema_ast::{DefineIndex, contains_template_action};
+use helm_schema_ast::contains_template_action;
 use helm_schema_ir::{ContractIr, Guard, SymbolicIrContext};
 use helm_schema_k8s::LocalResourceSchema;
 use vfs::VfsPath;
@@ -10,7 +10,6 @@ use crate::error::CliResult;
 #[tracing::instrument(skip_all, fields(prefix_len = chart.values_prefix.len()))]
 pub(crate) fn collect_manifest_contract_for_chart(
     chart: &chart::ChartContext,
-    defines: &DefineIndex,
     symbolic_context: &SymbolicIrContext,
     include_tests: bool,
 ) -> CliResult<ManifestContractAnalysis> {
@@ -25,7 +24,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
     )?;
     for path in manifests {
         let (mut manifest_contract, template_local_resource_schemas) =
-            collect_manifest_contract_for_template(&path, defines, symbolic_context)?;
+            collect_manifest_contract_for_template(&path, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
         manifest_contract =
@@ -48,12 +47,10 @@ pub(crate) struct ManifestContractAnalysis {
 #[tracing::instrument(skip_all)]
 fn collect_manifest_contract_for_template(
     path: &VfsPath,
-    defines: &DefineIndex,
     symbolic_context: &SymbolicIrContext,
 ) -> CliResult<(ContractIr, Vec<LocalResourceSchema>)> {
     let source = path.read_to_string()?;
-    let contract =
-        symbolic_context.generate_contract_ir_for_source(&source, path.as_str(), defines);
+    let contract = symbolic_context.generate_contract_ir_for_source(&source, path.as_str());
     let local_resource_schemas = local_resource_schemas_from_template_source(
         &source,
         path.as_str(),

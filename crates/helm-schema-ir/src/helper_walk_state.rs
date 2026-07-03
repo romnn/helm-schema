@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeSet, HashSet};
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -22,12 +22,6 @@ pub(crate) struct DotFrame {
 /// alternatives (`else` branches) narrow value analysis without annotating
 /// fragment output metadata, so the fragment view is always a subset of the
 /// value view.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum PredicateScope {
-    Both,
-    ValueOnly,
-}
-
 #[derive(Clone)]
 pub(crate) struct HelperRangeIteration {
     pub(crate) dot: DotFrame,
@@ -43,7 +37,7 @@ pub(crate) struct RangeFrame {
 #[derive(Clone)]
 pub(crate) struct HelperRuntimeControlState {
     dot_stack: Vec<DotFrame>,
-    active_predicates: BTreeMap<Predicate, PredicateScope>,
+    active_predicates: BTreeSet<Predicate>,
     active_source_relations: Vec<BTreeSet<String>>,
     range_frames: Vec<RangeFrame>,
     no_output_depth: usize,
@@ -52,7 +46,7 @@ pub(crate) struct HelperRuntimeControlState {
 #[derive(Clone)]
 pub(crate) struct HelperRuntimeControlSnapshot {
     dot_stack_len: usize,
-    active_predicates: BTreeMap<Predicate, PredicateScope>,
+    active_predicates: BTreeSet<Predicate>,
     active_source_relations: Vec<BTreeSet<String>>,
 }
 
@@ -66,7 +60,7 @@ impl HelperRuntimeControlState {
     pub(crate) fn for_fragment(dot: DotFrame) -> Self {
         Self {
             dot_stack: vec![dot],
-            active_predicates: BTreeMap::new(),
+            active_predicates: BTreeSet::new(),
             active_source_relations: Vec::new(),
             range_frames: Vec::new(),
             no_output_depth: 0,
@@ -90,15 +84,7 @@ impl HelperRuntimeControlState {
     }
 
     pub(crate) fn active_output_predicates(&self) -> BTreeSet<Predicate> {
-        self.active_predicates.keys().cloned().collect()
-    }
-
-    pub(crate) fn active_fragment_predicates(&self) -> BTreeSet<Predicate> {
-        self.active_predicates
-            .iter()
-            .filter(|(_, scope)| **scope == PredicateScope::Both)
-            .map(|(predicate, _)| predicate.clone())
-            .collect()
+        self.active_predicates.clone()
     }
 
     pub(crate) fn active_source_relations(&self) -> &Vec<BTreeSet<String>> {
@@ -107,16 +93,7 @@ impl HelperRuntimeControlState {
 
     pub(crate) fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         if !predicate.is_trivial() {
-            self.active_predicates
-                .insert(predicate, PredicateScope::Both);
-        }
-    }
-
-    pub(crate) fn push_value_predicate_if_absent(&mut self, predicate: Predicate) {
-        if !predicate.is_trivial() {
-            self.active_predicates
-                .entry(predicate)
-                .or_insert(PredicateScope::ValueOnly);
+            self.active_predicates.insert(predicate);
         }
     }
 

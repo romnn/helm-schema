@@ -40,7 +40,7 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
         .expect("service account name output metadata");
     let meta = &output.meta;
     let type_hints = &summary.type_hints;
-    let guard_sets = meta.contract_guard_sets("signoz.serviceAccount.name");
+    let guard_sets = crate::tests::raw_guard_sets(meta, "signoz.serviceAccount.name");
 
     assert!(
         guard_sets.contains(&vec![
@@ -220,9 +220,7 @@ fn image_helper_combines_assignment_and_render_branch_guards() {
         .iter()
         .find(|output| output.source_expr == "global.imageRegistry" && output.is_rendered())
         .expect("global image registry output");
-    let guard_sets = global_registry
-        .meta
-        .contract_guard_sets("global.imageRegistry");
+    let guard_sets = crate::tests::raw_guard_sets(&global_registry.meta, "global.imageRegistry");
 
     assert!(
         guard_sets.contains(&vec![
@@ -294,7 +292,7 @@ fn labels_standard_keeps_name_override_independent_from_custom_labels_guard() {
         .filter(|output| output.source_expr == "nameOverride" && output.relative_path.0.is_empty())
     {
         saw_name_override = true;
-        let guard_sets = output.meta.contract_guard_sets("nameOverride");
+        let guard_sets = crate::tests::raw_guard_sets(&output.meta, "nameOverride");
         assert!(
             guard_sets.iter().all(|guards| !guards
                 .iter()
@@ -338,7 +336,7 @@ fn nested_helper_assignment_preserves_branch_guards_for_dependencies() {
         .output_uses
         .iter()
         .filter(|output| output.source_expr == "fullnameOverride" && output.is_dependency())
-        .flat_map(|output| output.meta.contract_guard_sets("fullnameOverride"))
+        .flat_map(|output| crate::tests::raw_guard_sets(&output.meta, "fullnameOverride"))
         .collect::<Vec<_>>();
 
     assert!(
@@ -493,7 +491,7 @@ fn passwords_manage_preserves_selected_value_branch_predicates() {
         .iter()
         .find(|output| output.source_expr == "auth.password" && output.is_rendered())
         .expect("rendered auth.password output");
-    let guard_sets = auth_password.meta.contract_guard_sets("auth.password");
+    let guard_sets = crate::tests::raw_guard_sets(&auth_password.meta, "auth.password");
 
     assert!(
         guard_sets.contains(&vec![

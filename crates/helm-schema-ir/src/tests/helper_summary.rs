@@ -17,107 +17,6 @@ fn output_paths(paths: impl IntoIterator<Item = String>) -> AbstractValue {
 }
 
 #[test]
-fn helper_output_meta_projects_predicates_to_contract_guard_sets() {
-    let meta = HelperOutputMeta {
-        predicates: BTreeSet::from([BTreeSet::from([Predicate::Not(Box::new(
-            Predicate::truthy_path("feature.enabled"),
-        ))])]),
-        defaulted: true,
-        provenance: Vec::new(),
-        ..HelperOutputMeta::default()
-    };
-
-    sim_assert_eq!(
-        have: meta.contract_guard_sets("serviceAccount.name"),
-        want: vec![vec![
-            Guard::Not {
-                path: "feature.enabled".to_string(),
-            },
-            Guard::Default {
-                path: "serviceAccount.name".to_string(),
-            },
-        ]]
-    );
-}
-
-#[test]
-fn helper_output_meta_preserves_alternative_guard_sets() {
-    let meta = HelperOutputMeta {
-        predicates: BTreeSet::from([
-            BTreeSet::from([
-                Predicate::truthy_path("feature.enabled"),
-                Predicate::truthy_path("component.enabled"),
-            ]),
-            BTreeSet::from([
-                Predicate::truthy_path("feature.enabled").negated(),
-                Predicate::truthy_path("component.enabled"),
-            ]),
-        ]),
-        defaulted: true,
-        provenance: Vec::new(),
-        ..HelperOutputMeta::default()
-    };
-
-    sim_assert_eq!(
-        have: meta.contract_guard_sets("serviceAccount.name"),
-        want: vec![
-            vec![
-                Guard::Truthy {
-                    path: "component.enabled".to_string(),
-                },
-                Guard::Truthy {
-                    path: "feature.enabled".to_string(),
-                },
-                Guard::Default {
-                    path: "serviceAccount.name".to_string(),
-                },
-            ],
-            vec![
-                Guard::Truthy {
-                    path: "component.enabled".to_string(),
-                },
-                Guard::Not {
-                    path: "feature.enabled".to_string(),
-                },
-                Guard::Default {
-                    path: "serviceAccount.name".to_string(),
-                },
-            ],
-        ]
-    );
-}
-
-#[test]
-fn helper_output_meta_suppresses_dynamic_traversal_parent_guards_only_for_selected_child() {
-    let mut meta = HelperOutputMeta {
-        predicates: BTreeSet::from([BTreeSet::from([
-            Predicate::truthy_path("auth"),
-            Predicate::truthy_path("auth.replicationPassword"),
-        ])]),
-        ..HelperOutputMeta::default()
-    };
-    meta.suppress_predicate_path("auth");
-
-    sim_assert_eq!(
-        have: meta.contract_guard_sets("auth.replicationPassword"),
-        want: vec![vec![Guard::Truthy {
-            path: "auth.replicationPassword".to_string(),
-        }]]
-    );
-    sim_assert_eq!(
-        have: meta.contract_guard_sets("auth"),
-        want: vec![vec![
-            Guard::Truthy {
-                path: "auth".to_string(),
-            },
-            Guard::Truthy {
-                path: "auth.replicationPassword".to_string(),
-            },
-        ]]
-    );
-}
-
-#[test]
 fn helper_summary_merges_fragment_output_uses() {
     let mut summary = HelperSummary::default();
     summary.add_output_use(HelperFragmentOutputUse::new(
@@ -230,7 +129,7 @@ fn pathless_summary_prunes_independent_sibling_predicates() {
         .expect("nameOverride output");
 
     sim_assert_eq!(
-        have: output.meta.contract_guard_sets("nameOverride"),
+        have: crate::tests::raw_guard_sets(&output.meta, "nameOverride"),
         want: vec![Vec::new()]
     );
 }
@@ -264,7 +163,7 @@ fn pathless_summary_keeps_local_global_sibling_predicates() {
         .expect("auth.password output");
 
     sim_assert_eq!(
-        have: output.meta.contract_guard_sets("auth.password"),
+        have: crate::tests::raw_guard_sets(&output.meta, "auth.password"),
         want: vec![vec![Guard::Truthy {
             path: "global.postgresql.auth.password".to_string(),
         }]]
@@ -302,7 +201,7 @@ fn pathless_summary_keeps_local_global_scope_sibling_predicates() {
         .expect("auth.password output");
 
     sim_assert_eq!(
-        have: output.meta.contract_guard_sets("auth.password"),
+        have: crate::tests::raw_guard_sets(&output.meta, "auth.password"),
         want: vec![vec![Guard::Truthy {
             path: "global.postgresql.auth.postgresPassword".to_string(),
         }]]

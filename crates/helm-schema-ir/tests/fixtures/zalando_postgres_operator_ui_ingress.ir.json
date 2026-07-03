@@ -3,18 +3,6 @@
     {
       "guards": [
         {
-          "path": "ingress.enabled",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
           "path": "fullnameOverride",
           "type": "truthy"
         },
@@ -37,49 +25,7 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
+      "resource": null,
       "source_expr": "fullnameOverride"
     },
     {
@@ -97,6 +43,18 @@
       "path": [
         "metadata",
         "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.fullname"
+          ],
+          "span": {
+            "end": 851,
+            "start": 484
+          },
+          "template_path": "<inline:0>"
+        }
       ],
       "resource": {
         "api_version": "networking.k8s.io/v1",
@@ -172,6 +130,18 @@
         "service",
         "name"
       ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.fullname"
+          ],
+          "span": {
+            "end": 851,
+            "start": 484
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "api_version_branches": [
@@ -244,6 +214,18 @@
         "paths[*]",
         "backend",
         "serviceName"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.fullname"
+          ],
+          "span": {
+            "end": 851,
+            "start": 484
+          },
+          "template_path": "<inline:0>"
+        }
       ],
       "resource": {
         "api_version": "networking.k8s.io/v1",
@@ -541,7 +523,13 @@
         }
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "spec",
+        "rules[*]",
+        "http",
+        "paths[*]",
+        "path"
+      ],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "api_version_branches": [
@@ -1003,49 +991,7 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
+      "resource": null,
       "source_expr": "nameOverride"
     },
     {
@@ -1146,6 +1092,18 @@
         "metadata",
         "name"
       ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.fullname"
+          ],
+          "span": {
+            "end": 851,
+            "start": 484
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "api_version_branches": [
@@ -1228,6 +1186,18 @@
         "service",
         "name"
       ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.fullname"
+          ],
+          "span": {
+            "end": 851,
+            "start": 484
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "api_version_branches": [
@@ -1308,6 +1278,18 @@
         "paths[*]",
         "backend",
         "serviceName"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator-ui.fullname"
+          ],
+          "span": {
+            "end": 851,
+            "start": 484
+          },
+          "template_path": "<inline:0>"
+        }
       ],
       "resource": {
         "api_version": "networking.k8s.io/v1",

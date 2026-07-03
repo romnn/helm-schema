@@ -69,6 +69,83 @@
       },
       "then": {
         "properties": {
+          "nameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
           "serviceAccount": {
             "properties": {
               "name": {
@@ -94,13 +171,7 @@
         "null"
       ]
     },
-    "nameOverride": {
-      "description": "Name of the object being referenced.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "rbac": {
       "additionalProperties": false,
       "properties": {

@@ -25,7 +25,7 @@ fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
         idx.add_file_source("helpers.tpl", helpers);
     }
     SymbolicIrContext::new(&idx)
-        .generate_contract_ir(template, &idx)
+        .generate_contract_ir(template)
         .finalize()
         .uses()
         .to_vec()

@@ -26,10 +26,13 @@ use helm_schema_ast::children_with_field;
 use helm_schema_core::Predicate;
 
 use super::domain::{
-    AbstractFragment, AbstractString, Guarded, PathCondition, StringPart, and_conditions,
+    AbstractFragment, AbstractString, Guarded, PathCondition, StringPart, TaintPart,
+    and_conditions, stamp_fragment_sites, stamp_part_sites,
 };
 use super::eval::Interpreter;
-use super::lower::{LowerScope, MAX_SCALAR_ARMS, lower_value, lower_value_scalar_arms};
+use super::lower::{
+    LowerScope, MAX_SCALAR_ARM_FANOUT, MAX_SCALAR_ARMS, lower_value, lower_value_scalar_arms,
+};
 
 pub(super) struct HoleEval {
     pub(super) value: Option<AbstractValue>,
@@ -83,14 +86,31 @@ impl Interpreter<'_> {
     }
 
     /// Absorb a hole's effect stream into interpreter state and the read
-    /// list: chart-level default mutations (source order), bound-value
-    /// reads, and helper-internal read facts. Rendered helper rows become
-    /// reads only in no-render contexts (assignments), where the current
-    /// pipeline also demotes them to pathless claims.
+    /// list: chart-level default mutations (source order), declared type
+    /// hints, bound-value reads, and helper-internal read facts. Rendered
+    /// helper rows become reads only in no-render contexts (assignments),
+    /// where the current pipeline also demotes them to pathless claims.
     fn absorb_hole_effects(&mut self, effects: &Effects, include_rendered_reads: bool) {
         let mut chart_defaults = effects.chart_default_paths.clone();
         chart_defaults.extend(effects.helper_summary.chart_defaults.iter().cloned());
         self.locals.append_chart_value_defaults(&mut chart_defaults);
+
+        // Type hints surface from every hole, including assignment
+        // right-hand sides (declared input types hold wherever the
+        // expression runs).
+        for (path, hints) in effects
+            .type_hints
+            .iter()
+            .chain(&effects.helper_summary.type_hints)
+        {
+            if path.trim().is_empty() {
+                continue;
+            }
+            self.type_hints
+                .entry(path.clone())
+                .or_default()
+                .extend(hints.iter().cloned());
+        }
 
         let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
         for path in bound_reads {
@@ -113,33 +133,69 @@ impl Interpreter<'_> {
             {
                 continue;
             }
-            self.push_meta_reads(path, meta);
+            self.push_meta_reads(path, ValueKind::Scalar, meta, false);
         }
         for output in &summary.output_uses {
             if output.is_dependency() || include_rendered_reads {
-                self.push_meta_reads(&output.source_expr, &output.meta);
+                // Encoded renders don't expose the value's shape; other
+                // demoted rows keep their summary kind (structured helper
+                // rows captured by assignments stay fragment evidence).
+                let kind = if output.encoded {
+                    ValueKind::Scalar
+                } else {
+                    output.kind
+                };
+                self.push_meta_reads(
+                    &output.source_expr,
+                    kind,
+                    &output.meta,
+                    output.is_dependency(),
+                );
             }
         }
     }
 
     /// Pathless reads for every values path the hole's effects attribute
-    /// (used where the current pipeline suppresses rendered placement, i.e.
-    /// assignment right-hand sides).
-    fn push_effects_reads(&mut self, hole: &HoleEval) {
+    /// (used where the current pipeline suppresses rendered placement:
+    /// assignment right-hand sides and render-suppressed fragment holes).
+    /// Ancestor paths with a more specific path in the same hole are dropped
+    /// (the most-specific-path rule for scalar sites), and paths already
+    /// covered by rendered helper rows read through those rows instead.
+    fn push_effects_reads(&mut self, hole: &HoleEval, kind: ValueKind) {
+        let row_sources: std::collections::BTreeSet<&String> = hole
+            .effects
+            .helper_summary
+            .output_uses
+            .iter()
+            .filter(|output| output.is_rendered())
+            .map(|output| &output.source_expr)
+            .collect();
         let defaulted = hole.effects.default_paths_with_local();
-        for path in hole.effects.output_value_paths() {
-            if defaulted.contains(&path) {
-                let default_guard = Guard::Default { path: path.clone() };
-                self.push_read(&path, std::slice::from_ref(&default_guard));
-            } else {
-                self.push_read(&path, &[]);
+        let all = hole.effects.output_value_paths();
+        for path in &all {
+            if helm_schema_core::values_path_has_descendant(path, &all)
+                || row_sources.contains(path)
+            {
+                continue;
             }
+            let mut extra = Vec::new();
+            if defaulted.contains(path) {
+                extra.push(Guard::Default { path: path.clone() });
+            }
+            let (resource, provenance) = match &self.current_site {
+                Some(site) => (
+                    site.resource.clone(),
+                    site.provenance.iter().cloned().collect(),
+                ),
+                None => (None, Vec::new()),
+            };
+            self.push_read_row(path, kind, &extra, resource, provenance, false);
         }
     }
 
     /// Evaluate a hole standing as an entire fragment position.
-    pub(super) fn eval_entire_hole(&mut self, text: &str) -> Guarded<AbstractFragment> {
-        self.eval_output_action(text).0
+    pub(super) fn eval_entire_hole(&mut self, span: Span) -> Guarded<AbstractFragment> {
+        self.eval_output_action(span).0
     }
 
     /// Evaluate a standalone output action: the lowered fragment plus the
@@ -147,8 +203,9 @@ impl Interpreter<'_> {
     /// which enclosing container the output attaches to.
     pub(super) fn eval_output_action(
         &mut self,
-        text: &str,
+        span: Span,
     ) -> (Guarded<AbstractFragment>, Option<usize>) {
+        let text = self.text(span);
         if hole_is_control_fragment(text) {
             return (Guarded::empty(), None);
         }
@@ -156,8 +213,10 @@ impl Interpreter<'_> {
         if exprs.is_empty() {
             return (Guarded::empty(), None);
         }
+        let previous_site = self.enter_hole_site(span);
         if parse_helper_assignment_from_exprs(&exprs).is_some() {
             self.eval_assignment_exprs(&exprs);
+            self.restore_site(previous_site);
             return (Guarded::empty(), None);
         }
         let inlined = self.inline_static_file_fragments(&exprs);
@@ -165,21 +224,40 @@ impl Interpreter<'_> {
             .iter()
             .rev()
             .find_map(TemplateExpr::fragment_indent_width);
-        let hole = self.eval_hole_exprs(&exprs);
-        self.absorb_hole_effects(&hole.effects, false);
         let kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
             ValueKind::Fragment
         } else {
             ValueKind::Scalar
         };
+        if kind == ValueKind::Scalar
+            && let Some(nested) = self.inline_resource_helper_fragment(&exprs)
+        {
+            // The body's exact evaluation carries the placements; the call's
+            // summary facts become pathless reads, matching how the retired
+            // emission demoted them beside its exact inline walk.
+            let hole = self.eval_hole_exprs(&exprs);
+            self.absorb_hole_effects(&hole.effects, true);
+            self.push_effects_reads(&hole, ValueKind::Scalar);
+            let mut out = nested;
+            out.extend(inlined);
+            self.restore_site(previous_site);
+            return (out, width);
+        }
+        let hole = self.eval_hole_exprs(&exprs);
+        self.absorb_hole_effects(&hole.effects, false);
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
         let defaulted = hole.effects.default_paths_with_local();
+        // Direct helper flows collapsed by transfer functions (printf over
+        // include) keep their per-path branch meta: the summary's rendered
+        // rows merge with the locals' binding-time meta for lowering.
+        let mut hole_meta = hole.effects.local_output_meta.clone();
+        merge_output_use_meta(&mut hole_meta, &hole.effects.helper_summary.output_uses);
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
-            local_output_meta: &hole.effects.local_output_meta,
+            local_output_meta: &hole_meta,
         };
         let mut out = match &value {
             Some(value) => lower_value(value, kind, &scope),
@@ -190,13 +268,16 @@ impl Interpreter<'_> {
                 out.arms.push((condition, AbstractFragment::Splice(splice)));
             }
         }
+        stamp_fragment_sites(&mut out, &self.current_site);
         out.extend(inlined);
+        self.restore_site(previous_site);
         (out, width)
     }
 
     /// Evaluate a hole rendered inside a partial scalar: guarded arms of
     /// string parts.
-    pub(super) fn eval_hole_parts(&mut self, text: &str) -> Vec<(PathCondition, Vec<StringPart>)> {
+    pub(super) fn eval_hole_parts(&mut self, span: Span) -> Vec<(PathCondition, Vec<StringPart>)> {
+        let text = self.text(span);
         if hole_is_control_fragment(text) {
             return Vec::new();
         }
@@ -204,27 +285,43 @@ impl Interpreter<'_> {
         if exprs.is_empty() {
             return Vec::new();
         }
+        let previous_site = self.enter_hole_site(span);
         if parse_helper_assignment_from_exprs(&exprs).is_some() {
             self.eval_assignment_exprs(&exprs);
+            self.restore_site(previous_site);
             return Vec::new();
         }
+        // Fragment-rendering holes (`toYaml … | nindent`) keep fragment
+        // evidence even inside scalar text; everything else is a partial
+        // scalar contribution.
+        let kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
+            ValueKind::Fragment
+        } else {
+            ValueKind::PartialScalar
+        };
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, false);
-        let (value, extra_paths) = prepare_hole_value(hole.value, &hole.effects, true);
+        let (value, extra_paths) =
+            prepare_hole_value(hole.value, &hole.effects, kind != ValueKind::Fragment);
         let defaulted = hole.effects.default_paths_with_local();
+        // Direct helper flows collapsed by transfer functions (printf over
+        // include) keep their per-path branch meta: the summary's rendered
+        // rows merge with the locals' binding-time meta for lowering.
+        let mut hole_meta = hole.effects.local_output_meta.clone();
+        merge_output_use_meta(&mut hole_meta, &hole.effects.helper_summary.output_uses);
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
-            local_output_meta: &hole.effects.local_output_meta,
+            local_output_meta: &hole_meta,
         };
         let mut arms = match &value {
-            Some(value) => lower_value_scalar_arms(value, &scope),
+            Some(value) => lower_value_scalar_arms(value, kind, &scope),
             None => Vec::new(),
         };
         let mut plain_parts: Vec<StringPart> = Vec::new();
         for path in extra_paths {
-            for (condition, splice) in scope.path_splice_arms(&path, ValueKind::PartialScalar) {
+            for (condition, splice) in scope.path_splice_arms(&path, kind) {
                 if condition == Predicate::True {
                     plain_parts.push(StringPart::Splice(splice));
                 } else {
@@ -235,6 +332,10 @@ impl Interpreter<'_> {
         if !plain_parts.is_empty() {
             arms.push((Predicate::True, plain_parts));
         }
+        for (_, parts) in &mut arms {
+            stamp_part_sites(parts, &self.current_site);
+        }
+        self.restore_site(previous_site);
         arms
     }
 
@@ -253,7 +354,7 @@ impl Interpreter<'_> {
     pub(super) fn eval_scalar_parts(&mut self, parts: &ScalarParts) -> Guarded<AbstractFragment> {
         let segments = self.scalar_segments(parts);
         if let Some(span) = entire_hole_span(&segments) {
-            return self.eval_entire_hole(self.text(span));
+            return self.eval_entire_hole(span);
         }
         let mut arms: Vec<(PathCondition, Vec<StringPart>)> = vec![(Predicate::True, Vec::new())];
         for segment in segments {
@@ -267,7 +368,7 @@ impl Interpreter<'_> {
                         vec![StringPart::Text([text].into_iter().collect())],
                     )]
                 }
-                Segment::Hole(span) => self.eval_hole_parts(self.text(span)),
+                Segment::Hole(span) => self.eval_hole_parts(span),
                 Segment::Region(span) => self.eval_inline_region(span),
             };
             arms = combine_scalar_arms(arms, segment_arms);
@@ -309,13 +410,18 @@ impl Interpreter<'_> {
 
     /// Evaluate a block scalar: the body text with holes evaluated in place
     /// (holes are render-suppressed into the block text, so everything
-    /// attributes at the block's own position). Region-opening holes are
-    /// skipped here; the region itself is a CST child of the block's entry
-    /// and contributes its condition reads there.
+    /// attributes at the block's own position). Region-opening holes whose
+    /// region stays inside the block evaluate as inline regions (block
+    /// content never becomes CST control structure); regions extending past
+    /// the block are represented as CST children of the block's entry and
+    /// contribute their condition reads there.
     pub(super) fn eval_block_scalar(&mut self, block: &BlockScalar) -> Guarded<AbstractFragment> {
         let mut arms: Vec<(PathCondition, Vec<StringPart>)> = vec![(Predicate::True, Vec::new())];
         let mut cursor = block.body.start;
         for hole in &block.holes {
+            if hole.start < cursor {
+                continue;
+            }
             if hole.start > cursor
                 && let Some(text) = self.source.get(cursor..hole.start)
                 && !text.is_empty()
@@ -326,9 +432,32 @@ impl Interpreter<'_> {
                 )];
                 arms = combine_scalar_arms(arms, text_arm);
             }
-            if !self.control_facts.contains_key(&hole.start) {
-                let hole_arms = self.eval_hole_parts(self.text(*hole));
-                arms = combine_scalar_arms(arms, hole_arms);
+            match self.control_facts.get(&hole.start) {
+                Some(facts) if facts.region_end <= block.body.end => {
+                    let region = Span {
+                        start: hole.start,
+                        end: facts.region_end,
+                    };
+                    let region_arms = self.eval_inline_region(region);
+                    arms = combine_scalar_arms(arms, region_arms);
+                    cursor = region.end;
+                    continue;
+                }
+                Some(_) => {}
+                None => {
+                    if parse_expr_text(self.text(*hole))
+                        .iter()
+                        .any(TemplateExpr::renders_yaml_fragment)
+                    {
+                        // A fragment render suppressed into block text: the
+                        // helper rows and value paths are the semantic facts
+                        // (with their own kinds); the text stays opaque.
+                        self.eval_suppressed_fragment_hole(*hole);
+                    } else {
+                        let hole_arms = self.eval_hole_parts(*hole);
+                        arms = combine_scalar_arms(arms, hole_arms);
+                    }
+                }
             }
             cursor = hole.end.max(cursor);
         }
@@ -345,15 +474,42 @@ impl Interpreter<'_> {
         scalar_arms_to_fragment(arms, true)
     }
 
+    /// A fragment-rendering hole inside a render-suppressed blob: rendered
+    /// helper rows become pathless reads that keep their kinds, and direct
+    /// value paths read with the hole's fragment kind.
+    fn eval_suppressed_fragment_hole(&mut self, span: Span) {
+        let exprs = parse_expr_text(self.text(span));
+        if exprs.is_empty() {
+            return;
+        }
+        let previous_site = self.enter_hole_site(span);
+        let hole = self.eval_hole_exprs(&exprs);
+        self.absorb_hole_effects(&hole.effects, true);
+        self.push_effects_reads(&hole, ValueKind::Fragment);
+        self.restore_site(previous_site);
+    }
+
     /// Evaluate an inline `{{ if }}…{{ end }}` or `{{ range }}…{{ end }}`
     /// region inside a scalar by re-parsing the region text with the
     /// Go-template grammar and turning its branches into guarded scalar
     /// arms. Other inline regions (`with`) and nested regions degrade to
-    /// conservative taint.
+    /// conservative taint. The whole region evaluates under the region's
+    /// site facts (its holes share the region's line).
     pub(super) fn eval_inline_region(
         &mut self,
         span: Span,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
+        let region_site = self.region_site(span);
+        let previous_site = std::mem::replace(&mut self.current_site, region_site);
+        let mut arms = self.eval_inline_region_arms(span);
+        for (_, parts) in &mut arms {
+            stamp_part_sites(parts, &self.current_site);
+        }
+        self.restore_site(previous_site);
+        arms
+    }
+
+    fn eval_inline_region_arms(&mut self, span: Span) -> Vec<(PathCondition, Vec<StringPart>)> {
         let text = self.text(span);
         let Some(tree) = parse_go_template(text) else {
             return self.inline_region_taint(text);
@@ -397,7 +553,7 @@ impl Interpreter<'_> {
             }
         }
         self.active_predicates.truncate(entry_predicates);
-        if arms.len() > MAX_SCALAR_ARMS {
+        if arms.len() > MAX_SCALAR_ARM_FANOUT {
             let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
             return vec![(Predicate::True, parts)];
         }
@@ -540,14 +696,21 @@ impl Interpreter<'_> {
                 let hole = self.eval_hole_exprs(&exprs);
                 self.absorb_hole_effects(&hole.effects, false);
                 let defaulted = hole.effects.default_paths_with_local();
+                let kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
+                    ValueKind::Fragment
+                } else {
+                    ValueKind::PartialScalar
+                };
+                let mut hole_meta = hole.effects.local_output_meta.clone();
+                merge_output_use_meta(&mut hole_meta, &hole.effects.helper_summary.output_uses);
                 let scope = LowerScope {
                     defaulted_paths: &defaulted,
                     encoded_paths: &hole.effects.encoded_paths,
                     chart_value_defaults: &self.locals.chart_value_defaults,
-                    local_output_meta: &hole.effects.local_output_meta,
+                    local_output_meta: &hole_meta,
                 };
                 match &hole.value {
-                    Some(value) => lower_value_scalar_arms(value, &scope),
+                    Some(value) => lower_value_scalar_arms(value, kind, &scope),
                     None => Vec::new(),
                 }
             }
@@ -563,7 +726,10 @@ impl Interpreter<'_> {
                 if taint.is_empty() {
                     Vec::new()
                 } else {
-                    vec![(Predicate::True, vec![StringPart::Taint(taint)])]
+                    vec![(
+                        Predicate::True,
+                        vec![StringPart::Taint(TaintPart::new(taint))],
+                    )]
                 }
             }
             NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {
@@ -582,7 +748,10 @@ impl Interpreter<'_> {
         if taint.is_empty() {
             return Vec::new();
         }
-        vec![(Predicate::True, vec![StringPart::Taint(taint)])]
+        vec![(
+            Predicate::True,
+            vec![StringPart::Taint(TaintPart::new(taint))],
+        )]
     }
 
     fn resolved_paths_of_action_text(&mut self, text: &str) -> std::collections::BTreeSet<String> {
@@ -600,11 +769,14 @@ impl Interpreter<'_> {
     /// default/meta facts, and record the right-hand side's reads — the
     /// current pipeline walks assignment bodies in a no-render scope, so all
     /// of its claims are pathless.
-    pub(super) fn eval_assignment_text(&mut self, text: &str) {
-        let exprs = parse_expr_text(text);
-        if !exprs.is_empty() {
-            self.eval_assignment_exprs(&exprs);
+    pub(super) fn eval_assignment_span(&mut self, span: Span) {
+        let exprs = parse_expr_text(self.text(span));
+        if exprs.is_empty() {
+            return;
         }
+        let previous_site = self.enter_hole_site(span);
+        self.eval_assignment_exprs(&exprs);
+        self.restore_site(previous_site);
     }
 
     pub(super) fn eval_assignment_exprs(&mut self, exprs: &[TemplateExpr]) {
@@ -636,7 +808,12 @@ impl Interpreter<'_> {
             self.locals
                 .set_output_meta(assignment.variable.clone(), output_meta);
             self.absorb_hole_effects(&hole.effects, true);
-            self.push_effects_reads(&hole);
+            let kind = if rhs.iter().any(TemplateExpr::renders_yaml_fragment) {
+                ValueKind::Fragment
+            } else {
+                ValueKind::Scalar
+            };
+            self.push_effects_reads(&hole, kind);
         }
         if let Some(get_binding) = parse_get_binding_from_exprs(exprs) {
             self.locals.apply_get_binding(get_binding);
@@ -735,16 +912,16 @@ fn combine_scalar_arms(
         return base;
     }
     if base.len().saturating_mul(segment.len()) > MAX_SCALAR_ARMS {
-        // Bounded fallback: fold the segment's alternatives into one
-        // contribution set and drop their conditions.
-        let union: Vec<StringPart> = segment.into_iter().flat_map(|(_, parts)| parts).collect();
-        return base
-            .into_iter()
-            .map(|(condition, mut parts)| {
-                parts.extend(union.iter().cloned());
-                (condition, parts)
-            })
-            .collect();
+        // Bounded fallback: drop the cross-segment correlation but keep
+        // every contribution under its own conditions (projection reads
+        // per-part attribution, not reconstructed text).
+        let mut arms = base;
+        arms.extend(segment);
+        if arms.len() > MAX_SCALAR_ARM_FANOUT {
+            let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
+            return vec![(Predicate::True, parts)];
+        }
+        return arms;
     }
     let mut out = Vec::new();
     for (base_condition, base_parts) in &base {

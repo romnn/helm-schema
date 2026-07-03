@@ -187,7 +187,7 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
         .expect("nameOverride output use should be present");
     let meta = &output.meta;
     sim_assert_eq!(
-        have: meta.contract_guard_sets("nameOverride"),
+        have: crate::tests::raw_guard_sets(meta, "nameOverride"),
         want: vec![Vec::new()]
     );
     assert!(!meta.defaulted);

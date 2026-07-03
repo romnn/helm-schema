@@ -117,7 +117,7 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
     let src = test_util::read_testdata(case.template_path);
     let values_yaml = test_util::read_testdata(case.values_path);
     let idx = common::build_define_index(case.define_sources, case.helper_parse_mode);
-    let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
+    let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src);
 
     let diagnostics = DiagnosticSink::new();
     let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")

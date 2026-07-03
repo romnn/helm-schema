@@ -8,9 +8,24 @@
 //! pipeline's ambient guard stacks.
 
 use std::collections::BTreeSet;
+use std::rc::Rc;
 
-use crate::{ContractProvenance, ValueKind};
+use crate::{ContractProvenance, ResourceRef, ValueKind};
 use helm_schema_core::Predicate;
+
+/// Render-site facts resolved at evaluation time: the manifest resource
+/// whose span contains the site, that resource span's path prefix (List
+/// envelope items rebase their emitted paths below `items[*]`), and the
+/// site's source provenance. Shared by every row one hole produces.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct SiteFacts {
+    /// The resource containing this site, when its document declares one.
+    pub resource: Option<ResourceRef>,
+    /// Path segments the containing resource span strips from emitted paths.
+    pub path_prefix: Vec<String>,
+    /// The site's own source span, when the template has a source path.
+    pub provenance: Option<ContractProvenance>,
+}
 
 /// The condition under which a guarded arm materializes.
 ///
@@ -202,7 +217,24 @@ pub enum StringPart {
     Splice(Splice),
     /// Unknown rendered text conservatively attributed to these `.Values`
     /// paths.
-    Taint(BTreeSet<String>),
+    Taint(TaintPart),
+}
+
+/// Unknown rendered text inside a scalar with its influencing paths.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct TaintPart {
+    /// The `.Values` paths that flowed into the unknown text.
+    pub paths: BTreeSet<String>,
+    /// The render site the taint was observed at.
+    pub site: Option<Rc<SiteFacts>>,
+}
+
+impl TaintPart {
+    /// Taint with no resolved site (stamped later by the interpreter).
+    #[must_use]
+    pub fn new(paths: BTreeSet<String>) -> Self {
+        Self { paths, site: None }
+    }
 }
 
 /// A `.Values` path rendered at a fragment position.
@@ -243,11 +275,88 @@ pub struct SpliceMeta {
     pub encoded: bool,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
+    /// The render site the splice materializes at.
+    pub site: Option<Rc<SiteFacts>>,
 }
 
 /// An opaque fragment position: content unknown, influence preserved.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Opaque {
     /// The `.Values` paths that flowed into the unknown content.
     pub taint: BTreeSet<String>,
+    /// The hole kind the opaque content renders as (scalar holes taint as
+    /// scalars, fragment holes as fragments).
+    pub kind: ValueKind,
+    /// The render site the opaque content was observed at.
+    pub site: Option<Rc<SiteFacts>>,
+}
+
+impl Default for Opaque {
+    fn default() -> Self {
+        Self {
+            taint: BTreeSet::new(),
+            kind: ValueKind::Scalar,
+            site: None,
+        }
+    }
+}
+
+/// Stamp `site` onto every row-producing node below `guarded` that has no
+/// site yet (nested-file content arrives already stamped by its own
+/// interpreter and keeps its facts).
+pub fn stamp_fragment_sites(guarded: &mut Guarded<AbstractFragment>, site: &Option<Rc<SiteFacts>>) {
+    if site.is_none() {
+        return;
+    }
+    for (_, node) in &mut guarded.arms {
+        stamp_node_sites(node, site);
+    }
+}
+
+fn stamp_node_sites(node: &mut AbstractFragment, site: &Option<Rc<SiteFacts>>) {
+    match node {
+        AbstractFragment::Mapping(mapping) => {
+            for entry in &mut mapping.entries {
+                stamp_fragment_sites(&mut entry.value, site);
+            }
+        }
+        AbstractFragment::Sequence(sequence) => {
+            for item in &mut sequence.items {
+                stamp_fragment_sites(item, site);
+            }
+        }
+        AbstractFragment::Scalar(scalar) => stamp_part_sites(&mut scalar.parts, site),
+        AbstractFragment::Splice(splice) => {
+            if splice.meta.site.is_none() {
+                splice.meta.site = site.clone();
+            }
+        }
+        AbstractFragment::Opaque(opaque) => {
+            if opaque.site.is_none() {
+                opaque.site = site.clone();
+            }
+        }
+    }
+}
+
+/// Stamp `site` onto every splice and taint part that has no site yet.
+pub fn stamp_part_sites(parts: &mut [StringPart], site: &Option<Rc<SiteFacts>>) {
+    if site.is_none() {
+        return;
+    }
+    for part in parts {
+        match part {
+            StringPart::Text(_) => {}
+            StringPart::Splice(splice) => {
+                if splice.meta.site.is_none() {
+                    splice.meta.site = site.clone();
+                }
+            }
+            StringPart::Taint(taint) => {
+                if taint.site.is_none() {
+                    taint.site = site.clone();
+                }
+            }
+        }
+    }
 }

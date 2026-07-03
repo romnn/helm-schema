@@ -17,6 +17,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 829,
+            "start": 474
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
       "resource": {
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
@@ -126,6 +138,38 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 829,
+            "start": 474
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.merge"
+          ],
+          "span": {
+            "end": 1396,
+            "start": 1194
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.labels.standard"
+          ],
+          "span": {
+            "end": 1172,
+            "start": 303
+          },
+          "template_path": "<inline:8>"
+        }
+      ],
       "resource": null,
       "source_expr": "commonLabels"
     },
@@ -200,6 +244,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 1226,
+            "start": 774
+          },
+          "template_path": "<inline:6>"
+        }
+      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -312,6 +368,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 829,
+            "start": 474
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
       "resource": {
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
@@ -414,6 +482,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 829,
+            "start": 474
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
       "resource": null,
       "source_expr": "metrics.prometheusRule.rules"
     },
@@ -602,15 +682,15 @@
     {
       "guards": [
         {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
           "path": "metrics.enabled",
           "type": "truthy"
         },
         {
           "path": "metrics.prometheusRule.enabled",
+          "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
           "type": "truthy"
         },
         {
@@ -694,6 +774,26 @@
         "app.kubernetes.io/name"
       ],
       "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 829,
+            "start": 474
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.merge"
+          ],
+          "span": {
+            "end": 1396,
+            "start": 1194
+          },
+          "template_path": "<inline:2>"
+        },
         {
           "helper_chain": [
             "common.names.name"

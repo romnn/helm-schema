@@ -1,26 +1,9 @@
-mod inline;
-mod output;
-mod runtime;
-
-use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{AttributionIndex, DefineIndex, TemplateExpr};
+use helm_schema_ast::DefineIndex;
 
-use crate::Guard;
-use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::contract::ContractIr;
-use crate::expr_eval::expr_literal_helper_call_callee;
-use crate::fragment_expr_eval::{
-    FragmentEvalContext, FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
-};
-use crate::helper_summary::HelperSummary;
-use crate::node_eval::eval_node;
-use crate::symbolic_scope_state::SymbolicScopeState;
-use crate::value_path_context::ValuePathContext;
-use helm_schema_ast::parse_go_template;
-use helm_schema_core::Predicate;
 
 /// Reusable state for generating symbolic IR across many templates that
 /// share one [`DefineIndex`].
@@ -53,178 +36,30 @@ impl SymbolicIrContext {
     /// contracts should use this method and derive schema facts with
     /// [`ContractIr::finalize`]. Inspection output can finalize the graph once
     /// and ask the resulting contract for its stable document.
-    pub fn generate_contract_ir(&self, src: &str, defines: &DefineIndex) -> ContractIr {
-        self.generate_contract_ir_with_provenance(src, None, defines)
+    #[must_use]
+    pub fn generate_contract_ir(&self, src: &str) -> ContractIr {
+        self.generate_contract_ir_with_provenance(src, None)
     }
 
-    pub fn generate_contract_ir_for_source(
-        &self,
-        src: &str,
-        source_path: &str,
-        defines: &DefineIndex,
-    ) -> ContractIr {
-        self.generate_contract_ir_with_provenance(src, Some(source_path), defines)
+    #[must_use]
+    pub fn generate_contract_ir_for_source(&self, src: &str, source_path: &str) -> ContractIr {
+        self.generate_contract_ir_with_provenance(src, Some(source_path))
     }
 
-    /// Evaluate a template into the Stage-B abstract fragment domain,
-    /// reusing this context's memoized helper analyses. This runs beside
-    /// [`SymbolicIrContext::generate_contract_ir`] and does not affect it.
+    /// Evaluate a template into the abstract fragment domain, reusing this
+    /// context's memoized helper analyses.
     #[must_use]
     pub fn eval_document_fragment(&self, src: &str) -> crate::fragment_eval::EvaluatedDocument {
-        crate::fragment_eval::eval_document(src, &self.inner.analysis_db)
+        crate::fragment_eval::eval_document(src, None, &self.inner.analysis_db)
     }
 
     fn generate_contract_ir_with_provenance(
         &self,
         src: &str,
         source_path: Option<&str>,
-        defines: &DefineIndex,
     ) -> ContractIr {
-        let Some(tree) = parse_go_template(src) else {
-            return ContractIr::default();
-        };
-
-        let mut w = SymbolicWalker::new_with_context(src, source_path, 0, defines, self.clone());
-        w.run_contract(&tree)
-    }
-}
-
-struct SymbolicWalker<'a> {
-    source: &'a str,
-    source_path: Option<&'a str>,
-    source_offset: usize,
-    defines: &'a DefineIndex,
-    ir_context: SymbolicIrContext,
-    contract: ContractIr,
-    seed_predicates: Vec<Predicate>,
-    seed_dot: Option<AbstractValue>,
-    no_output_depth: usize,
-    control_resource_context_depth: usize,
-    attribution: AttributionIndex,
-    current_source_span: Option<crate::SourceSpan>,
-
-    inline_stack: Vec<String>,
-
-    scope: SymbolicScopeState,
-
-    root_bindings: HashMap<String, AbstractValue>,
-}
-
-impl<'a> SymbolicWalker<'a> {
-    fn new_with_context(
-        source: &'a str,
-        source_path: Option<&'a str>,
-        source_offset: usize,
-        defines: &'a DefineIndex,
-        ir_context: SymbolicIrContext,
-    ) -> Self {
-        Self {
-            source,
-            source_path,
-            source_offset,
-            defines,
-            ir_context,
-            contract: ContractIr::default(),
-            seed_predicates: Vec::new(),
-            seed_dot: None,
-            no_output_depth: 0,
-            control_resource_context_depth: 0,
-            attribution: AttributionIndex::default(),
-            current_source_span: None,
-
-            inline_stack: Vec::new(),
-
-            scope: SymbolicScopeState::default(),
-
-            root_bindings: HashMap::new(),
-        }
-    }
-
-    fn provenance_helper_chain(&self) -> Vec<String> {
-        self.inline_stack
-            .iter()
-            .filter_map(|entry| entry.strip_prefix("define:"))
-            .map(std::string::ToString::to_string)
-            .collect()
-    }
-
-    fn fragment_eval_context(&self) -> FragmentEvalContext<'_> {
-        FragmentEvalContext::new(&self.ir_context.inner.analysis_db)
-    }
-
-    fn value_path_context(&self) -> ValuePathContext<'_> {
-        ValuePathContext {
-            root_bindings: &self.root_bindings,
-            template_bindings: &self.scope.locals().fragment_values,
-            range_domains: &self.scope.locals().range_domains,
-            get_bindings: &self.scope.locals().get_bindings,
-            template_default_paths: &self.scope.locals().default_paths,
-            template_output_meta: &self.scope.locals().output_meta,
-            fragment_context: self.fragment_eval_context(),
-            current_dot_fragment: self.current_dot_fragment(),
-            current_dot_binding: self.current_dot_binding(),
-        }
-    }
-
-    fn run_contract(&mut self, tree: &tree_sitter::Tree) -> ContractIr {
-        self.attribution = crate::resource_identity::attributed_document(
-            self.source,
-            tree.root_node(),
-            &self.ir_context.inner.analysis_db,
-        );
-        self.scope
-            .reset_control(&self.seed_predicates, self.seed_dot.clone());
-        self.no_output_depth = 0;
-        eval_node(self, tree.root_node());
-        std::mem::take(&mut self.contract)
-    }
-
-    fn contract_guards(&self) -> Vec<Guard> {
-        self.scope.contract_guards()
-    }
-
-    fn current_dot_binding(&self) -> Option<AbstractValue> {
-        self.scope.current_dot_binding()
-    }
-
-    fn current_dot_fragment(&self) -> Option<AbstractValue> {
-        self.scope.current_dot_fragment()
-    }
-
-    fn summarize_bound_helper_calls_in_exprs(&self, exprs: &[TemplateExpr]) -> HelperSummary {
-        if self.exprs_call_inlined_helper(exprs) {
-            return HelperSummary::default();
-        }
-        let current_dot = self.current_dot_binding();
-        let fragment_locals = &self.scope.locals().fragment_values;
-        let context = self.fragment_eval_context();
-        let mut seen = HashSet::new();
-        let mut summary = HelperSummary::default();
-        for expr in exprs {
-            summary.extend(
-                helper_result_from_expr_with_fragment_locals(
-                    expr,
-                    FragmentLocalFacts::bindings_only(fragment_locals),
-                    Some(&self.root_bindings),
-                    current_dot.as_ref(),
-                    context,
-                    &mut seen,
-                )
-                .effects
-                .helper_summary,
-            );
-        }
-        summary
-    }
-
-    fn exprs_call_inlined_helper(&self, exprs: &[TemplateExpr]) -> bool {
-        let [expr] = exprs else {
-            return false;
-        };
-        let Some(name) = expr_literal_helper_call_callee(expr) else {
-            return false;
-        };
-        let token = format!("define:{name}");
-        self.inline_stack.iter().any(|entry| entry == &token)
+        let document =
+            crate::fragment_eval::eval_document(src, source_path, &self.inner.analysis_db);
+        crate::fragment_eval::contract_ir_from_document(&document)
     }
 }

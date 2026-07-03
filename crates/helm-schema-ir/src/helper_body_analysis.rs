@@ -194,12 +194,7 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         relative_path: &YamlPath,
         kind: ValueKind,
     ) {
-        let active_output_predicates = if kind == ValueKind::Fragment || !relative_path.0.is_empty()
-        {
-            self.control.active_fragment_predicates()
-        } else {
-            self.control.active_output_predicates()
-        };
+        let active_output_predicates = self.control.active_output_predicates();
         let active_source_relations = self.control.active_source_relations().clone();
         let mut state = crate::helper_walk_state::FragmentOutputWalkState {
             locals: &mut *self.locals,
@@ -259,7 +254,7 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         };
 
         let meta = HelperOutputMeta::default()
-            .with_output_site_predicates(&self.control.active_fragment_predicates());
+            .with_output_site_predicates(&self.control.active_output_predicates());
         for source_expr in range_binding.fragment_source_paths() {
             self.outputs.push(HelperFragmentOutputUse::new(
                 source_expr,
@@ -420,8 +415,11 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
     }
 
     fn activate_condition_alternative(&mut self, plan: &Self::ConditionPlan) {
+        // The negation scopes to fragment rows too: an else-branch output
+        // renders exactly when the prior arms' conditions are false — the
+        // same both-scopes rule the if arm's own condition gets.
         self.control
-            .push_value_predicate_if_absent(plan.predicate.negated());
+            .push_predicate_if_absent(plan.predicate.negated());
     }
 
     fn plan_range_action(

@@ -44,14 +44,19 @@ use helm_schema_core::Predicate;
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Opaque,
-    PathCondition, Sequence, Splice, SpliceMeta, StringPart,
+    PathCondition, Sequence, Splice, SpliceMeta, StringPart, TaintPart,
 };
 
-/// Bound on guarded-arm fan-out when lowering scalar alternatives. Beyond
-/// the cap the alternatives collapse into one unconditional contribution-set
-/// arm (conditions dropped, meta kept) so pathological templates stay
-/// bounded.
+/// Bound on *correlated* guarded-arm fan-out (cross-segment products) when
+/// lowering scalar alternatives. Beyond the cap the product degrades to
+/// per-arm contributions that keep their own conditions (correlation is
+/// dropped, conditions are not).
 pub(crate) const MAX_SCALAR_ARMS: usize = 8;
+
+/// Hard bound on total guarded arms per scalar hole. Beyond it the
+/// alternatives collapse into one unconditional contribution-set arm
+/// (conditions dropped, meta kept) so pathological templates stay bounded.
+pub(crate) const MAX_SCALAR_ARM_FANOUT: usize = 64;
 
 /// Effect-derived context under which a hole's value lowers: which paths the
 /// expression defaulted or encoded, which paths carry chart-level `set …
@@ -83,6 +88,7 @@ impl LowerScope<'_> {
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),
+                site: None,
             },
         }
     }
@@ -196,9 +202,37 @@ pub(crate) fn lower_value(
             }
             out
         }
-        AbstractValue::Widened(paths) => Guarded::unconditional(AbstractFragment::Opaque(Opaque {
-            taint: paths.clone(),
-        })),
+        AbstractValue::Widened(paths) => {
+            // A widened transform still attributes exactly: paths whose
+            // branch conditions are recorded (helper rows collapsed by
+            // transfer functions like `printf … | trunc`) keep them as
+            // guarded arms; the rest stay conservative taint.
+            let mut out = Guarded::empty();
+            let mut taint = BTreeSet::new();
+            for path in paths {
+                match scope.local_output_meta.get(path) {
+                    Some(meta) if !meta.predicates.is_empty() || meta.defaulted => {
+                        for (condition, splice) in scope.path_splice_arms(path, kind) {
+                            out.arms.push((condition, AbstractFragment::Splice(splice)));
+                        }
+                    }
+                    _ => {
+                        taint.insert(path.clone());
+                    }
+                }
+            }
+            if !taint.is_empty() {
+                out.arms.push((
+                    Predicate::True,
+                    AbstractFragment::Opaque(Opaque {
+                        taint,
+                        kind,
+                        site: None,
+                    }),
+                ));
+            }
+            out
+        }
     }
 }
 
@@ -238,9 +272,12 @@ fn structure_child_kind(value: &AbstractValue) -> ValueKind {
 
 /// Lower a hole value rendered *inside* a partial scalar: guarded arms of
 /// part lists. One hole usually yields a single arm; helper predicate
-/// branches split into arms so their conditions stay in the tree.
+/// branches split into arms so their conditions stay in the tree. `kind` is
+/// the hole's own render kind: fragment-rendering holes (`toYaml …` inside a
+/// block scalar) keep fragment evidence even though they sit in scalar text.
 pub(crate) fn lower_value_scalar_arms(
     value: &AbstractValue,
+    kind: ValueKind,
     scope: &LowerScope<'_>,
 ) -> Vec<(PathCondition, Vec<StringPart>)> {
     match value {
@@ -250,7 +287,7 @@ pub(crate) fn lower_value_scalar_arms(
                 Vec::new()
             } else {
                 scope
-                    .path_splice_arms(path, ValueKind::PartialScalar)
+                    .path_splice_arms(path, kind)
                     .into_iter()
                     .map(|(condition, splice)| (condition, vec![StringPart::Splice(splice)]))
                     .collect()
@@ -261,11 +298,7 @@ pub(crate) fn lower_value_scalar_arms(
             .map(|condition| {
                 (
                     condition,
-                    vec![StringPart::Splice(scope.splice(
-                        path,
-                        ValueKind::PartialScalar,
-                        Some(meta),
-                    ))],
+                    vec![StringPart::Splice(scope.splice(path, kind, Some(meta)))],
                 )
             })
             .collect(),
@@ -274,13 +307,16 @@ pub(crate) fn lower_value_scalar_arms(
         }
         AbstractValue::Dict(_) | AbstractValue::List(_) | AbstractValue::Overlay { .. } => {
             let taint = value.fragment_rendered_paths();
-            vec![(Predicate::True, vec![StringPart::Taint(taint)])]
+            vec![(
+                Predicate::True,
+                vec![StringPart::Taint(TaintPart::new(taint))],
+            )]
         }
         AbstractValue::Choice(choices) => {
             let mut base_parts = Vec::new();
             let mut conditional_arms = Vec::new();
             for choice in choices {
-                for (condition, parts) in lower_value_scalar_arms(choice, scope) {
+                for (condition, parts) in lower_value_scalar_arms(choice, kind, scope) {
                     if condition == Predicate::True {
                         base_parts.extend(parts);
                     } else {
@@ -293,14 +329,34 @@ pub(crate) fn lower_value_scalar_arms(
                 arms.push((Predicate::True, base_parts));
             }
             arms.extend(conditional_arms);
-            if arms.len() > MAX_SCALAR_ARMS {
+            if arms.len() > MAX_SCALAR_ARM_FANOUT {
                 let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
                 return vec![(Predicate::True, parts)];
             }
             arms
         }
         AbstractValue::Widened(paths) => {
-            vec![(Predicate::True, vec![StringPart::Taint(paths.clone())])]
+            let mut arms = Vec::new();
+            let mut taint = BTreeSet::new();
+            for path in paths {
+                match scope.local_output_meta.get(path) {
+                    Some(meta) if !meta.predicates.is_empty() || meta.defaulted => {
+                        for (condition, splice) in scope.path_splice_arms(path, kind) {
+                            arms.push((condition, vec![StringPart::Splice(splice)]));
+                        }
+                    }
+                    _ => {
+                        taint.insert(path.clone());
+                    }
+                }
+            }
+            if !taint.is_empty() {
+                arms.push((
+                    Predicate::True,
+                    vec![StringPart::Taint(TaintPart::new(taint))],
+                ));
+            }
+            arms
         }
     }
 }

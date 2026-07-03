@@ -281,6 +281,67 @@
             },
             "type": "object"
           }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "anyOf": [
+                      {
+                        "const": true
+                      },
+                      {
+                        "not": {
+                          "const": 0
+                        },
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
         }
       ],
       "properties": {
@@ -291,12 +352,7 @@
         "create": {
           "type": "boolean"
         },
-        "name": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
+        "name": {}
       },
       "type": "object"
     },
@@ -317,13 +373,9 @@
           "type": "boolean"
         },
         "existingSecret": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "password": {
@@ -356,13 +408,9 @@
               ]
             },
             "replicationPasswordKey": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
+              "type": [
+                "string",
+                "null"
               ]
             },
             "userPasswordKey": {
@@ -382,7 +430,14 @@
           "type": "boolean"
         },
         "username": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       },
       "type": "object"
@@ -391,21 +446,15 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         "internalNodePort": {
           "type": "null"
         },
-        "internalPort": {
-          "type": "integer"
-        },
+        "internalPort": {},
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         "nodePort": {
@@ -417,9 +466,7 @@
         "opampPort": {
           "type": "integer"
         },
-        "port": {
-          "type": "integer"
-        },
+        "port": {},
         "type": {
           "anyOf": [
             {
