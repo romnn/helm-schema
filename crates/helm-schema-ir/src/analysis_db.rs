@@ -9,6 +9,7 @@ use crate::helper_body_analysis::{
     ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
 };
 use crate::helper_summary::HelperSummary;
+use crate::helper_walk_state::DotFrame;
 use crate::{ContractProvenance, SourceSpan};
 use helm_schema_ast::parse_go_template;
 
@@ -159,8 +160,7 @@ struct CachedDefineBody {
 struct BoundHelperCallCacheKey {
     name: String,
     bindings: BTreeMap<String, AbstractValue>,
-    helper_body_dot: Option<AbstractValue>,
-    helper_fragment_dot: Option<AbstractValue>,
+    dot: DotFrame,
     seen: BTreeSet<String>,
 }
 
@@ -177,8 +177,7 @@ impl BoundHelperCallCacheKey {
                 .iter()
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect(),
-            helper_body_dot: resolution.helper_body_dot.clone(),
-            helper_fragment_dot: resolution.helper_fragment_dot.clone(),
+            dot: resolution.dot.clone(),
             seen,
         }
     }

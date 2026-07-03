@@ -2,7 +2,7 @@ use std::collections::{BTreeSet, HashMap};
 
 use test_util::prelude::sim_assert_eq;
 
-use super::{HelperRangeJoinBehavior, HelperRuntimeControlState, RangeFrame};
+use super::{DotFrame, HelperRangeJoinBehavior, HelperRuntimeControlState, RangeFrame};
 use crate::abstract_value::AbstractValue;
 use crate::symbolic_local_state::SymbolicLocalState;
 
@@ -68,10 +68,10 @@ fn merge_unions_fragment_local_bindings() {
 
 #[test]
 fn fragment_control_state_tracks_fragment_and_helper_dot() {
-    let mut state = HelperRuntimeControlState::for_fragment(
-        Some(&AbstractValue::ValuesPath("root".to_string())),
-        Some(&AbstractValue::ValuesPath("fragment.root".to_string())),
-    );
+    let mut state = HelperRuntimeControlState::for_fragment(DotFrame {
+        helper: Some(AbstractValue::ValuesPath("root".to_string())),
+        fragment: Some(AbstractValue::ValuesPath("fragment.root".to_string())),
+    });
 
     state.push_effect_dot_binding(Some(AbstractValue::ValuesPath("child".to_string())));
 
@@ -87,7 +87,7 @@ fn fragment_control_state_tracks_fragment_and_helper_dot() {
 
 #[test]
 fn prepare_range_join_promotes_body_for_definitely_nonempty_frame() {
-    let mut state = HelperRuntimeControlState::for_fragment(None, None);
+    let mut state = HelperRuntimeControlState::for_fragment(DotFrame::default());
     state.push_range_frame(RangeFrame {
         definitely_nonempty: true,
         iterations: None,
@@ -101,7 +101,7 @@ fn prepare_range_join_promotes_body_for_definitely_nonempty_frame() {
 
 #[test]
 fn prepare_range_join_merges_when_frame_is_not_definitely_nonempty() {
-    let mut state = HelperRuntimeControlState::for_fragment(None, None);
+    let mut state = HelperRuntimeControlState::for_fragment(DotFrame::default());
     state.push_range_frame(RangeFrame {
         definitely_nonempty: false,
         iterations: None,

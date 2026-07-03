@@ -6,6 +6,7 @@ use helm_schema_ast::DefineIndex;
 use crate::Guard;
 use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::helper_walk_state::DotFrame;
 
 use super::{BoundHelperCallResolution, interpret_bound_helper_body};
 
@@ -26,8 +27,7 @@ fn helper_body_summary_preserves_if_else_output_predicates() {
     let context = FragmentEvalContext::new(&analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::new(),
-        helper_body_dot: None,
-        helper_fragment_dot: None,
+        dot: DotFrame::default(),
     };
     let mut seen = HashSet::new();
 
@@ -96,8 +96,7 @@ fn helper_body_summary_resolves_string_hints_through_local_aliases() {
             "imageRoot".to_string(),
             crate::abstract_value::AbstractValue::ValuesPath("image".to_string()),
         )]),
-        helper_body_dot: None,
-        helper_fragment_dot: None,
+        dot: DotFrame::default(),
     };
     let mut seen = HashSet::new();
 
@@ -134,21 +133,23 @@ fn storage_class_helper_projects_storage_class_name_relative_path() {
                 crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
             ),
         ]),
-        helper_body_dot: Some(crate::abstract_value::AbstractValue::Dict(
-            [
-                (
-                    "persistence".to_string(),
-                    crate::abstract_value::AbstractValue::ValuesPath("persistence".to_string()),
-                ),
-                (
-                    "global".to_string(),
-                    crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
-                ),
-            ]
-            .into_iter()
-            .collect(),
-        )),
-        helper_fragment_dot: None,
+        dot: DotFrame {
+            helper: Some(crate::abstract_value::AbstractValue::Dict(
+                [
+                    (
+                        "persistence".to_string(),
+                        crate::abstract_value::AbstractValue::ValuesPath("persistence".to_string()),
+                    ),
+                    (
+                        "global".to_string(),
+                        crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+            )),
+            fragment: None,
+        },
     };
     let mut seen = HashSet::new();
 
@@ -192,21 +193,23 @@ fn image_helper_combines_assignment_and_render_branch_guards() {
                 crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
             ),
         ]),
-        helper_body_dot: Some(crate::abstract_value::AbstractValue::Dict(
-            [
-                (
-                    "imageRoot".to_string(),
-                    crate::abstract_value::AbstractValue::ValuesPath("image".to_string()),
-                ),
-                (
-                    "global".to_string(),
-                    crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
-                ),
-            ]
-            .into_iter()
-            .collect(),
-        )),
-        helper_fragment_dot: None,
+        dot: DotFrame {
+            helper: Some(crate::abstract_value::AbstractValue::Dict(
+                [
+                    (
+                        "imageRoot".to_string(),
+                        crate::abstract_value::AbstractValue::ValuesPath("image".to_string()),
+                    ),
+                    (
+                        "global".to_string(),
+                        crate::abstract_value::AbstractValue::ValuesPath("global".to_string()),
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+            )),
+            fragment: None,
+        },
     };
     let mut seen = HashSet::new();
 
@@ -274,8 +277,10 @@ fn labels_standard_keeps_name_override_independent_from_custom_labels_guard() {
                 crate::abstract_value::AbstractValue::RootContext,
             ),
         ]),
-        helper_body_dot: Some(dot.clone()),
-        helper_fragment_dot: Some(dot),
+        dot: DotFrame {
+            helper: Some(dot.clone()),
+            fragment: Some(dot),
+        },
     };
     let mut seen = HashSet::new();
 
@@ -323,8 +328,7 @@ fn nested_helper_assignment_preserves_branch_guards_for_dependencies() {
     let context = FragmentEvalContext::new(&analysis_db);
     let resolution = BoundHelperCallResolution {
         bindings: HashMap::new(),
-        helper_body_dot: None,
-        helper_fragment_dot: None,
+        dot: DotFrame::default(),
     };
     let mut seen = HashSet::new();
 
@@ -377,28 +381,30 @@ fn key_selector_helper_outputs_key_strings_not_selected_values() {
                 crate::abstract_value::AbstractValue::RootContext,
             ),
         ]),
-        helper_body_dot: Some(crate::abstract_value::AbstractValue::Dict(
-            [
-                (
-                    "keys".to_string(),
-                    crate::abstract_value::AbstractValue::List(vec![
-                        crate::abstract_value::AbstractValue::StringSet(BTreeSet::from([
-                            "global.postgresql.auth.password".to_string(),
-                        ])),
-                        crate::abstract_value::AbstractValue::StringSet(BTreeSet::from([
-                            "auth.password".to_string(),
-                        ])),
-                    ]),
-                ),
-                (
-                    "context".to_string(),
-                    crate::abstract_value::AbstractValue::RootContext,
-                ),
-            ]
-            .into_iter()
-            .collect(),
-        )),
-        helper_fragment_dot: None,
+        dot: DotFrame {
+            helper: Some(crate::abstract_value::AbstractValue::Dict(
+                [
+                    (
+                        "keys".to_string(),
+                        crate::abstract_value::AbstractValue::List(vec![
+                            crate::abstract_value::AbstractValue::StringSet(BTreeSet::from([
+                                "global.postgresql.auth.password".to_string(),
+                            ])),
+                            crate::abstract_value::AbstractValue::StringSet(BTreeSet::from([
+                                "auth.password".to_string(),
+                            ])),
+                        ]),
+                    ),
+                    (
+                        "context".to_string(),
+                        crate::abstract_value::AbstractValue::RootContext,
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+            )),
+            fragment: None,
+        },
     };
     let mut seen = HashSet::new();
 
@@ -472,8 +478,7 @@ fn passwords_manage_preserves_selected_value_branch_predicates() {
                 ])),
             ),
         ]),
-        helper_body_dot: None,
-        helper_fragment_dot: None,
+        dot: DotFrame::default(),
     };
     let mut seen = HashSet::new();
 

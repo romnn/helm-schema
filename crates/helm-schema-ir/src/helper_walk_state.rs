@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -6,10 +6,31 @@ use crate::helper_summary::{HelperFragmentOutputUse, HelperSummary};
 use crate::symbolic_local_state::SymbolicLocalState;
 use helm_schema_core::Predicate;
 
+/// One dot (`.`) binding as each helper analysis domain sees it: value
+/// analysis reads the context-value projection (`helper`), fragment-output
+/// analysis reads the raw fragment shape (`fragment`). The domains interpret
+/// the same binding differently on purpose (see
+/// `plan/helper-single-walker-rewrite-postmortem.md`); this frame unifies only
+/// where the pair is stored.
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct DotFrame {
+    pub(crate) helper: Option<AbstractValue>,
+    pub(crate) fragment: Option<AbstractValue>,
+}
+
+/// Which analysis domains an active predicate narrows. Condition
+/// alternatives (`else` branches) narrow value analysis without annotating
+/// fragment output metadata, so the fragment view is always a subset of the
+/// value view.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PredicateScope {
+    Both,
+    ValueOnly,
+}
+
 #[derive(Clone)]
 pub(crate) struct HelperRangeIteration {
-    pub(crate) helper_dot_binding: Option<AbstractValue>,
-    pub(crate) fragment_dot_binding: Option<AbstractValue>,
+    pub(crate) dot: DotFrame,
     pub(crate) variable_binding: Option<(String, AbstractValue)>,
 }
 
@@ -21,10 +42,8 @@ pub(crate) struct RangeFrame {
 
 #[derive(Clone)]
 pub(crate) struct HelperRuntimeControlState {
-    helper_dot_stack: Vec<Option<AbstractValue>>,
-    fragment_dot_stack: Vec<Option<AbstractValue>>,
-    active_value_predicates: BTreeSet<Predicate>,
-    active_fragment_predicates: BTreeSet<Predicate>,
+    dot_stack: Vec<DotFrame>,
+    active_predicates: BTreeMap<Predicate, PredicateScope>,
     active_source_relations: Vec<BTreeSet<String>>,
     range_frames: Vec<RangeFrame>,
     no_output_depth: usize,
@@ -32,10 +51,8 @@ pub(crate) struct HelperRuntimeControlState {
 
 #[derive(Clone)]
 pub(crate) struct HelperRuntimeControlSnapshot {
-    helper_dot_stack_len: usize,
-    fragment_dot_stack_len: usize,
-    active_value_predicates: BTreeSet<Predicate>,
-    active_fragment_predicates: BTreeSet<Predicate>,
+    dot_stack_len: usize,
+    active_predicates: BTreeMap<Predicate, PredicateScope>,
     active_source_relations: Vec<BTreeSet<String>>,
 }
 
@@ -46,35 +63,42 @@ pub(crate) enum HelperRangeJoinBehavior {
 }
 
 impl HelperRuntimeControlState {
-    pub(crate) fn for_fragment(
-        current_dot: Option<&AbstractValue>,
-        current_dot_fragment: Option<&AbstractValue>,
-    ) -> Self {
+    pub(crate) fn for_fragment(dot: DotFrame) -> Self {
         Self {
-            helper_dot_stack: vec![current_dot.cloned()],
-            fragment_dot_stack: vec![current_dot_fragment.cloned()],
-            active_value_predicates: BTreeSet::new(),
-            active_fragment_predicates: BTreeSet::new(),
+            dot_stack: vec![dot],
+            active_predicates: BTreeMap::new(),
             active_source_relations: Vec::new(),
             range_frames: Vec::new(),
             no_output_depth: 0,
         }
     }
 
+    pub(crate) fn current_dot(&self) -> DotFrame {
+        self.dot_stack.last().cloned().unwrap_or_default()
+    }
+
     pub(crate) fn current_helper_dot(&self) -> Option<&AbstractValue> {
-        self.helper_dot_stack.last().and_then(Option::as_ref)
+        self.dot_stack
+            .last()
+            .and_then(|frame| frame.helper.as_ref())
     }
 
     pub(crate) fn current_fragment_dot(&self) -> Option<&AbstractValue> {
-        self.fragment_dot_stack.last().and_then(Option::as_ref)
+        self.dot_stack
+            .last()
+            .and_then(|frame| frame.fragment.as_ref())
     }
 
-    pub(crate) fn active_output_predicates(&self) -> &BTreeSet<Predicate> {
-        &self.active_value_predicates
+    pub(crate) fn active_output_predicates(&self) -> BTreeSet<Predicate> {
+        self.active_predicates.keys().cloned().collect()
     }
 
-    pub(crate) fn active_fragment_predicates(&self) -> &BTreeSet<Predicate> {
-        &self.active_fragment_predicates
+    pub(crate) fn active_fragment_predicates(&self) -> BTreeSet<Predicate> {
+        self.active_predicates
+            .iter()
+            .filter(|(_, scope)| **scope == PredicateScope::Both)
+            .map(|(predicate, _)| predicate.clone())
+            .collect()
     }
 
     pub(crate) fn active_source_relations(&self) -> &Vec<BTreeSet<String>> {
@@ -83,24 +107,16 @@ impl HelperRuntimeControlState {
 
     pub(crate) fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         if !predicate.is_trivial() {
-            self.active_value_predicates.insert(predicate.clone());
-            self.active_fragment_predicates.insert(predicate);
+            self.active_predicates
+                .insert(predicate, PredicateScope::Both);
         }
     }
 
     pub(crate) fn push_value_predicate_if_absent(&mut self, predicate: Predicate) {
         if !predicate.is_trivial() {
-            self.active_value_predicates.insert(predicate);
-        }
-    }
-
-    pub(crate) fn extend_truthy_predicates(
-        &mut self,
-        guard_paths: impl IntoIterator<Item = String>,
-    ) {
-        for predicate in guard_paths.into_iter().map(Predicate::truthy_path) {
-            self.active_value_predicates.insert(predicate.clone());
-            self.active_fragment_predicates.insert(predicate);
+            self.active_predicates
+                .entry(predicate)
+                .or_insert(PredicateScope::ValueOnly);
         }
     }
 
@@ -116,28 +132,23 @@ impl HelperRuntimeControlState {
     }
 
     pub(crate) fn push_effect_dot_binding(&mut self, binding: Option<AbstractValue>) {
-        self.fragment_dot_stack.push(binding.clone());
-        self.helper_dot_stack
-            .push(binding.map(|binding| binding.to_context_value()));
+        self.dot_stack.push(DotFrame {
+            helper: binding.as_ref().map(AbstractValue::to_context_value),
+            fragment: binding,
+        });
     }
 
     pub(crate) fn snapshot(&self) -> HelperRuntimeControlSnapshot {
         HelperRuntimeControlSnapshot {
-            helper_dot_stack_len: self.helper_dot_stack.len(),
-            fragment_dot_stack_len: self.fragment_dot_stack.len(),
-            active_value_predicates: self.active_value_predicates.clone(),
-            active_fragment_predicates: self.active_fragment_predicates.clone(),
+            dot_stack_len: self.dot_stack.len(),
+            active_predicates: self.active_predicates.clone(),
             active_source_relations: self.active_source_relations.clone(),
         }
     }
 
     pub(crate) fn restore(&mut self, snapshot: &HelperRuntimeControlSnapshot) {
-        self.helper_dot_stack
-            .truncate(snapshot.helper_dot_stack_len);
-        self.fragment_dot_stack
-            .truncate(snapshot.fragment_dot_stack_len);
-        self.active_value_predicates = snapshot.active_value_predicates.clone();
-        self.active_fragment_predicates = snapshot.active_fragment_predicates.clone();
+        self.dot_stack.truncate(snapshot.dot_stack_len);
+        self.active_predicates = snapshot.active_predicates.clone();
         self.active_source_relations = snapshot.active_source_relations.clone();
     }
 
@@ -181,8 +192,7 @@ impl HelperRuntimeControlState {
         if let Some((variable, binding)) = iteration.variable_binding {
             locals.fragment_values.insert(variable, binding);
         }
-        self.helper_dot_stack.push(iteration.helper_dot_binding);
-        self.fragment_dot_stack.push(iteration.fragment_dot_binding);
+        self.dot_stack.push(iteration.dot);
     }
 
     pub(crate) fn exit_range_iteration(&mut self) {
@@ -191,8 +201,7 @@ impl HelperRuntimeControlState {
             .last()
             .is_some_and(|frame| frame.iterations.is_some())
         {
-            self.helper_dot_stack.pop();
-            self.fragment_dot_stack.pop();
+            self.dot_stack.pop();
         }
     }
 

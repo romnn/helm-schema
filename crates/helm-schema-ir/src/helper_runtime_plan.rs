@@ -7,7 +7,9 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with_fragment_locals};
-use crate::helper_walk_state::{HelperRangeIteration, HelperRuntimeControlState, RangeFrame};
+use crate::helper_walk_state::{
+    DotFrame, HelperRangeIteration, HelperRuntimeControlState, RangeFrame,
+};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
 use helm_schema_core::Predicate;
@@ -34,7 +36,9 @@ impl HelperRangeRuntimePlan {
         control: &mut HelperRuntimeControlState,
         locals: &mut SymbolicLocalState,
     ) {
-        control.extend_truthy_predicates(self.guard_paths.iter().cloned());
+        for path in &self.guard_paths {
+            control.push_predicate_if_absent(Predicate::truthy_path(path.clone()));
+        }
         if let Some((variable, binding)) = &self.non_exact_variable_binding {
             locals
                 .fragment_values
@@ -97,8 +101,7 @@ pub(crate) fn helper_if_condition_plan(
 pub(crate) fn helper_range_runtime_plan(
     header: Option<&TemplateHeader>,
     bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    current_dot_fragment: Option<&AbstractValue>,
+    dot: &DotFrame,
     local_bindings: &HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
@@ -110,7 +113,7 @@ pub(crate) fn helper_range_runtime_plan(
     let guard_paths = branch_guard_paths_for_expr(
         header.expr(),
         bindings,
-        current_dot,
+        dot.helper.as_ref(),
         local_bindings,
         context,
         seen,
@@ -118,7 +121,7 @@ pub(crate) fn helper_range_runtime_plan(
     let range_fragment_value = range_iterable_binding_expr(
         header.expr(),
         local_bindings,
-        current_dot_fragment,
+        dot.fragment.as_ref(),
         context,
         seen,
     );
@@ -128,8 +131,10 @@ pub(crate) fn helper_range_runtime_plan(
             items
                 .iter()
                 .map(|item| HelperRangeIteration {
-                    helper_dot_binding: Some(item.to_context_value()),
-                    fragment_dot_binding: Some(item.clone()),
+                    dot: DotFrame {
+                        helper: Some(item.to_context_value()),
+                        fragment: Some(item.clone()),
+                    },
                     variable_binding: range_variable
                         .as_ref()
                         .map(|variable| (variable.clone(), item.clone())),

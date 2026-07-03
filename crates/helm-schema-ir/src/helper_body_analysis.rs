@@ -18,7 +18,7 @@ use crate::helper_runtime_plan::{
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
 use crate::helper_walk_state::{
-    HelperRangeJoinBehavior, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
+    DotFrame, HelperRangeJoinBehavior, HelperRuntimeControlSnapshot, HelperRuntimeControlState,
 };
 use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, eval_template_body, push_predicate_contract_guards,
@@ -30,8 +30,7 @@ use helm_schema_core::Predicate;
 
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, AbstractValue>,
-    pub(crate) helper_body_dot: Option<AbstractValue>,
-    pub(crate) helper_fragment_dot: Option<AbstractValue>,
+    pub(crate) dot: DotFrame,
 }
 
 pub(crate) struct ResolveBoundHelperCallParams<'a, 'context> {
@@ -98,8 +97,10 @@ pub(crate) fn resolve_bound_helper_call(
 
     BoundHelperCallResolution {
         bindings,
-        helper_body_dot,
-        helper_fragment_dot,
+        dot: DotFrame {
+            helper: helper_body_dot,
+            fragment: helper_fragment_dot,
+        },
     }
 }
 
@@ -145,10 +146,7 @@ pub(crate) fn interpret_bound_helper_body(
     let mut runtime = HelperAnalysisRuntime {
         source: body.source,
         bindings: &resolution.bindings,
-        control: HelperRuntimeControlState::for_fragment(
-            resolution.helper_body_dot.as_ref(),
-            resolution.helper_fragment_dot.as_ref(),
-        ),
+        control: HelperRuntimeControlState::for_fragment(resolution.dot.clone()),
         locals: &mut locals,
         context,
         seen: &mut output_seen,
@@ -192,27 +190,17 @@ struct HelperAnalysisSnapshot {
 }
 
 impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
-    fn current_helper_dot(&self) -> Option<&AbstractValue> {
-        self.control.current_helper_dot()
-    }
-
-    fn current_fragment_dot(&self) -> Option<&AbstractValue> {
-        self.control.current_fragment_dot()
-    }
-
     fn collect_fragment_expression(
         &mut self,
         exprs: &[helm_schema_ast::TemplateExpr],
         relative_path: &YamlPath,
         kind: ValueKind,
     ) {
-        let current_dot = self.current_helper_dot().cloned();
-        let current_dot_fragment = self.current_fragment_dot().cloned();
         let active_output_predicates = if kind == ValueKind::Fragment || !relative_path.0.is_empty()
         {
-            self.control.active_fragment_predicates().clone()
+            self.control.active_fragment_predicates()
         } else {
-            self.control.active_output_predicates().clone()
+            self.control.active_output_predicates()
         };
         let active_source_relations = self.control.active_source_relations().clone();
         let mut state = crate::helper_walk_state::FragmentOutputWalkState {
@@ -225,8 +213,7 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         collect_bound_fragment_output_uses_from_exprs(
             exprs,
             self.bindings,
-            current_dot.as_ref(),
-            current_dot_fragment.as_ref(),
+            &self.control.current_dot(),
             relative_path,
             kind,
             &active_output_predicates,
@@ -274,7 +261,7 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         };
 
         let meta = HelperOutputMeta::default()
-            .with_output_site_predicates(self.control.active_fragment_predicates());
+            .with_output_site_predicates(&self.control.active_fragment_predicates());
         for source_expr in range_binding.fragment_source_paths() {
             self.outputs.push(HelperFragmentOutputUse::new(
                 source_expr,
@@ -386,11 +373,10 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
 
     fn observe_assignment_exprs(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) {
         let mut seen_set = HashSet::new();
-        let current_dot_fragment = self.current_fragment_dot().cloned();
         if crate::fragment_assignment::apply_local_set_mutations_from_exprs(
             exprs,
             &mut self.locals.fragment_values,
-            current_dot_fragment.as_ref(),
+            self.control.current_fragment_dot(),
             self.context,
             &mut seen_set,
         ) {
@@ -403,11 +389,10 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         &mut self,
         header: &helm_schema_ast::TemplateHeader,
     ) -> Self::ConditionPlan {
-        let current_dot = self.current_helper_dot().cloned();
         let plan = helper_if_condition_plan(
             header,
             self.bindings,
-            current_dot.as_ref(),
+            self.control.current_helper_dot(),
             self.locals,
             self.context,
             self.seen,
@@ -431,8 +416,8 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
             self.bindings,
             &self.locals.fragment_values,
             self.context,
-            self.current_fragment_dot(),
-            self.current_helper_dot(),
+            self.control.current_fragment_dot(),
+            self.control.current_helper_dot(),
         );
         self.control.push_effect_dot_binding(dot_binding);
         plan
@@ -450,13 +435,10 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         _current_path: &YamlPath,
         _mapping_entry_path: Option<&YamlPath>,
     ) -> Self::RangePlan {
-        let current_dot = self.current_helper_dot().cloned();
-        let fragment_current_dot = self.current_fragment_dot().cloned();
         helper_range_runtime_plan(
             header,
             self.bindings,
-            current_dot.as_ref(),
-            fragment_current_dot.as_ref(),
+            &self.control.current_dot(),
             &self.locals.fragment_values,
             self.context,
             self.seen,

@@ -4,7 +4,7 @@ use test_util::prelude::sim_assert_eq;
 
 use super::HelperRangeRuntimePlan;
 use crate::abstract_value::AbstractValue;
-use crate::helper_walk_state::{HelperRuntimeControlState, RangeFrame};
+use crate::helper_walk_state::{DotFrame, HelperRuntimeControlState, RangeFrame};
 use crate::symbolic_local_state::SymbolicLocalState;
 
 #[test]
@@ -22,13 +22,13 @@ fn activate_range_plan_installs_predicates_binding_and_frame() {
         )),
         range_fragment_value: Some(AbstractValue::ValuesPath("serviceAccount".to_string())),
     };
-    let mut control = HelperRuntimeControlState::for_fragment(None, None);
+    let mut control = HelperRuntimeControlState::for_fragment(DotFrame::default());
     let mut locals = SymbolicLocalState::default();
 
     plan.activate(&mut control, &mut locals);
 
     sim_assert_eq!(
-        have: control.active_output_predicates().iter().cloned().collect::<Vec<_>>().len(),
+        have: control.active_output_predicates().len(),
         want: 1
     );
     sim_assert_eq!(

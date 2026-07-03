@@ -16,7 +16,7 @@ use crate::fragment_expr_eval::{
     helper_result_from_exprs_with_fragment_locals,
 };
 use crate::helper_summary::{HelperFragmentOutputUse, NestedDependencyRows, merge_output_use_meta};
-use crate::helper_walk_state::FragmentOutputWalkState;
+use crate::helper_walk_state::{DotFrame, FragmentOutputWalkState};
 use crate::{ValueKind, YamlPath};
 use helm_schema_core as output_path;
 use helm_schema_core::Predicate;
@@ -25,8 +25,7 @@ use helm_schema_core::Predicate;
 pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     exprs: &[TemplateExpr],
     bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    current_dot_fragment: Option<&AbstractValue>,
+    dot: &DotFrame,
     relative_path: &YamlPath,
     output_kind: ValueKind,
     active_output_predicates: &BTreeSet<Predicate>,
@@ -37,11 +36,11 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     if apply_local_set_mutations_from_exprs(
         exprs,
         &mut state.locals.fragment_values,
-        current_dot_fragment,
+        dot.fragment.as_ref(),
         state.context,
         &mut seen_set,
     ) {
-        let effects = eval_helper_exprs_direct_effects(exprs, bindings, current_dot);
+        let effects = eval_helper_exprs_direct_effects(exprs, bindings, dot.helper.as_ref());
         state
             .analysis
             .chart_defaults
@@ -53,8 +52,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         collect_bound_fragment_output_assignment_uses(
             &assignment,
             bindings,
-            current_dot,
-            current_dot_fragment,
+            dot,
             active_output_predicates,
             active_source_relations,
             state,
@@ -80,7 +78,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
             &state.locals.output_meta,
         ),
         Some(bindings),
-        current_dot,
+        dot.helper.as_ref(),
         state.context,
         state.seen,
     );
@@ -219,8 +217,7 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
 fn collect_bound_fragment_output_assignment_uses(
     assignment: &ParsedHelperAssignment,
     bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    current_dot_fragment: Option<&AbstractValue>,
+    dot: &DotFrame,
     active_output_predicates: &BTreeSet<Predicate>,
     active_source_relations: &[BTreeSet<String>],
     state: &mut FragmentOutputWalkState<'_, '_>,
@@ -238,7 +235,7 @@ fn collect_bound_fragment_output_assignment_uses(
             &state.locals.default_paths,
         ),
         Some(bindings),
-        current_dot,
+        dot.helper.as_ref(),
         state.context,
         &mut seen_rhs,
     );
@@ -279,7 +276,7 @@ fn collect_bound_fragment_output_assignment_uses(
     }
     let mut merged_current_item_paths = BTreeSet::new();
     if rhs_merges_into_var
-        && let Some(current_dot_fragment) = current_dot_fragment
+        && let Some(current_dot_fragment) = dot.fragment.as_ref()
         && matches!(
             current_dot_fragment,
             AbstractValue::Dict(_) | AbstractValue::Overlay { .. }
