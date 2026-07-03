@@ -17,22 +17,6 @@ fn join(values: Vec<AbstractValue>) -> AbstractValue {
     AbstractValue::join_all(values).expect("join should produce a value")
 }
 
-fn empty_scope() -> OutputProjectionScope<'static> {
-    static ROOT: YamlPath = YamlPath(Vec::new());
-    static NO_PATHS: BTreeSet<String> = BTreeSet::new();
-    static NO_PREDICATES: BTreeSet<Predicate> = BTreeSet::new();
-    static NO_META: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
-    OutputProjectionScope {
-        root: &ROOT,
-        encoded_paths: &NO_PATHS,
-        active_output_predicates: &NO_PREDICATES,
-        defaulted_paths: &NO_PATHS,
-        path_meta: &NO_META,
-        local_rendered_paths: &NO_PATHS,
-        local_defaulted_paths: &NO_PATHS,
-    }
-}
-
 #[test]
 fn join_is_idempotent() {
     let value = path("image.tag");
@@ -186,39 +170,5 @@ fn without_widened_drops_widened_alternatives() {
     sim_assert_eq!(
         have: join(vec![path("image.tag"), widened]).without_widened(),
         want: Some(path("image.tag"))
-    );
-}
-
-#[test]
-fn widened_projects_rows_at_the_expression_slot() {
-    let value = AbstractValue::Widened(paths(&["auth.existingSecret"]));
-    let slot = YamlPath(vec!["data".to_string(), "password".to_string()]);
-    let mut outputs = Vec::new();
-    value.collect_output_uses(&mut outputs, &slot, ValueKind::Scalar, &empty_scope());
-
-    let rows: Vec<(String, YamlPath, ValueKind)> = outputs
-        .into_iter()
-        .map(|output| (output.source_expr, output.relative_path, output.kind))
-        .collect();
-    sim_assert_eq!(
-        have: rows,
-        want: vec![("auth.existingSecret".to_string(), slot, ValueKind::Scalar)]
-    );
-}
-
-#[test]
-fn widened_range_item_scalar_projects_to_sequence_item_path() {
-    let value = AbstractValue::Widened(paths(&["hosts.*"]));
-    let slot = YamlPath(vec!["tls".to_string()]);
-    let mut outputs = Vec::new();
-    value.collect_output_uses(&mut outputs, &slot, ValueKind::Scalar, &empty_scope());
-
-    let rows: Vec<(String, YamlPath)> = outputs
-        .into_iter()
-        .map(|output| (output.source_expr, output.relative_path))
-        .collect();
-    sim_assert_eq!(
-        have: rows,
-        want: vec![("hosts.*".to_string(), output_path::sequence_item_path(&slot))]
     );
 }

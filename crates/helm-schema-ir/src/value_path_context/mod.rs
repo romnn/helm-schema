@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::GetBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::HelperOutputMeta;
 
 mod condition_predicate;
 mod path_resolution;

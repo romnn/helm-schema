@@ -1,8 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
-use crate::{ValueKind, YamlPath};
-use helm_schema_core::{self as output_path, Predicate};
+use crate::helper_meta::HelperOutputMeta;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum AbstractValue {
@@ -349,59 +347,6 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn merge_context_values(values: Vec<Self>) -> Option<Self> {
-        let mut map = BTreeMap::new();
-        let mut non_dict_value_paths = BTreeSet::new();
-        let mut non_dict_output_paths = Vec::new();
-        let mut non_dict_strings = BTreeSet::new();
-
-        let mut pending = values;
-        while let Some(binding) = pending.pop() {
-            match binding {
-                Self::Choice(choices) => pending.extend(choices),
-                Self::Dict(entries) => Self::merge_entries(&mut map, entries),
-                Self::Overlay { entries, fallback } => {
-                    pending.push(*fallback);
-                    Self::merge_entries(&mut map, entries);
-                }
-                Self::ValuesPath(path) => {
-                    non_dict_value_paths.insert(path);
-                }
-                Self::OutputPath(path, meta) => {
-                    non_dict_output_paths.push(Self::OutputPath(path, meta));
-                }
-                Self::StringSet(strings) => {
-                    non_dict_strings.extend(strings);
-                }
-                Self::RootContext | Self::Unknown | Self::Top | Self::List(_) => {}
-                // Widened influence is not a context fragment: merged dot
-                // contexts keep only values-backed members.
-                Self::Widened(_) => {}
-            }
-        }
-
-        let mut fallback_choices = Vec::new();
-        if let Some(paths) = Self::path_choices(non_dict_value_paths) {
-            fallback_choices.push(paths);
-        }
-        fallback_choices.extend(non_dict_output_paths);
-        if !non_dict_strings.is_empty() {
-            fallback_choices.push(Self::StringSet(non_dict_strings));
-        }
-        let fallback = Self::choice(fallback_choices);
-
-        if map.is_empty() {
-            fallback
-        } else if let Some(fallback) = fallback {
-            Some(Self::Overlay {
-                entries: map,
-                fallback: Box::new(fallback),
-            })
-        } else {
-            Some(Self::Dict(map))
-        }
-    }
-
     pub(crate) fn remove_fragment_paths(self, remove: &BTreeSet<String>) -> Option<Self> {
         if remove.is_empty() {
             return Some(self);
@@ -504,105 +449,6 @@ impl AbstractValue {
         self.collect_paths(&mut paths, true, true);
         paths
     }
-
-    pub(crate) fn collect_output_uses(
-        &self,
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-        relative_path: &YamlPath,
-        kind: ValueKind,
-        scope: &OutputProjectionScope<'_>,
-    ) {
-        match self {
-            Self::ValuesPath(path) if !path.is_empty() => {
-                push_output_path(outputs, path, relative_path, kind, None, scope);
-            }
-            Self::ValuesPath(_) => {}
-            Self::OutputPath(path, meta) => {
-                push_output_path(outputs, path, relative_path, kind, Some(meta), scope);
-            }
-            Self::Dict(entries) => {
-                Self::collect_entry_output_uses(entries, outputs, relative_path, scope);
-            }
-            Self::Overlay { entries, fallback } => {
-                fallback.collect_output_uses(outputs, relative_path, kind, scope);
-                Self::collect_entry_output_uses(entries, outputs, relative_path, scope);
-            }
-            Self::Choice(choices) => {
-                for choice in choices {
-                    choice.collect_output_uses(outputs, relative_path, kind, scope);
-                }
-            }
-            Self::List(items) => {
-                let item_path = output_path::sequence_item_path(relative_path);
-                for item in items {
-                    item.collect_output_uses(outputs, &item_path, item.output_child_kind(), scope);
-                }
-            }
-            Self::Widened(paths) => {
-                for path in paths {
-                    if path.is_empty() {
-                        continue;
-                    }
-                    // A range item (`path.*`) that reaches a scalar slot only
-                    // through an unknown call renders once per iteration, so
-                    // it lands on the slot's sequence-item path.
-                    let path_for_output = if kind == ValueKind::Scalar && path.ends_with(".*") {
-                        output_path::sequence_item_path(relative_path)
-                    } else {
-                        relative_path.clone()
-                    };
-                    push_output_path(outputs, path, &path_for_output, kind, None, scope);
-                }
-            }
-            Self::Top | Self::Unknown | Self::RootContext | Self::StringSet(_) => {}
-        }
-    }
-
-    fn collect_entry_output_uses(
-        entries: &BTreeMap<String, Self>,
-        outputs: &mut Vec<HelperFragmentOutputUse>,
-        relative_path: &YamlPath,
-        scope: &OutputProjectionScope<'_>,
-    ) {
-        for (key, value) in entries {
-            let child_path =
-                output_path::append_relative_path(relative_path, &YamlPath(vec![key.clone()]));
-            value.collect_output_uses(outputs, &child_path, value.output_child_kind(), scope);
-        }
-    }
-
-    pub(crate) fn for_output_path(
-        source_expr: String,
-        relative_path: &YamlPath,
-        meta: HelperOutputMeta,
-    ) -> Self {
-        let mut value = Self::OutputPath(source_expr, meta);
-        for segment in relative_path.0.iter().rev() {
-            value = Self::Dict(BTreeMap::from([(segment.clone(), value)]));
-        }
-        value
-    }
-
-    pub(crate) fn output_child_kind(&self) -> ValueKind {
-        match self {
-            Self::Dict(_) | Self::List(_) | Self::Overlay { .. } => ValueKind::Fragment,
-            Self::Choice(choices)
-                if choices.iter().any(|choice| {
-                    matches!(choice, Self::Dict(_) | Self::List(_) | Self::Overlay { .. })
-                }) =>
-            {
-                ValueKind::Fragment
-            }
-            Self::Top
-            | Self::Unknown
-            | Self::ValuesPath(_)
-            | Self::OutputPath(_, _)
-            | Self::RootContext
-            | Self::StringSet(_)
-            | Self::Choice(_)
-            | Self::Widened(_) => ValueKind::Scalar,
-        }
-    }
 }
 
 fn item_path(path: &str) -> String {
@@ -611,52 +457,6 @@ fn item_path(path: &str) -> String {
     } else {
         format!("{path}.*")
     }
-}
-
-/// Effect-derived, path-keyed enrichment under which a value projects its
-/// output rows: encodings, admitted defaults, local output metadata, and the
-/// predicates active at the output site.
-pub(crate) struct OutputProjectionScope<'a> {
-    /// The relative path the projection starts from. A row landing exactly
-    /// here for a local-rendered source renders the local's binding.
-    pub(crate) root: &'a YamlPath,
-    pub(crate) encoded_paths: &'a BTreeSet<String>,
-    pub(crate) active_output_predicates: &'a BTreeSet<Predicate>,
-    pub(crate) defaulted_paths: &'a BTreeSet<String>,
-    pub(crate) path_meta: &'a BTreeMap<String, HelperOutputMeta>,
-    /// Paths rendered by locals read in the projected expression. Root rows
-    /// for these take their defaultedness from the local binding (not from
-    /// read-site `default` wrapping) and stay unencoded.
-    pub(crate) local_rendered_paths: &'a BTreeSet<String>,
-    pub(crate) local_defaulted_paths: &'a BTreeSet<String>,
-}
-
-fn push_output_path(
-    outputs: &mut Vec<HelperFragmentOutputUse>,
-    path: &str,
-    relative_path: &YamlPath,
-    kind: ValueKind,
-    meta: Option<&HelperOutputMeta>,
-    scope: &OutputProjectionScope<'_>,
-) {
-    let local_root_row = relative_path == scope.root && scope.local_rendered_paths.contains(path);
-    let mut meta = meta.cloned().unwrap_or_default();
-    if let Some(path_meta) = scope.path_meta.get(path) {
-        meta.merge(path_meta);
-    }
-    meta.defaulted |= if local_root_row {
-        scope.local_defaulted_paths.contains(path)
-    } else {
-        scope.defaulted_paths.contains(path)
-    };
-    let meta = meta.with_output_site_predicates(scope.active_output_predicates);
-    outputs.push(HelperFragmentOutputUse::with_encoding(
-        path.to_string(),
-        relative_path.clone(),
-        kind,
-        !local_root_row && path_is_encoded(path, scope.encoded_paths),
-        meta,
-    ));
 }
 
 pub(crate) fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {

@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::BoundValueContext;
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::HelperOutputMeta;
 
 /// Abstract interpreter environment for Helm expression evaluation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

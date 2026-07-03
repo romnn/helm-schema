@@ -1,13 +1,12 @@
 use std::collections::HashSet;
 
 use helm_schema_ast::{
-    AttributionIndex, ResourceSpan, TemplateExpr, TemplateHeader, build_attribution_index,
-    decode_guard, decode_guard_expr, parse_expr_text, parse_go_template, unquote_yaml_scalar,
+    ResourceSpan, TemplateExpr, TemplateHeader, decode_guard, decode_guard_expr, parse_expr_text,
+    parse_go_template, unquote_yaml_scalar,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
 use helm_schema_syntax::{MappingEntry, Node as CstNode, TemplatedDocument};
 
-use crate::YamlPath;
 use crate::analysis_db::IrAnalysisDb;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{eval_expr, literal_helper_call_callee};
@@ -16,18 +15,6 @@ use crate::node_eval::{
 };
 
 const MAX_RECURSION_DEPTH: usize = 12;
-
-/// Build the complete attributed-document artifact for one template source:
-/// output slots, control sites, and resource identity spans derived together.
-pub(crate) fn attributed_document(
-    source: &str,
-    root: tree_sitter::Node<'_>,
-    analysis_db: &IrAnalysisDb,
-) -> AttributionIndex {
-    let document = TemplatedDocument::parse_with_root(source, root);
-    build_attribution_index(source, root)
-        .with_resource_spans(collect_resource_spans(&document, analysis_db))
-}
 
 pub(crate) fn collect_resource_spans(
     document: &TemplatedDocument<'_>,
@@ -52,13 +39,6 @@ pub(crate) fn collect_resource_spans(
             .then_with(|| left.end.cmp(&right.end))
     });
     spans
-}
-
-pub(crate) fn helper_body_defines_resource(name: &str, analysis_db: &IrAnalysisDb) -> bool {
-    let Some(body) = analysis_db.parsed_helper_body(name) else {
-        return false;
-    };
-    detect_manifest_resource(body.source, analysis_db).is_some()
 }
 
 #[derive(Default)]
@@ -231,7 +211,6 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
     /// the current value.
     type ScopeSnapshot = OutputParts;
     type ConditionPlan = ResourceConditionPlan;
-    type RangePlan = ();
 
     fn source(&self) -> &str {
         self.source
@@ -363,23 +342,6 @@ impl NodeEvalRuntime for ResourceOutputRuntime<'_, '_> {
     }
 
     fn activate_condition_alternative(&mut self, _plan: &Self::ConditionPlan) {}
-
-    fn plan_range_action(
-        &mut self,
-        _node: tree_sitter::Node<'_>,
-        _header: Option<&TemplateHeader>,
-        _current_path: &YamlPath,
-        _mapping_entry_path: Option<&YamlPath>,
-    ) -> Self::RangePlan {
-    }
-
-    fn activate_range_action(
-        &mut self,
-        _node: tree_sitter::Node<'_>,
-        _plan: &Self::RangePlan,
-        _current_path: &YamlPath,
-    ) {
-    }
 }
 
 fn resource_spans_for_manifest_source(

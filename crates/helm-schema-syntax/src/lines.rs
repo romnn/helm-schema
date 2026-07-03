@@ -27,15 +27,6 @@ impl LineIndex {
         self.starts.len()
     }
 
-    /// The index of the line containing `byte` (clamped to the source end).
-    pub(crate) fn line_of(&self, byte: usize) -> usize {
-        let byte = byte.min(self.source_len);
-        match self.starts.binary_search(&byte) {
-            Ok(line) => line,
-            Err(insertion) => insertion - 1,
-        }
-    }
-
     /// Line span `[start, end)` excluding the trailing newline.
     pub(crate) fn span(&self, line: usize) -> (usize, usize) {
         let start = self.starts[line];

@@ -39,7 +39,7 @@ use std::collections::BTreeSet;
 
 use crate::ValueKind;
 use crate::abstract_value::{AbstractValue, path_is_encoded};
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::HelperOutputMeta;
 use helm_schema_core::Predicate;
 
 use super::domain::{
@@ -227,7 +227,7 @@ pub(crate) fn lower_value(
                     AbstractFragment::Opaque(Opaque {
                         taint,
                         kind,
-                        site: None,
+                        ..Opaque::default()
                     }),
                 ));
             }

@@ -159,7 +159,7 @@ fn walk_node(
                     opaque.kind,
                     Predicate::contract_guard_stack(conditions),
                     opaque.site.as_deref(),
-                    &[],
+                    &opaque.provenance,
                 ));
             }
         }
@@ -192,7 +192,7 @@ fn project_parts(
                         ValueKind::PartialScalar,
                         Predicate::contract_guard_stack(conditions),
                         taint.site.as_deref(),
-                        &[],
+                        &taint.provenance,
                     ));
                 }
             }
@@ -252,7 +252,7 @@ fn placed_row(
         .and_then(|site| site.provenance.clone())
         .into_iter()
         .collect();
-    crate::helper_summary::merge_provenance_sites(&mut provenance, helper_provenance);
+    crate::helper_meta::merge_provenance_sites(&mut provenance, helper_provenance);
     ContractUse::with_provenances(
         values_path,
         path,

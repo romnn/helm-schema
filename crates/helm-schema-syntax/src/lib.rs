@@ -34,8 +34,6 @@
 //! well-nested assumption are flagged (or degraded to [`Node::Opaque`] when
 //! they open mid-scalar) instead of guessed at.
 //!
-//! The query layer ([`TemplatedDocument::slot_context_at`],
-//! [`TemplatedDocument::open_slot_path_before`]) reproduces the exact
 //! open-slot semantics that `helm-schema-ast`'s attribution previously
 //! recovered with an O(n²) per-query line replay; here the parse is a single
 //! pass and each query is an O(depth) chain walk.
@@ -45,16 +43,14 @@ mod cst;
 mod dump;
 mod lines;
 mod parse;
-mod query;
 mod yaml_scan;
 
 pub use actions::parse_go_template;
 pub use cst::{
     BlockScalar, CommentLine, ControlBranch, ControlKind, ControlRegion, MappingEntry, Node,
-    OpaqueKind, OpaqueNode, OutputAction, PathSegment, ScalarLine, ScalarPart, ScalarParts,
-    SequenceItem, Span, TemplatedDocument,
+    OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
+    TemplatedDocument,
 };
-pub use query::SlotContext;
 pub use yaml_scan::{
     first_mapping_colon_offset, mapping_colon_is_structural, parse_yaml_key,
     structural_mapping_colon, unquote_yaml_scalar,

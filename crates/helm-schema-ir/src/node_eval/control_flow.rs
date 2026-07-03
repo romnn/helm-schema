@@ -127,33 +127,15 @@ pub(crate) fn else_if_pairs<'node>(
 pub(super) fn eval_range_node<R>(
     runtime: &mut R,
     node: tree_sitter::Node<'_>,
-    header: Option<&TemplateHeader>,
+    _header: Option<&TemplateHeader>,
 ) where
     R: NodeEvalRuntime,
 {
     let entry = runtime.scope_snapshot();
 
-    let control_site = runtime.document_control_site_for_node(node);
-    let plan = runtime.plan_range_action(
-        node,
-        header,
-        &control_site.path,
-        control_site.range_mapping_entry_path.as_ref(),
-    );
-    let range_output_path = control_site
-        .range_mapping_entry_path
-        .unwrap_or_else(|| control_site.path.clone());
-
     runtime.enter_local_scope();
-    runtime.activate_range_action(node, &plan, &range_output_path);
-    let iteration_count = runtime.range_iteration_count();
-
-    for index in 0..iteration_count {
-        runtime.enter_range_iteration(index);
-        for child in children_with_field(node, "body") {
-            eval_node(runtime, child);
-        }
-        runtime.exit_range_iteration(index);
+    for child in children_with_field(node, "body") {
+        eval_node(runtime, child);
     }
     runtime.exit_local_scope();
     let body_outcome = runtime.scope_snapshot();

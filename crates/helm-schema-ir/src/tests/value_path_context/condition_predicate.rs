@@ -6,7 +6,7 @@ use test_util::prelude::sim_assert_eq;
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::HelperOutputMeta;
 use crate::{Guard, GuardValue};
 
 use super::*;

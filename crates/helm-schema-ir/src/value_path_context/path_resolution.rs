@@ -7,7 +7,7 @@ use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{direct_values_path, eval_expr, eval_exprs_effects};
-use crate::fragment_expr_eval::{fragment_context_value, locals_with_roots};
+use crate::fragment_expr_eval::fragment_context_value;
 
 use super::ValuePathContext;
 
@@ -49,7 +49,9 @@ impl ValuePathContext<'_> {
             .or_else(|| self.current_dot_binding.clone());
         let mut env = EvalEnv::from_helper_context(Some(self.root_bindings), current_dot.as_ref())
             .without_helper_call_args();
-        env.locals = locals_with_roots(self.template_bindings, self.root_bindings);
+        // Locals and root bindings are distinct namespaces (see the hole
+        // evaluator); roots resolve through `root_fields` only.
+        env.locals = self.template_bindings.clone();
         env.local_default_paths = self.template_default_paths.clone();
         env.local_output_meta = self.template_output_meta.clone();
         env.bound_values = BoundValueContext::new(self.range_domains, self.get_bindings);

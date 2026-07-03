@@ -1,16 +1,69 @@
-use helm_schema_ast::{AttributionIndex, DefineIndex, build_attribution_index};
+use helm_schema_ast::{DefineIndex, ResourceSpan};
+use helm_schema_core::ResourceRef;
 use indoc::indoc;
 
 use test_util::prelude::sim_assert_eq;
 
-fn attribution_index(source: &str) -> AttributionIndex {
+/// Test-side span queries with the interpreter's site rules: the smallest
+/// resource span containing a byte wins, a window spanning several distinct
+/// resources claims none, and List-item spans rebase emitted paths below
+/// their `items[*]` prefix.
+struct SpanLocator {
+    spans: Vec<ResourceSpan>,
+}
+
+impl SpanLocator {
+    fn span_at(&self, byte: usize) -> Option<&ResourceSpan> {
+        self.spans
+            .iter()
+            .filter(|span| span.start <= byte && byte < span.end)
+            .min_by(|left, right| {
+                let left_len = left.end.saturating_sub(left.start);
+                let right_len = right.end.saturating_sub(right.start);
+                left_len
+                    .cmp(&right_len)
+                    .then_with(|| right.start.cmp(&left.start))
+            })
+    }
+
+    fn resource_at(&self, byte: usize) -> Option<&ResourceRef> {
+        self.span_at(byte).map(|span| &span.resource)
+    }
+
+    fn rebase_path_at(&self, byte: usize, path: crate::YamlPath) -> crate::YamlPath {
+        let Some(span) = self.span_at(byte) else {
+            return path;
+        };
+        if span.path_prefix.is_empty() || !path.0.starts_with(&span.path_prefix) {
+            return path;
+        }
+        crate::YamlPath(path.0[span.path_prefix.len()..].to_vec())
+    }
+
+    fn single_resource_in_span(&self, start: usize, end: usize) -> Option<&ResourceRef> {
+        let mut resource = None;
+        for span in &self.spans {
+            if span.start >= end || start >= span.end {
+                continue;
+            }
+            match resource {
+                Some(existing) if existing != &span.resource => return None,
+                Some(_) => {}
+                None => resource = Some(&span.resource),
+            }
+        }
+        resource
+    }
+}
+
+fn attribution_index(source: &str) -> SpanLocator {
     let tree = helm_schema_ast::parse_go_template(source).expect("parse template");
     let defines = DefineIndex::new();
     let analysis_db = crate::analysis_db::IrAnalysisDb::new(&defines);
     let document = helm_schema_syntax::TemplatedDocument::parse_with_root(source, tree.root_node());
-    build_attribution_index(source, tree.root_node()).with_resource_spans(
-        crate::resource_identity::collect_resource_spans(&document, &analysis_db),
-    )
+    SpanLocator {
+        spans: crate::resource_identity::collect_resource_spans(&document, &analysis_db),
+    }
 }
 
 #[test]

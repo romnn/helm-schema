@@ -227,13 +227,20 @@ pub struct TaintPart {
     pub paths: BTreeSet<String>,
     /// The render site the taint was observed at.
     pub site: Option<Rc<SiteFacts>>,
+    /// Helper-body source sites the taint was derived through (spliced
+    /// summary content keeps its body sites here).
+    pub provenance: Vec<ContractProvenance>,
 }
 
 impl TaintPart {
     /// Taint with no resolved site (stamped later by the interpreter).
     #[must_use]
     pub fn new(paths: BTreeSet<String>) -> Self {
-        Self { paths, site: None }
+        Self {
+            paths,
+            site: None,
+            provenance: Vec::new(),
+        }
     }
 }
 
@@ -289,6 +296,9 @@ pub struct Opaque {
     pub kind: ValueKind,
     /// The render site the opaque content was observed at.
     pub site: Option<Rc<SiteFacts>>,
+    /// Helper-body source sites the content was derived through (spliced
+    /// summary content keeps its body sites here).
+    pub provenance: Vec<ContractProvenance>,
 }
 
 impl Default for Opaque {
@@ -297,6 +307,7 @@ impl Default for Opaque {
             taint: BTreeSet::new(),
             kind: ValueKind::Scalar,
             site: None,
+            provenance: Vec::new(),
         }
     }
 }

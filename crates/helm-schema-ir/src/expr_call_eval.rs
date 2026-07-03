@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::HelperOutputMeta;
 use helm_schema_ast::expression_schema_type;
 use helm_schema_ast::{
     is_merge_function, is_provenance_preserving_function, is_string_transform_function,

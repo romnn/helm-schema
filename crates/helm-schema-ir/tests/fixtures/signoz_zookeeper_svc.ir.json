@@ -12,6 +12,11 @@
             "service.annotations"
           ],
           "type": "or"
+        },
+        {
+          "path": "commonAnnotations",
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Scalar",
@@ -22,12 +27,49 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 378,
+            "start": 234
           },
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "commonAnnotations"
+    },
+    {
+      "guards": [
+        {
+          "path": "commonAnnotations",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "commonAnnotations"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
@@ -59,8 +101,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 363,
+            "start": 326
           },
           "template_path": "<inline:2>"
         }
@@ -101,8 +143,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 301,
+            "start": 275
           },
           "template_path": "<inline:2>"
         }
@@ -118,6 +160,11 @@
         {
           "path": "commonLabels",
           "type": "truthy"
+        },
+        {
+          "path": "commonLabels",
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Scalar",
@@ -128,12 +175,24 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 378,
+            "start": 234
           },
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "commonLabels"
+    },
+    {
+      "guards": [
+        {
+          "path": "commonLabels",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
@@ -158,8 +217,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 363,
+            "start": 326
           },
           "template_path": "<inline:2>"
         }
@@ -193,8 +252,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 301,
+            "start": 275
           },
           "template_path": "<inline:2>"
         }
@@ -206,7 +265,12 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -215,8 +279,8 @@
             "common.names.fullname"
           ],
           "span": {
-            "end": 1048,
-            "start": 681
+            "end": 1047,
+            "start": 682
           },
           "template_path": "<inline:6>"
         }
@@ -242,8 +306,8 @@
             "common.names.fullname"
           ],
           "span": {
-            "end": 1048,
-            "start": 681
+            "end": 778,
+            "start": 718
           },
           "template_path": "<inline:6>"
         }
@@ -255,7 +319,16 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -264,8 +337,8 @@
             "common.names.fullname"
           ],
           "span": {
-            "end": 1048,
-            "start": 681
+            "end": 1035,
+            "start": 850
           },
           "template_path": "<inline:6>"
         }
@@ -292,8 +365,8 @@
             "common.names.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:6>"
         },
@@ -302,8 +375,8 @@
             "common.labels.standard"
           ],
           "span": {
-            "end": 328,
-            "start": 114
+            "end": 174,
+            "start": 139
           },
           "template_path": "<inline:8>"
         }
@@ -340,8 +413,8 @@
             "common.names.fullname"
           ],
           "span": {
-            "end": 1048,
-            "start": 681
+            "end": 1023,
+            "start": 953
           },
           "template_path": "<inline:6>"
         }
@@ -371,8 +444,8 @@
             "common.names.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:6>"
         },
@@ -381,8 +454,8 @@
             "common.labels.matchLabels"
           ],
           "span": {
-            "end": 574,
-            "start": 465
+            "end": 525,
+            "start": 490
           },
           "template_path": "<inline:8>"
         }
@@ -394,7 +467,12 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "namespaceOverride",
+          "type": "truthy"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -403,8 +481,8 @@
             "zookeeper.namespace"
           ],
           "span": {
-            "end": 1207,
-            "start": 1075
+            "end": 1206,
+            "start": 1076
           },
           "template_path": "<inline:0>"
         }
@@ -430,8 +508,8 @@
             "zookeeper.namespace"
           ],
           "span": {
-            "end": 1207,
-            "start": 1075
+            "end": 1150,
+            "start": 1117
           },
           "template_path": "<inline:0>"
         }
@@ -454,6 +532,11 @@
             "service.annotations"
           ],
           "type": "or"
+        },
+        {
+          "path": "service.annotations",
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Scalar",
@@ -464,12 +547,49 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 378,
+            "start": 234
           },
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "service.annotations"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.annotations",
+          "type": "truthy"
+        },
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.annotations"
+    },
+    {
+      "guards": [
+        {
+          "paths": [
+            "commonAnnotations",
+            "service.annotations"
+          ],
+          "type": "or"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
@@ -501,8 +621,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 363,
+            "start": 326
           },
           "template_path": "<inline:2>"
         }
@@ -543,8 +663,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 301,
+            "start": 275
           },
           "template_path": "<inline:2>"
         }
@@ -646,6 +766,11 @@
         {
           "path": "service.extraPorts",
           "type": "truthy"
+        },
+        {
+          "path": "service.extraPorts",
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Scalar",
@@ -656,12 +781,24 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 378,
+            "start": 234
           },
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "service.extraPorts"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.extraPorts",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
@@ -686,8 +823,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 363,
+            "start": 326
           },
           "template_path": "<inline:2>"
         }
@@ -721,8 +858,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 301,
+            "start": 275
           },
           "template_path": "<inline:2>"
         }
@@ -1083,6 +1220,11 @@
         {
           "path": "service.sessionAffinityConfig",
           "type": "truthy"
+        },
+        {
+          "path": "service.sessionAffinityConfig",
+          "schema_type": "string",
+          "type": "type_is"
         }
       ],
       "kind": "Scalar",
@@ -1093,12 +1235,24 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 378,
+            "start": 234
           },
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "service.sessionAffinityConfig"
+    },
+    {
+      "guards": [
+        {
+          "path": "service.sessionAffinityConfig",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
@@ -1123,8 +1277,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 363,
+            "start": 326
           },
           "template_path": "<inline:2>"
         }
@@ -1158,8 +1312,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 379,
-            "start": 229
+            "end": 301,
+            "start": 275
           },
           "template_path": "<inline:2>"
         }

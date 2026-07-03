@@ -4,16 +4,32 @@
 //! bindings join across branches with the same rules as the symbolic
 //! walker.
 
-use helm_schema_ast::TemplateHeader;
+use helm_schema_ast::{TemplateHeader, range_variable_name_expr};
 use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_literal_list_range_expr;
+use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
 
 use super::domain::{AbstractFragment, PathCondition, Splice, SpliceMeta, and_conditions};
 use super::eval::{Adopted, ArmSpec, Contributions, Interpreter, NodeView};
+
+/// Exact range iterations resolved from a statically known list iterable
+/// (helper scope): each item supplies the iteration's dot and, for
+/// `range $item := …` headers, the item variable binding.
+pub(super) struct RangeIterations {
+    pub(super) items: Vec<RangeIterationBinding>,
+    /// A statically nonempty iterable promotes the body outcome at the
+    /// join: bindings set in every iteration survive the region.
+    pub(super) nonempty: bool,
+}
+
+pub(super) struct RangeIterationBinding {
+    pub(super) dot: AbstractValue,
+    pub(super) variable: Option<(String, AbstractValue)>,
+}
 
 impl Interpreter<'_> {
     pub(super) fn eval_control(
@@ -39,6 +55,7 @@ impl Interpreter<'_> {
         let mut outcomes = Vec::new();
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
         let mut has_unconditional_else = false;
+        let mut promote_body_outcome = false;
 
         for (index, _branch) in region.branches.iter().enumerate() {
             self.locals = entry_locals.clone();
@@ -64,7 +81,8 @@ impl Interpreter<'_> {
             // region intersects (none when it spans several documents).
             let region_site = self.region_site(region.span);
             let previous_site = std::mem::replace(&mut self.current_site, region_site);
-            let (own_condition, extra) = self.activate_arm(&arm, nodes, region.span.start);
+            let (own_condition, extra, iterations) =
+                self.activate_arm(&arm, nodes, region.span.start);
             self.current_site = previous_site;
             if let Some(own) = own_condition {
                 arm_condition = and_conditions(arm_condition, own.clone());
@@ -72,9 +90,31 @@ impl Interpreter<'_> {
                     prior_conditions.push(own);
                 }
             }
+            if index == 0 && iterations.as_ref().is_some_and(|plan| plan.nonempty) {
+                promote_body_outcome = true;
+            }
 
             self.locals.enter_local_scope();
-            let mut contributions = self.eval_node_list(nodes);
+            let mut contributions = match &iterations {
+                Some(plan) => {
+                    // Exact iterations share one local scope (bindings
+                    // accumulate across items, like the sequential loop the
+                    // template runs); each item installs its own dot.
+                    let mut all = Contributions::default();
+                    for item in &plan.items {
+                        if let Some((variable, binding)) = &item.variable {
+                            self.locals
+                                .fragment_values
+                                .insert(variable.clone(), binding.clone());
+                        }
+                        self.dot_stack.push(Some(item.dot.clone()));
+                        all.extend(self.eval_node_list(nodes));
+                        self.dot_stack.pop();
+                    }
+                    all
+                }
+                None => self.eval_node_list(nodes),
+            };
             // Escaped descendants of earlier siblings whose spans fall in
             // this branch's window evaluate here, re-attached under their
             // parent entry chain, so they carry this arm's condition.
@@ -92,7 +132,11 @@ impl Interpreter<'_> {
         self.locals = entry_locals.clone();
         self.active_predicates.truncate(entry_predicates);
         self.dot_stack.truncate(entry_dots);
-        if !has_unconditional_else {
+        if promote_body_outcome {
+            // A statically nonempty exact range definitely ran its body:
+            // bindings written there survive without an entry-state merge.
+            outcomes.truncate(1);
+        } else if !has_unconditional_else {
             outcomes.push(entry_locals.clone());
         }
         self.locals.join_branch_outcomes(&entry_locals, outcomes);
@@ -127,8 +171,27 @@ impl Interpreter<'_> {
             .iter()
             .map(|node| NodeView::plain(node))
             .collect();
+        // A mapping entry can only contain strictly deeper content: chain
+        // entries at or below the deferred nodes' own content indent are
+        // structural-recovery artifacts (a trailing region hung under an
+        // escaped open entry), not real parents. Control nodes measure by
+        // their branch bodies (headers are conventionally unindented).
+        let node_indent = spec
+            .nodes
+            .iter()
+            .filter_map(|node| self.structural_content_indent(node))
+            .min();
+        let chain_entries: Vec<&helm_schema_syntax::MappingEntry> = match node_indent {
+            Some(node_indent) => spec
+                .chain
+                .iter()
+                .copied()
+                .filter(|entry| entry.indent < node_indent)
+                .collect(),
+            None => spec.chain.clone(),
+        };
         let mut contributions = self.eval_node_list(&views);
-        let mut chain = spec.chain.iter().rev();
+        let mut chain = chain_entries.iter().rev();
         let Some(innermost) = chain.next() else {
             out.extend(contributions);
             return;
@@ -157,7 +220,7 @@ impl Interpreter<'_> {
 
     fn classify_branch(&self, region: &ControlRegion, index: usize) -> ArmSpec {
         if index == 0 {
-            let facts = self.control_facts.get(&region.span.start);
+            let facts = self.body_facts.control_facts.get(&region.span.start);
             return match region.kind {
                 ControlKind::If => ArmSpec::If(facts.and_then(|facts| facts.header.clone())),
                 ControlKind::With => ArmSpec::With(facts.and_then(|facts| facts.header.clone())),
@@ -179,19 +242,29 @@ impl Interpreter<'_> {
     /// the current pipeline also records, install dot bindings and range
     /// domains, and return the arm's own condition plus any structural
     /// contributions the arm itself renders (range headers that render list
-    /// or mapping content).
+    /// or mapping content) and the exact iteration plan when the iterable is
+    /// statically known.
     fn activate_arm(
         &mut self,
         arm: &ArmSpec,
         nodes: &[NodeView<'_>],
         region_start: usize,
-    ) -> (Option<PathCondition>, Contributions) {
+    ) -> (
+        Option<PathCondition>,
+        Contributions,
+        Option<RangeIterations>,
+    ) {
         match arm {
-            ArmSpec::Else => (None, Contributions::default()),
-            ArmSpec::If(header) => (self.activate_if(header.as_ref()), Contributions::default()),
+            ArmSpec::Else => (None, Contributions::default(), None),
+            ArmSpec::If(header) => (
+                self.activate_if(header.as_ref()),
+                Contributions::default(),
+                None,
+            ),
             ArmSpec::With(header) => (
                 self.activate_with(header.as_ref()),
                 Contributions::default(),
+                None,
             ),
             ArmSpec::Range {
                 header,
@@ -202,7 +275,7 @@ impl Interpreter<'_> {
 
     fn activate_if(&mut self, header: Option<&TemplateHeader>) -> Option<PathCondition> {
         let header = header?;
-        let (predicate, bound_values) = {
+        let (mut predicate, bound_values) = {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
@@ -211,6 +284,23 @@ impl Interpreter<'_> {
         };
         for path in &bound_values {
             self.push_read(path, &[]);
+        }
+        // Helper-body conditions over bound helper calls resolve through the
+        // call's summary: its claim paths become guard reads, and when the
+        // condition itself decodes nothing they stand in as the arm's truthy
+        // conditions (the summary lane's rule for `if include …` headers).
+        let helper_paths = self.helper_condition_claim_paths(header.expr());
+        for path in &helper_paths {
+            self.push_read(path, &[]);
+        }
+        if predicate.is_trivial() && !helper_paths.is_empty() {
+            predicate = Predicate::all(
+                helper_paths
+                    .iter()
+                    .cloned()
+                    .map(Predicate::truthy_path)
+                    .collect(),
+            );
         }
         let guards = predicate.contract_guards();
         for guard in &guards {
@@ -225,6 +315,37 @@ impl Interpreter<'_> {
         Some(predicate)
     }
 
+    /// The most-specific claim paths of bound helper calls inside a
+    /// helper-body condition (empty at document scope and for conditions
+    /// without resolvable calls).
+    fn helper_condition_claim_paths(
+        &mut self,
+        expr: &helm_schema_ast::TemplateExpr,
+    ) -> std::collections::BTreeSet<String> {
+        if !self.helper_scope || !expr_contains_bound_helper_call(expr, self.db) {
+            return std::collections::BTreeSet::new();
+        }
+        let hole = self.eval_hole_exprs_for_condition(expr);
+        let mut paths: std::collections::BTreeSet<String> = hole
+            .effects
+            .helper_reads
+            .iter()
+            .map(|read| read.values_path.clone())
+            .collect();
+        paths.extend(
+            hole.effects
+                .helper_rendered
+                .iter()
+                .map(|row| row.path.clone()),
+        );
+        paths.extend(hole.effects.type_hints.keys().cloned());
+        paths
+            .iter()
+            .filter(|path| !helm_schema_core::values_path_has_descendant(path, &paths))
+            .cloned()
+            .collect()
+    }
+
     fn activate_with(&mut self, header: Option<&TemplateHeader>) -> Option<PathCondition> {
         let Some(header) = header else {
             self.dot_stack.push(None);
@@ -232,8 +353,17 @@ impl Interpreter<'_> {
         };
         let (predicate, bound_values, dot) = {
             let context = self.value_path_context();
+            // Helper bodies decode `with` like `if` (truthy conditions), the
+            // shape the summary lane always produced: a helper row's
+            // self-condition must stay a positive header for the signal
+            // builder, where document rows carry the with-marker flavor.
+            let predicate = if self.helper_scope {
+                context.condition_predicate_expr(header.expr())
+            } else {
+                context.with_condition_predicate_expr(header.expr())
+            };
             (
-                context.with_condition_predicate_expr(header.expr()),
+                predicate,
                 context.bound_output_paths_expr(header.expr()),
                 context.with_body_fragment_value_expr(header.expr()),
             )
@@ -265,10 +395,14 @@ impl Interpreter<'_> {
         destructured: bool,
         nodes: &[NodeView<'_>],
         region_start: usize,
-    ) -> (Option<PathCondition>, Contributions) {
+    ) -> (
+        Option<PathCondition>,
+        Contributions,
+        Option<RangeIterations>,
+    ) {
         let Some(header) = header else {
             self.dot_stack.push(None);
-            return (None, Contributions::default());
+            return (None, Contributions::default(), None);
         };
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
@@ -293,12 +427,24 @@ impl Interpreter<'_> {
         let mut own = Vec::new();
         let mut extra = Contributions::default();
         for path in &source_paths {
-            let guard = Guard::Range { path: path.clone() };
+            // Helper bodies mark range membership with truthy conditions
+            // (the summary lane's flavor: range guards are a document-lane
+            // shape the signal builder scopes to rendered documents).
+            let predicate = if self.helper_scope {
+                Predicate::truthy_path(path.clone())
+            } else {
+                Predicate::from(Guard::Range { path: path.clone() })
+            };
             if emit_header_read && !renders_scalar_items {
-                self.push_read(path, std::slice::from_ref(&guard));
+                if self.helper_scope {
+                    self.push_read(path, &[]);
+                } else {
+                    let guard = Guard::Range { path: path.clone() };
+                    self.push_read(path, std::slice::from_ref(&guard));
+                }
             }
-            own.push(Predicate::from(guard.clone()));
-            self.push_predicate(Predicate::from(guard));
+            own.push(predicate.clone());
+            self.push_predicate(predicate);
         }
         if renders_scalar_items {
             for path in &source_paths {
@@ -324,9 +470,71 @@ impl Interpreter<'_> {
                 }
             }
         }
-        let dot = direct_path.map(|path| AbstractValue::ValuesPath(format!("{path}.*")));
+        // Helper bodies iterate statically known list iterables exactly
+        // (per-item dots and item-variable bindings); other iterables run
+        // the one symbolic iteration with the resolved item dot.
+        let iterations = self.exact_range_iterations(header);
+        if let Some(iterations) = iterations {
+            return (Some(Predicate::all(own)), extra, Some(iterations));
+        }
+        let mut dot = direct_path.map(|path| AbstractValue::ValuesPath(format!("{path}.*")));
+        if self.helper_scope {
+            let iterable = self.range_iterable_fragment_value(header);
+            let item_dot = iterable
+                .as_ref()
+                .and_then(AbstractValue::fragment_range_item)
+                .map(|binding| binding.to_context_value());
+            if item_dot.is_some() {
+                dot = item_dot;
+            }
+            if let Some((variable, binding)) =
+                helm_schema_ast::range_variable_name_expr(header.expr()).zip(dot.clone())
+            {
+                self.locals.fragment_values.insert(variable, binding);
+            }
+        }
         self.dot_stack.push(dot);
-        (Some(Predicate::all(own)), extra)
+        (Some(Predicate::all(own)), extra, None)
+    }
+
+    /// The iterable's fragment value, for the helper-scope range model.
+    fn range_iterable_fragment_value(&mut self, header: &TemplateHeader) -> Option<AbstractValue> {
+        let value_expr = match header.expr().deparen() {
+            helm_schema_ast::TemplateExpr::VariableDefinition { value, .. }
+            | helm_schema_ast::TemplateExpr::Assignment { value, .. } => value.as_ref(),
+            expr => expr,
+        };
+        let mut seen = self.helper_seen.clone();
+        let current_dot = self.current_dot_fragment();
+        FragmentEvalContext::new(self.db).fragment_value_from_expr(
+            value_expr,
+            &self.locals.fragment_values,
+            current_dot.as_ref(),
+            &mut seen,
+        )
+    }
+
+    fn exact_range_iterations(&mut self, header: &TemplateHeader) -> Option<RangeIterations> {
+        if !self.helper_scope {
+            return None;
+        }
+        let iterable = self.range_iterable_fragment_value(header)?;
+        let AbstractValue::List(items) = &iterable else {
+            return None;
+        };
+        let variable = range_variable_name_expr(header.expr());
+        Some(RangeIterations {
+            items: items
+                .iter()
+                .map(|item| RangeIterationBinding {
+                    dot: item.clone(),
+                    variable: variable
+                        .as_ref()
+                        .map(|variable| (variable.clone(), item.clone())),
+                })
+                .collect(),
+            nonempty: iterable.definitely_nonempty_iterable(),
+        })
     }
 
     fn range_body_shape(&mut self, nodes: &[NodeView<'_>]) -> RangeBodyShape {
@@ -398,6 +606,24 @@ impl Interpreter<'_> {
             _ => {}
         }
     }
+}
+
+/// Whether an expression contains an `include`/`template` call naming a
+/// helper the define index can resolve.
+fn expr_contains_bound_helper_call(
+    expr: &helm_schema_ast::TemplateExpr,
+    db: &crate::analysis_db::IrAnalysisDb,
+) -> bool {
+    let mut found = false;
+    expr.walk(|node| {
+        if let helm_schema_ast::TemplateExpr::Call { function, args } = node
+            && let Some(name) = crate::expr_eval::literal_helper_call_callee(function, args)
+            && db.has_helper(name)
+        {
+            found = true;
+        }
+    });
+    found
 }
 
 fn splice_arm(

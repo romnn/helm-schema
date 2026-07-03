@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
-use crate::helper_summary::{HelperOutputMeta, HelperSummary, insert_type_hint};
+use crate::fragment_eval::ValueRead;
+use crate::helper_meta::{HelperOutputMeta, RenderedRow, insert_type_hint};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
@@ -23,7 +24,16 @@ pub(crate) struct Effects {
     /// and encoding semantics instead of the read site's.
     pub(crate) local_rendered_paths: BTreeSet<String>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
-    pub(crate) helper_summary: HelperSummary,
+    /// Pathless reads observed inside called helper bodies (guard reads and
+    /// dependency-lane rows), carrying helper-internal guards only; the
+    /// absorbing site adds its ambient guards and provenance.
+    pub(crate) helper_reads: Vec<ValueRead>,
+    /// Rendered claims of called helpers, for no-render demotion and
+    /// per-path meta restoration (see [`RenderedRow`]).
+    pub(crate) helper_rendered: Vec<RenderedRow>,
+    /// Predicate paths severed by index-call narrowing inside called
+    /// helpers; ancestor guard reads absorb against them.
+    pub(crate) helper_suppressed_paths: BTreeSet<String>,
 }
 
 impl Effects {
@@ -52,7 +62,18 @@ impl Effects {
                 .or_default()
                 .extend(entries);
         }
-        self.helper_summary.extend(other.helper_summary);
+        for read in other.helper_reads {
+            if !self.helper_reads.contains(&read) {
+                self.helper_reads.push(read);
+            }
+        }
+        for row in other.helper_rendered {
+            if !self.helper_rendered.contains(&row) {
+                self.helper_rendered.push(row);
+            }
+        }
+        self.helper_suppressed_paths
+            .extend(other.helper_suppressed_paths);
         for (path, hints) in other.type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.type_hints, path.clone(), &hint);

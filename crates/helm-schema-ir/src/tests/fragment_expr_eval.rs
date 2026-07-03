@@ -5,10 +5,10 @@ use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
+    FragmentEvalContext, context_value_from_outer_expr,
     helper_result_from_expr_with_fragment_locals,
 };
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::HelperOutputMeta;
 use test_util::prelude::sim_assert_eq;
 
 fn single_expr(action: &str) -> TemplateExpr {
@@ -32,7 +32,7 @@ fn helper_value_from_fragment_locals(
     let mut seen = HashSet::new();
     helper_result_from_expr_with_fragment_locals(
         &expr,
-        FragmentLocalFacts::bindings_only(fragment_locals),
+        fragment_locals,
         None,
         None,
         context,
@@ -155,7 +155,7 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
 
     let result = helper_result_from_expr_with_fragment_locals(
         &expr,
-        FragmentLocalFacts::bindings_only(&HashMap::new()),
+        &HashMap::new(),
         None,
         None,
         context,
@@ -180,11 +180,10 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     );
     let output = result
         .effects
-        .helper_summary
-        .output_uses
+        .helper_rendered
         .iter()
-        .find(|output| output.source_expr == "nameOverride")
-        .expect("nameOverride output use should be present");
+        .find(|row| row.path == "nameOverride")
+        .expect("nameOverride rendered row should be present");
     let meta = &output.meta;
     sim_assert_eq!(
         have: crate::tests::raw_guard_sets(meta, "nameOverride"),

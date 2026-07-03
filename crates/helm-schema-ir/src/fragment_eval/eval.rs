@@ -11,35 +11,39 @@
 //! stack, but only to stamp root-to-leaf guards onto the pathless reads that
 //! have no tree position.
 //!
-//! Reused machinery (nothing here re-derives what the current pipeline
-//! already knows how to compute):
+//! Reused machinery (nothing here re-derives what the pipeline already
+//! knows how to compute):
 //!
 //! - condition decoding: [`ValuePathContext`] predicate decoding over
 //!   `TemplateHeader`s,
 //! - expression evaluation: the `AbstractValue` lattice with bound-helper
-//!   resolution (`document_result_from_expr`), so helper calls flow through
-//!   the existing memoized summarize machinery,
+//!   resolution (`document_result_from_expr`), where helper calls resolve
+//!   through their in-domain fragment summaries (`super::summary`),
 //! - range headers: `range_header_from_source` /
 //!   `range_has_destructured_variable_definition` on the shared Go-template
-//!   parse (body shape now comes from the CST instead of line scans),
-//! - local state: [`SymbolicLocalState`] with the same branch-join rules as
-//!   the symbolic walker.
+//!   parse (body shape comes from the CST),
+//! - local state: [`SymbolicLocalState`] with shared branch-join rules.
 //!
-//! Known boundaries: document-scope ranges run one symbolic iteration;
-//! destructured range variables stay unbound at document scope; helper
-//! calls flow through summaries except resource-defining helper bodies and
-//! static file templates, which evaluate exactly as nested fragments at
-//! output holes (not partial-scalar or block-scalar holes); ill-nested
-//! regions re-adopt escaped siblings by span in both directions, so
-//! branch-window content of a container opened before (or closed after)
-//! the region inherits the branch guard.
+//! The same interpreter evaluates documents and helper bodies; a helper
+//! scope additionally carries the call's root bindings, the resolved dot
+//! pair, and the active call chain, and applies the summary lane's
+//! flattening rules where the caller consumes summary facts (truthy range
+//! markers, dependency-lane demotions, sibling-condition scoping).
+//!
+//! Known boundaries: document-scope ranges run one symbolic iteration
+//! (helper scopes iterate statically known lists exactly); destructured
+//! range variables stay unbound at document scope; static file templates
+//! evaluate as nested fragments at output holes; ill-nested regions
+//! re-adopt escaped siblings by span in both directions, so branch-window
+//! content of a container opened before (or closed after) the region
+//! inherits the branch guard.
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
 use helm_schema_ast::{
-    ResourceSpan, TemplateHeader, range_has_destructured_variable_definition,
-    range_header_from_source,
+    ResourceSpan, TemplateExpr, TemplateHeader, parse_expr_text,
+    range_has_destructured_variable_definition, range_header_from_source,
 };
 use helm_schema_syntax as syntax;
 use helm_schema_syntax::{
@@ -50,7 +54,7 @@ use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::contract_sink::merge_guards;
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::control_header;
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
@@ -77,7 +81,7 @@ pub struct EvaluatedDocument {
 }
 
 /// One pathless `.Values` read with the guards active at the read site.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ValueRead {
     /// The dotted `.Values` path that was read.
     pub values_path: String,
@@ -120,12 +124,36 @@ pub(crate) fn eval_document(
 /// Control-header facts parsed once from the shared Go-template tree, keyed
 /// by the region's opening-bracket byte (which equals the action node's
 /// start byte).
-pub(super) struct ControlFacts {
+pub(crate) struct ControlFacts {
     pub(super) header: Option<TemplateHeader>,
     pub(super) range_destructured: bool,
     /// The whole region's end byte (through `{{ end }}`), for regions that
     /// only surface as holes (block-scalar bodies).
     pub(super) region_end: usize,
+}
+
+/// Source-only evaluation facts of one template body: independent of call
+/// bindings, so helper bodies compute them once and reuse them across every
+/// memoized-summary miss.
+pub(crate) struct BodyEvalFacts {
+    pub(super) control_facts: HashMap<usize, ControlFacts>,
+    pub(super) resource_spans: Vec<ResourceSpan>,
+}
+
+impl BodyEvalFacts {
+    pub(crate) fn collect(
+        source: &str,
+        db: &IrAnalysisDb,
+        tree: &tree_sitter::Tree,
+        document: &TemplatedDocument<'_>,
+    ) -> Self {
+        let mut control_facts = HashMap::new();
+        collect_control_facts(tree.root_node(), source, &mut control_facts);
+        Self {
+            control_facts,
+            resource_spans: crate::resource_identity::collect_resource_spans(document, db),
+        }
+    }
 }
 
 fn collect_control_facts(
@@ -377,20 +405,41 @@ pub(super) struct Interpreter<'a> {
     /// over the define body text; provenance spans stay file-absolute).
     pub(super) source_offset: usize,
     pub(super) db: &'a IrAnalysisDb,
-    pub(super) control_facts: HashMap<usize, ControlFacts>,
+    /// Source-only facts (control headers, resource spans), shared across
+    /// the memoized evaluations of one helper body.
+    pub(super) body_facts: Rc<BodyEvalFacts>,
     pub(super) inline_regions: Vec<Span>,
-    /// The manifest resource spans of this source (each with its List-item
-    /// path prefix), resolved once by the resource-identity walk.
-    pub(super) resource_spans: Vec<ResourceSpan>,
     /// Static file templates currently being inlined (cycle prevention for
     /// `.Files.Get`-style template requests).
     pub(super) inline_files: Vec<String>,
+    /// Whether this interpreter evaluates a helper body (a summary run).
+    pub(super) helper_scope: bool,
+    /// The active helper call chain, threaded into expression evaluation so
+    /// nested bound calls cut cycles.
+    pub(super) helper_seen: HashSet<String>,
     pub(super) locals: SymbolicLocalState,
     pub(super) dot_stack: Vec<Option<AbstractValue>>,
+    /// The value-flavor dot of a helper scope's root frame (the call
+    /// boundary resolves both flavors; see `DotFrame`). Document scope has
+    /// none: its value dot derives from the fragment dot.
+    pub(super) root_value_dot: Option<AbstractValue>,
     pub(super) root_bindings: HashMap<String, AbstractValue>,
     pub(super) active_predicates: Vec<Predicate>,
     pub(super) reads: Vec<ValueRead>,
+    /// Dedup shadow of `reads` (order lives in the vec).
+    reads_seen: HashSet<ValueRead>,
     pub(super) type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Predicate paths severed by index-call narrowing anywhere in this
+    /// source: guard reads of their strict ancestors are dropped from the
+    /// summary (the narrowing proves the ancestor probe was a traversal
+    /// step, not a condition on the ancestor itself).
+    pub(super) suppress_predicate_paths: BTreeSet<String>,
+    /// Every chart-level `set … default` normalization observed anywhere in
+    /// this source, unconditionally. `locals.chart_value_defaults` keeps the
+    /// branch-intersected "definitely ran in source order" view for render
+    /// sites; helper summaries export this accumulator instead (a summary's
+    /// defaults are declarations for the caller, like they always were).
+    pub(super) chart_defaults_observed: BTreeSet<String>,
     /// The site facts of the hole or control region currently being
     /// evaluated; reads recorded during that evaluation carry them.
     pub(super) current_site: Option<Rc<SiteFacts>>,
@@ -407,26 +456,41 @@ impl<'a> Interpreter<'a> {
         tree: &tree_sitter::Tree,
         document: &TemplatedDocument<'_>,
     ) -> Self {
-        let mut control_facts = HashMap::new();
-        collect_control_facts(tree.root_node(), source, &mut control_facts);
+        let body_facts = Rc::new(BodyEvalFacts::collect(source, db, tree, document));
+        Self::with_body_facts(source, source_path, db, document, body_facts)
+    }
+
+    /// A fresh interpreter reusing precomputed source-only facts (helper
+    /// bodies share them across memoized evaluations).
+    pub(super) fn with_body_facts(
+        source: &'a str,
+        source_path: Option<&'a str>,
+        db: &'a IrAnalysisDb,
+        document: &TemplatedDocument<'_>,
+        body_facts: Rc<BodyEvalFacts>,
+    ) -> Self {
         let mut inline_regions = Vec::new();
         collect_inline_regions(document.roots(), &mut inline_regions);
-        let resource_spans = crate::resource_identity::collect_resource_spans(document, db);
         Self {
             source,
             source_path,
             source_offset: 0,
             db,
-            control_facts,
+            body_facts,
             inline_regions,
-            resource_spans,
             inline_files: Vec::new(),
+            helper_scope: false,
+            helper_seen: HashSet::new(),
             locals: SymbolicLocalState::default(),
             dot_stack: Vec::new(),
+            root_value_dot: None,
             root_bindings: HashMap::new(),
             active_predicates: Vec::new(),
             reads: Vec::new(),
+            reads_seen: HashSet::new(),
             type_hints: BTreeMap::new(),
+            suppress_predicate_paths: BTreeSet::new(),
+            chart_defaults_observed: BTreeSet::new(),
             current_site: None,
         }
     }
@@ -439,6 +503,7 @@ impl<'a> Interpreter<'a> {
     /// containing the hole's start byte plus the hole's own provenance.
     pub(super) fn hole_site(&self, span: Span) -> Option<Rc<SiteFacts>> {
         let resource_span = self
+            .body_facts
             .resource_spans
             .iter()
             .filter(|resource| resource.start <= span.start && span.start < resource.end)
@@ -460,7 +525,7 @@ impl<'a> Interpreter<'a> {
     /// several manifest documents claims none).
     pub(super) fn region_site(&self, span: Span) -> Option<Rc<SiteFacts>> {
         let mut unique: Option<&ResourceSpan> = None;
-        for resource in &self.resource_spans {
+        for resource in &self.body_facts.resource_spans {
             if resource.start >= span.end || span.start >= resource.end {
                 continue;
             }
@@ -530,10 +595,29 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(super) fn current_dot_binding(&self) -> Option<AbstractValue> {
+        if self.dot_stack.len() <= 1
+            && let Some(root) = &self.root_value_dot
+        {
+            return Some(root.clone());
+        }
         self.dot_stack
             .last()
             .and_then(|binding| binding.as_ref())
             .and_then(AbstractValue::to_current_dot_context_value)
+    }
+
+    /// The value-flavor dot for expression evaluation: a helper scope's root
+    /// frame carries the call boundary's own value dot; everywhere else the
+    /// fragment dot's context-value projection stands in.
+    pub(super) fn current_value_dot(&self) -> Option<AbstractValue> {
+        if self.dot_stack.len() <= 1
+            && let Some(root) = &self.root_value_dot
+        {
+            return Some(root.clone());
+        }
+        self.current_dot_fragment()
+            .map(|value| value.to_context_value())
+            .or_else(|| self.current_dot_binding())
     }
 
     pub(super) fn value_path_context(&self) -> ValuePathContext<'_> {
@@ -546,7 +630,7 @@ impl<'a> Interpreter<'a> {
             template_output_meta: &self.locals.output_meta,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment: self.current_dot_fragment(),
-            current_dot_binding: self.current_dot_binding(),
+            current_dot_binding: self.current_value_dot(),
         }
     }
 
@@ -591,11 +675,23 @@ impl<'a> Interpreter<'a> {
         provenance: Vec<ContractProvenance>,
         dependency: bool,
     ) {
+        let mut guards = self.ambient_guards();
+        merge_guards(&mut guards, extra_guards);
+        self.push_read_row_with_guards(values_path, kind, guards, resource, provenance, dependency);
+    }
+
+    fn push_read_row_with_guards(
+        &mut self,
+        values_path: &str,
+        kind: crate::ValueKind,
+        guards: Vec<Guard>,
+        resource: Option<ResourceRef>,
+        provenance: Vec<ContractProvenance>,
+        dependency: bool,
+    ) {
         if values_path.trim().is_empty() {
             return;
         }
-        let mut guards = self.ambient_guards();
-        merge_guards(&mut guards, extra_guards);
         let read = ValueRead {
             values_path: values_path.to_string(),
             kind,
@@ -604,7 +700,15 @@ impl<'a> Interpreter<'a> {
             provenance,
             dependency,
         };
-        if !self.reads.contains(&read) {
+        if self.reads_seen.insert(read.clone()) {
+            self.reads.push(read);
+        }
+    }
+
+    /// Absorb one nested interpreter's read verbatim (nested static-file
+    /// evaluations already stamped their own guards and sites).
+    pub(super) fn push_nested_read(&mut self, read: ValueRead) {
+        if self.reads_seen.insert(read.clone()) {
             self.reads.push(read);
         }
     }
@@ -647,6 +751,7 @@ impl<'a> Interpreter<'a> {
         values_path: &str,
         kind: crate::ValueKind,
         meta: &HelperOutputMeta,
+        sibling_claims: &BTreeSet<String>,
         dependency: bool,
     ) {
         let branches: Vec<Vec<Predicate>> = if meta.predicates.is_empty() {
@@ -663,24 +768,92 @@ impl<'a> Interpreter<'a> {
             .and_then(|site| site.provenance.clone())
             .into_iter()
             .collect();
-        crate::helper_summary::merge_provenance_sites(&mut provenance, &meta.provenance);
+        merge_provenance_sites(&mut provenance, &meta.provenance);
+        let ambient = self.claim_scoped_ambient_guards(values_path, sibling_claims);
         for branch in branches {
-            let mut extra = Predicate::contract_guard_stack(&branch);
+            let mut guards = ambient.clone();
+            merge_guards(&mut guards, &Predicate::contract_guard_stack(&branch));
             if meta.defaulted {
                 let default_guard = Guard::Default {
                     path: values_path.to_string(),
                 };
-                if !extra.contains(&default_guard) {
-                    extra.push(default_guard);
+                if !guards.contains(&default_guard) {
+                    guards.push(default_guard);
                 }
             }
-            self.push_read_row(
+            self.push_read_row_with_guards(
                 values_path,
                 kind,
-                &extra,
+                guards,
                 None,
                 provenance.clone(),
                 dependency,
+            );
+        }
+    }
+
+    /// The ambient guard stack scoped to one helper claim: a truthiness
+    /// condition about a *different* claim path of the same call describes a
+    /// sibling's branch, not this row's, and is dropped unless the paths are
+    /// related (the summary lane's sibling-source rule).
+    fn claim_scoped_ambient_guards(
+        &self,
+        claim_path: &str,
+        sibling_claims: &BTreeSet<String>,
+    ) -> Vec<Guard> {
+        let mut guards = self.ambient_guards();
+        guards.retain(|guard| {
+            let path = match guard {
+                Guard::Truthy { path } | Guard::Not { path } => path,
+                _ => return true,
+            };
+            path == claim_path
+                || !sibling_claims.contains(path)
+                || crate::helper_meta::values_paths_are_related(path, claim_path)
+        });
+        guards
+    }
+
+    /// Absorb helper-body reads at a call site: each read keeps its
+    /// helper-internal guards and gains the site's ambient guards; the
+    /// site's provenance leads the read's helper-body sites. Helper-internal
+    /// reads carry no resource of their own, so site-less rows stay
+    /// resource-free exactly like the summary lane always was.
+    pub(super) fn absorb_helper_reads_with_suppression(
+        &mut self,
+        reads: &[ValueRead],
+        suppressed: &BTreeSet<&String>,
+        sibling_claims: &BTreeSet<String>,
+    ) {
+        let site_provenance: Vec<ContractProvenance> = self
+            .current_site
+            .as_ref()
+            .and_then(|site| site.provenance.clone())
+            .into_iter()
+            .collect();
+        for read in reads {
+            // Guard-path reads that are strict ancestors of a predicate path
+            // the helper explicitly severed (index-call narrowing) are
+            // dropped, the same way the summary lane always skipped them.
+            if !read.dependency
+                && !suppressed.contains(&read.values_path)
+                && suppressed.iter().any(|narrowed| {
+                    helm_schema_core::values_path_is_descendant(narrowed, &read.values_path)
+                })
+            {
+                continue;
+            }
+            let mut provenance = site_provenance.clone();
+            merge_provenance_sites(&mut provenance, &read.provenance);
+            let mut guards = self.claim_scoped_ambient_guards(&read.values_path, sibling_claims);
+            merge_guards(&mut guards, &read.guards);
+            self.push_read_row_with_guards(
+                &read.values_path,
+                read.kind,
+                guards,
+                read.resource.clone(),
+                provenance,
+                read.dependency,
             );
         }
     }
@@ -943,8 +1116,40 @@ impl<'a> Interpreter<'a> {
         self.line_indent(span.start)
     }
 
+    /// The structural indent of one node: containers report their own
+    /// indent, scalars their line indent, plain outputs their line indent,
+    /// and control regions the minimum over their branch bodies (a region's
+    /// rendered content sits at the body indent; the header line is
+    /// conventionally unindented). Outputs with an explicit rendered indent
+    /// (`… | nindent N`) report `None`: they float, and the float rules own
+    /// their placement (line columns are layout noise for them).
+    pub(super) fn structural_content_indent(&self, node: &Node) -> Option<usize> {
+        match node {
+            Node::Mapping(entry) => Some(entry.indent),
+            Node::Sequence(item) => Some(item.indent),
+            Node::Scalar(line) => Some(line.indent),
+            Node::Control(region) => region
+                .branches
+                .iter()
+                .flat_map(|branch| &branch.body)
+                .filter_map(|child| self.structural_content_indent(child))
+                .min(),
+            Node::Output(action) => {
+                let width = parse_expr_text(self.text(action.span))
+                    .iter()
+                    .rev()
+                    .find_map(TemplateExpr::fragment_indent_width);
+                match width {
+                    Some(_) => None,
+                    None => Some(self.line_indent(action.span.start)),
+                }
+            }
+            Node::Comment(_) | Node::Opaque(_) => None,
+        }
+    }
+
     /// The indentation of the line containing `byte`.
-    fn line_indent(&self, byte: usize) -> usize {
+    pub(super) fn line_indent(&self, byte: usize) -> usize {
         let line_start = self
             .source
             .get(..byte)
@@ -970,7 +1175,7 @@ impl<'a> Interpreter<'a> {
                 if let Some(parts) = &entry.value {
                     value.extend(self.eval_scalar_parts(parts));
                 }
-                let children = view.in_scope_children();
+                let (children, siblings) = self.split_structural_children(view, entry.indent);
                 if !children.is_empty() {
                     let mut child = self.eval_node_list(&children);
                     let opened_empty = entry.value.is_none() && entry.block.is_none();
@@ -980,6 +1185,9 @@ impl<'a> Interpreter<'a> {
                     value.extend(child.assemble());
                 }
                 out.merge_entry(key, value);
+                if !siblings.is_empty() {
+                    out.extend(self.eval_node_list(&siblings));
+                }
             }
             Node::Sequence(item) => {
                 let mut value = Guarded::empty();
@@ -989,7 +1197,7 @@ impl<'a> Interpreter<'a> {
                 if let Some(parts) = &item.value {
                     value.extend(self.eval_scalar_parts(parts));
                 }
-                let children = view.in_scope_children();
+                let (children, siblings) = self.split_structural_children(view, item.indent);
                 if !children.is_empty() {
                     let mut child = self.eval_node_list(&children);
                     // Items never accept same-indent output (the open-slot
@@ -999,6 +1207,9 @@ impl<'a> Interpreter<'a> {
                     value.extend(child.assemble());
                 }
                 out.items.push(value);
+                if !siblings.is_empty() {
+                    out.extend(self.eval_node_list(&siblings));
+                }
             }
             Node::Scalar(line) => {
                 if line
@@ -1017,6 +1228,46 @@ impl<'a> Interpreter<'a> {
             Node::Control(_) | Node::Output(_) | Node::Comment(_) | Node::Opaque(_) => {}
         }
         out
+    }
+
+    /// Split a container's in-scope children into real children and nodes
+    /// the layout recovery hung under the container: YAML containers hold
+    /// strictly deeper content — except sequence items, which may sit at
+    /// their parent key's own indent — so anything else at or above the
+    /// container indent evaluates as a sibling at the container's level (the
+    /// line model's pop-by-indent rule). Explicitly-indented outputs float;
+    /// the float rules own their placement.
+    fn split_structural_children<'n>(
+        &self,
+        view: NodeView<'n>,
+        container_indent: usize,
+    ) -> (Vec<NodeView<'n>>, Vec<NodeView<'n>>) {
+        view.in_scope_children()
+            .into_iter()
+            .partition(|child| self.node_belongs_inside(child.node, container_indent))
+    }
+
+    fn node_belongs_inside(&self, node: &Node, container_indent: usize) -> bool {
+        match node {
+            Node::Mapping(entry) => entry.indent > container_indent,
+            Node::Sequence(item) => item.indent >= container_indent,
+            Node::Scalar(line) => line.indent > container_indent,
+            Node::Control(region) => region
+                .branches
+                .iter()
+                .flat_map(|branch| &branch.body)
+                .all(|child| self.node_belongs_inside(child, container_indent)),
+            Node::Output(action) => {
+                // Deeper lines always belong; the explicit-width probe (a
+                // re-parse) only runs for the rare same-or-shallower case.
+                self.line_indent(action.span.start) > container_indent
+                    || parse_expr_text(self.text(action.span))
+                        .iter()
+                        .rev()
+                        .any(|expr| expr.fragment_indent_width().is_some())
+            }
+            Node::Comment(_) | Node::Opaque(_) => true,
+        }
     }
 
     pub(super) fn entry_key(&mut self, parts: &ScalarParts) -> EntryKey {

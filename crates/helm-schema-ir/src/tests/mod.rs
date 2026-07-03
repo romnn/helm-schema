@@ -1,67 +1,8 @@
-mod abstract_value_output_projection;
 mod contract;
 mod contract_signals;
-mod document_projection {
-    use helm_schema_ast::{
-        AttributionIndex, DefineIndex, OutputSlot, OutputSlotKind, build_attribution_index,
-    };
-
-    use crate::{ValueKind, YamlPath, analysis_db::IrAnalysisDb};
-
-    struct DocumentTracker<'a> {
-        source: &'a str,
-        analysis_db: IrAnalysisDb,
-        attribution: AttributionIndex,
-    }
-
-    impl<'a> DocumentTracker<'a> {
-        fn new(source: &'a str, defines: &'a DefineIndex) -> Self {
-            Self {
-                source,
-                analysis_db: IrAnalysisDb::new(defines),
-                attribution: AttributionIndex::default(),
-            }
-        }
-
-        fn reset_for_tree(&mut self, tree: &tree_sitter::Tree) {
-            let document = helm_schema_syntax::TemplatedDocument::parse_with_root(
-                self.source,
-                tree.root_node(),
-            );
-            self.attribution =
-                build_attribution_index(self.source, tree.root_node()).with_resource_spans(
-                    crate::resource_identity::collect_resource_spans(&document, &self.analysis_db),
-                );
-        }
-
-        fn control_site_for_node(
-            &self,
-            node: tree_sitter::Node<'_>,
-        ) -> helm_schema_ast::ControlSite {
-            self.attribution
-                .control_site_for_node(node)
-                .unwrap_or_default()
-        }
-
-        fn output_slot_for_action(&self, node: tree_sitter::Node<'_>) -> OutputSlot {
-            self.attribution
-                .output_slot_for_node(node)
-                .unwrap_or_else(|| OutputSlot {
-                    kind: ValueKind::Scalar,
-                    path: YamlPath(Vec::new()),
-                    resource: None,
-                    slot: OutputSlotKind::Opaque,
-                })
-        }
-    }
-
-    mod helper_contract;
-    mod tracker;
-}
 mod expr_eval;
 mod expr_eval_helper_hooks;
 mod fragment_expr_eval;
-mod fragment_range_scope;
 mod fragment_scope_eval;
 mod resource_identity;
 mod symbolic_local_state;
@@ -75,7 +16,7 @@ use helm_schema_core::Predicate;
 /// retired emission-side `contract_guard_sets` (which additionally applied
 /// the deleted sibling/suppression prune algebra).
 pub(crate) fn raw_guard_sets(
-    meta: &crate::helper_summary::HelperOutputMeta,
+    meta: &crate::helper_meta::HelperOutputMeta,
     source_expr: &str,
 ) -> Vec<Vec<Guard>> {
     let branches: Vec<Vec<Predicate>> = if meta.predicates.is_empty() {

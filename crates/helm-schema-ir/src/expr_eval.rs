@@ -240,14 +240,6 @@ fn bindings_from_helper_arg_value(
     }
 }
 
-pub(crate) fn expr_starts_with_helper_call(expr: &TemplateExpr) -> bool {
-    match expr.deparen() {
-        TemplateExpr::Call { function, .. } => is_helper_call_function(function),
-        TemplateExpr::Pipeline(stages) => stages.first().is_some_and(expr_starts_with_helper_call),
-        _ => false,
-    }
-}
-
 pub(crate) fn literal_helper_call_callee<'a>(
     function: &str,
     args: &'a [TemplateExpr],
@@ -259,22 +251,6 @@ pub(crate) fn literal_helper_call_callee<'a>(
         return None;
     };
     lit.as_string()
-}
-
-pub(crate) fn expr_literal_helper_call_callee(expr: &TemplateExpr) -> Option<&str> {
-    let TemplateExpr::Call { function, args } = expr.deparen() else {
-        return None;
-    };
-    literal_helper_call_callee(function, args)
-}
-
-/// Leading `$var` of an expression or pipeline, after unwrapping parens.
-pub(crate) fn expr_leading_variable(expr: &TemplateExpr) -> Option<&str> {
-    match expr.deparen() {
-        TemplateExpr::Variable(name) if !name.is_empty() => Some(name.as_str()),
-        TemplateExpr::Pipeline(stages) => stages.first().and_then(expr_leading_variable),
-        _ => None,
-    }
 }
 
 pub(crate) fn is_helper_call_function(function: &str) -> bool {

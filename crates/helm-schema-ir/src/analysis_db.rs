@@ -1,16 +1,17 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::rc::Rc;
 
-use helm_schema_ast::{AttributionIndex, DefineIndex, TemplateExpr};
+use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_body_analysis::{
-    ResolveBoundHelperCallParams, interpret_bound_helper_body, resolve_bound_helper_call,
+use crate::expr_eval::bindings_for_helper_arg_with;
+use crate::fragment_eval::BodyEvalFacts;
+use crate::fragment_eval::summary::{FragmentSummary, eval_bound_helper_fragment};
+use crate::fragment_expr_eval::{
+    FragmentEvalContext, context_value_from_outer_expr,
+    helper_result_from_expr_with_fragment_locals,
 };
-use crate::helper_summary::HelperSummary;
-use crate::helper_walk_state::DotFrame;
-use crate::{ContractProvenance, SourceSpan};
 use helm_schema_ast::parse_go_template;
 
 pub(crate) struct ParsedHelperBody<'a> {
@@ -20,24 +21,16 @@ pub(crate) struct ParsedHelperBody<'a> {
     pub(crate) tree: tree_sitter::Tree,
 }
 
-impl ParsedHelperBody<'_> {
-    pub(crate) fn provenance(&self, helper_name: &str) -> ContractProvenance {
-        ContractProvenance::new(
-            self.source_path,
-            SourceSpan::new(self.body_offset, self.body_offset + self.source.len()),
-            vec![helper_name.to_string()],
-        )
-    }
-}
-
 pub(crate) struct IrAnalysisDb {
     define_bodies: HashMap<String, CachedDefineBody>,
     /// Raw template file sources by index path (static `files/*` templates
     /// requested through `.Files.Get` resolve here).
     file_sources: HashMap<String, String>,
     define_trees: RefCell<HashMap<String, tree_sitter::Tree>>,
-    define_attributions: RefCell<HashMap<String, AttributionIndex>>,
-    bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, HelperSummary>>,
+    /// Source-only evaluation facts per helper body (control headers,
+    /// resource spans), shared across memoized-summary misses.
+    body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
+    bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
 }
 
 impl IrAnalysisDb {
@@ -62,7 +55,7 @@ impl IrAnalysisDb {
             define_bodies,
             file_sources,
             define_trees: RefCell::new(HashMap::new()),
-            define_attributions: RefCell::new(HashMap::new()),
+            body_eval_facts: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
         }
     }
@@ -89,6 +82,22 @@ impl IrAnalysisDb {
         Some(tree)
     }
 
+    /// The source-only evaluation facts of one helper body, computed once.
+    pub(crate) fn helper_body_eval_facts(
+        &self,
+        name: &str,
+        build: impl FnOnce() -> BodyEvalFacts,
+    ) -> Rc<BodyEvalFacts> {
+        if let Some(facts) = self.body_eval_facts.borrow().get(name) {
+            return Rc::clone(facts);
+        }
+        let facts = Rc::new(build());
+        self.body_eval_facts
+            .borrow_mut()
+            .insert(name.to_string(), Rc::clone(&facts));
+        facts
+    }
+
     pub(crate) fn parsed_helper_body(&self, name: &str) -> Option<ParsedHelperBody<'_>> {
         let body = self.define_bodies.get(name)?;
         Some(ParsedHelperBody {
@@ -99,24 +108,8 @@ impl IrAnalysisDb {
         })
     }
 
-    pub(crate) fn helper_attribution(&self, name: &str) -> Option<AttributionIndex> {
-        if let Some(attribution) = self.define_attributions.borrow().get(name) {
-            return Some(attribution.clone());
-        }
-
-        let body = self.define_bodies.get(name)?;
-        let tree = self.define_tree(name)?;
-        let attribution = crate::resource_identity::attributed_document(
-            body.source.as_str(),
-            tree.root_node(),
-            self,
-        );
-        self.define_attributions
-            .borrow_mut()
-            .insert(name.to_string(), attribution.clone());
-        Some(attribution)
-    }
-
+    /// Evaluate one bound helper call in the fragment domain, memoized per
+    /// (helper, bindings, dot, call chain).
     #[tracing::instrument(skip_all, fields(helper = name))]
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn summarize_bound_helper_call(
@@ -128,9 +121,9 @@ impl IrAnalysisDb {
         fragment_locals: &HashMap<String, AbstractValue>,
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
-    ) -> HelperSummary {
+    ) -> Rc<FragmentSummary> {
         if !seen.insert(name.to_string()) {
-            return HelperSummary::default();
+            return Rc::new(FragmentSummary::default());
         }
 
         let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
@@ -147,16 +140,122 @@ impl IrAnalysisDb {
 
         if let Some(cached) = self.bound_helper_calls.borrow().get(&key) {
             seen.remove(name);
-            return cached.clone();
+            return Rc::clone(cached);
         }
 
-        let mut summary = interpret_bound_helper_body(name, &resolution, context, seen);
-        summary.mark_suppressed_roots_for_bound_outputs(&resolution.bindings);
+        let summary = Rc::new(eval_bound_helper_fragment(name, &resolution, self, seen));
         self.bound_helper_calls
             .borrow_mut()
-            .insert(key, summary.clone());
+            .insert(key, Rc::clone(&summary));
         seen.remove(name);
         summary
+    }
+}
+
+/// One dot (`.`) binding as the two evaluation flavors see it: value
+/// analysis reads the context-value projection (`helper`), fragment
+/// evaluation reads the raw fragment shape (`fragment`). The flavors
+/// interpret the same binding differently on purpose (see
+/// `plan/helper-single-walker-rewrite-postmortem.md`).
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct DotFrame {
+    pub(crate) helper: Option<AbstractValue>,
+    pub(crate) fragment: Option<AbstractValue>,
+}
+
+pub(crate) struct BoundHelperCallResolution {
+    pub(crate) bindings: HashMap<String, AbstractValue>,
+    pub(crate) dot: DotFrame,
+}
+
+struct ResolveBoundHelperCallParams<'a, 'context> {
+    helper_name: &'a str,
+    arg: Option<&'a TemplateExpr>,
+    outer_bindings: Option<&'a HashMap<String, AbstractValue>>,
+    current_dot: Option<&'a AbstractValue>,
+    fragment_locals: &'a HashMap<String, AbstractValue>,
+    context: FragmentEvalContext<'context>,
+    seen: &'a HashSet<String>,
+}
+
+fn resolve_bound_helper_call(
+    params: ResolveBoundHelperCallParams<'_, '_>,
+) -> BoundHelperCallResolution {
+    let eval_arg_value = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
+        helper_result_from_expr_with_fragment_locals(
+            expr,
+            params.fragment_locals,
+            params.outer_bindings,
+            params.current_dot,
+            params.context,
+            seen,
+        )
+        .value
+    };
+    let mut binding_seen = params.seen.clone();
+    let arg_resolution = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
+        eval_arg_value(expr, &mut binding_seen)
+    });
+    let mut bindings = arg_resolution.bindings;
+
+    // The binding resolution already evaluated the whole arg unless the arg
+    // was a dot/root or merge call; only those shapes still need their own
+    // helper-dot evaluation here (same evaluation, fresh seen set).
+    let mut helper_body_dot = arg_resolution
+        .value
+        .or_else(|| {
+            let mut dot_seen = params.seen.clone();
+            params
+                .arg
+                .and_then(|expr| eval_arg_value(expr, &mut dot_seen))
+        })
+        .or_else(|| params.current_dot.cloned());
+
+    let mut helper_fragment_dot = params.arg.and_then(|expr| {
+        context_value_from_outer_expr(
+            expr,
+            Some(params.fragment_locals),
+            params.outer_bindings,
+            params.current_dot,
+        )
+    });
+
+    if helper_uses_large_config_arg(params.helper_name) {
+        if let Some(binding) = bindings.remove("config") {
+            bindings.insert("config".to_string(), abstract_config_binding(binding));
+        }
+        helper_body_dot = helper_body_dot.map(abstract_config_entry_in_binding);
+        helper_fragment_dot = helper_fragment_dot.map(abstract_config_entry_in_binding);
+    }
+
+    BoundHelperCallResolution {
+        bindings,
+        dot: DotFrame {
+            helper: helper_body_dot,
+            fragment: helper_fragment_dot,
+        },
+    }
+}
+
+fn helper_uses_large_config_arg(name: &str) -> bool {
+    name.starts_with("opentelemetry-collector.apply")
+}
+
+fn abstract_config_binding(binding: AbstractValue) -> AbstractValue {
+    // `path_choices` yields `None` only for an empty path set, so a pathless
+    // config binding widens straight to `Top`.
+    AbstractValue::path_choices(binding.paths()).unwrap_or(AbstractValue::Top)
+}
+
+fn abstract_config_entry_in_binding(binding: AbstractValue) -> AbstractValue {
+    match binding {
+        AbstractValue::Dict(mut entries) => {
+            if let Some(config) = entries.remove("config") {
+                entries.insert("config".to_string(), abstract_config_binding(config));
+            }
+            AbstractValue::Dict(entries)
+        }
+        other => other,
     }
 }
 
@@ -177,7 +276,7 @@ struct BoundHelperCallCacheKey {
 impl BoundHelperCallCacheKey {
     fn from_resolution(
         name: &str,
-        resolution: &crate::helper_body_analysis::BoundHelperCallResolution,
+        resolution: &BoundHelperCallResolution,
         seen: BTreeSet<String>,
     ) -> Self {
         Self {

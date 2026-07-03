@@ -16,8 +16,8 @@ use std::collections::HashMap;
 use crate::actions::{ActionToken, TokenKind};
 use crate::cst::{
     BlockScalar, CommentLine, ControlBranch, ControlKind, ControlRegion, MappingEntry, Node,
-    OpaqueKind, OpaqueNode, OutputAction, PathSegment, ScalarLine, ScalarPart, ScalarParts,
-    SequenceItem, Span, TemplatedDocument,
+    OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
+    TemplatedDocument,
 };
 use crate::lines::LineIndex;
 use crate::yaml_scan::{structural_mapping_colon, unquote_yaml_scalar};
@@ -30,7 +30,6 @@ use crate::yaml_scan::{structural_mapping_colon, unquote_yaml_scalar};
 pub(crate) struct Frame {
     pub(crate) parent: Option<usize>,
     pub(crate) indent: usize,
-    pub(crate) seg: PathSegment,
     /// The entry's inline value was empty when the scope opened.
     pub(crate) opened_empty: bool,
     pub(crate) block: bool,
@@ -45,7 +44,6 @@ pub(crate) fn parse_document(source: &str, tokens: Vec<ActionToken>) -> Template
         tokens,
         frames: Vec::new(),
         head: None,
-        chains: Vec::new(),
         owners: vec![OwnerFrame::root()],
         region_modes: HashMap::new(),
         next_token: 0,
@@ -129,7 +127,6 @@ struct Parser<'src> {
     tokens: Vec<ActionToken>,
     frames: Vec<Frame>,
     head: Option<usize>,
-    chains: Vec<Option<usize>>,
     owners: Vec<OwnerFrame>,
     region_modes: HashMap<usize, RegionMode>,
     next_token: usize,
@@ -138,7 +135,6 @@ struct Parser<'src> {
 impl<'src> Parser<'src> {
     fn run(mut self, lines: LineIndex) -> TemplatedDocument<'src> {
         for line in 0..lines.count() {
-            self.chains.push(self.head);
             let (ls, le) = lines.span(line);
             let followed_by_newline = line + 1 < lines.count();
             self.process_line(ls, le, followed_by_newline);
@@ -153,9 +149,6 @@ impl<'src> Parser<'src> {
             source: self.source,
             roots,
             document_spans: document_spans(self.source),
-            lines,
-            frames: self.frames,
-            chains: self.chains,
         }
     }
 
@@ -228,7 +221,7 @@ impl<'src> Parser<'src> {
         let nested = after_dash.trim_start();
         let nested_start = ls + indent + 1 + (after_dash.len() - nested.len());
         let item_block = nested.starts_with('|') || nested.starts_with('>');
-        let frame = self.push_frame(indent, PathSegment::Item, false, item_block);
+        let frame = self.push_frame(indent, false, item_block);
         let mut seed = ItemSeed {
             frame,
             span: Span::new(ls + indent, le),
@@ -290,12 +283,7 @@ impl<'src> Parser<'src> {
             }));
             return;
         }
-        let frame = self.push_frame(
-            eff_indent,
-            PathSegment::Key(key_text.to_string()),
-            value.is_empty(),
-            block,
-        );
+        let frame = self.push_frame(eff_indent, value.is_empty(), block);
         self.owners
             .push(OwnerFrame::container(OwnerData::Entry(EntrySeed {
                 frame,
@@ -477,18 +465,11 @@ impl<'src> Parser<'src> {
         }
     }
 
-    fn push_frame(
-        &mut self,
-        indent: usize,
-        seg: PathSegment,
-        opened_empty: bool,
-        block: bool,
-    ) -> usize {
+    fn push_frame(&mut self, indent: usize, opened_empty: bool, block: bool) -> usize {
         let id = self.frames.len();
         self.frames.push(Frame {
             parent: self.head,
             indent,
-            seg,
             opened_empty,
             block,
             marked_at: None,

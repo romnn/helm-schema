@@ -1100,10 +1100,9 @@ fn with_rewritten_selector_chain_does_not_emit_parent_suffix_path() {
 
 #[test]
 fn helper_context_chain_in_condition_surfaces_referenced_value() {
-    // Same context idiom inside an `if` condition — the typed walker's
-    // parse_condition path must still surface the inner field as an
-    // IR use (the IR emits the condition's value reference as a use
-    // even though the condition itself doesn't get a self-guard).
+    // Same context idiom inside an `if` condition — the fragment
+    // interpreter's condition decoding must still surface the inner
+    // field as an IR use.
     let helpers = indoc! {r#"
         {{- define "common.enabled" -}}
         {{- if .context.Values.featureFlag -}}
@@ -1133,15 +1132,15 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
         "expected exactly one `featureFlag` use from the helper-context \
          condition; got: {ir:#?}",
     );
-    // The condition's source use is unconditional — the Truthy guard
-    // is pushed AFTER emission, for body uses (here the body is plain
-    // text, so there's nothing to gate). A regression that attached a
-    // self-guard would fail here.
-    assert!(
-        flag_uses[0].guards.is_empty(),
-        "helper-context condition source use must be unconditional, but \
-         got guards: {:?}",
-        flag_uses[0].guards,
+    // The condition's source use carries its own decoded condition, the
+    // same convention document-level condition reads always had (the
+    // summary lane used to flatten these to unconditional reads).
+    sim_assert_eq!(
+        have: flag_uses[0].guards.clone(),
+        want: vec![helm_schema_ir::Guard::Truthy {
+            path: "featureFlag".to_string()
+        }],
+        "helper-context condition source use keeps its own condition",
     );
 
     // Same absence guarantee as the unconditional helper-context test:

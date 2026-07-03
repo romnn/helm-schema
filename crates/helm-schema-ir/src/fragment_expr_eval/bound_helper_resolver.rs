@@ -42,7 +42,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         if self.params.seen.contains(name) {
             return Some(EvalResult::none());
         }
-        let analysis = self.params.context.analysis_db.summarize_bound_helper_call(
+        let summary = self.params.context.analysis_db.summarize_bound_helper_call(
             name,
             arg,
             self.params.outer,
@@ -51,25 +51,21 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             self.params.context,
             self.params.seen,
         );
-        let value = analysis.project_value();
-        // The resolver boundary is the one place nested summary hints enter
+        // The resolver boundary is the one place summary facts enter
         // expression effects; collectors read the Effects fields only.
         // Encoded rows surface as encoded paths so value-lattice lowerings
         // keep the "sink does not constrain the value" semantics the row
-        // recorded (`project_value` output paths carry no encoding flag).
-        let encoded_paths = analysis
-            .output_uses
-            .iter()
-            .filter(|output| output.encoded)
-            .map(|output| output.source_expr.clone())
-            .collect();
+        // recorded (the projected value's output paths carry no encoding
+        // flag).
         let effects = Effects {
-            chart_default_paths: analysis.chart_defaults.clone(),
-            type_hints: analysis.type_hints.clone(),
-            encoded_paths,
-            helper_summary: analysis,
+            chart_default_paths: summary.chart_defaults.clone(),
+            type_hints: summary.type_hints.clone(),
+            encoded_paths: summary.encoded_paths(),
+            helper_reads: summary.reads.clone(),
+            helper_rendered: summary.rendered.clone(),
+            helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
             ..Effects::default()
         };
-        Some(EvalResult::with_effects(value, effects))
+        Some(EvalResult::with_effects(summary.value.clone(), effects))
     }
 }

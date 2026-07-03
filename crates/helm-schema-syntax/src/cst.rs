@@ -1,9 +1,6 @@
 //! The `TemplatedDocument` CST: YAML layout nodes, template control regions,
 //! output holes, and comments, all carrying byte spans into the source.
 
-use crate::lines::LineIndex;
-use crate::parse::Frame;
-
 /// A half-open byte range `[start, end)` into the parsed source.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Span {
@@ -18,27 +15,12 @@ impl Span {
     }
 }
 
-/// One step of a YAML container path: a mapping key or a sequence item.
-///
-/// Consumers fold segments into their own path representation; the
-/// convention used by helm-schema appends `[*]` to the enclosing key for
-/// `Item` (collapsing repeated items). `Key` segments are never empty.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum PathSegment {
-    Key(String),
-    Item,
-}
-
-/// A parsed templated-YAML source: the layout node forest plus the
-/// open-slot chain index that backs the query API.
+/// A parsed templated-YAML source: the layout node forest with document
+/// boundaries.
 pub struct TemplatedDocument<'src> {
     pub(crate) source: &'src str,
     pub(crate) roots: Vec<Node>,
     pub(crate) document_spans: Vec<Span>,
-    pub(crate) lines: LineIndex,
-    pub(crate) frames: Vec<Frame>,
-    /// Per line: the innermost open container frame *before* the line.
-    pub(crate) chains: Vec<Option<usize>>,
 }
 
 impl<'src> TemplatedDocument<'src> {

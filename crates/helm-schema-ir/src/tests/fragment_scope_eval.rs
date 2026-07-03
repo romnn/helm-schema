@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, TemplateExpr, range_body_renders_mapping_entries_from_ast};
+use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
@@ -166,96 +166,4 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
             ]))),
         })
     );
-}
-
-#[test]
-fn range_body_mapping_entry_detection_sees_dynamic_template_key() {
-    let source = indoc::indoc! {r#"
-        {{- range $key, $value := .Values.annotations }}
-        {{ $key }}: {{ $value | quote }}
-        {{- end }}
-    "#};
-    let tree = parse_raw_template_tree(source);
-    let range = find_first_node(tree.root_node(), "range_action").expect("range action");
-
-    assert!(range_body_renders_mapping_entries_from_ast(range, source));
-}
-
-#[test]
-fn range_body_mapping_entry_detection_sees_fused_parser_pipeline_key() {
-    let source = indoc::indoc! {r#"
-        {{- range $key, $value := .Values.annotations }}
-        {{ $key | quote }}: {{ $value | quote }}
-        {{- end }}
-    "#};
-    let tree = parse_raw_template_tree(source);
-    let range = find_first_node(tree.root_node(), "range_action").expect("range action");
-
-    assert!(range_body_renders_mapping_entries_from_ast(range, source));
-}
-
-#[test]
-fn range_body_mapping_entry_detection_ignores_mutation_only_body() {
-    let source = indoc::indoc! {r#"
-        {{- range $key, $value := .Values.contexts }}
-          {{- $_ := set $value "dir" (printf "/etc/%s" $key) }}
-        {{- end }}
-    "#};
-    let tree = parse_raw_template_tree(source);
-    let range = find_first_node(tree.root_node(), "range_action").expect("range action");
-
-    assert!(!range_body_renders_mapping_entries_from_ast(range, source));
-}
-
-#[test]
-fn range_body_mapping_entry_detection_ignores_sequence_item_mapping() {
-    let source = indoc::indoc! {r#"
-        {{- range $key, $value := .Values.containers }}
-        - name: {{ $key }}
-          image: {{ $value.image }}
-        {{- end }}
-    "#};
-    let tree = parse_raw_template_tree(source);
-    let range = find_first_node(tree.root_node(), "range_action").expect("range action");
-
-    assert!(!range_body_renders_mapping_entries_from_ast(range, source));
-}
-
-#[test]
-fn range_body_mapping_entry_detection_ignores_static_wrapper_mapping() {
-    let source = indoc::indoc! {r#"
-        {{- range $key, $value := .Values.annotations }}
-        labels:
-          {{ $key }}: {{ $value | quote }}
-        {{- end }}
-    "#};
-    let tree = parse_raw_template_tree(source);
-    let range = find_first_node(tree.root_node(), "range_action").expect("range action");
-
-    assert!(!range_body_renders_mapping_entries_from_ast(range, source));
-}
-
-fn parse_raw_template_tree(source: &str) -> tree_sitter::Tree {
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).expect("set language");
-    parser.parse(source, None).expect("parse template")
-}
-
-fn find_first_node<'tree>(
-    node: tree_sitter::Node<'tree>,
-    kind: &str,
-) -> Option<tree_sitter::Node<'tree>> {
-    if node.kind() == kind {
-        return Some(node);
-    }
-
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        if let Some(found) = find_first_node(child, kind) {
-            return Some(found);
-        }
-    }
-    None
 }

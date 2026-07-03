@@ -3,8 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
-use crate::fragment_assignment::merge_fragment_locals;
-use crate::helper_summary::HelperOutputMeta;
+use crate::helper_meta::HelperOutputMeta;
 
 mod branch_join;
 
@@ -40,13 +39,6 @@ struct VariableLocalState {
 impl SymbolicLocalState {
     pub(crate) fn join_branch_outcomes(&mut self, entry: &Self, outcomes: Vec<Self>) {
         *self = joined_branch_outcomes(entry, outcomes);
-    }
-
-    pub(crate) fn merge_helper_outcome(mut self, other: Self) -> Self {
-        self.fragment_values = merge_fragment_locals(self.fragment_values, other.fragment_values);
-        self.default_paths = merge_default_paths(self.default_paths, other.default_paths);
-        self.output_meta = merge_output_meta(self.output_meta, other.output_meta);
-        self
     }
 
     pub(crate) fn enter_local_scope(&mut self) {
@@ -181,33 +173,6 @@ impl SymbolicLocalState {
         self.default_paths.remove(variable);
         self.output_meta.remove(variable);
     }
-}
-
-fn merge_default_paths(
-    mut base: HashMap<String, BTreeSet<String>>,
-    other: HashMap<String, BTreeSet<String>>,
-) -> HashMap<String, BTreeSet<String>> {
-    base.retain(|key, base_paths| {
-        let Some(other_paths) = other.get(key) else {
-            return false;
-        };
-        base_paths.extend(other_paths.iter().cloned());
-        true
-    });
-    base
-}
-
-fn merge_output_meta(
-    mut base: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    other: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-) -> HashMap<String, BTreeMap<String, HelperOutputMeta>> {
-    for (key, other_paths) in other {
-        let base_paths = base.entry(key).or_default();
-        for (path, meta) in other_paths {
-            base_paths.entry(path).or_default().merge(&meta);
-        }
-    }
-    base
 }
 
 fn restore_map_entry<T>(map: &mut HashMap<String, T>, variable: &str, value: Option<T>) {

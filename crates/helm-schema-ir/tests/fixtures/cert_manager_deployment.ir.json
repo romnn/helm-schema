@@ -579,7 +579,13 @@
       "source_expr": "containerSecurityContext"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "creator",
+          "type": "eq",
+          "value": "helm"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -588,8 +594,8 @@
             "labels"
           ],
           "span": {
-            "end": 5015,
-            "start": 4722
+            "end": 4925,
+            "start": 4782
           },
           "template_path": "<inline:0>"
         }
@@ -835,38 +841,13 @@
       "source_expr": "featureGates"
     },
     {
-      "guards": [],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 767,
-            "start": 400
-          },
-          "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1089,
-            "start": 884
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
       "guards": [
         {
           "path": "config",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
           "type": "truthy"
         },
         {
@@ -885,8 +866,42 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 766,
+            "start": 401
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 766,
+            "start": 401
+          },
+          "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "cert-manager.serviceAccountName"
+          ],
+          "span": {
+            "end": 1007,
+            "start": 930
           },
           "template_path": "<inline:0>"
         }
@@ -912,8 +927,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 497,
+            "start": 437
           },
           "template_path": "<inline:0>"
         }
@@ -948,8 +963,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 497,
+            "start": 437
           },
           "template_path": "<inline:0>"
         },
@@ -958,8 +973,8 @@
             "cert-manager.serviceAccountName"
           ],
           "span": {
-            "end": 1089,
-            "start": 884
+            "end": 1007,
+            "start": 930
           },
           "template_path": "<inline:0>"
         }
@@ -1003,8 +1018,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 497,
+            "start": 437
           },
           "template_path": "<inline:0>"
         }
@@ -1031,7 +1046,12 @@
       "source_expr": "global"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "global.commonLabels",
+          "type": "truthy"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -1040,8 +1060,8 @@
             "labels"
           ],
           "span": {
-            "end": 5015,
-            "start": 4722
+            "end": 5014,
+            "start": 4926
           },
           "template_path": "<inline:0>"
         }
@@ -1067,8 +1087,8 @@
             "labels"
           ],
           "span": {
-            "end": 5015,
-            "start": 4722
+            "end": 5003,
+            "start": 4963
           },
           "template_path": "<inline:0>"
         }
@@ -1099,8 +1119,8 @@
             "labels"
           ],
           "span": {
-            "end": 5015,
-            "start": 4722
+            "end": 5003,
+            "start": 4963
           },
           "template_path": "<inline:0>"
         }
@@ -1603,7 +1623,12 @@
       "source_expr": "https_proxy"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "image",
+          "type": "truthy"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -1612,8 +1637,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 6110,
+            "start": 5859
           },
           "template_path": "<inline:0>"
         }
@@ -1622,7 +1647,16 @@
       "source_expr": "image"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "image",
+          "type": "truthy"
+        },
+        {
+          "path": "image.digest",
+          "type": "truthy"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -1631,8 +1665,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 6099,
+            "start": 5987
           },
           "template_path": "<inline:0>"
         }
@@ -1665,8 +1699,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 6031,
+            "start": 6005
           },
           "template_path": "<inline:0>"
         }
@@ -1694,7 +1728,16 @@
       "source_expr": "image.pullPolicy"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "image",
+          "type": "truthy"
+        },
+        {
+          "path": "image.registry",
+          "type": "truthy"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -1703,8 +1746,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 5986,
+            "start": 5882
           },
           "template_path": "<inline:0>"
         }
@@ -1737,8 +1780,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 5944,
+            "start": 5902
           },
           "template_path": "<inline:0>"
         }
@@ -1774,8 +1817,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 5944,
+            "start": 5902
           },
           "template_path": "<inline:0>"
         }
@@ -1811,8 +1854,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 5975,
+            "start": 5956
           },
           "template_path": "<inline:0>"
         }
@@ -1852,8 +1895,8 @@
             "image"
           ],
           "span": {
-            "end": 6111,
-            "start": 5825
+            "end": 6088,
+            "start": 6043
           },
           "template_path": "<inline:0>"
         }
@@ -2212,39 +2255,18 @@
       "source_expr": "maxConcurrentChallenges"
     },
     {
-      "guards": [],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 767,
-            "start": 400
-          },
-          "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1089,
-            "start": 884
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
       "guards": [
         {
           "path": "config",
           "type": "truthy"
+        },
+        {
+          "path": "nameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
         },
         {
           "paths": [
@@ -2262,8 +2284,46 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 754,
+            "start": 569
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "guards": [
+        {
+          "path": "nameOverride",
+          "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
+        }
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 754,
+            "start": 569
+          },
+          "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "cert-manager.serviceAccountName"
+          ],
+          "span": {
+            "end": 1007,
+            "start": 930
           },
           "template_path": "<inline:0>"
         }
@@ -2290,8 +2350,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -2321,8 +2381,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -2359,8 +2419,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 742,
+            "start": 672
           },
           "template_path": "<inline:0>"
         }
@@ -2391,8 +2451,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -2424,8 +2484,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -2457,8 +2517,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -2501,8 +2561,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 742,
+            "start": 672
           },
           "template_path": "<inline:0>"
         },
@@ -2511,8 +2571,8 @@
             "cert-manager.serviceAccountName"
           ],
           "span": {
-            "end": 1089,
-            "start": 884
+            "end": 1007,
+            "start": 930
           },
           "template_path": "<inline:0>"
         }
@@ -2564,8 +2624,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 742,
+            "start": 672
           },
           "template_path": "<inline:0>"
         }
@@ -2594,8 +2654,8 @@
             "cert-manager.namespace"
           ],
           "span": {
-            "end": 5421,
-            "start": 5363
+            "end": 5420,
+            "start": 5368
           },
           "template_path": "<inline:0>"
         }
@@ -2999,7 +3059,12 @@
       "source_expr": "securityContext"
     },
     {
-      "guards": [],
+      "guards": [
+        {
+          "path": "serviceAccount.create",
+          "type": "truthy"
+        }
+      ],
       "kind": "Scalar",
       "path": [],
       "provenance": [
@@ -3008,8 +3073,8 @@
             "cert-manager.serviceAccountName"
           ],
           "span": {
-            "end": 1089,
-            "start": 884
+            "end": 1088,
+            "start": 885
           },
           "template_path": "<inline:0>"
         }
@@ -3056,8 +3121,8 @@
             "cert-manager.serviceAccountName"
           ],
           "span": {
-            "end": 1089,
-            "start": 884
+            "end": 1007,
+            "start": 930
           },
           "template_path": "<inline:0>"
         }
@@ -3092,8 +3157,8 @@
             "cert-manager.serviceAccountName"
           ],
           "span": {
-            "end": 1089,
-            "start": 884
+            "end": 1076,
+            "start": 1025
           },
           "template_path": "<inline:0>"
         }

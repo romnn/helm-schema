@@ -9,6 +9,11 @@
         {
           "path": "prometheus.podmonitor.enabled",
           "type": "not"
+        },
+        {
+          "path": "creator",
+          "type": "eq",
+          "value": "helm"
         }
       ],
       "kind": "Scalar",
@@ -19,8 +24,8 @@
             "labels"
           ],
           "span": {
-            "end": 5015,
-            "start": 4722
+            "end": 4925,
+            "start": 4782
           },
           "template_path": "<inline:0>"
         }
@@ -30,6 +35,10 @@
     },
     {
       "guards": [
+        {
+          "path": "fullnameOverride",
+          "type": "truthy"
+        },
         {
           "path": "prometheus.enabled",
           "type": "truthy"
@@ -47,8 +56,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 766,
+            "start": 401
           },
           "template_path": "<inline:0>"
         }
@@ -82,8 +91,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 497,
+            "start": 437
           },
           "template_path": "<inline:0>"
         }
@@ -96,6 +105,10 @@
     },
     {
       "guards": [
+        {
+          "path": "global.commonLabels",
+          "type": "truthy"
+        },
         {
           "path": "prometheus.enabled",
           "type": "truthy"
@@ -113,8 +126,8 @@
             "labels"
           ],
           "span": {
-            "end": 5015,
-            "start": 4722
+            "end": 5014,
+            "start": 4926
           },
           "template_path": "<inline:0>"
         }
@@ -148,8 +161,8 @@
             "labels"
           ],
           "span": {
-            "end": 5015,
-            "start": 4722
+            "end": 5003,
+            "start": 4963
           },
           "template_path": "<inline:0>"
         }
@@ -163,8 +176,16 @@
     {
       "guards": [
         {
+          "path": "nameOverride",
+          "type": "truthy"
+        },
+        {
           "path": "prometheus.enabled",
           "type": "truthy"
+        },
+        {
+          "path": "fullnameOverride",
+          "type": "not"
         },
         {
           "path": "prometheus.podmonitor.enabled",
@@ -179,8 +200,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 754,
+            "start": 569
           },
           "template_path": "<inline:0>"
         }
@@ -215,8 +236,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -254,8 +275,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -300,8 +321,8 @@
             "cert-manager.fullname"
           ],
           "span": {
-            "end": 767,
-            "start": 400
+            "end": 742,
+            "start": 672
           },
           "template_path": "<inline:0>"
         }
@@ -339,8 +360,8 @@
             "cert-manager.name"
           ],
           "span": {
-            "end": 190,
-            "start": 112
+            "end": 189,
+            "start": 113
           },
           "template_path": "<inline:0>"
         }
@@ -377,8 +398,8 @@
             "cert-manager.namespace"
           ],
           "span": {
-            "end": 5421,
-            "start": 5363
+            "end": 5420,
+            "start": 5368
           },
           "template_path": "<inline:0>"
         }

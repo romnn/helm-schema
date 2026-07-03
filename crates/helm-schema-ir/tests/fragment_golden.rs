@@ -130,10 +130,11 @@ fn partial_scalar_keeps_ordered_parts() {
     assert_fragment_dump(source, "", expected);
 }
 
-/// Helper calls evaluate through the memoized summaries: a scalar helper's
+/// Helper calls splice their memoized summary fragments: a scalar helper's
 /// internal branch condition becomes the splice's arm condition, a
-/// structured helper lowers to mapping entries, and helper-internal guard
-/// reads surface pathlessly.
+/// structured helper stays mapping entries, and helper-internal guard reads
+/// surface pathlessly carrying their own decoded condition — the same
+/// convention document-level condition reads always had.
 #[test]
 fn helper_splice_lowers_summary_branches_into_arms() {
     let helpers = indoc! {r#"
@@ -169,7 +170,7 @@ fn helper_splice_lowers_summary_branches_into_arms() {
                           when always:
                             splice appName scalar
         reads:
-          fullnameOverride []
+          fullnameOverride [truthy(fullnameOverride)]
     "#};
     assert_fragment_dump(source, helpers, expected);
 }

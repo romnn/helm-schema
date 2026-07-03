@@ -373,9 +373,13 @@
           "type": "boolean"
         },
         "existingSecret": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
           ]
         },
         "password": {
@@ -408,9 +412,13 @@
               ]
             },
             "replicationPasswordKey": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "userPasswordKey": {
@@ -430,14 +438,7 @@
           "type": "boolean"
         },
         "username": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "type": "string"
         }
       },
       "type": "object"
@@ -469,6 +470,11 @@
         "port": {},
         "type": {
           "anyOf": [
+            {
+              "enum": [
+                "ClusterIP"
+              ]
+            },
             {
               "enum": [
                 "NodePort"

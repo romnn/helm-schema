@@ -4,8 +4,6 @@
 //! cartesian product; inline `{{ if }}…{{ end }}` regions inside scalars
 //! re-parse structurally and become guarded scalar arms.
 
-use std::collections::HashSet;
-
 use helm_schema_ast::{TemplateExpr, parse_action_expressions, parse_expr_text};
 use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span, parse_go_template};
 
@@ -15,11 +13,10 @@ use crate::bound_value_analysis::{
 };
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
+use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
-use crate::fragment_expr_eval::{
-    FragmentEvalContext, document_result_from_expr, locals_with_roots,
-};
-use crate::helper_summary::merge_output_use_meta;
+use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
+use crate::helper_meta::merge_rendered_row_meta;
 use crate::node_eval::{NodeAction, control_header, else_if_pairs, node_action};
 use crate::{Guard, ValueKind};
 use helm_schema_ast::children_with_field;
@@ -33,10 +30,24 @@ use super::eval::Interpreter;
 use super::lower::{
     LowerScope, MAX_SCALAR_ARM_FANOUT, MAX_SCALAR_ARMS, lower_value, lower_value_scalar_arms,
 };
+use super::summary::splice_summary;
 
 pub(super) struct HoleEval {
     pub(super) value: Option<AbstractValue>,
     pub(super) effects: Effects,
+}
+
+/// How a no-render site demotes a called helper's rendered rows.
+enum RenderedDemotion {
+    /// Rendered rows stay tree evidence (ordinary output holes).
+    None,
+    /// Document-lane pathless claims keeping their kinds (document-scope
+    /// assignments capture the rows as local evidence).
+    Document,
+    /// Dependency-lane scalar claims (helper-body captures and
+    /// render-suppressed blobs: the caller sees summary facts, and
+    /// dependency rows are scalar by construction).
+    Dependency,
 }
 
 /// One layout segment of a scalar run: literal text, a template hole, or a
@@ -48,22 +59,29 @@ enum Segment {
 }
 
 impl Interpreter<'_> {
+    /// Evaluate one condition expression through the shared value lattice
+    /// with bound-helper resolution (guard-read derivation for conditions
+    /// over helper calls).
+    pub(super) fn eval_hole_exprs_for_condition(&mut self, expr: &TemplateExpr) -> HoleEval {
+        self.eval_hole_exprs(std::slice::from_ref(expr))
+    }
+
     /// Evaluate the expressions of one output hole through the shared value
     /// lattice, resolving bound helper calls via the memoized summaries.
     fn eval_hole_exprs(&mut self, exprs: &[TemplateExpr]) -> HoleEval {
-        let current_dot = self
-            .current_dot_fragment()
-            .map(|value| value.to_context_value())
-            .or_else(|| self.current_dot_binding());
+        let current_dot = self.current_value_dot();
         let mut env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref())
             .without_helper_call_args();
-        env.locals = locals_with_roots(&self.locals.fragment_values, &self.root_bindings);
+        // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
+        // roots stay in `root_fields` so a helper-arg key never shadows a
+        // same-named body local.
+        env.locals = self.locals.fragment_values.clone();
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
         env.bound_values =
             BoundValueContext::new(&self.locals.range_domains, &self.locals.get_bindings);
         let context = FragmentEvalContext::new(self.db);
-        let mut seen = HashSet::new();
+        let mut seen = self.helper_seen.clone();
         let mut values = Vec::new();
         let mut effects = Effects::default();
         for expr in exprs {
@@ -88,21 +106,18 @@ impl Interpreter<'_> {
     /// Absorb a hole's effect stream into interpreter state and the read
     /// list: chart-level default mutations (source order), declared type
     /// hints, bound-value reads, and helper-internal read facts. Rendered
-    /// helper rows become reads only in no-render contexts (assignments),
-    /// where the current pipeline also demotes them to pathless claims.
-    fn absorb_hole_effects(&mut self, effects: &Effects, include_rendered_reads: bool) {
+    /// helper rows become reads only in no-render contexts, per the site's
+    /// [`RenderedDemotion`] flavor.
+    fn absorb_hole_effects(&mut self, effects: &Effects, demotion: RenderedDemotion) {
+        self.chart_defaults_observed
+            .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths.clone();
-        chart_defaults.extend(effects.helper_summary.chart_defaults.iter().cloned());
         self.locals.append_chart_value_defaults(&mut chart_defaults);
 
         // Type hints surface from every hole, including assignment
         // right-hand sides (declared input types hold wherever the
         // expression runs).
-        for (path, hints) in effects
-            .type_hints
-            .iter()
-            .chain(&effects.helper_summary.type_hints)
-        {
+        for (path, hints) in &effects.type_hints {
             if path.trim().is_empty() {
                 continue;
             }
@@ -116,41 +131,44 @@ impl Interpreter<'_> {
         for path in bound_reads {
             self.push_read(&path, &[]);
         }
-        let summary = effects.helper_summary.clone();
         // Guard-path reads that are strict ancestors of a predicate path the
         // helper explicitly severed (index-call narrowing) are dropped, the
-        // same way the current emission skips them.
-        let suppressed: std::collections::BTreeSet<&String> = summary
-            .output_uses
-            .iter()
-            .flat_map(|output| output.meta.suppress_predicate_paths.iter())
-            .collect();
-        for (path, meta) in &summary.guard_path_meta {
-            if !suppressed.contains(path)
-                && suppressed
-                    .iter()
-                    .any(|narrowed| helm_schema_core::values_path_is_descendant(narrowed, path))
-            {
-                continue;
-            }
-            self.push_meta_reads(path, ValueKind::Scalar, meta, false);
+        // same way the summary lane always skipped them. Narrowings observed
+        // in this source accumulate so a helper summary can apply them to
+        // its own condition reads.
+        for meta in effects.local_output_meta.values() {
+            self.suppress_predicate_paths
+                .extend(meta.suppress_predicate_paths.iter().cloned());
         }
-        for output in &summary.output_uses {
-            if output.is_dependency() || include_rendered_reads {
-                // Encoded renders don't expose the value's shape; other
-                // demoted rows keep their summary kind (structured helper
-                // rows captured by assignments stay fragment evidence).
-                let kind = if output.encoded {
-                    ValueKind::Scalar
-                } else {
-                    output.kind
-                };
-                self.push_meta_reads(
-                    &output.source_expr,
-                    kind,
-                    &output.meta,
-                    output.is_dependency(),
-                );
+        self.suppress_predicate_paths
+            .extend(effects.helper_suppressed_paths.iter().cloned());
+        let suppressed: std::collections::BTreeSet<&String> = effects
+            .helper_rendered
+            .iter()
+            .flat_map(|row| row.meta.suppress_predicate_paths.iter())
+            .chain(effects.helper_suppressed_paths.iter())
+            .collect();
+        let claims = helper_claim_paths(effects);
+        self.absorb_helper_reads_with_suppression(&effects.helper_reads, &suppressed, &claims);
+        match demotion {
+            RenderedDemotion::None => {}
+            RenderedDemotion::Document => {
+                for row in &effects.helper_rendered {
+                    // Encoded renders don't expose the value's shape; other
+                    // demoted rows keep their summary kind (structured helper
+                    // rows captured by assignments stay fragment evidence).
+                    let kind = if row.encoded {
+                        ValueKind::Scalar
+                    } else {
+                        row.kind
+                    };
+                    self.push_meta_reads(&row.path, kind, &row.meta, &claims, false);
+                }
+            }
+            RenderedDemotion::Dependency => {
+                for row in &effects.helper_rendered {
+                    self.push_meta_reads(&row.path, ValueKind::Scalar, &row.meta, &claims, true);
+                }
             }
         }
     }
@@ -164,11 +182,9 @@ impl Interpreter<'_> {
     fn push_effects_reads(&mut self, hole: &HoleEval, kind: ValueKind) {
         let row_sources: std::collections::BTreeSet<&String> = hole
             .effects
-            .helper_summary
-            .output_uses
+            .helper_rendered
             .iter()
-            .filter(|output| output.is_rendered())
-            .map(|output| &output.source_expr)
+            .map(|row| &row.path)
             .collect();
         let defaulted = hole.effects.default_paths_with_local();
         let all = hole.effects.output_value_paths();
@@ -219,6 +235,10 @@ impl Interpreter<'_> {
             self.restore_site(previous_site);
             return (Guarded::empty(), None);
         }
+        if self.apply_helper_scope_set_mutations(&exprs) {
+            self.restore_site(previous_site);
+            return (Guarded::empty(), None);
+        }
         let inlined = self.inline_static_file_fragments(&exprs);
         let width = exprs
             .iter()
@@ -229,22 +249,14 @@ impl Interpreter<'_> {
         } else {
             ValueKind::Scalar
         };
-        if kind == ValueKind::Scalar
-            && let Some(nested) = self.inline_resource_helper_fragment(&exprs)
-        {
-            // The body's exact evaluation carries the placements; the call's
-            // summary facts become pathless reads, matching how the retired
-            // emission demoted them beside its exact inline walk.
-            let hole = self.eval_hole_exprs(&exprs);
-            self.absorb_hole_effects(&hole.effects, true);
-            self.push_effects_reads(&hole, ValueKind::Scalar);
-            let mut out = nested;
+        if let Some(spliced) = self.splice_helper_call_hole(&exprs) {
+            let mut out = spliced;
             out.extend(inlined);
             self.restore_site(previous_site);
             return (out, width);
         }
         let hole = self.eval_hole_exprs(&exprs);
-        self.absorb_hole_effects(&hole.effects, false);
+        self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
         let defaulted = hole.effects.default_paths_with_local();
@@ -252,7 +264,7 @@ impl Interpreter<'_> {
         // include) keep their per-path branch meta: the summary's rendered
         // rows merge with the locals' binding-time meta for lowering.
         let mut hole_meta = hole.effects.local_output_meta.clone();
-        merge_output_use_meta(&mut hole_meta, &hole.effects.helper_summary.output_uses);
+        merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
@@ -268,10 +280,80 @@ impl Interpreter<'_> {
                 out.arms.push((condition, AbstractFragment::Splice(splice)));
             }
         }
+        // A `printf "key: %s" …` hole renders a mapping entry as text: the
+        // rendered content belongs under the format's static key (the
+        // summary lane's static-key rule for helper bodies).
+        if self.helper_scope
+            && let Some(key) = static_printf_yaml_key(&exprs)
+            && !out.is_empty()
+        {
+            out = Guarded::unconditional(AbstractFragment::Mapping(super::domain::Mapping {
+                entries: vec![super::domain::MappingEntry {
+                    key: super::domain::EntryKey::Literal(key),
+                    value: out,
+                }],
+            }));
+        }
         stamp_fragment_sites(&mut out, &self.current_site);
         out.extend(inlined);
         self.restore_site(previous_site);
         (out, width)
+    }
+
+    /// Splice a bound helper call's summary fragment at an entire-hole
+    /// position. Fires for the plain call shape (`include`/`template` with a
+    /// literal name, alone or piped only through indent shaping): the
+    /// summary's fragment lands under the hole's slot, its body sites rebase
+    /// onto the call site, and its reads/hints absorb here. Other shapes
+    /// (encodings, transfer functions, dynamic names, unresolved helpers)
+    /// keep evaluating through the value lattice.
+    fn splice_helper_call_hole(
+        &mut self,
+        exprs: &[TemplateExpr],
+    ) -> Option<Guarded<AbstractFragment>> {
+        let (name, arg) = splice_target_helper_call(exprs)?;
+        if !self.db.has_helper(name) || self.helper_seen.contains(name) {
+            return None;
+        }
+        let name = name.to_string();
+        let current_dot = self.current_value_dot();
+        let mut seen = self.helper_seen.clone();
+        let summary = self.db.summarize_bound_helper_call(
+            &name,
+            arg,
+            Some(&self.root_bindings),
+            current_dot.as_ref(),
+            &self.locals.fragment_values,
+            FragmentEvalContext::new(self.db),
+            &mut seen,
+        );
+        let suppressed: std::collections::BTreeSet<&String> = summary
+            .rendered
+            .iter()
+            .flat_map(|row| row.meta.suppress_predicate_paths.iter())
+            .chain(summary.suppress_predicate_paths.iter())
+            .collect();
+        let mut claims: std::collections::BTreeSet<String> = summary
+            .reads
+            .iter()
+            .map(|read| read.values_path.clone())
+            .collect();
+        claims.extend(summary.rendered.iter().map(|row| row.path.clone()));
+        self.absorb_helper_reads_with_suppression(&summary.reads, &suppressed, &claims);
+        for (path, hints) in &summary.type_hints {
+            if path.trim().is_empty() {
+                continue;
+            }
+            self.type_hints
+                .entry(path.clone())
+                .or_default()
+                .extend(hints.iter().cloned());
+        }
+        self.chart_defaults_observed
+            .extend(summary.chart_defaults.iter().cloned());
+        let mut chart_defaults = summary.chart_defaults.clone();
+        self.locals.append_chart_value_defaults(&mut chart_defaults);
+        Some(splice_summary(&summary, &self.current_site))
     }
 
     /// Evaluate a hole rendered inside a partial scalar: guarded arms of
@@ -291,6 +373,10 @@ impl Interpreter<'_> {
             self.restore_site(previous_site);
             return Vec::new();
         }
+        if self.apply_helper_scope_set_mutations(&exprs) {
+            self.restore_site(previous_site);
+            return Vec::new();
+        }
         // Fragment-rendering holes (`toYaml … | nindent`) keep fragment
         // evidence even inside scalar text; everything else is a partial
         // scalar contribution.
@@ -300,7 +386,7 @@ impl Interpreter<'_> {
             ValueKind::PartialScalar
         };
         let hole = self.eval_hole_exprs(&exprs);
-        self.absorb_hole_effects(&hole.effects, false);
+        self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind != ValueKind::Fragment);
         let defaulted = hole.effects.default_paths_with_local();
@@ -308,7 +394,7 @@ impl Interpreter<'_> {
         // include) keep their per-path branch meta: the summary's rendered
         // rows merge with the locals' binding-time meta for lowering.
         let mut hole_meta = hole.effects.local_output_meta.clone();
-        merge_output_use_meta(&mut hole_meta, &hole.effects.helper_summary.output_uses);
+        merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
@@ -432,7 +518,7 @@ impl Interpreter<'_> {
                 )];
                 arms = combine_scalar_arms(arms, text_arm);
             }
-            match self.control_facts.get(&hole.start) {
+            match self.body_facts.control_facts.get(&hole.start) {
                 Some(facts) if facts.region_end <= block.body.end => {
                     let region = Span {
                         start: hole.start,
@@ -484,7 +570,7 @@ impl Interpreter<'_> {
         }
         let previous_site = self.enter_hole_site(span);
         let hole = self.eval_hole_exprs(&exprs);
-        self.absorb_hole_effects(&hole.effects, true);
+        self.absorb_hole_effects(&hole.effects, RenderedDemotion::Document);
         self.push_effects_reads(&hole, ValueKind::Fragment);
         self.restore_site(previous_site);
     }
@@ -694,7 +780,7 @@ impl Interpreter<'_> {
             }
             NodeAction::Output(Some(exprs)) => {
                 let hole = self.eval_hole_exprs(&exprs);
-                self.absorb_hole_effects(&hole.effects, false);
+                self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
                 let defaulted = hole.effects.default_paths_with_local();
                 let kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
                     ValueKind::Fragment
@@ -702,7 +788,7 @@ impl Interpreter<'_> {
                     ValueKind::PartialScalar
                 };
                 let mut hole_meta = hole.effects.local_output_meta.clone();
-                merge_output_use_meta(&mut hole_meta, &hole.effects.helper_summary.output_uses);
+                merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
                 let scope = LowerScope {
                     defaulted_paths: &defaulted,
                     encoded_paths: &hole.effects.encoded_paths,
@@ -779,41 +865,126 @@ impl Interpreter<'_> {
         self.restore_site(previous_site);
     }
 
-    pub(super) fn eval_assignment_exprs(&mut self, exprs: &[TemplateExpr]) {
-        if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
-            let locals = locals_with_roots(&self.locals.fragment_values, &self.root_bindings);
-            let current_dot = self
-                .current_dot_binding()
-                .map(|value| value.to_context_value());
-            let mut seen = HashSet::new();
-            let fragment_value = FragmentEvalContext::new(self.db).fragment_value_from_expr(
-                &assignment.rhs_expr,
-                &locals,
-                current_dot.as_ref(),
-                &mut seen,
-            );
-            self.locals.bind_fragment_value(
-                assignment.kind,
-                assignment.variable.clone(),
-                fragment_value,
-            );
+    /// Structural `set` mutations on local dict bindings (`set $ctx "k" v`,
+    /// bare or assigned to `$_`) mutate the target local instead of binding
+    /// output. Helper bodies rely on this for config-normalization chains;
+    /// only the chart-default effects surface (the summary lane never
+    /// claimed set-call operand reads).
+    pub(super) fn apply_helper_scope_set_mutations(&mut self, exprs: &[TemplateExpr]) -> bool {
+        if !self.helper_scope {
+            return false;
+        }
+        let current_dot = self.current_dot_fragment();
+        let mut seen = self.helper_seen.clone();
+        if !crate::fragment_assignment::apply_local_set_mutations_from_exprs(
+            exprs,
+            &mut self.locals.fragment_values,
+            current_dot.as_ref(),
+            FragmentEvalContext::new(self.db),
+            &mut seen,
+        ) {
+            return false;
+        }
+        let effects = crate::expr_eval::eval_helper_exprs_direct_effects(
+            exprs,
+            &self.root_bindings,
+            self.current_value_dot().as_ref(),
+        );
+        self.chart_defaults_observed
+            .extend(effects.chart_default_paths.iter().cloned());
+        let mut chart_defaults = effects.chart_default_paths;
+        self.locals.append_chart_value_defaults(&mut chart_defaults);
+        true
+    }
 
+    pub(super) fn eval_assignment_exprs(&mut self, exprs: &[TemplateExpr]) {
+        if self.apply_helper_scope_set_mutations(exprs) {
+            return;
+        }
+        if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
             let output_effects = self.value_path_context().expression_output_effects(rhs);
             let hole = self.eval_hole_exprs(rhs);
+            // The binding is the hole value without widened members (an
+            // unknown call result is influence, not a values-backed
+            // fragment).
+            let fragment_value = hole.value.clone().and_then(AbstractValue::without_widened);
+            // Helper bodies keep the prior binding when the right-hand side
+            // resolves to nothing (the summary lane's rule): an unresolvable
+            // re-assignment in one branch must not erase the other branches'
+            // value at the join.
+            if fragment_value.is_some() || !self.helper_scope {
+                self.locals.bind_fragment_value(
+                    assignment.kind,
+                    assignment.variable.clone(),
+                    fragment_value.clone(),
+                );
+            }
             let mut output_meta = output_effects.local_output_meta.clone();
-            merge_output_use_meta(&mut output_meta, &hole.effects.helper_summary.output_uses);
-            self.locals
-                .set_default_paths(&assignment.variable, output_effects.defaults.clone());
-            self.locals
-                .set_output_meta(assignment.variable.clone(), output_meta);
-            self.absorb_hole_effects(&hole.effects, true);
-            let kind = if rhs.iter().any(TemplateExpr::renders_yaml_fragment) {
-                ValueKind::Fragment
+            merge_rendered_row_meta(&mut output_meta, &hole.effects.helper_rendered);
+            // A helper-body `=` re-assignment under branch predicates keeps
+            // those predicates on each flowing path's meta: the write-through
+            // survives the branch join in the locals, so the conditions must
+            // ride the meta to the render site (the summary lane's rule). A
+            // truthiness condition about a *different* flowing path describes
+            // a sibling's branch and stays off this path's meta.
+            if self.helper_scope
+                && assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
+                && !self.active_predicates.is_empty()
+            {
+                if let Some(binding) = &fragment_value {
+                    for path in binding.fragment_rendered_paths() {
+                        output_meta.entry(path).or_default();
+                    }
+                }
+                let flowing: std::collections::BTreeSet<String> =
+                    output_meta.keys().cloned().collect();
+                for (path, meta) in &mut output_meta {
+                    let site: std::collections::BTreeSet<Predicate> = self
+                        .active_predicates
+                        .iter()
+                        .filter(|predicate| {
+                            predicate_applies_to_flowing_path(predicate, path, &flowing)
+                        })
+                        .cloned()
+                        .collect();
+                    meta.conjoin_branches(&site);
+                }
+            }
+            if self.helper_scope {
+                // Keep the (possibly empty) default and meta entries: the
+                // branch join unions per-variable facts only for variables
+                // every outcome still tracks, and a pre-branch binding
+                // without facts must not erase a branch's recorded ones.
+                self.locals
+                    .default_paths
+                    .insert(assignment.variable.clone(), output_effects.defaults.clone());
+                self.locals
+                    .output_meta
+                    .insert(assignment.variable.clone(), output_meta);
             } else {
-                ValueKind::Scalar
+                self.locals
+                    .set_default_paths(&assignment.variable, output_effects.defaults.clone());
+                self.locals
+                    .set_output_meta(assignment.variable.clone(), output_meta);
+            }
+            let demotion = if self.helper_scope {
+                RenderedDemotion::Dependency
+            } else {
+                RenderedDemotion::Document
             };
-            self.push_effects_reads(&hole, kind);
+            self.absorb_hole_effects(&hole.effects, demotion);
+            // Inside helper bodies, direct expression paths ride the binding
+            // and surface where the local renders; the summary lane never
+            // claimed them at the assignment itself.
+            if !self.helper_scope {
+                let kind = if rhs.iter().any(TemplateExpr::renders_yaml_fragment) {
+                    ValueKind::Fragment
+                } else {
+                    ValueKind::Scalar
+                };
+                self.push_effects_reads(&hole, kind);
+            }
         }
         if let Some(get_binding) = parse_get_binding_from_exprs(exprs) {
             self.locals.apply_get_binding(get_binding);
@@ -887,6 +1058,95 @@ fn entire_hole_span(segments: &[Segment]) -> Option<Span> {
         ("", "") | ("\"", "\"") | ("'", "'")
     )
     .then_some(hole)
+}
+
+/// The claim paths of the helper calls one hole resolved (read and rendered
+/// sources), the sibling set for ambient-condition scoping.
+fn helper_claim_paths(effects: &Effects) -> std::collections::BTreeSet<String> {
+    let mut claims: std::collections::BTreeSet<String> = effects
+        .helper_reads
+        .iter()
+        .map(|read| read.values_path.clone())
+        .collect();
+    claims.extend(effects.helper_rendered.iter().map(|row| row.path.clone()));
+    claims
+}
+
+/// Whether an ambient predicate belongs on one flowing path's assignment
+/// meta: truthiness conditions about a different flowing path of the same
+/// assignment describe that sibling's branch (unrelated paths keep the
+/// condition).
+fn predicate_applies_to_flowing_path(
+    predicate: &Predicate,
+    path: &str,
+    flowing: &std::collections::BTreeSet<String>,
+) -> bool {
+    let predicate_path = match predicate {
+        Predicate::Guard(Guard::Truthy { path } | Guard::Not { path }) => path,
+        Predicate::Not(inner) => {
+            return predicate_applies_to_flowing_path(inner, path, flowing);
+        }
+        _ => return true,
+    };
+    predicate_path == path
+        || !flowing.contains(predicate_path)
+        || crate::helper_meta::values_paths_are_related(predicate_path, path)
+}
+
+/// The static YAML key of a `printf "key: %s" …` hole (the format's leading
+/// mapping key), when the hole is exactly one such printf.
+fn static_printf_yaml_key(exprs: &[TemplateExpr]) -> Option<String> {
+    fn printf_format(expr: &TemplateExpr) -> Option<&str> {
+        match expr {
+            TemplateExpr::Parenthesized(inner) => printf_format(inner),
+            TemplateExpr::Call { function, args } if function == "printf" => match args.first()? {
+                TemplateExpr::Literal(
+                    helm_schema_ast::Literal::String(format)
+                    | helm_schema_ast::Literal::RawString(format),
+                ) => Some(format),
+                _ => None,
+            },
+            TemplateExpr::Pipeline(stages) => stages.first().and_then(printf_format),
+            _ => None,
+        }
+    }
+
+    let [expr] = exprs else {
+        return None;
+    };
+    let format = printf_format(expr)?;
+    helm_schema_ast::parse_yaml_key(format.trim_start())
+}
+
+/// The literal helper call a hole splices whole: exactly one expression
+/// that is an `include`/`template` call with a literal name, either bare or
+/// piped only through indent shaping (`nindent`/`indent`), which relocates
+/// the fragment without transforming it.
+fn splice_target_helper_call(exprs: &[TemplateExpr]) -> Option<(&str, Option<&TemplateExpr>)> {
+    let [expr] = exprs else {
+        return None;
+    };
+    let call = match expr.deparen() {
+        TemplateExpr::Pipeline(stages) => {
+            let (first, rest) = stages.split_first()?;
+            if !rest.iter().all(|stage| {
+                matches!(
+                    stage.deparen(),
+                    TemplateExpr::Call { function, .. }
+                        if matches!(function.as_str(), "nindent" | "indent")
+                )
+            }) {
+                return None;
+            }
+            first.deparen()
+        }
+        other => other,
+    };
+    let TemplateExpr::Call { function, args } = call else {
+        return None;
+    };
+    let name = literal_helper_call_callee(function, args)?;
+    Some((name, args.get(1)))
 }
 
 /// Whether an action hole is a control-flow fragment (`{{ if … }}`,

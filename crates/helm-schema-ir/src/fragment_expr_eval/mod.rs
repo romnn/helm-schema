@@ -1,7 +1,7 @@
 mod bound_helper_resolver;
 mod context;
 
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
@@ -11,37 +11,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
-use crate::helper_summary::HelperOutputMeta;
 use bound_helper_resolver::{BoundHelperValueResolverParams, eval_expr_result_with_bound_helpers};
-
-#[derive(Clone, Copy)]
-pub(crate) struct FragmentLocalFacts<'a> {
-    pub(crate) bindings: &'a HashMap<String, AbstractValue>,
-    pub(crate) default_paths: Option<&'a HashMap<String, BTreeSet<String>>>,
-    pub(crate) output_meta: Option<&'a HashMap<String, BTreeMap<String, HelperOutputMeta>>>,
-}
-
-impl<'a> FragmentLocalFacts<'a> {
-    pub(crate) fn bindings_only(bindings: &'a HashMap<String, AbstractValue>) -> Self {
-        Self {
-            bindings,
-            default_paths: None,
-            output_meta: None,
-        }
-    }
-
-    pub(crate) fn with_output_meta(
-        bindings: &'a HashMap<String, AbstractValue>,
-        default_paths: &'a HashMap<String, BTreeSet<String>>,
-        output_meta: &'a HashMap<String, BTreeMap<String, HelperOutputMeta>>,
-    ) -> Self {
-        Self {
-            bindings,
-            default_paths: Some(default_paths),
-            output_meta: Some(output_meta),
-        }
-    }
-}
 
 pub(crate) fn context_value_from_outer_expr(
     expr: &TemplateExpr,
@@ -87,7 +57,7 @@ pub(crate) fn context_value_from_outer_expr(
 /// The fragment-context value of an expression: the plain outer-fragment
 /// evaluation first, then the bound-helper-resolving fragment evaluation as
 /// the fallback. This is the composition behind with-body dots and `hasKey`
-/// probes at both walkers.
+/// probes.
 ///
 /// The first arm binds `outer`, so its dot is always the dict of root
 /// bindings; an ambient helper dot cannot reach it (hence no ambient-dot
@@ -122,10 +92,10 @@ pub(crate) fn locals_with_roots(
     locals
 }
 
-/// Document-scope expression evaluation for the fragment interpreter: the
-/// caller supplies the fully-populated environment (locals, bound values,
-/// local default/meta facts) and this resolves bound helper calls through
-/// the shared summarize machinery, exactly like the other walkers.
+/// Expression evaluation for the fragment interpreter: the caller supplies
+/// the fully-populated environment (locals, bound values, local default/meta
+/// facts) and this resolves bound helper calls through the memoized
+/// in-domain summaries.
 pub(crate) fn document_result_from_expr(
     expr: &TemplateExpr,
     env: &EvalEnv,
@@ -150,25 +120,19 @@ pub(crate) fn document_result_from_expr(
 
 pub(crate) fn helper_result_from_expr_with_fragment_locals(
     expr: &TemplateExpr,
-    fragment_locals: FragmentLocalFacts<'_>,
+    fragment_locals: &HashMap<String, AbstractValue>,
     outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> EvalResult {
     let mut env = EvalEnv::from_helper_context(outer, current_dot);
-    env.locals = fragment_locals.bindings.clone();
-    if let Some(default_paths) = fragment_locals.default_paths {
-        env.local_default_paths = default_paths.clone();
-    }
-    if let Some(output_meta) = fragment_locals.output_meta {
-        env.local_output_meta = output_meta.clone();
-    }
+    env.locals = fragment_locals.clone();
     let mut result = eval_expr_result_with_bound_helpers(
         expr,
         &env,
         BoundHelperValueResolverParams {
-            fragment_locals: fragment_locals.bindings,
+            fragment_locals,
             outer,
             current_dot,
             context,

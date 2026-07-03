@@ -1,12 +1,14 @@
 //! Fragment evaluation: the `Guarded<AbstractFragment>` domain and its
 //! interpreter over the `helm-schema-syntax` templated-YAML CST.
 //!
-//! This is the production document frontend (see
+//! This is the production frontend (see
 //! `plan/unified-frontend-redesign.md`, Stage B): the abstract rendered
 //! document is evaluated once, guards stay tree-structured, and the
 //! contract graph is a projection over that one artifact
-//! ([`contract_ir_from_document`]). Helper bodies still flow through the
-//! memoized summary machinery; moving them in-domain is the next stage.
+//! ([`contract_ir_from_document`]). Helper bodies evaluate through the
+//! same interpreter into memoized fragment summaries ([`summary`]); helper
+//! calls splice those summaries at their call sites or consume their value
+//! projection inside expressions.
 
 mod control;
 mod domain;
@@ -16,6 +18,7 @@ mod files;
 mod holes;
 mod lower;
 mod project;
+pub(crate) mod summary;
 
 pub use domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Opaque,
@@ -24,5 +27,5 @@ pub use domain::{
 pub use dump::dump_document;
 pub use eval::{EvaluatedDocument, ValueRead};
 
-pub(crate) use eval::eval_document;
+pub(crate) use eval::{BodyEvalFacts, eval_document};
 pub(crate) use project::contract_ir_from_document;

@@ -52,22 +52,6 @@ fn parsed_assignment_from_expr(
     }
 }
 
-pub(crate) fn merge_fragment_locals(
-    mut base: HashMap<String, AbstractValue>,
-    other: HashMap<String, AbstractValue>,
-) -> HashMap<String, AbstractValue> {
-    for (key, value) in other {
-        let merged = match base.remove(&key) {
-            Some(existing) => AbstractValue::choice(vec![existing, value]),
-            None => Some(value),
-        };
-        if let Some(merged) = merged {
-            base.insert(key, merged);
-        }
-    }
-    base
-}
-
 fn shadow_fragment_value_keys(binding: AbstractValue, keys: BTreeSet<String>) -> AbstractValue {
     if keys.is_empty() {
         return binding;
