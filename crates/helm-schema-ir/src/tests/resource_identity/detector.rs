@@ -5,9 +5,14 @@ use crate::analysis_db::IrAnalysisDb;
 use crate::{CapabilityGuard, HelperBranchBody};
 use test_util::prelude::sim_assert_eq;
 
+fn collect_spans(src: &str, analysis_db: &IrAnalysisDb) -> Vec<helm_schema_ast::ResourceSpan> {
+    let document = helm_schema_syntax::TemplatedDocument::parse(src);
+    crate::resource_identity::collect_resource_spans(&document, analysis_db)
+}
+
 fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
     let analysis_db = IrAnalysisDb::new(defines);
-    crate::resource_identity::collect_resource_spans(src, &analysis_db)
+    collect_spans(src, &analysis_db)
         .into_iter()
         .next()
         .map(|span| span.resource)
@@ -50,7 +55,7 @@ fn detects_resources_inside_template_control_bodies_after_preamble() {
     "#};
     let defines = DefineIndex::new();
     let analysis_db = IrAnalysisDb::new(&defines);
-    let spans = crate::resource_identity::collect_resource_spans(source, &analysis_db);
+    let spans = collect_spans(source, &analysis_db);
 
     sim_assert_eq!(have: spans.len(), want: 2);
     sim_assert_eq!(have: spans[0].start, want: 0);
@@ -65,7 +70,7 @@ fn detects_resources_in_signoz_postgresql_secrets_template() {
     );
     let defines = DefineIndex::new();
     let analysis_db = IrAnalysisDb::new(&defines);
-    let spans = crate::resource_identity::collect_resource_spans(source, &analysis_db);
+    let spans = collect_spans(source, &analysis_db);
 
     sim_assert_eq!(have: spans.len(), want: 3);
     assert!(spans.iter().all(|span| span.resource.kind == "Secret"));

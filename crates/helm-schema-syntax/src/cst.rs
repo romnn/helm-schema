@@ -128,6 +128,35 @@ pub struct MappingEntry {
     pub children: Vec<Node>,
 }
 
+impl MappingEntry {
+    /// The sequence items nested below this entry in document order, looking
+    /// through control regions: an item closed while a branch was active is
+    /// owned by that branch, while an item still open when the region ended
+    /// escapes to the entry itself. Guard structure is dropped; use
+    /// `children` to keep it.
+    #[must_use]
+    pub fn sequence_items(&self) -> Vec<&SequenceItem> {
+        let mut items = Vec::new();
+        collect_sequence_items(&self.children, &mut items);
+        items.sort_by_key(|item| item.span.start);
+        items
+    }
+}
+
+fn collect_sequence_items<'nodes>(nodes: &'nodes [Node], items: &mut Vec<&'nodes SequenceItem>) {
+    for node in nodes {
+        match node {
+            Node::Sequence(item) => items.push(item),
+            Node::Control(region) => {
+                for branch in &region.branches {
+                    collect_sequence_items(&branch.body, items);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
 /// One `- …` sequence item line and the nodes nested below it. An inline
 /// `- key: …` entry appears as the first child with effective indent
 /// `dash + 2`.
@@ -141,6 +170,106 @@ pub struct SequenceItem {
     /// Block-scalar header and suppressed body, for `- |` items.
     pub block: Option<BlockScalar>,
     pub children: Vec<Node>,
+}
+
+impl SequenceItem {
+    /// The item's content span: the first content after the dash through the
+    /// end of the deepest node nested below the item (a bare dash with no
+    /// content spans its own line).
+    #[must_use]
+    pub fn content_span(&self) -> Span {
+        let start = if let Some(value) = &self.value {
+            value.span.start
+        } else if let Some(block) = &self.block {
+            block.header.start
+        } else if let Some(first) = self.children.first() {
+            first.span_start()
+        } else {
+            self.span.start
+        };
+        let end = subtree_end(
+            self.span.end,
+            self.value.as_ref(),
+            self.block.as_ref(),
+            &self.children,
+        );
+        Span::new(start, end.max(start))
+    }
+}
+
+impl Node {
+    /// The byte where this node's own content starts.
+    #[must_use]
+    pub fn span_start(&self) -> usize {
+        match self {
+            Node::Mapping(entry) => entry.span.start,
+            Node::Sequence(item) => item.span.start,
+            Node::Control(region) => region.span.start,
+            Node::Output(action) => action.span.start,
+            Node::Comment(comment) => comment.span.start,
+            Node::Scalar(line) => line.span.start,
+            Node::Opaque(opaque) => opaque.span.start,
+        }
+    }
+
+    /// The end of the deepest content in this node's subtree: nested nodes,
+    /// block-scalar bodies, and inline-value holes that run past the line
+    /// end for multi-line actions.
+    #[must_use]
+    pub fn subtree_end(&self) -> usize {
+        match self {
+            Node::Mapping(entry) => subtree_end(
+                entry.span.end,
+                entry.value.as_ref(),
+                entry.block.as_ref(),
+                &entry.children,
+            ),
+            Node::Sequence(item) => subtree_end(
+                item.span.end,
+                item.value.as_ref(),
+                item.block.as_ref(),
+                &item.children,
+            ),
+            Node::Control(region) => region
+                .branches
+                .iter()
+                .flat_map(|branch| &branch.body)
+                .map(Node::subtree_end)
+                .fold(region.span.end, usize::max),
+            Node::Output(action) => action.span.end,
+            Node::Comment(comment) => comment.span.end,
+            Node::Scalar(line) => scalar_parts_end(&line.content).max(line.span.end),
+            Node::Opaque(opaque) => opaque.span.end,
+        }
+    }
+}
+
+fn subtree_end(
+    own_end: usize,
+    value: Option<&ScalarParts>,
+    block: Option<&BlockScalar>,
+    children: &[Node],
+) -> usize {
+    let mut end = own_end;
+    if let Some(value) = value {
+        end = end.max(scalar_parts_end(value));
+    }
+    if let Some(block) = block {
+        end = end.max(block.header.end).max(block.body.end);
+    }
+    for child in children {
+        end = end.max(child.subtree_end());
+    }
+    end
+}
+
+fn scalar_parts_end(parts: &ScalarParts) -> usize {
+    let mut end = parts.span.end;
+    for part in &parts.parts {
+        let (ScalarPart::Text(span) | ScalarPart::Hole(span)) = part;
+        end = end.max(span.end);
+    }
+    end
 }
 
 /// A literal block scalar (`|` / `>` families): its header token and the

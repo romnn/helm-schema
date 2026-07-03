@@ -3,7 +3,7 @@
 //! suppression, fragment insertion slots) independently of the downstream
 //! attribution and IR layers.
 
-use helm_schema_syntax::{PathSegment, TemplatedDocument};
+use helm_schema_syntax::{Node, PathSegment, TemplatedDocument};
 use test_util::prelude::sim_assert_eq;
 
 /// Fold segments with the consumer convention: `[*]` appends to the
@@ -153,4 +153,67 @@ fn document_spans_split_at_markers() {
         .map(|span| (span.start, span.end))
         .collect();
     sim_assert_eq!(have: spans, want: vec![(0, 8), (12, 20)]);
+}
+
+#[test]
+fn mapping_entry_sequence_items_and_content_spans() {
+    let source = "\
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    data:
+      key: {{ .Values.key }}
+  - |
+    raw block
+  -
+    apiVersion: v1
+";
+    let document = TemplatedDocument::parse(source);
+    let Node::Mapping(entry) = &document.roots()[0] else {
+        panic!("expected the items entry at the root");
+    };
+    let items = entry.sequence_items();
+    sim_assert_eq!(have: items.len(), want: 3);
+
+    // Inline-entry item: content runs from after the dash through the end of
+    // its deepest nested entry (the templated value's hole included).
+    let first = items[0].content_span();
+    sim_assert_eq!(
+        have: &source[first.start..first.end],
+        want: "apiVersion: v1\n    kind: ConfigMap\n    data:\n      key: {{ .Values.key }}"
+    );
+
+    // Block-scalar item: content covers the header and the suppressed body.
+    let second = items[1].content_span();
+    sim_assert_eq!(have: &source[second.start..second.end], want: "|\n    raw block");
+
+    // Bare-dash item: content starts at the first child on the next line.
+    let third = items[2].content_span();
+    sim_assert_eq!(have: &source[third.start..third.end], want: "apiVersion: v1");
+}
+
+#[test]
+fn sequence_items_look_through_control_regions() {
+    let source = "\
+items:
+{{- if .Values.modern }}
+  - kind: A
+  - kind: B
+{{- else }}
+  - kind: C
+{{- end }}
+";
+    let document = TemplatedDocument::parse(source);
+    let Node::Mapping(entry) = &document.roots()[0] else {
+        panic!("expected the items entry at the root");
+    };
+    let contents: Vec<&str> = entry
+        .sequence_items()
+        .into_iter()
+        .map(|item| {
+            let span = item.content_span();
+            &source[span.start..span.end]
+        })
+        .collect();
+    sim_assert_eq!(have: contents, want: vec!["kind: A", "kind: B", "kind: C"]);
 }

@@ -7,8 +7,9 @@ fn attribution_index(source: &str) -> AttributionIndex {
     let tree = helm_schema_ast::parse_go_template(source).expect("parse template");
     let defines = DefineIndex::new();
     let analysis_db = crate::analysis_db::IrAnalysisDb::new(&defines);
+    let document = helm_schema_syntax::TemplatedDocument::parse_with_root(source, tree.root_node());
     build_attribution_index(source, tree.root_node()).with_resource_spans(
-        crate::resource_identity::collect_resource_spans(source, &analysis_db),
+        crate::resource_identity::collect_resource_spans(&document, &analysis_db),
     )
 }
 
@@ -164,6 +165,40 @@ fn resource_locator_descends_into_ranged_list_items() {
             "rules[*]".to_string(),
             "host".to_string(),
         ])
+    );
+}
+
+// Pins the Stage-A3 CST descent improvement: the old tree-sitter walker's
+// ERROR-node recovery failed on the indented item fragment of a nested
+// List envelope and silently dropped every resource in the document.
+#[test]
+fn resource_locator_descends_into_nested_list_envelopes() {
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: List
+        items:
+          - apiVersion: v1
+            kind: List
+            items:
+              - apiVersion: v1
+                kind: ConfigMap
+                data:
+                  key: {{ .Values.key }}
+    "#};
+    let locator = attribution_index(source);
+
+    let key_byte = source.find("key").expect("key marker");
+    let inner = locator.resource_at(key_byte).expect("inner resource");
+    sim_assert_eq!(have: inner.kind, want: "ConfigMap");
+    sim_assert_eq!(have: inner.api_version, want: "v1");
+    sim_assert_eq!(
+        have: locator.rebase_path_at(key_byte, crate::YamlPath(vec![
+            "items[*]".to_string(),
+            "items[*]".to_string(),
+            "data".to_string(),
+            "key".to_string(),
+        ])),
+        want: crate::YamlPath(vec!["data".to_string(), "key".to_string()])
     );
 }
 

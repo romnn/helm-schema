@@ -2,10 +2,10 @@ use std::collections::HashSet;
 
 use helm_schema_ast::{
     AttributionIndex, ResourceSpan, TemplateExpr, TemplateHeader, build_attribution_index,
-    decode_guard, decode_guard_expr, parse_expr_text, parse_go_template, parse_helm_template,
-    unquote_yaml_scalar,
+    decode_guard, decode_guard_expr, parse_expr_text, parse_go_template, unquote_yaml_scalar,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
+use helm_schema_syntax::{MappingEntry, Node as CstNode, TemplatedDocument};
 
 use crate::YamlPath;
 use crate::analysis_db::IrAnalysisDb;
@@ -24,22 +24,24 @@ pub(crate) fn attributed_document(
     root: tree_sitter::Node<'_>,
     analysis_db: &IrAnalysisDb,
 ) -> AttributionIndex {
+    let document = TemplatedDocument::parse_with_root(source, root);
     build_attribution_index(source, root)
-        .with_resource_spans(collect_resource_spans(source, analysis_db))
+        .with_resource_spans(collect_resource_spans(&document, analysis_db))
 }
 
 pub(crate) fn collect_resource_spans(
-    source: &str,
+    document: &TemplatedDocument<'_>,
     analysis_db: &IrAnalysisDb,
 ) -> Vec<ResourceSpan> {
+    let source = document.source();
     let mut spans = Vec::new();
-    for (start, end) in source_document_spans(source) {
-        let Some(document_source) = source.get(start..end) else {
+    for span in document.document_spans() {
+        let Some(document_source) = source.get(span.start..span.end) else {
             continue;
         };
         spans.extend(resource_spans_for_manifest_source(
             document_source,
-            start,
+            span.start,
             Vec::new(),
             analysis_db,
         ));
@@ -538,142 +540,55 @@ fn list_item_sources<'source>(
     base_offset: usize,
     path_prefix: Vec<String>,
 ) -> Vec<ListItemSource<'source>> {
-    let Some(tree) = parse_helm_template(source) else {
+    let document = TemplatedDocument::parse(source);
+    let Some(entry) = top_level_items_entry(document.roots(), source) else {
         return Vec::new();
     };
-    let root = tree.root_node();
-    let Some(document) = first_document_node(root) else {
-        return Vec::new();
-    };
-    let Some(items_sequence) = top_level_items_sequence(document, source) else {
-        return Vec::new();
-    };
-
     let mut items = Vec::new();
-    let mut cursor = items_sequence.walk();
-    for item in items_sequence.children(&mut cursor) {
-        if !item.is_named() || !matches!(item.kind(), "block_sequence_item" | "flow_node") {
-            continue;
-        }
-        let content = sequence_item_content_node(item);
-        let Some(item_source) = source.get(content.start_byte()..content.end_byte()) else {
+    for item in entry.sequence_items() {
+        let span = item.content_span();
+        let Some(item_source) = source.get(span.start..span.end) else {
             continue;
         };
         let mut item_prefix = path_prefix.clone();
         item_prefix.push("items[*]".to_string());
         items.push(ListItemSource {
             source: item_source,
-            start: base_offset + content.start_byte(),
+            start: base_offset + span.start,
             path_prefix: item_prefix,
         });
     }
     items
 }
 
-fn source_document_spans(source: &str) -> Vec<(usize, usize)> {
-    let mut spans = Vec::new();
-    let mut start = 0usize;
-    let mut byte = 0usize;
-    for line in source.split_inclusive('\n') {
-        if line.trim() == "---" {
-            if start < byte {
-                spans.push((start, byte));
-            }
-            start = byte + line.len();
-        }
-        byte += line.len();
-    }
-    if start < source.len() {
-        spans.push((start, source.len()));
-    }
-    spans
-}
-
-fn first_document_node(root: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
-    let mut cursor = root.walk();
-    root.children(&mut cursor)
-        .find(|child| child.is_named() && child.kind() == "document")
-}
-
-fn top_level_items_sequence<'tree>(
-    document: tree_sitter::Node<'tree>,
+/// The root-level `items:` mapping entry of one manifest document. Control
+/// regions overlay container structure in the CST, so the entry (or the
+/// items below it) can sit inside a region branch; look through branches.
+fn top_level_items_entry<'nodes>(
+    nodes: &'nodes [CstNode],
     source: &str,
-) -> Option<tree_sitter::Node<'tree>> {
-    let mapping = top_level_mapping_node(document)?;
-    let pair_kind = match mapping.kind() {
-        "block_mapping" => "block_mapping_pair",
-        "flow_mapping" => "flow_pair",
-        "ERROR" => "block_mapping_pair",
-        _ => return None,
-    };
-    let mut cursor = mapping.walk();
-    for pair in mapping.children(&mut cursor) {
-        if !pair.is_named() || pair.kind() != pair_kind {
-            continue;
-        }
-        let Some(key) = pair.child_by_field_name("key") else {
-            continue;
-        };
-        if yaml_scalar_text(key, source) == Some("items") {
-            return pair.child_by_field_name("value").and_then(sequence_node);
+) -> Option<&'nodes MappingEntry> {
+    for node in nodes {
+        match node {
+            CstNode::Mapping(entry) => {
+                let Some(key) = source.get(entry.key.span.start..entry.key.span.end) else {
+                    continue;
+                };
+                if unquote_yaml_scalar(key.trim()) == "items" {
+                    return Some(entry);
+                }
+            }
+            CstNode::Control(region) => {
+                for branch in &region.branches {
+                    if let Some(entry) = top_level_items_entry(&branch.body, source) {
+                        return Some(entry);
+                    }
+                }
+            }
+            _ => {}
         }
     }
     None
-}
-
-fn top_level_mapping_node(node: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
-    match node.kind() {
-        "block_mapping" | "flow_mapping" => Some(node),
-        "ERROR" => {
-            let mut cursor = node.walk();
-            if node
-                .named_children(&mut cursor)
-                .any(|child| child.kind() == "block_mapping_pair")
-            {
-                return Some(node);
-            }
-            let mut cursor = node.walk();
-            node.named_children(&mut cursor)
-                .find_map(top_level_mapping_node)
-        }
-        "document" | "block_node" | "flow_node" | "block_sequence_item" => {
-            let mut cursor = node.walk();
-            node.named_children(&mut cursor)
-                .find_map(top_level_mapping_node)
-        }
-        _ => None,
-    }
-}
-
-fn sequence_node(node: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
-    let node = unwrap_yaml_value_node(node);
-    matches!(node.kind(), "block_sequence" | "flow_sequence").then_some(node)
-}
-
-fn sequence_item_content_node(item: tree_sitter::Node<'_>) -> tree_sitter::Node<'_> {
-    let content = if item.kind() == "block_sequence_item" {
-        item.named_child(0).unwrap_or(item)
-    } else {
-        item
-    };
-    unwrap_yaml_value_node(content)
-}
-
-fn unwrap_yaml_value_node(node: tree_sitter::Node<'_>) -> tree_sitter::Node<'_> {
-    if matches!(node.kind(), "block_node" | "flow_node")
-        && let Some(child) = node.named_child(0)
-    {
-        return unwrap_yaml_value_node(child);
-    }
-    node
-}
-
-fn yaml_scalar_text<'source>(
-    node: tree_sitter::Node<'_>,
-    source: &'source str,
-) -> Option<&'source str> {
-    let text = node.utf8_text(source.as_bytes()).ok()?.trim();
-    Some(unquote_yaml_scalar(text))
 }
 
 fn normalize_sequence_item_source(source: &str) -> String {

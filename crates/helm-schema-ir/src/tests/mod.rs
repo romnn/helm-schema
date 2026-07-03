@@ -24,11 +24,14 @@ mod document_projection {
         }
 
         fn reset_for_tree(&mut self, tree: &tree_sitter::Tree) {
-            self.attribution = build_attribution_index(self.source, tree.root_node())
-                .with_resource_spans(crate::resource_identity::collect_resource_spans(
-                    self.source,
-                    &self.analysis_db,
-                ));
+            let document = helm_schema_syntax::TemplatedDocument::parse_with_root(
+                self.source,
+                tree.root_node(),
+            );
+            self.attribution =
+                build_attribution_index(self.source, tree.root_node()).with_resource_spans(
+                    crate::resource_identity::collect_resource_spans(&document, &self.analysis_db),
+                );
         }
 
         fn control_site_for_node(
