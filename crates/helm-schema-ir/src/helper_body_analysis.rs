@@ -13,7 +13,7 @@ use crate::fragment_expr_eval::{
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_exprs;
 use crate::helper_runtime_plan::{
     HelperConditionPlan, HelperRangeRuntimePlan, helper_if_condition_plan,
-    helper_range_runtime_plan, helper_with_condition_plan,
+    helper_range_runtime_plan,
 };
 use crate::helper_summary::HelperSummary;
 use crate::helper_summary::{HelperFragmentOutputUse, HelperOutputMeta};
@@ -24,6 +24,7 @@ use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, eval_template_body, push_predicate_contract_guards,
 };
 use crate::symbolic_local_state::SymbolicLocalState;
+use crate::value_path_context::computed_with_body_fragment_value_expr;
 use crate::{ValueKind, YamlPath};
 use helm_schema_core::Predicate;
 
@@ -237,15 +238,6 @@ impl<'context: 'state, 'state> HelperAnalysisRuntime<'context, 'state> {
         );
     }
 
-    fn activate_condition_plan(&mut self, plan: &HelperConditionPlan) {
-        for path in &plan.guard_paths {
-            self.analysis.add_guard_path(path.clone());
-        }
-        push_predicate_contract_guards(self, &plan.predicate);
-        self.control
-            .extend_source_relations(plan.source_relations.iter().cloned());
-    }
-
     fn collect_dependency_expression(&mut self, exprs: &[helm_schema_ast::TemplateExpr]) {
         let output_len = self.outputs.len();
         self.collect_fragment_expression(exprs, &YamlPath(Vec::new()), ValueKind::Scalar);
@@ -423,7 +415,12 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
             self.context,
             self.seen,
         );
-        self.activate_condition_plan(&plan);
+        for path in &plan.guard_paths {
+            self.analysis.add_guard_path(path.clone());
+        }
+        push_predicate_contract_guards(self, &plan.predicate);
+        self.control
+            .extend_source_relations(plan.source_relations.iter().cloned());
         plan
     }
 
@@ -431,20 +428,16 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         &mut self,
         header: &helm_schema_ast::TemplateHeader,
     ) -> Self::ConditionPlan {
-        let current_dot = self.current_helper_dot().cloned();
-        let fragment_current_dot = self.current_fragment_dot().cloned();
-        let plan = helper_with_condition_plan(
-            header,
+        let plan = self.enter_if_condition(header);
+        let dot_binding = computed_with_body_fragment_value_expr(
+            header.expr(),
             self.bindings,
-            current_dot.as_ref(),
-            fragment_current_dot.as_ref(),
-            self.locals,
+            &self.locals.fragment_values,
             self.context,
-            self.seen,
+            self.current_fragment_dot(),
+            self.current_helper_dot(),
         );
-        self.activate_condition_plan(&plan);
-        self.control
-            .push_effect_dot_binding(plan.dot_binding.clone());
+        self.control.push_effect_dot_binding(dot_binding);
         plan
     }
 

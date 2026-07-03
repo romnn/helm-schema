@@ -43,14 +43,6 @@ impl ReferenceMode {
             Self::SelfContained
         }
     }
-
-    pub(super) fn bundles_refs(self) -> bool {
-        matches!(self, Self::SelfContained)
-    }
-
-    pub(super) fn fully_inlines_refs(self) -> bool {
-        matches!(self, Self::FullyInlinedExport)
-    }
 }
 
 /// JSON serialization format for the final schema document.

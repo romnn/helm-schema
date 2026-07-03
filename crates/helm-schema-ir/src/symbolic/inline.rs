@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
 use crate::ValueKind;
-use crate::contract::ContractIr;
 use crate::contract_sink::ContractUseContext;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{bindings_for_helper_arg_with, eval_expr, expr_literal_helper_call_callee};
@@ -153,7 +152,6 @@ impl<'a> SymbolicWalker<'a> {
             None,
             Vec::new(),
         );
-        let mut dependency_contract = ContractIr::default();
         for output in inline_dependency_outputs {
             let value = output.source_expr;
             if suppress_roots.contains(&value) {
@@ -162,9 +160,8 @@ impl<'a> SymbolicWalker<'a> {
             let witness = output
                 .meta
                 .emission_witness(&value, None, ValueKind::Scalar);
-            context.emit(witness, &mut dependency_contract);
+            context.emit(witness, &mut self.contract);
         }
-        self.contract.append(dependency_contract);
         true
     }
 }

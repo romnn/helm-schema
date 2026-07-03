@@ -5,7 +5,7 @@ use serde_json::Value;
 use crate::error::CliResult;
 use crate::flatten;
 use crate::load_budget::read_to_end_capped;
-use crate::output_pipeline::PolicyInputOptions;
+use crate::output_pipeline::{PolicyInputOptions, ReferenceMode};
 use crate::schema_override;
 
 /// Output policy inputs loaded from the filesystem before final schema
@@ -67,25 +67,21 @@ fn prepare_override_schema(
 ) -> CliResult<Value> {
     let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
 
-    if options.reference_mode.bundles_refs() {
-        return flatten::bundle_refs(
+    match options.reference_mode {
+        ReferenceMode::SelfContained => flatten::bundle_refs(
             schema,
             override_base,
             options.fetch_policy,
             options.load_budget,
-        );
+        ),
+        ReferenceMode::FullyInlinedExport => flatten::flatten_refs(
+            schema,
+            override_base,
+            options.fetch_policy,
+            options.load_budget,
+        ),
+        ReferenceMode::PreserveRefs => Ok(schema),
     }
-
-    if !options.reference_mode.fully_inlines_refs() {
-        return Ok(schema);
-    }
-
-    flatten::flatten_refs(
-        schema,
-        override_base,
-        options.fetch_policy,
-        options.load_budget,
-    )
 }
 
 fn load_json_file(path: &Path, max_bytes: usize) -> CliResult<Value> {

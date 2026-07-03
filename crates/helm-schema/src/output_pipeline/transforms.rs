@@ -7,7 +7,7 @@ use crate::error::CliResult;
 use crate::flatten;
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
 use crate::output_pipeline::global_mirror::mirror_global_schema_into_subcharts;
-use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs};
+use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use crate::schema_override;
 
 const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
@@ -55,10 +55,12 @@ fn apply_output_transforms(
     base_dir: &Path,
     options: &OutputPipelineOptions,
 ) -> CliResult<Value> {
-    if options.reference_mode.bundles_refs() {
-        schema = flatten::bundle_prepared_refs(schema, base_dir)?;
-    } else if options.reference_mode.fully_inlines_refs() {
-        schema = flatten::flatten_prepared_refs(schema, base_dir)?;
+    match options.reference_mode {
+        ReferenceMode::SelfContained => schema = flatten::bundle_prepared_refs(schema, base_dir)?,
+        ReferenceMode::FullyInlinedExport => {
+            schema = flatten::flatten_prepared_refs(schema, base_dir)?;
+        }
+        ReferenceMode::PreserveRefs => {}
     }
 
     if options.strip_descriptions {

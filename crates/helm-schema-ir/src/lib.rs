@@ -1,7 +1,6 @@
 mod abstract_value;
 mod analysis_db;
 mod bound_value_analysis;
-mod condition_action_plan;
 mod contract;
 mod contract_normalization;
 mod contract_signal_builder;

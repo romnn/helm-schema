@@ -4,22 +4,47 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_get_binding_from_exprs;
-use crate::condition_action_plan::{ConditionActionPlan, plan_if_condition, plan_with_condition};
-use crate::contract::ContractIr;
 use crate::contract_sink::{ContractUseContext, EmissionWitness};
 use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
 use crate::helper_summary::merge_output_use_meta;
-use crate::node_eval::{
-    NodeActionEffectSink, NodeEvalRuntime, activate_if_condition_plan, activate_range_action_plan,
-    activate_with_condition_plan,
-};
+use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, push_predicate_contract_guards};
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
 use crate::symbolic_scope_state::SymbolicScopeSnapshot;
+use crate::value_path_context::ValuePathContext;
 use crate::{Guard, ValueKind, YamlPath};
 use helm_schema_ast::ControlSite;
 use helm_schema_core::Predicate;
 
 use super::SymbolicWalker;
+
+#[derive(Clone)]
+pub(crate) struct ConditionActionPlan {
+    pub(crate) predicate: Predicate,
+    pub(crate) bound_values: Vec<String>,
+    pub(crate) dot_binding: Option<AbstractValue>,
+}
+
+fn plan_if_condition(
+    header: &TemplateHeader,
+    value_path_context: &ValuePathContext<'_>,
+) -> ConditionActionPlan {
+    ConditionActionPlan {
+        predicate: value_path_context.condition_predicate_expr(header.expr()),
+        bound_values: value_path_context.bound_output_paths_expr(header.expr()),
+        dot_binding: None,
+    }
+}
+
+fn plan_with_condition(
+    header: &TemplateHeader,
+    value_path_context: &ValuePathContext<'_>,
+) -> ConditionActionPlan {
+    ConditionActionPlan {
+        predicate: value_path_context.with_condition_predicate_expr(header.expr()),
+        bound_values: value_path_context.bound_output_paths_expr(header.expr()),
+        dot_binding: value_path_context.with_body_fragment_value_expr(header.expr()),
+    }
+}
 
 impl SymbolicWalker<'_> {
     fn current_source_byte(&self) -> Option<usize> {
@@ -65,11 +90,90 @@ impl SymbolicWalker<'_> {
             self.current_source_span,
             self.provenance_helper_chain(),
         );
-        let mut contract = ContractIr::default();
         let witness =
             EmissionWitness::new(source_expr, Some(path), kind, vec![extra_guards.to_vec()]);
-        context.emit(witness, &mut contract);
-        self.contract.append(contract);
+        context.emit(witness, &mut self.contract);
+    }
+
+    fn activate_if_condition_plan(&mut self, plan: &ConditionActionPlan) {
+        let guards = plan.predicate.contract_guards();
+        for value in &plan.bound_values {
+            self.push_contract_use(value.clone(), YamlPath(Vec::new()), ValueKind::Scalar, &[]);
+        }
+
+        for guard in &guards {
+            for path in guard.value_paths() {
+                self.push_contract_use(
+                    path.to_string(),
+                    YamlPath(Vec::new()),
+                    ValueKind::Scalar,
+                    std::slice::from_ref(guard),
+                );
+            }
+            self.scope
+                .push_predicate_if_absent(Predicate::from(guard.clone()));
+        }
+        if guards.is_empty() {
+            self.scope.push_predicate_if_absent(plan.predicate.clone());
+        }
+    }
+
+    fn activate_with_condition_plan(&mut self, plan: &ConditionActionPlan) {
+        // Push the With predicate before emitting header scalar uses so the
+        // emitted contract guards on those uses include `Guard::With`.
+        // The schema generator uses that marker to identify with-header reads.
+        let guards = push_predicate_contract_guards(self, &plan.predicate);
+
+        for value in &plan.bound_values {
+            self.push_contract_use(value.clone(), YamlPath(Vec::new()), ValueKind::Scalar, &[]);
+        }
+
+        for guard in &guards {
+            for path in guard.value_paths() {
+                self.push_contract_use(
+                    path.to_string(),
+                    YamlPath(Vec::new()),
+                    ValueKind::Scalar,
+                    &[],
+                );
+            }
+        }
+        self.scope.push_dot_binding(plan.dot_binding.clone());
+    }
+
+    fn activate_range_action_plan(&mut self, plan: &RangeActionPlan, current_path: &YamlPath) {
+        if let Some((variable, literals)) = &plan.literal_range {
+            self.scope
+                .locals_mut()
+                .insert_range_domain(variable.clone(), literals.clone());
+        }
+        for source_path in &plan.source_paths {
+            let guard = Guard::Range {
+                path: source_path.clone(),
+            };
+            if plan.emit_header_use {
+                self.push_contract_use(
+                    source_path.clone(),
+                    plan.guard_path.clone(),
+                    ValueKind::Scalar,
+                    std::slice::from_ref(&guard),
+                );
+            }
+            self.scope.push_predicate_if_absent(Predicate::from(guard));
+        }
+
+        if plan.renders_mapping_entries {
+            for source_path in &plan.source_paths {
+                self.push_contract_use(
+                    source_path.clone(),
+                    current_path.clone(),
+                    ValueKind::Fragment,
+                    &[],
+                );
+            }
+        }
+
+        self.scope.push_dot_binding(plan.dot_binding.clone());
     }
 
     fn observe_symbolic_assignment(&mut self, exprs: &[TemplateExpr]) {
@@ -190,7 +294,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     fn enter_if_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let plan = plan_if_condition(header, &self.value_path_context());
         self.control_resource_context_depth += 1;
-        activate_if_condition_plan(self, &plan);
+        self.activate_if_condition_plan(&plan);
         self.control_resource_context_depth = self.control_resource_context_depth.saturating_sub(1);
         plan
     }
@@ -198,7 +302,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
     fn enter_with_condition(&mut self, header: &TemplateHeader) -> ConditionActionPlan {
         let plan = plan_with_condition(header, &self.value_path_context());
         self.control_resource_context_depth += 1;
-        activate_with_condition_plan(self, &plan);
+        self.activate_with_condition_plan(&plan);
         self.control_resource_context_depth = self.control_resource_context_depth.saturating_sub(1);
         plan
     }
@@ -232,7 +336,7 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
         current_path: &YamlPath,
     ) {
         self.control_resource_context_depth += 1;
-        activate_range_action_plan(self, plan, current_path);
+        self.activate_range_action_plan(plan, current_path);
         self.control_resource_context_depth = self.control_resource_context_depth.saturating_sub(1);
     }
 }
@@ -240,25 +344,5 @@ impl NodeEvalRuntime for SymbolicWalker<'_> {
 impl NodeActionEffectSink for SymbolicWalker<'_> {
     fn push_predicate_if_absent(&mut self, predicate: Predicate) {
         self.scope.push_predicate_if_absent(predicate);
-    }
-
-    fn push_dot_binding(&mut self, binding: Option<AbstractValue>) {
-        self.scope.push_dot_binding(binding);
-    }
-
-    fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
-        self.scope
-            .locals_mut()
-            .insert_range_domain(variable, literals);
-    }
-
-    fn observe_value_use_with_extra_guards(
-        &mut self,
-        source_expr: String,
-        path: YamlPath,
-        kind: ValueKind,
-        extra_guards: &[Guard],
-    ) {
-        self.push_contract_use(source_expr, path, kind, extra_guards);
     }
 }

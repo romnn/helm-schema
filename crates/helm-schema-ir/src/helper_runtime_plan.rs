@@ -10,7 +10,6 @@ use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with
 use crate::helper_walk_state::{HelperRangeIteration, HelperRuntimeControlState, RangeFrame};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
-use crate::value_path_context::computed_with_body_fragment_value_expr;
 use helm_schema_core::Predicate;
 
 #[derive(Clone)]
@@ -18,7 +17,6 @@ pub(crate) struct HelperConditionPlan {
     pub(crate) guard_paths: BTreeSet<String>,
     pub(crate) predicate: Predicate,
     pub(crate) source_relations: Vec<BTreeSet<String>>,
-    pub(crate) dot_binding: Option<AbstractValue>,
 }
 
 #[derive(Clone, Default)]
@@ -93,29 +91,7 @@ pub(crate) fn helper_if_condition_plan(
         guard_paths,
         predicate,
         source_relations: condition_source_relations(expr, locals),
-        dot_binding: None,
     }
-}
-
-pub(crate) fn helper_with_condition_plan(
-    header: &TemplateHeader,
-    bindings: &HashMap<String, AbstractValue>,
-    current_dot: Option<&AbstractValue>,
-    current_dot_fragment: Option<&AbstractValue>,
-    locals: &SymbolicLocalState,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> HelperConditionPlan {
-    let mut plan = helper_if_condition_plan(header, bindings, current_dot, locals, context, seen);
-    plan.dot_binding = computed_with_body_fragment_value_expr(
-        header.expr(),
-        bindings,
-        &locals.fragment_values,
-        context,
-        current_dot_fragment,
-        current_dot,
-    );
-    plan
 }
 
 pub(crate) fn helper_range_runtime_plan(
@@ -163,20 +139,15 @@ pub(crate) fn helper_range_runtime_plan(
     } else {
         None
     };
-    let non_exact_variable_binding = if exact_iterations.is_none() {
-        range_variable.zip(
-            range_fragment_value
-                .as_ref()
-                .and_then(AbstractValue::fragment_range_item)
-                .map(|binding| binding.to_context_value()),
-        )
-    } else {
-        None
-    };
     let dot_binding = range_fragment_value
         .as_ref()
         .and_then(AbstractValue::fragment_range_item)
         .map(|binding| binding.to_context_value());
+    let non_exact_variable_binding = if exact_iterations.is_none() {
+        range_variable.zip(dot_binding.clone())
+    } else {
+        None
+    };
     let frame = RangeFrame {
         definitely_nonempty: range_fragment_value
             .as_ref()
