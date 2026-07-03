@@ -1,6 +1,23 @@
 # Unified frontend redesign: global-maximum architecture
 
-Status: approved direction (2026-07-03). This supersedes the incremental
+Status: IMPLEMENTED (2026-07-04), commits from Stage A through B5+C. All
+stages landed fully validated (byte-identical-or-adjudicated fixtures, full
+suite, zero lint warnings, luup3 aggregate at every commit). Final state:
+one frontend CST (helm-schema-syntax), one abstract interpreter
+(fragment_eval, helpers in-domain), one identity projection, one claim
+terminal; the line model, AttributionIndex layer, three walkers, the wide
+HelperSummary, the emission/prune algebra, and the node_eval runtime are
+deleted. Core production Rust LOC: 24,940 — the new design's floor carries
+the ~1,700-line frontend the old design lacked while being categorically
+simpler downstream. Signoz release generation ~1.53s median (~15% faster
+than before the redesign). Remaining floor items (documented, deliberate):
+rows flatten guard trees into Vec<Guard> (the public row currency —
+collapsing it is public-API surgery); capability conditions live outside
+PathCondition (extend the predicate lattice if ever needed); the gen
+conditional-append deep-clone is the next perf lever; the double
+self-truthy normalization is corpus-pinned fixpoint insurance.
+
+Originally: approved direction (2026-07-03). This supersedes the incremental
 consolidation campaign recorded in
 `plan/full-core-architecture-simplification-handoff.md`, which closed at the
 current model's floor (23,848 production LOC, commit `c46f7af`). That campaign
