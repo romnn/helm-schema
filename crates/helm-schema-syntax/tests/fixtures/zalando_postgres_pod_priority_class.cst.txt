@@ -1,0 +1,17 @@
+document 0 [0..647)
+control if [0..646) ill-nested
+  branch [0..45) "{{- if .Values.podPriorityClassName.create }}"
+    entry [46..78) closed indent=0 key="apiVersion" value="scheduling.k8s.io/v1"
+    entry [79..148) closed indent=0 key="description" value="'Use only for databases controlled by Postgres operator'"
+    entry [149..168) closed indent=0 key="kind" value="PriorityClass"
+    entry [169..178) open indent=0 key="metadata"
+      entry [181..188) open indent=2 key="labels"
+        entry [193..258) open indent=4 key="app.kubernetes.io/name" value="⟦{{ template \"postgres-operator.name\" . }}⟧"
+        entry [263..320) open indent=4 key="helm.sh/chart" value="⟦{{ template \"postgres-operator.chart\" . }}⟧"
+        entry [325..377) open indent=4 key="app.kubernetes.io/managed-by" value="⟦{{ .Release.Service }}⟧"
+        entry [382..429) open indent=4 key="app.kubernetes.io/instance" value="⟦{{ .Release.Name }}⟧"
+      entry [432..486) open indent=2 key="name" value="⟦{{ include \"postgres-pod.priorityClassName\" . }}⟧"
+      entry [489..524) open indent=2 key="namespace" value="⟦{{ .Release.Namespace }}⟧"
+    entry [525..563) closed indent=0 key="preemptionPolicy" value="PreemptLowerPriority"
+    entry [564..584) closed indent=0 key="globalDefault" value="false"
+entry [585..635) open indent=0 key="value" value="⟦{{ .Values.podPriorityClassName.priority }}⟧"

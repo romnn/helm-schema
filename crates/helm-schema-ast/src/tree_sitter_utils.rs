@@ -21,25 +21,15 @@ pub fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
     }
 }
 
-pub(crate) fn parse_with(
-    language: tree_sitter::Language,
-    source: &str,
-) -> Option<tree_sitter::Tree> {
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).ok()?;
-    parser.parse(source, None)
-}
-
-#[tracing::instrument(skip_all, fields(bytes = source.len()))]
-pub fn parse_go_template(source: &str) -> Option<tree_sitter::Tree> {
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    parse_with(language, source)
-}
+/// The Go-template tree parse is owned by `helm-schema-syntax` (this crate
+/// layers the typed expression AST on top of the same trees).
+pub use helm_schema_syntax::parse_go_template;
 
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]
 pub fn parse_helm_template(source: &str) -> Option<tree_sitter::Tree> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
-    parse_with(language, source)
+    let mut parser = tree_sitter::Parser::new();
+    parser.set_language(&language).ok()?;
+    parser.parse(source, None)
 }

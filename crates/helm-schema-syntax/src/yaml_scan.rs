@@ -1,3 +1,7 @@
+//! Line-local YAML lexical helpers: mapping-colon detection (template- and
+//! quote-aware) and scalar quoting. These are the shared lexical layer under
+//! both the layout parser and its query API.
+
 pub fn parse_yaml_key(after: &str) -> Option<String> {
     fn finalize_yaml_key(key: String) -> Option<String> {
         if key.is_empty() {
@@ -74,7 +78,7 @@ pub fn unquote_yaml_scalar(value: &str) -> &str {
 /// Whether the colon at `colon` separates a mapping key from its value.
 /// YAML only treats `:` as a mapping separator when it ends the line or is
 /// followed by whitespace; `key:value` is a plain scalar.
-pub(crate) fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
+pub fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
     text[colon + 1..]
         .chars()
         .next()
@@ -83,7 +87,7 @@ pub(crate) fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
 
 /// The offset of the first colon that YAML treats as a mapping key/value
 /// separator, or `None` when the line has no such colon.
-pub(crate) fn structural_mapping_colon(text: &str) -> Option<usize> {
+pub fn structural_mapping_colon(text: &str) -> Option<usize> {
     first_mapping_colon_offset(text).filter(|&colon| mapping_colon_is_structural(text, colon))
 }
 
@@ -137,5 +141,5 @@ pub fn first_mapping_colon_offset(line: &str) -> Option<usize> {
 }
 
 #[cfg(test)]
-#[path = "tests/yaml_syntax.rs"]
+#[path = "tests/yaml_scan.rs"]
 mod tests;

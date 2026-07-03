@@ -1,0 +1,132 @@
+document 0 [0..4399)
+opaque template-comment [0..93) "{{- /*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/}}"
+scalar [7..52) indent=0 "⟦{{- /*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/}}⟧"
+entry [53..88) closed indent=0 key="SPDX-License-Identifier" value="⟦{{- /*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/}}⟧"
+scalar [89..93) indent=0 "⟦{{- /*\nCopyright Broadcom, Inc. All Rights Reserved.\nSPDX-License-Identifier: APACHE-2.0\n*/}}⟧"
+control if [95..4398) ill-nested
+  branch [95..134) "{{- if .Values.networkPolicy.enabled }}"
+    entry [135..154) closed indent=0 key="kind" value="NetworkPolicy"
+    entry [155..230) open indent=0 key="apiVersion" value="⟦{{ template \"common.capabilities.networkPolicy.apiVersion\" . }}⟧"
+    entry [231..240) open indent=0 key="metadata"
+      entry [243..289) open indent=2 key="name" value="⟦{{ template \"common.names.fullname\" . }}⟧"
+      entry [292..351) open indent=2 key="namespace" value="⟦{{ include \"common.names.namespace\" . | quote }}⟧"
+      entry [354..470) open indent=2 key="labels" value="⟦{{- include \"common.labels.standard\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 4 }}⟧"
+      control if [473..644) ill-nested
+        branch [473..508) "{{- if .Values.commonAnnotations }}"
+      entry [511..631) open indent=2 key="annotations" value="⟦{{- include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4 }}⟧"
+entry [645..650) open indent=0 key="spec"
+  entry [653..665) open indent=2 key="podSelector"
+    entry [670..794) open indent=4 key="matchLabels" value="⟦{{- include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 6 }}⟧"
+  entry [797..809) open indent=2 key="policyTypes"
+    item [814..823) indent=4 value="Ingress"
+    item [828..836) indent=4 value="Egress"
+  entry [893..900) open indent=2 key="egress"
+    item [905..909) indent=4 value="{}"
+  control if [839..1701) ill-nested
+    branch [839..890) "{{- if .Values.networkPolicy.allowExternalEgress }}"
+    branch [912..923) "{{- else }}"
+  entry [926..933) open indent=2 key="egress"
+    control if [938..1505) ill-nested
+      branch [938..985) "{{- if eq .Values.architecture \"replication\" }}"
+        comment [990..1012) "# Allow dns resolution"
+        item [1017..1025) indent=4
+          entry [1019..1025) open indent=6 key="ports"
+            item [1034..1044) indent=8
+              entry [1036..1044) closed indent=10 key="port" value="53"
+              entry [1055..1068) closed indent=10 key="protocol" value="UDP"
+              comment [1073..1123) "# Allow outbound connections to other cluster pods"
+    item [1128..1136) indent=4
+      entry [1130..1136) open indent=6 key="ports"
+        item [1145..1194) indent=8
+          entry [1147..1194) open indent=10 key="port" value="⟦{{ .Values.master.containerPorts.redis }}⟧"
+        control if [1203..1319) ill-nested
+          branch [1203..1237) "{{- if .Values.sentinel.enabled }}"
+        item [1246..1300) indent=8
+          entry [1248..1300) open indent=10 key="port" value="⟦{{ .Values.sentinel.containerPorts.sentinel }}⟧"
+      entry [1326..1329) open indent=6 key="to"
+        item [1338..1352) indent=8
+          entry [1340..1352) open indent=10 key="podSelector"
+            entry [1365..1490) open indent=12 key="matchLabels" value="⟦{{- include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14 }}⟧"
+              control if [1510..1688)
+                branch [1510..1553) "{{- if .Values.networkPolicy.extraEgress }}"
+                  output [1558..1673) "{{- include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraEgress \"context\" $ ) | nindent 4 }}"
+  entry [1704..1712) open indent=2 key="ingress"
+    comment [1717..1744) "# Allow inbound connections"
+    item [1749..1757) indent=4
+      entry [1751..1757) open indent=6 key="ports"
+        item [1766..1815) indent=8
+          entry [1768..1815) open indent=10 key="port" value="⟦{{ .Values.master.containerPorts.redis }}⟧"
+        control if [1824..1940) ill-nested
+          branch [1824..1858) "{{- if .Values.sentinel.enabled }}"
+        item [1867..1921) indent=8
+          entry [1869..1921) open indent=10 key="port" value="⟦{{ .Values.sentinel.containerPorts.sentinel }}⟧"
+      control if [1947..3099) ill-nested
+        branch [1947..1996) "{{- if not .Values.networkPolicy.allowExternal }}"
+      entry [2003..2008) open indent=6 key="from"
+        item [2017..2031) indent=8
+          entry [2019..2031) open indent=10 key="podSelector"
+            entry [2044..2056) open indent=12 key="matchLabels"
+              output [2071..2111) "{{ template \"common.names.fullname\" . }}"
+              opaque action-line-text [2111..2126) "-client: \"true\""
+        item [2135..2149) indent=8
+          entry [2137..2149) open indent=10 key="podSelector"
+            entry [2162..2287) open indent=12 key="matchLabels" value="⟦{{- include \"common.labels.matchLabels\" ( dict \"customLabels\" .Values.commonLabels \"context\" $ ) | nindent 14 }}⟧"
+        control if [2296..3082) ill-nested
+          branch [2296..2397) "{{- if or .Values.networkPolicy.ingressNSMatchLabels .Values.networkPolicy.ingressNSPodMatchLabels }}"
+        item [2406..2426) indent=8
+          entry [2408..2426) open indent=10 key="namespaceSelector"
+            entry [2439..2451) open indent=12 key="matchLabels"
+              control if [2466..2759)
+                branch [2466..2518) "{{- if .Values.networkPolicy.ingressNSMatchLabels }}"
+                  control range [2535..2690)
+                    branch [2535..2606) "{{- range $key, $value := .Values.networkPolicy.ingressNSMatchLabels }}"
+                      output [2623..2641) "{{ $key | quote }}"
+                      opaque action-line-text [2641..2642) ":"
+                      output [2643..2663) "{{ $value | quote }}"
+                branch [2705..2715) "{{ else }}"
+                  scalar [2732..2734) indent=16 "{}"
+          control if [2770..3063) ill-nested
+            branch [2770..2825) "{{- if .Values.networkPolicy.ingressNSPodMatchLabels }}"
+          entry [2836..2848) open indent=10 key="podSelector"
+            entry [2861..2873) open indent=12 key="matchLabels"
+              control range [2888..3042)
+                branch [2888..2962) "{{- range $key, $value := .Values.networkPolicy.ingressNSPodMatchLabels }}"
+                  output [2977..2995) "{{ $key | quote }}"
+                  opaque action-line-text [2995..2996) ":"
+                  output [2997..3017) "{{ $value | quote }}"
+    control if [3104..4202) ill-nested
+      branch [3104..3137) "{{- if .Values.metrics.enabled }}"
+        comment [3142..3180) "# Allow prometheus scrapes for metrics"
+    item [3185..3193) indent=4
+      entry [3187..3193) open indent=6 key="ports"
+        item [3202..3251) indent=8
+          entry [3204..3251) open indent=10 key="port" value="⟦{{ .Values.metrics.containerPorts.http }}⟧"
+      control if [3258..4187) ill-nested
+        branch [3258..3315) "{{- if not .Values.networkPolicy.metrics.allowExternal }}"
+      entry [3322..3327) open indent=6 key="from"
+        control if [3336..4170) ill-nested
+          branch [3336..3453) "{{- if or .Values.networkPolicy.metrics.ingressNSMatchLabels .Values.networkPolicy.metrics.ingressNSPodMatchLabels }}"
+        item [3462..3482) indent=8
+          entry [3464..3482) open indent=10 key="namespaceSelector"
+            entry [3495..3507) open indent=12 key="matchLabels"
+              control if [3522..3831)
+                branch [3522..3582) "{{- if .Values.networkPolicy.metrics.ingressNSMatchLabels }}"
+                  control range [3599..3762)
+                    branch [3599..3678) "{{- range $key, $value := .Values.networkPolicy.metrics.ingressNSMatchLabels }}"
+                      output [3695..3713) "{{ $key | quote }}"
+                      opaque action-line-text [3713..3714) ":"
+                      output [3715..3735) "{{ $value | quote }}"
+                branch [3777..3787) "{{ else }}"
+                  scalar [3804..3806) indent=16 "{}"
+          control if [3842..4151) ill-nested
+            branch [3842..3905) "{{- if .Values.networkPolicy.metrics.ingressNSPodMatchLabels }}"
+          entry [3916..3928) open indent=10 key="podSelector"
+            entry [3941..3953) open indent=12 key="matchLabels"
+              control range [3968..4130)
+                branch [3968..4050) "{{- range $key, $value := .Values.networkPolicy.metrics.ingressNSPodMatchLabels }}"
+                  output [4065..4083) "{{ $key | quote }}"
+                  opaque action-line-text [4083..4084) ":"
+                  output [4085..4105) "{{ $value | quote }}"
+              control if [4207..4387)
+                branch [4207..4251) "{{- if .Values.networkPolicy.extraIngress }}"
+                  output [4256..4372) "{{- include \"common.tplvalues.render\" ( dict \"value\" .Values.networkPolicy.extraIngress \"context\" $ ) | nindent 4 }}"

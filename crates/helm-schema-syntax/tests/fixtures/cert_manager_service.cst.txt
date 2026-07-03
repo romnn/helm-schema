@@ -1,0 +1,39 @@
+document 0 [0..1247)
+control if [0..1246) ill-nested
+  branch [0..84) "{{- if and .Values.prometheus.enabled (not .Values.prometheus.podmonitor.enabled) }}"
+    entry [85..99) closed indent=0 key="apiVersion" value="v1"
+    entry [100..113) closed indent=0 key="kind" value="Service"
+    entry [114..123) open indent=0 key="metadata"
+      entry [126..172) open indent=2 key="name" value="⟦{{ template \"cert-manager.fullname\" . }}⟧"
+      entry [175..226) open indent=2 key="namespace" value="⟦{{ include \"cert-manager.namespace\" . }}⟧"
+      control with [227..317) ill-nested
+        branch [227..265) "{{- with .Values.serviceAnnotations }}"
+      entry [268..280) open indent=2 key="annotations"
+        output [281..306) "{{ toYaml . | indent 4 }}"
+      entry [320..327) open indent=2 key="labels"
+        entry [332..372) open indent=4 key="app" value="⟦{{ include \"cert-manager.name\" . }}⟧"
+        entry [377..436) open indent=4 key="app.kubernetes.io/name" value="⟦{{ include \"cert-manager.name\" . }}⟧"
+        entry [441..488) open indent=4 key="app.kubernetes.io/instance" value="⟦{{ .Release.Name }}⟧"
+        entry [493..534) closed indent=4 key="app.kubernetes.io/component" value="\"controller\""
+        output [539..576) "{{- include \"labels\" . | nindent 4 }}"
+        control with [581..661)
+          branch [581..614) "{{- with .Values.serviceLabels }}"
+            output [619..646) "{{- toYaml . | nindent 4 }}"
+entry [662..667) open indent=0 key="spec"
+  entry [670..685) closed indent=2 key="type" value="ClusterIP"
+  control if [688..794) ill-nested
+    branch [688..727) "{{- if .Values.serviceIPFamilyPolicy }}"
+  entry [730..781) open indent=2 key="ipFamilyPolicy" value="⟦{{ .Values.serviceIPFamilyPolicy }}⟧"
+  control if [797..912) ill-nested
+    branch [797..832) "{{- if .Values.serviceIPFamilies }}"
+  entry [835..899) open indent=2 key="ipFamilies" value="⟦{{ .Values.serviceIPFamilies | toYaml | nindent 2 }}⟧"
+  entry [915..921) open indent=2 key="ports"
+    item [924..939) indent=2
+      entry [926..939) closed indent=4 key="protocol" value="TCP"
+      entry [944..954) closed indent=4 key="port" value="9402"
+      entry [959..994) closed indent=4 key="name" value="tcp-prometheus-servicemonitor"
+      entry [999..1061) open indent=4 key="targetPort" value="⟦{{ .Values.prometheus.servicemonitor.targetPort }}⟧"
+  entry [1064..1073) open indent=2 key="selector"
+    entry [1078..1137) open indent=4 key="app.kubernetes.io/name" value="⟦{{ include \"cert-manager.name\" . }}⟧"
+    entry [1142..1189) open indent=4 key="app.kubernetes.io/instance" value="⟦{{ .Release.Name }}⟧"
+    entry [1194..1235) closed indent=4 key="app.kubernetes.io/component" value="\"controller\""

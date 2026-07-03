@@ -8,7 +8,6 @@ mod range_structure;
 mod template_action;
 mod tree_sitter_utils;
 mod values_comments;
-mod yaml_syntax;
 
 pub use capability_branch::{decode_guard, decode_guard_expr};
 pub use document_attribution::{
@@ -20,6 +19,8 @@ pub use expr_function_catalog::{
     is_merge_function, is_provenance_preserving_function, is_string_transform_function,
     type_is_schema_type,
 };
+pub(crate) use helm_schema_syntax::structural_mapping_colon;
+pub use helm_schema_syntax::{first_mapping_colon_offset, parse_yaml_key, unquote_yaml_scalar};
 pub use literal_schema_type::expression_schema_type;
 pub use printf_eval::{literal_printf_format, render_printf_string_sets};
 pub use range_structure::{
@@ -33,8 +34,6 @@ pub use tree_sitter_utils::{
     children_with_field, parse_expr_text, parse_go_template, parse_helm_template,
 };
 pub use values_comments::extract_values_yaml_descriptions;
-pub(crate) use yaml_syntax::structural_mapping_colon;
-pub use yaml_syntax::{first_mapping_colon_offset, parse_yaml_key, unquote_yaml_scalar};
 
 use std::collections::HashMap;
 

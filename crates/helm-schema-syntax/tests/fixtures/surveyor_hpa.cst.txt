@@ -1,0 +1,31 @@
+document 0 [0..911)
+control if [0..910) ill-nested
+  branch [0..37) "{{- if .Values.autoscaling.enabled }}"
+    entry [38..69) closed indent=0 key="apiVersion" value="autoscaling/v2beta1"
+    entry [70..99) closed indent=0 key="kind" value="HorizontalPodAutoscaler"
+    entry [100..109) open indent=0 key="metadata"
+      entry [112..153) open indent=2 key="name" value="⟦{{ include \"surveyor.fullname\" . }}⟧"
+      entry [156..163) open indent=2 key="labels"
+        output [168..214) "{{- include \"surveyor.labels\" . | nindent 4 }}"
+entry [215..220) open indent=0 key="spec"
+  entry [223..238) open indent=2 key="scaleTargetRef"
+    entry [243..262) closed indent=4 key="apiVersion" value="apps/v1"
+    entry [267..283) closed indent=4 key="kind" value="Deployment"
+    entry [288..329) open indent=4 key="name" value="⟦{{ include \"surveyor.fullname\" . }}⟧"
+  entry [332..382) open indent=2 key="minReplicas" value="⟦{{ .Values.autoscaling.minReplicas }}⟧"
+  entry [385..435) open indent=2 key="maxReplicas" value="⟦{{ .Values.autoscaling.maxReplicas }}⟧"
+  entry [438..446) open indent=2 key="metrics"
+    control if [449..668) ill-nested
+      branch [449..509) "{{- if .Values.autoscaling.targetCPUUtilizationPercentage }}"
+    item [514..530) indent=4
+      entry [516..530) closed indent=6 key="type" value="Resource"
+      entry [537..546) open indent=6 key="resource"
+        entry [555..564) closed indent=8 key="name" value="cpu"
+        entry [573..655) open indent=8 key="targetAverageUtilization" value="⟦{{ .Values.autoscaling.targetCPUUtilizationPercentage }}⟧"
+    control if [671..899) ill-nested
+      branch [671..734) "{{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}"
+    item [739..755) indent=4
+      entry [741..755) closed indent=6 key="type" value="Resource"
+      entry [762..771) open indent=6 key="resource"
+        entry [780..792) closed indent=8 key="name" value="memory"
+        entry [801..886) open indent=8 key="targetAverageUtilization" value="⟦{{ .Values.autoscaling.targetMemoryUtilizationPercentage }}⟧"

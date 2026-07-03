@@ -196,9 +196,7 @@ pub fn parse_action_expressions(body_text: &str) -> Vec<TemplateExpr> {
         return Vec::new();
     }
 
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let Some(tree) = crate::tree_sitter_utils::parse_with(language, body_text) else {
+    let Some(tree) = helm_schema_syntax::parse_go_template(body_text) else {
         return Vec::new();
     };
 

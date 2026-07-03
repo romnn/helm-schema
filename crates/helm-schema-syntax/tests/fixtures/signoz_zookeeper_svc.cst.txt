@@ -1,0 +1,76 @@
+document 0 [0..3297)
+entry [0..14) closed indent=0 key="apiVersion" value="v1"
+entry [15..28) closed indent=0 key="kind" value="Service"
+entry [29..38) open indent=0 key="metadata"
+  entry [41..87) open indent=2 key="name" value="⟦{{ template \"common.names.fullname\" . }}⟧"
+  entry [90..139) open indent=2 key="namespace" value="⟦{{ template \"zookeeper.namespace\" . }}⟧"
+  entry [142..203) open indent=2 key="labels" value="⟦{{- include \"common.labels.standard\" . | nindent 4 }}⟧"
+    entry [208..246) closed indent=4 key="app.kubernetes.io/component" value="zookeeper"
+    control if [251..403)
+      branch [251..281) "{{- if .Values.commonLabels }}"
+        output [286..388) "{{- include \"common.tplvalues.render\" ( dict \"value\" .Values.commonLabels \"context\" $ ) | nindent 4 }}"
+  control if [406..838) ill-nested
+    branch [406..472) "{{- if or .Values.commonAnnotations .Values.service.annotations }}"
+  entry [475..487) open indent=2 key="annotations"
+    control if [492..658)
+      branch [492..529) "{{- if .Values.service.annotations }}"
+        output [534..643) "{{- include \"common.tplvalues.render\" ( dict \"value\" .Values.service.annotations \"context\" $ ) | nindent 4 }}"
+    control if [663..825)
+      branch [663..698) "{{- if .Values.commonAnnotations }}"
+        output [703..810) "{{- include \"common.tplvalues.render\" ( dict \"value\" .Values.commonAnnotations \"context\" $ ) | nindent 4 }}"
+entry [839..844) open indent=0 key="spec"
+  entry [847..879) open indent=2 key="type" value="⟦{{ .Values.service.type }}⟧"
+  control if [882..1017) ill-nested
+    branch [882..959) "{{- if and .Values.service.clusterIP (eq .Values.service.type \"ClusterIP\") }}"
+  entry [962..1004) open indent=2 key="clusterIP" value="⟦{{ .Values.service.clusterIP }}⟧"
+  control if [1020..1200) ill-nested
+    branch [1020..1110) "{{- if or (eq .Values.service.type \"LoadBalancer\") (eq .Values.service.type \"NodePort\") }}"
+  entry [1113..1187) open indent=2 key="externalTrafficPolicy" value="⟦{{ .Values.service.externalTrafficPolicy | quote }}⟧"
+  control if [1203..1400) ill-nested
+    branch [1203..1312) "{{- if and (eq .Values.service.type \"LoadBalancer\") (not (empty .Values.service.loadBalancerSourceRanges)) }}"
+  entry [1315..1387) open indent=2 key="loadBalancerSourceRanges" value="⟦{{ .Values.service.loadBalancerSourceRanges }}⟧"
+  control if [1403..1570) ill-nested
+    branch [1403..1502) "{{- if and (eq .Values.service.type \"LoadBalancer\") (not (empty .Values.service.loadBalancerIP)) }}"
+  entry [1505..1557) open indent=2 key="loadBalancerIP" value="⟦{{ .Values.service.loadBalancerIP }}⟧"
+  control if [1573..1684) ill-nested
+    branch [1573..1614) "{{- if .Values.service.sessionAffinity }}"
+  entry [1617..1671) open indent=2 key="sessionAffinity" value="⟦{{ .Values.service.sessionAffinity }}⟧"
+  control if [1687..1890) ill-nested
+    branch [1687..1734) "{{- if .Values.service.sessionAffinityConfig }}"
+  entry [1737..1877) open indent=2 key="sessionAffinityConfig" value="⟦{{- include \"common.tplvalues.render\" (dict \"value\" .Values.service.sessionAffinityConfig \"context\" $) | nindent 4 }}⟧"
+  entry [1893..1899) open indent=2 key="ports"
+    control if [1904..2365) ill-nested
+      branch [1904..1955) "{{- if not .Values.service.disableBaseClientPort }}"
+    item [1960..1978) indent=4
+      entry [1962..1978) closed indent=6 key="name" value="tcp-client"
+      entry [1985..2025) open indent=6 key="port" value="⟦{{ .Values.service.ports.client }}⟧"
+      entry [2032..2050) closed indent=6 key="targetPort" value="client"
+      entry [2207..2255) open indent=6 key="nodePort" value="⟦{{ .Values.service.nodePorts.client }}⟧"
+      control if [2057..2350) ill-nested
+        branch [2057..2200) "{{- if and (or (eq .Values.service.type \"NodePort\") (eq .Values.service.type \"LoadBalancer\")) (not (empty .Values.service.nodePorts.client)) }}"
+        branch [2262..2312) "{{- else if eq .Values.service.type \"ClusterIP\" }}"
+          entry [2319..2333) closed indent=6 key="nodePort" value="null"
+    control if [2370..2815) ill-nested
+      branch [2370..2406) "{{- if .Values.tls.client.enabled }}"
+    item [2411..2433) indent=4
+      entry [2413..2433) closed indent=6 key="name" value="tcp-client-tls"
+      entry [2440..2477) open indent=6 key="port" value="⟦{{ .Values.service.ports.tls }}⟧"
+      entry [2484..2506) closed indent=6 key="targetPort" value="client-tls"
+      entry [2660..2705) open indent=6 key="nodePort" value="⟦{{ .Values.service.nodePorts.tls }}⟧"
+      control if [2513..2800) ill-nested
+        branch [2513..2653) "{{- if and (or (eq .Values.service.type \"NodePort\") (eq .Values.service.type \"LoadBalancer\")) (not (empty .Values.service.nodePorts.tls)) }}"
+        branch [2712..2762) "{{- else if eq .Values.service.type \"ClusterIP\" }}"
+          entry [2769..2783) closed indent=6 key="nodePort" value="null"
+    item [2820..2840) indent=4
+      entry [2822..2840) closed indent=6 key="name" value="tcp-follower"
+      entry [2847..2889) open indent=6 key="port" value="⟦{{ .Values.service.ports.follower }}⟧"
+      entry [2896..2916) closed indent=6 key="targetPort" value="follower"
+    item [2921..2941) indent=4
+      entry [2923..2941) closed indent=6 key="name" value="tcp-election"
+      entry [2948..2990) open indent=6 key="port" value="⟦{{ .Values.service.ports.election }}⟧"
+      entry [2997..3017) closed indent=6 key="targetPort" value="election"
+      control if [3022..3184)
+        branch [3022..3058) "{{- if .Values.service.extraPorts }}"
+          output [3063..3169) "{{- include \"common.tplvalues.render\" (dict \"value\" .Values.service.extraPorts \"context\" $) | nindent 4 }}"
+  entry [3187..3253) open indent=2 key="selector" value="⟦{{- include \"common.labels.matchLabels\" . | nindent 4 }}⟧"
+    entry [3258..3296) closed indent=4 key="app.kubernetes.io/component" value="zookeeper"
