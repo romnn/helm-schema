@@ -1,3 +1,8 @@
+#![allow(
+    dead_code,
+    reason = "shared by multiple integration-test binaries; each binary uses a subset"
+)]
+
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::SymbolicIrContext;
 use serde_json::Value;

@@ -66,6 +66,14 @@ impl SymbolicIrContext {
         self.generate_contract_ir_with_provenance(src, Some(source_path), defines)
     }
 
+    /// Evaluate a template into the Stage-B abstract fragment domain,
+    /// reusing this context's memoized helper analyses. This runs beside
+    /// [`SymbolicIrContext::generate_contract_ir`] and does not affect it.
+    #[must_use]
+    pub fn eval_document_fragment(&self, src: &str) -> crate::fragment_eval::EvaluatedDocument {
+        crate::fragment_eval::eval_document(src, &self.inner.analysis_db)
+    }
+
     fn generate_contract_ir_with_provenance(
         &self,
         src: &str,

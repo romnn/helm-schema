@@ -659,7 +659,7 @@ fn push_output_path(
     ));
 }
 
-fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {
+pub(crate) fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {
     encoded_paths.iter().any(|encoded_path| {
         path == encoded_path
             || path

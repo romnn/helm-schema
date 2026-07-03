@@ -1,0 +1,275 @@
+{
+  "fixtures": {
+    "bitnami_redis_networkpolicy": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "b",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "row diffs are guard-algebra classes: the old pipeline's sibling-source guard injection (extra truthy(commonLabels) on helper label rows) and defaulted-branch predicate pruning are not reproduced; the new model keeps the raw helper branch conditions in the tree.",
+      "row_diffs": 10,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "bitnami_redis_prometheusrule": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "b",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "row diffs: old injects sibling-source truthy(commonLabels) guards and prunes truthy(nameOverride) from defaulted helper branches; new keeps the helper's own branch conditions.",
+      "row_diffs": 3,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "cert_manager_deployment": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "b",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "row diffs are guard-set differences on placed rows: old's helper meta prune/sibling algebra vs the new model's raw branch conditions, plus with-header context predicates recorded per arm.",
+      "row_diffs": 19,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "cert_manager_service": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "nats_operator_rbac": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "nats_service": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "none",
+      "missing_pairs": 5,
+      "missing_paths": 35,
+      "notes": "B1 boundary: static file templates (files/*.yaml rendered via nats.loadMergePatch/tplYaml) are not inlined by the fragment interpreter yet, so all config.* paths and file-derived placements are missing. Planned for the B2 cutover round.",
+      "row_diffs": 42,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [
+        "global.labels @ metadata.labels",
+        "nameOverride @ metadata.labels.app.kubernetes.io/name",
+        "nameOverride @ spec.selector.app.kubernetes.io/name",
+        "namespaceOverride @ metadata.namespace",
+        "service.name @ metadata.name"
+      ],
+      "sample_missing_paths": [
+        "config.cluster.enabled",
+        "config.cluster.port",
+        "config.cluster.tls.enabled",
+        "config.gateway.enabled",
+        "config.gateway.port",
+        "config.gateway.tls.enabled",
+        "config.leafnodes.enabled",
+        "config.leafnodes.port"
+      ]
+    },
+    "nats_service_account": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "none",
+      "missing_pairs": 4,
+      "missing_paths": 3,
+      "notes": "B1 boundary: same static-file-template gap as nats_service.",
+      "row_diffs": 8,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [
+        "global.labels @ metadata.labels",
+        "nameOverride @ metadata.labels.app.kubernetes.io/name",
+        "namespaceOverride @ metadata.namespace",
+        "serviceAccount.name @ metadata.name"
+      ],
+      "sample_missing_paths": [
+        "global.labels",
+        "namespaceOverride",
+        "serviceAccount.name"
+      ]
+    },
+    "signoz_postgresql_secrets": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "b",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "pairs and paths match; row diffs are the helper meta prune algebra (suppressed/related-source predicate pruning) that the new model intentionally does not reproduce.",
+      "row_diffs": 53,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "signoz_zookeeper_statefulset": {
+      "extra_pairs": 7,
+      "extra_paths": 0,
+      "level": "a",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "extra pairs are a precision improvement: helpers with mixed scalar+fragment summaries (zookeeper.*.secretName printf over include) keep their scalar splices placed at the call site, where the old pipeline demotes every scalar row to pathless once any structured row exists. Row diffs additionally cover the guard prune algebra.",
+      "row_diffs": 99,
+      "sample_extra_pairs": [
+        "fullnameOverride @ spec.template.spec.containers[*].env[*].valueFrom.secretKeyRef.name",
+        "fullnameOverride @ spec.template.spec.initContainers[*].env[*].valueFrom.secretKeyRef.name",
+        "fullnameOverride @ spec.template.spec.volumes[*].secret.secretName",
+        "nameOverride @ spec.template.spec.containers[*].env[*].valueFrom.secretKeyRef.name",
+        "nameOverride @ spec.template.spec.initContainers[*].env[*].valueFrom.secretKeyRef.name",
+        "nameOverride @ spec.template.spec.volumes[*].secret.secretName",
+        "replicaCount @ spec.template.spec.containers[*].env[*].value"
+      ],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "signoz_zookeeper_svc": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "surveyor_configmap": {
+      "extra_pairs": 2,
+      "extra_paths": 0,
+      "level": "a",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "extra pairs are a precision improvement: a helper splice inside a partial scalar (name: {{ template \"surveyor.fullname\" . }}-config) is placed at metadata.name with PartialScalar kind, where the old pipeline demotes helper rows at partial slots to pathless.",
+      "row_diffs": 7,
+      "sample_extra_pairs": [
+        "fullnameOverride @ metadata.name",
+        "nameOverride @ metadata.name"
+      ],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "surveyor_hpa": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "surveyor_service_monitor": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "zalando_postgres_operator_clusterrole": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "zalando_postgres_operator_clusterrolebinding": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "zalando_postgres_operator_deployment": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "zalando_postgres_operator_postgres_pod_priority_class": {
+      "extra_pairs": 0,
+      "extra_paths": 0,
+      "level": "c",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "full parity.",
+      "row_diffs": 0,
+      "sample_extra_pairs": [],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    },
+    "zalando_postgres_operator_ui_ingress": {
+      "extra_pairs": 1,
+      "extra_paths": 0,
+      "level": "a",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "extra pair is a precision improvement: a range-item splice at an iterated terminal (paths[*].path from `- path: {{ . }}`) stays placed, where the old direct_value_path rule demotes any `.*` source to pathless unless the slot's last segment is `[*]`.",
+      "row_diffs": 3,
+      "sample_extra_pairs": [
+        "ingress.hosts.*.paths.* @ spec.rules[*].http.paths[*].path"
+      ],
+      "sample_extra_paths": [],
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
+    }
+  }
+}

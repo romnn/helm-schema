@@ -5,7 +5,8 @@ mod runtime;
 
 use helm_schema_ast::children_with_field;
 
-pub(crate) use action::{NodeAction, node_action};
+pub(crate) use action::{NodeAction, control_header, node_action};
+pub(crate) use control_flow::else_if_pairs;
 pub(crate) use effects::{NodeActionEffectSink, push_predicate_contract_guards};
 pub(crate) use runtime::{BranchOutcome, NodeEvalRuntime};
 

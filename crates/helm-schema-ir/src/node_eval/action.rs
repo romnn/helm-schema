@@ -41,7 +41,7 @@ fn parse_node_exprs(source: &str, node: tree_sitter::Node<'_>) -> Option<Vec<Tem
     node.utf8_text(source.as_bytes()).ok().map(parse_expr_text)
 }
 
-pub(super) fn control_header(source: &str, node: tree_sitter::Node<'_>) -> Option<TemplateHeader> {
+pub(crate) fn control_header(source: &str, node: tree_sitter::Node<'_>) -> Option<TemplateHeader> {
     let condition = node.child_by_field_name("condition").unwrap_or(node);
     condition
         .utf8_text(source.as_bytes())

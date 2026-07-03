@@ -10,6 +10,7 @@ mod eval_env;
 mod expr_call_eval;
 mod expr_eval;
 mod fragment_assignment;
+pub mod fragment_eval;
 mod fragment_expr_eval;
 mod helper_body_analysis;
 mod helper_fragment_output_uses;

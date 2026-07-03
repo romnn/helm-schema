@@ -133,6 +133,32 @@ pub(crate) fn locals_with_roots(
     locals
 }
 
+/// Document-scope expression evaluation for the fragment interpreter: the
+/// caller supplies the fully-populated environment (locals, bound values,
+/// local default/meta facts) and this resolves bound helper calls through
+/// the shared summarize machinery, exactly like the other walkers.
+pub(crate) fn document_result_from_expr(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+    fragment_locals: &HashMap<String, AbstractValue>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> EvalResult {
+    eval_expr_result_with_bound_helpers(
+        expr,
+        env,
+        BoundHelperValueResolverParams {
+            fragment_locals,
+            outer,
+            current_dot,
+            context,
+            seen,
+        },
+    )
+}
+
 pub(crate) fn helper_result_from_expr_with_fragment_locals(
     expr: &TemplateExpr,
     fragment_locals: FragmentLocalFacts<'_>,
