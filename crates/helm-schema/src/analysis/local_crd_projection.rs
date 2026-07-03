@@ -45,11 +45,9 @@ pub(crate) fn local_resource_schemas_from_template_source(
     }
 
     let tree = parse_helm_template(source).ok_or(ParseError::TreeSitterParseFailed)?;
-    Ok(local_resource_schemas_from_template_tree(
-        tree.root_node(),
-        source,
-        filename,
-    ))
+    let mut resource_schemas = Vec::new();
+    collect_template_crd_schemas(tree.root_node(), source, filename, &mut resource_schemas);
+    Ok(resource_schemas)
 }
 
 fn resource_schemas_from_literal_documents(
@@ -72,45 +70,28 @@ fn resource_schemas_from_literal_documents(
     Ok(resource_schemas)
 }
 
-fn local_resource_schemas_from_template_tree(
-    root: tree_sitter::Node<'_>,
-    source: &str,
-    filename: &str,
-) -> Vec<LocalResourceSchema> {
-    let mut resource_schemas = Vec::new();
-    collect_template_crd_schemas(root, source, filename, &mut resource_schemas);
-    resource_schemas
-}
-
 fn collect_template_crd_schemas(
     node: tree_sitter::Node<'_>,
     source: &str,
     filename: &str,
     resource_schemas: &mut Vec<LocalResourceSchema>,
 ) {
-    if let Some(extracted) = crd_resource_schemas_from_node(node, source, filename) {
-        resource_schemas.extend(extracted);
-        return;
+    if let Some(document) = crd_document_from_node(node, source) {
+        let schemas = resource_schemas_from_crd_document_with_source(
+            document,
+            TEMPLATE_CRD_SOURCE_ID,
+            filename.to_string(),
+        );
+        if !schemas.is_empty() {
+            resource_schemas.extend(schemas);
+            return;
+        }
     }
 
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         collect_template_crd_schemas(child, source, filename, resource_schemas);
     }
-}
-
-fn crd_resource_schemas_from_node(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    filename: &str,
-) -> Option<Vec<LocalResourceSchema>> {
-    let document = crd_document_from_node(node, source)?;
-    let schemas = resource_schemas_from_crd_document_with_source(
-        document,
-        TEMPLATE_CRD_SOURCE_ID,
-        filename.to_string(),
-    );
-    (!schemas.is_empty()).then_some(schemas)
 }
 
 fn crd_document_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<Value> {
@@ -157,17 +138,7 @@ fn mapping_value<'tree>(
     source: &str,
     key: &str,
 ) -> Option<tree_sitter::Node<'tree>> {
-    let mapping = mapping_node(node)?;
-    let pair_kind = match mapping.kind() {
-        "block_mapping" => "block_mapping_pair",
-        "flow_mapping" => "flow_pair",
-        _ => return None,
-    };
-    let mut cursor = mapping.walk();
-    for pair in mapping.children(&mut cursor) {
-        if !pair.is_named() || pair.kind() != pair_kind {
-            continue;
-        }
+    for pair in mapping_pairs(mapping_node(node)?) {
         let pair_key = pair.child_by_field_name("key")?;
         if literal_string_from_node(pair_key, source).as_deref() == Some(key) {
             return pair
@@ -176,6 +147,21 @@ fn mapping_value<'tree>(
         }
     }
     None
+}
+
+/// Named `key: value` pair nodes of a mapping node; block and flow
+/// mappings name their pair kind differently.
+fn mapping_pairs(mapping: tree_sitter::Node<'_>) -> Vec<tree_sitter::Node<'_>> {
+    let pair_kind = match mapping.kind() {
+        "block_mapping" => "block_mapping_pair",
+        "flow_mapping" => "flow_pair",
+        _ => return Vec::new(),
+    };
+    let mut cursor = mapping.walk();
+    mapping
+        .children(&mut cursor)
+        .filter(|pair| pair.is_named() && pair.kind() == pair_kind)
+        .collect()
 }
 
 fn sequence_items(node: tree_sitter::Node<'_>) -> Option<Vec<tree_sitter::Node<'_>>> {
@@ -234,16 +220,7 @@ fn literal_json_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<V
         }
         "block_mapping" | "flow_mapping" => {
             let mut object = serde_json::Map::new();
-            let pair_kind = if node.kind() == "block_mapping" {
-                "block_mapping_pair"
-            } else {
-                "flow_pair"
-            };
-            let mut cursor = node.walk();
-            for pair in node.children(&mut cursor) {
-                if !pair.is_named() || pair.kind() != pair_kind {
-                    continue;
-                }
+            for pair in mapping_pairs(node) {
                 let key = literal_string_from_node(pair.child_by_field_name("key")?, source)?;
                 let value = pair
                     .child_by_field_name("value")

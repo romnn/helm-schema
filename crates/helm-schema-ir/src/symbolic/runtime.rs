@@ -5,7 +5,7 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader};
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_get_binding_from_exprs;
 use crate::contract_sink::{ContractUseContext, EmissionWitness};
-use crate::fragment_assignment::{AssignmentKind, parse_helper_assignment_from_exprs};
+use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::helper_summary::merge_output_use_meta;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, push_predicate_contract_guards};
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
@@ -192,16 +192,11 @@ impl SymbolicWalker<'_> {
                 current_dot.as_ref(),
                 &mut seen,
             );
-            match assignment.kind {
-                AssignmentKind::Declaration => self
-                    .scope
-                    .locals_mut()
-                    .declare_fragment_value(assignment.variable.clone(), fragment_value),
-                AssignmentKind::Assignment => self
-                    .scope
-                    .locals_mut()
-                    .assign_fragment_value(assignment.variable.clone(), fragment_value),
-            }
+            self.scope.locals_mut().bind_fragment_value(
+                assignment.kind,
+                assignment.variable.clone(),
+                fragment_value,
+            );
             self.refresh_assignment_facts(assignment.variable, &assignment.rhs_expr);
         }
 

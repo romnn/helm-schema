@@ -24,10 +24,8 @@ pub(crate) fn collect_manifest_contract_for_chart(
         chart::FileRole::ManifestTemplate,
     )?;
     for path in manifests {
-        let TemplateManifestAnalysis {
-            contract: mut manifest_contract,
-            local_resource_schemas: template_local_resource_schemas,
-        } = collect_manifest_contract_for_template(&path, defines, symbolic_context)?;
+        let (mut manifest_contract, template_local_resource_schemas) =
+            collect_manifest_contract_for_template(&path, defines, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
         manifest_contract =
@@ -47,17 +45,12 @@ pub(crate) struct ManifestContractAnalysis {
     pub(crate) local_resource_schemas: Vec<LocalResourceSchema>,
 }
 
-struct TemplateManifestAnalysis {
-    contract: ContractIr,
-    local_resource_schemas: Vec<LocalResourceSchema>,
-}
-
 #[tracing::instrument(skip_all)]
 fn collect_manifest_contract_for_template(
     path: &VfsPath,
     defines: &DefineIndex,
     symbolic_context: &SymbolicIrContext,
-) -> CliResult<TemplateManifestAnalysis> {
+) -> CliResult<(ContractIr, Vec<LocalResourceSchema>)> {
     let source = path.read_to_string()?;
     let contract =
         symbolic_context.generate_contract_ir_for_source(&source, path.as_str(), defines);
@@ -66,10 +59,7 @@ fn collect_manifest_contract_for_template(
         path.as_str(),
         contains_template_action(&source)?,
     )?;
-    Ok(TemplateManifestAnalysis {
-        contract,
-        local_resource_schemas,
-    })
+    Ok((contract, local_resource_schemas))
 }
 
 fn apply_chart_activation_guard_sets(
@@ -121,13 +111,17 @@ fn chart_activation_guard_sets(activation: &chart::ChartDependencyActivation) ->
     guard_sets
 }
 
+fn trimmed_nonempty(paths: &[String]) -> impl Iterator<Item = String> + '_ {
+    paths.iter().filter_map(|path| {
+        let path = path.trim();
+        (!path.is_empty()).then_some(path.to_string())
+    })
+}
+
 fn normalized_ordered_paths(paths: &[String]) -> Vec<String> {
     let mut seen = std::collections::BTreeSet::new();
     let mut normalized = Vec::new();
-    for path in paths.iter().filter_map(|path| {
-        let path = path.trim();
-        (!path.is_empty()).then_some(path.to_string())
-    }) {
+    for path in trimmed_nonempty(paths) {
         if seen.insert(path.clone()) {
             normalized.push(path);
         }
@@ -136,13 +130,7 @@ fn normalized_ordered_paths(paths: &[String]) -> Vec<String> {
 }
 
 fn normalized_sorted_paths(paths: &[String]) -> Vec<String> {
-    let mut normalized = paths
-        .iter()
-        .filter_map(|path| {
-            let path = path.trim();
-            (!path.is_empty()).then_some(path.to_string())
-        })
-        .collect::<Vec<_>>();
+    let mut normalized = trimmed_nonempty(paths).collect::<Vec<_>>();
     normalized.sort();
     normalized.dedup();
     normalized

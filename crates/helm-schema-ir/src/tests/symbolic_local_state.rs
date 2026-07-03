@@ -10,7 +10,8 @@ use test_util::prelude::sim_assert_eq;
 #[test]
 fn snapshot_restore_replaces_all_local_state_maps() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "image".to_string(),
         Some(AbstractValue::ValuesPath("image".to_string())),
     );
@@ -20,7 +21,8 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     let snapshot = state.clone();
     state.enter_local_scope();
 
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "image".to_string(),
         Some(AbstractValue::ValuesPath("otherImage".to_string())),
     );
@@ -46,13 +48,15 @@ fn snapshot_restore_replaces_all_local_state_maps() {
 #[test]
 fn local_scope_restores_shadowed_fragment_value() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
 
     state.enter_local_scope();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("inner".to_string())),
     );
@@ -67,13 +71,15 @@ fn local_scope_restores_shadowed_fragment_value() {
 #[test]
 fn local_scope_keeps_assignment_to_outer_fragment_value() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
 
     state.enter_local_scope();
-    state.assign_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Assignment,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
@@ -146,7 +152,8 @@ fn fragment_assignment_replaces_outer_get_binding() {
     ));
 
     state.enter_local_scope();
-    state.assign_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Assignment,
         "value".to_string(),
         Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
@@ -162,7 +169,8 @@ fn fragment_assignment_replaces_outer_get_binding() {
 #[test]
 fn local_scope_restores_range_domain_shadowing_outer_binding() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "key".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
@@ -181,14 +189,16 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
 #[test]
 fn local_scope_restores_default_paths_for_shadowed_declaration() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_default_paths("name", BTreeSet::from(["outer.default".to_string()]));
 
     state.enter_local_scope();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("inner".to_string())),
     );
@@ -204,14 +214,16 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
 #[test]
 fn local_scope_keeps_default_paths_for_outer_assignment() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_default_paths("name", BTreeSet::from(["outer.default".to_string()]));
 
     state.enter_local_scope();
-    state.assign_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Assignment,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
@@ -227,14 +239,16 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
 #[test]
 fn local_scope_restores_output_meta_for_shadowed_declaration() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_output_meta("name".to_string(), output_meta("outer.output"));
 
     state.enter_local_scope();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("inner".to_string())),
     );
@@ -250,14 +264,16 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
 #[test]
 fn local_scope_keeps_output_meta_for_outer_assignment() {
     let mut state = SymbolicLocalState::default();
-    state.declare_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
     state.set_output_meta("name".to_string(), output_meta("outer.output"));
 
     state.enter_local_scope();
-    state.assign_fragment_value(
+    state.bind_fragment_value(
+        AssignmentKind::Assignment,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
@@ -273,19 +289,22 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
 #[test]
 fn branch_join_keeps_bindings_present_in_all_outcomes() {
     let mut entry = SymbolicLocalState::default();
-    entry.declare_fragment_value(
+    entry.bind_fragment_value(
+        AssignmentKind::Declaration,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("entry".to_string())),
     );
     let entry_snapshot = entry.clone();
 
     let mut first = entry.clone();
-    first.assign_fragment_value(
+    first.bind_fragment_value(
+        AssignmentKind::Assignment,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("first".to_string())),
     );
     let mut second = entry.clone();
-    second.assign_fragment_value(
+    second.bind_fragment_value(
+        AssignmentKind::Assignment,
         "name".to_string(),
         Some(AbstractValue::ValuesPath("second".to_string())),
     );

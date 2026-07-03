@@ -124,44 +124,29 @@ impl TemplateExpr {
     pub fn renders_yaml_fragment(&self) -> bool {
         match self.deparen() {
             TemplateExpr::Call { function, args } => {
-                is_fragment_render_function(function)
+                matches!(function.as_str(), "toYaml" | "nindent" | "indent" | "tpl")
                     || args.iter().any(TemplateExpr::renders_yaml_fragment)
             }
             TemplateExpr::Pipeline(stages) => {
                 stages.iter().any(TemplateExpr::renders_yaml_fragment)
             }
-            TemplateExpr::Parenthesized(inner) => inner.renders_yaml_fragment(),
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Selector { .. }
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::VariableDefinition { .. }
-            | TemplateExpr::Assignment { .. }
-            | TemplateExpr::Unknown(_) => false,
+            _ => false,
         }
     }
 
     #[must_use]
     pub(crate) fn fragment_indent_width(&self) -> Option<usize> {
-        match self {
+        match self.deparen() {
             TemplateExpr::Call { function, args }
                 if matches!(function.as_str(), "indent" | "nindent") =>
             {
                 indent_width_from_call_args(args)
             }
-            TemplateExpr::Call { .. } => None,
             TemplateExpr::Pipeline(stages) => stages
                 .iter()
                 .rev()
                 .find_map(TemplateExpr::fragment_indent_width),
-            TemplateExpr::Parenthesized(inner) => inner.fragment_indent_width(),
-            TemplateExpr::Literal(_)
-            | TemplateExpr::Field(_)
-            | TemplateExpr::Selector { .. }
-            | TemplateExpr::Variable(_)
-            | TemplateExpr::VariableDefinition { .. }
-            | TemplateExpr::Assignment { .. }
-            | TemplateExpr::Unknown(_) => None,
+            _ => None,
         }
     }
 
@@ -188,10 +173,6 @@ impl TemplateExpr {
             | TemplateExpr::Unknown(_) => {}
         }
     }
-}
-
-fn is_fragment_render_function(function: &str) -> bool {
-    matches!(function, "toYaml" | "nindent" | "indent" | "tpl")
 }
 
 fn indent_width_from_call_args(args: &[TemplateExpr]) -> Option<usize> {
@@ -475,9 +456,13 @@ fn convert_value_field(node: Node<'_>, src: &str) -> TemplateExpr {
 }
 
 fn convert_args(node: Node<'_>, src: &str) -> Vec<TemplateExpr> {
-    node.child_by_field_name("arguments")
-        .map(|n| collect_argument_list(n, src))
-        .unwrap_or_default()
+    let Some(list) = node.child_by_field_name("arguments") else {
+        return Vec::new();
+    };
+    let mut cursor = list.walk();
+    list.named_children(&mut cursor)
+        .map(|ch| convert_pipeline(ch, src))
+        .collect()
 }
 
 /// Source text of `node`'s named-field child, or `""` if absent.
@@ -485,15 +470,6 @@ fn field_text<'a>(node: Node<'_>, name: &str, src: &'a str) -> &'a str {
     node.child_by_field_name(name)
         .and_then(|n| n.utf8_text(src.as_bytes()).ok())
         .unwrap_or("")
-}
-
-fn collect_argument_list(node: Node<'_>, src: &str) -> Vec<TemplateExpr> {
-    let mut args = Vec::new();
-    let mut cursor = node.walk();
-    for ch in node.named_children(&mut cursor) {
-        args.push(convert_pipeline(ch, src));
-    }
-    args
 }
 
 /// Read a tree-sitter node's source text, returning `""` if the byte

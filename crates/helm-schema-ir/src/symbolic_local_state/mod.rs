@@ -63,31 +63,18 @@ impl SymbolicLocalState {
     }
 
     pub(crate) fn apply_get_binding(&mut self, plan: GetBindingPlan) {
-        match plan.kind {
-            AssignmentKind::Declaration => self.declare_get_binding(plan.variable, plan.binding),
-            AssignmentKind::Assignment => self.assign_get_binding(plan.variable, plan.binding),
-        }
+        self.record_binding_shadow(plan.kind, &plan.variable);
+        self.set_get_binding(plan.variable, plan.binding);
     }
 
-    pub(crate) fn declare_fragment_value(
+    pub(crate) fn bind_fragment_value(
         &mut self,
+        kind: AssignmentKind,
         variable: String,
         binding: Option<AbstractValue>,
     ) {
-        self.record_scope_shadow(&variable);
+        self.record_binding_shadow(kind, &variable);
         self.set_fragment_value(variable, binding);
-    }
-
-    pub(crate) fn assign_fragment_value(
-        &mut self,
-        variable: String,
-        binding: Option<AbstractValue>,
-    ) {
-        if self.local_scopes.is_empty() || self.variable_has_current_value(&variable) {
-            self.set_fragment_value(variable, binding);
-        } else {
-            self.declare_fragment_value(variable, binding);
-        }
     }
 
     pub(crate) fn set_default_paths(&mut self, variable: &str, paths: BTreeSet<String>) {
@@ -112,10 +99,7 @@ impl SymbolicLocalState {
 
     pub(crate) fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
         self.record_scope_shadow(&variable);
-        self.get_bindings.remove(&variable);
-        self.fragment_values.remove(&variable);
-        self.default_paths.remove(&variable);
-        self.output_meta.remove(&variable);
+        self.clear_variable(&variable);
         self.range_domains.insert(variable, literals);
     }
 
@@ -125,6 +109,18 @@ impl SymbolicLocalState {
 
     pub(crate) fn append_chart_value_defaults(&mut self, defaults: &mut BTreeSet<String>) {
         self.chart_value_defaults.append(defaults);
+    }
+
+    /// Record the pre-write state of `variable` into the current scope frame
+    /// so `exit_local_scope` restores it. `:=` always shadows; `=` writes
+    /// through to the existing binding (the write survives scope exit), so it
+    /// shadows only when the variable has no current value — Go templates
+    /// treat that as a fresh declaration.
+    fn record_binding_shadow(&mut self, kind: AssignmentKind, variable: &str) {
+        if matches!(kind, AssignmentKind::Assignment) && self.variable_has_current_value(variable) {
+            return;
+        }
+        self.record_scope_shadow(variable);
     }
 
     fn record_scope_shadow(&mut self, variable: &str) {
@@ -156,24 +152,8 @@ impl SymbolicLocalState {
             || self.output_meta.contains_key(variable)
     }
 
-    fn declare_get_binding(&mut self, variable: String, binding: GetBinding) {
-        self.record_scope_shadow(&variable);
-        self.set_get_binding(variable, binding);
-    }
-
-    fn assign_get_binding(&mut self, variable: String, binding: GetBinding) {
-        if self.local_scopes.is_empty() || self.variable_has_current_value(&variable) {
-            self.set_get_binding(variable, binding);
-        } else {
-            self.declare_get_binding(variable, binding);
-        }
-    }
-
     fn set_get_binding(&mut self, variable: String, binding: GetBinding) {
-        self.range_domains.remove(&variable);
-        self.fragment_values.remove(&variable);
-        self.default_paths.remove(&variable);
-        self.output_meta.remove(&variable);
+        self.clear_variable(&variable);
         self.get_bindings.insert(variable, binding);
     }
 
@@ -186,15 +166,20 @@ impl SymbolicLocalState {
     }
 
     fn set_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
-        self.range_domains.remove(&variable);
-        self.get_bindings.remove(&variable);
-        self.default_paths.remove(&variable);
-        self.output_meta.remove(&variable);
+        self.clear_variable(&variable);
         if let Some(binding) = binding {
             self.fragment_values.insert(variable, binding);
-        } else {
-            self.fragment_values.remove(&variable);
         }
+    }
+
+    /// Binding a variable in one domain displaces whatever it held in every
+    /// other domain (and any stale entry in its own).
+    fn clear_variable(&mut self, variable: &str) {
+        self.range_domains.remove(variable);
+        self.get_bindings.remove(variable);
+        self.fragment_values.remove(variable);
+        self.default_paths.remove(variable);
+        self.output_meta.remove(variable);
     }
 }
 

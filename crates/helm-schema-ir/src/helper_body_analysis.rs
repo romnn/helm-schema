@@ -108,12 +108,9 @@ fn helper_uses_large_config_arg(name: &str) -> bool {
 }
 
 fn abstract_config_binding(binding: AbstractValue) -> AbstractValue {
-    let paths = binding.paths();
-    if paths.is_empty() {
-        AbstractValue::Top
-    } else {
-        AbstractValue::path_choices(paths).unwrap_or(AbstractValue::Top)
-    }
+    // `path_choices` yields `None` only for an empty path set, so a pathless
+    // config binding widens straight to `Top`.
+    AbstractValue::path_choices(binding.paths()).unwrap_or(AbstractValue::Top)
 }
 
 fn abstract_config_entry_in_binding(binding: AbstractValue) -> AbstractValue {
