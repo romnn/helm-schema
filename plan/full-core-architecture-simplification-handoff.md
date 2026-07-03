@@ -77,7 +77,7 @@ task tokei:core
 reports:
 
 ```text
-Rust Code: 23,991
+Rust Code: 23,848
 ```
 
 Twenty-five consolidation rounds landed on 2026-07-02/03 (commits f7acb84..
@@ -744,14 +744,33 @@ Interpretation:
 Current baseline for the next agent:
 
 ```text
-full core Rust Code: 23,991
+full core Rust Code: 23,848
 ```
 
-The 24K soft goal is crossed. The remaining stretch toward 23K runs
-through the helper event-stream rewrite (the one lever still open) plus
-whatever the next fresh-eyes pass exposes; per-round yields at this depth
-were 25-120 LOC, so treat 23K as several sessions away and stop before
-deletions start costing clarity.
+## Campaign verdict (2026-07-03): the architectural floor is reached
+
+Twenty-nine rounds landed (26,240 measured / ~26,571 honest baseline ->
+23,848). The event-stream phase (rounds 26-29) delivered its remaining
+honest value as state and entry-point unification: one DotFrame stack, one
+scoped predicate map, one fragment-evaluation owner module, finalize() as
+the contract terminal. The full event-enum design from the postmortem is
+SUPERSEDED: the body walk was already unified, and measured yields show the
+duplication it targeted no longer exists (-143 LOC across the whole phase
+versus the 200-400 once estimated, because rounds 1-25 had absorbed it).
+
+Floor evidence: rounds 26-29 yielded -18/-54/-18/-53 with exhaustive
+sweeps; every surviving candidate has multiple live callers, is a
+documented semantic distinction (value/fragment domains, dependency-vs-use
+normalization, alpha cache policy), or costs more lines than it saves.
+The revised honest lower bound for the current feature set and quality bar
+is ~23,800 +/- 50 — the tree is at it. The earlier 23.4K estimate
+double-counted event-stream headroom. Pushing below this trades clarity or
+features for lines; do not.
+
+If new LOC pressure ever arises, the honest sources are feature decisions
+(dropping diagnostics richness, inference bounds, or output modes), not
+further consolidation. New precision features (scalar-concat modeling,
+dynamic-map-key attribution) will legitimately raise the floor.
 
 ## Real big levers left
 
