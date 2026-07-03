@@ -4,7 +4,7 @@ use helm_schema_ast::is_merge_function;
 use helm_schema_ast::{Literal, TemplateExpr, parse_yaml_key};
 
 use crate::abstract_value::{AbstractValue, OutputProjectionScope};
-use crate::eval_effect::{Effects, EvalResult};
+use crate::eval_effect::Effects;
 use crate::expr_eval::{
     eval_helper_exprs_direct_effects, expr_leading_variable, expr_starts_with_helper_call,
 };
@@ -87,31 +87,30 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         values.extend(expr_result.value);
         effects.merge(expr_result.effects);
     }
-    let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
-    let local_effects = &result.effects;
-    state.analysis.absorb_effect_hints(local_effects);
+    let value = AbstractValue::choice(values);
+    state.analysis.absorb_effect_hints(&effects);
     if kind == ValueKind::Scalar && relative_path.0.is_empty() {
         state
             .analysis
             .string_output
-            .extend(result.value.iter().flat_map(AbstractValue::strings));
+            .extend(value.iter().flat_map(AbstractValue::strings));
     }
 
     let mut expression_output_uses = Vec::new();
-    let expression_default_paths = local_effects.default_paths_with_local();
-    if let Some(binding) = &result.value {
+    let expression_default_paths = effects.default_paths_with_local();
+    if let Some(binding) = &value {
         binding.collect_output_uses(
             &mut expression_output_uses,
             &output_path,
             kind,
             &OutputProjectionScope {
                 root: &output_path,
-                encoded_paths: &local_effects.encoded_paths,
+                encoded_paths: &effects.encoded_paths,
                 active_output_predicates,
                 defaulted_paths: &expression_default_paths,
-                path_meta: &local_effects.local_output_meta,
-                local_rendered_paths: &local_effects.local_rendered_paths,
-                local_defaulted_paths: &local_effects.local_default_paths,
+                path_meta: &effects.local_output_meta,
+                local_rendered_paths: &effects.local_rendered_paths,
+                local_defaulted_paths: &effects.local_default_paths,
             },
         );
         relate_outputs_to_active_sources(&mut expression_output_uses, active_source_relations);
@@ -121,9 +120,9 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
         .filter(|output| output.is_rendered())
         .map(|output| output.source_expr.clone())
         .collect();
-    expression_sources.extend(local_effects.local_rendered_paths.iter().cloned());
+    expression_sources.extend(effects.local_rendered_paths.iter().cloned());
     note_outputs_sibling_sources(&mut expression_output_uses, &expression_sources);
-    let nested_summary = result.effects.helper_summary;
+    let nested_summary = effects.helper_summary;
     if kind == ValueKind::Scalar {
         state
             .analysis

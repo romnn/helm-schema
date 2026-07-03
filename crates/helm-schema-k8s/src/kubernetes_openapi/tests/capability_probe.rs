@@ -3,7 +3,7 @@ use test_util::prelude::sim_assert_eq;
 
 fn probe(api: &str) -> Option<ResourceRef> {
     let query = ApiPresenceQuery::parse_helm_literal(api)?;
-    DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(&query)
+    build_capability_probe(&query)
 }
 
 #[test]

@@ -25,7 +25,7 @@ use crate::source_cache::{
     probe_source_schema_doc, source_url,
 };
 
-use super::capability_probe::DEFAULT_CAPABILITY_PROBE_TABLE;
+use super::capability_probe::build_capability_probe;
 use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf_with_location};
 use super::version_chain::K8sVersionChain;
 use crate::mirror_chain::{MirrorChain, SchemaSource};
@@ -471,7 +471,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
                 trace,
             };
         };
-        let Some(probe) = DEFAULT_CAPABILITY_PROBE_TABLE.build_probe(query) else {
+        let Some(probe) = build_capability_probe(query) else {
             trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
             return TracedApiPresenceOutcome {
                 answer: None,

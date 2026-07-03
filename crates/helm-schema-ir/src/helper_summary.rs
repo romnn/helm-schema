@@ -686,9 +686,10 @@ impl HelperSummary {
                 projected_output_meta(output.meta),
             ));
         }
+        // No context-value or merge_context_values pass here: the inputs are
+        // only `StringSet` and `for_output_path` dict chains, so `merge_all`
+        // can never yield `Top` and a single-value context merge is identity.
         AbstractValue::merge_all(values)
-            .map(|value| value.to_context_value())
-            .and_then(|value| AbstractValue::merge_context_values(vec![value]))
     }
 }
 

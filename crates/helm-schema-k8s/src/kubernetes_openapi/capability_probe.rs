@@ -1,5 +1,31 @@
 use helm_schema_core::{ApiPresenceQuery, ResourceRef};
 
+/// Build the `ResourceRef` to probe for a Helm capability literal.
+///
+/// For `group/version/Kind` and core `version/Kind`, the kind is probed
+/// directly. For `group/version` or core `version`, the declarative table
+/// supplies the canonical probe kind. Unknown api-version-only literals
+/// return `None` so the caller can keep the capability guard potentially
+/// live.
+pub(super) fn build_capability_probe(query: &ApiPresenceQuery) -> Option<ResourceRef> {
+    match query {
+        ApiPresenceQuery::Resource { api_version, kind } => {
+            Some(ResourceRef::concrete(api_version.clone(), kind.clone()))
+        }
+        ApiPresenceQuery::GroupVersion { api_version } => Some(ResourceRef::concrete(
+            api_version.clone(),
+            canonical_kind(api_version)?.to_string(),
+        )),
+    }
+}
+
+fn canonical_kind(api_version: &str) -> Option<&'static str> {
+    WELL_KNOWN_API_VERSION_PROBES
+        .iter()
+        .find(|(candidate, _)| *candidate == api_version)
+        .map(|(_, kind)| *kind)
+}
+
 /// Declarative probe table for `.Capabilities.APIVersions.Has "group/version"`.
 ///
 /// Helm's capability API accepts both api-version and resource-qualified forms.
@@ -7,43 +33,6 @@ use helm_schema_core::{ApiPresenceQuery, ResourceRef};
 /// already exact and do not use this table. Api-version-only probes need one
 /// canonical kind whose presence proves that api version exists in the
 /// configured K8s schema bundle.
-#[derive(Debug, Clone, Copy)]
-pub(super) struct CapabilityProbeTable {
-    entries: &'static [(&'static str, &'static str)],
-}
-
-pub(super) const DEFAULT_CAPABILITY_PROBE_TABLE: CapabilityProbeTable = CapabilityProbeTable {
-    entries: WELL_KNOWN_API_VERSION_PROBES,
-};
-
-impl CapabilityProbeTable {
-    /// Build the `ResourceRef` to probe for a Helm capability literal.
-    ///
-    /// For `group/version/Kind` and core `version/Kind`, the kind is probed
-    /// directly. For `group/version` or core `version`, the declarative table
-    /// supplies the canonical probe kind. Unknown api-version-only literals
-    /// return `None` so the caller can keep the capability guard potentially
-    /// live.
-    pub(super) fn build_probe(self, query: &ApiPresenceQuery) -> Option<ResourceRef> {
-        match query {
-            ApiPresenceQuery::Resource { api_version, kind } => {
-                Some(ResourceRef::concrete(api_version.clone(), kind.clone()))
-            }
-            ApiPresenceQuery::GroupVersion { api_version } => Some(ResourceRef::concrete(
-                api_version.clone(),
-                self.canonical_kind(api_version)?.to_string(),
-            )),
-        }
-    }
-
-    fn canonical_kind(self, api_version: &str) -> Option<&'static str> {
-        self.entries
-            .iter()
-            .find(|(candidate, _)| *candidate == api_version)
-            .map(|(_, kind)| *kind)
-    }
-}
-
 const WELL_KNOWN_API_VERSION_PROBES: &[(&str, &str)] = &[
     ("v1", "ConfigMap"),
     ("apps/v1", "Deployment"),

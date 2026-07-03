@@ -46,38 +46,33 @@ pub(crate) struct ResolveBoundHelperCallParams<'a, 'context> {
 pub(crate) fn resolve_bound_helper_call(
     params: ResolveBoundHelperCallParams<'_, '_>,
 ) -> BoundHelperCallResolution {
-    let mut binding_seen = params.seen.clone();
-    let arg_resolution = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
+    let eval_arg_value = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
         helper_result_from_expr_with_fragment_locals(
             expr,
             FragmentLocalFacts::bindings_only(params.fragment_locals),
             params.outer_bindings,
             params.current_dot,
             params.context,
-            &mut binding_seen,
+            seen,
         )
         .value
+    };
+    let mut binding_seen = params.seen.clone();
+    let arg_resolution = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
+        eval_arg_value(expr, &mut binding_seen)
     });
     let mut bindings = arg_resolution.bindings;
 
     // The binding resolution already evaluated the whole arg unless the arg
     // was a dot/root or merge call; only those shapes still need their own
-    // helper-dot evaluation here.
+    // helper-dot evaluation here (same evaluation, fresh seen set).
     let mut helper_body_dot = arg_resolution
         .value
         .or_else(|| {
             let mut dot_seen = params.seen.clone();
-            params.arg.and_then(|expr| {
-                helper_result_from_expr_with_fragment_locals(
-                    expr,
-                    FragmentLocalFacts::bindings_only(params.fragment_locals),
-                    params.outer_bindings,
-                    params.current_dot,
-                    params.context,
-                    &mut dot_seen,
-                )
-                .value
-            })
+            params
+                .arg
+                .and_then(|expr| eval_arg_value(expr, &mut dot_seen))
         })
         .or_else(|| params.current_dot.cloned());
 
@@ -325,9 +320,8 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
     ) {
         let join = self.control.prepare_range_join(&entry.control);
 
-        let first_body_outcome = outcomes.first().cloned();
         if join == HelperRangeJoinBehavior::PromoteBodyOutcome {
-            if let Some(outcome) = first_body_outcome {
+            if let Some(outcome) = outcomes.into_iter().next() {
                 *self.locals = outcome.locals;
             }
         } else {
