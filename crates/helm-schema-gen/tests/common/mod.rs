@@ -147,7 +147,7 @@ pub fn generate_schema_with_values_yaml(
     provider: &dyn ResourceSchemaOracle,
     values_yaml: Option<&str>,
 ) -> Value {
-    let schema_signals = contract.into_schema_signals();
+    let schema_signals = contract.finalize().into_schema_signals();
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, provider).with_values_yaml(values_yaml),
     )

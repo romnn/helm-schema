@@ -14,7 +14,9 @@ struct FlattenedConditionalOverlay {
 }
 
 fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
-    ContractIr::from_contract_uses(uses).into_schema_signals()
+    ContractIr::from_contract_uses(uses)
+        .finalize()
+        .into_schema_signals()
 }
 
 fn nullable_paths_for(signals: &ContractSchemaSignals) -> BTreeSet<String> {
@@ -1025,7 +1027,7 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
         None,
     ));
 
-    let direct_signals = contract.into_schema_signals();
+    let direct_signals = contract.finalize().into_schema_signals();
 
     assert!(
         direct_signals
@@ -1112,6 +1114,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
             None,
         ),
     ])
+    .finalize()
     .into_schema_signals();
 
     let evidence = signals.schema_evidence_by_value_path();
@@ -1178,6 +1181,7 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
             None,
         ),
     ])
+    .finalize()
     .into_schema_signals();
 
     assert!(

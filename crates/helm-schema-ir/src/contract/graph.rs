@@ -1,11 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::contract::{ContractDocument, FinalizedContract};
+use crate::contract::FinalizedContract;
 use crate::contract_normalization::{
     canonicalize_contract_uses, drop_default_guard_subsumed_duplicates, normalize_contract_uses,
 };
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
-use helm_schema_core::ContractSchemaSignals;
 
 /// Opaque guarded contract graph for one template interpretation.
 ///
@@ -24,8 +23,8 @@ impl ContractIr {
     ///
     /// This is the contract-layer constructor for tests and expert callers
     /// that already have semantic claims. Schema signals are still derived
-    /// through [`ContractIr::into_schema_signals`], so semantic finalization
-    /// stays on the contract graph rather than a serialized document.
+    /// through [`ContractIr::finalize`], so semantic finalization stays on
+    /// the contract graph rather than a serialized document.
     #[must_use]
     pub fn from_contract_uses(uses: Vec<ContractUse>) -> Self {
         Self {
@@ -145,21 +144,6 @@ impl ContractIr {
                 .or_default()
                 .extend(schema_types);
         }
-    }
-
-    /// Finalize claims and export the stable versioned inspection document.
-    #[must_use]
-    pub fn document(self) -> ContractDocument {
-        self.finalize().document()
-    }
-
-    /// Finalize claims and derive the typed schema-generation signals.
-    ///
-    /// Production schema generation should use this method when it does not
-    /// need fixture/inspection rows or the stable export document.
-    #[must_use]
-    pub fn into_schema_signals(self) -> ContractSchemaSignals {
-        self.finalize().into_schema_signals()
     }
 
     /// Finalize the contract once and derive downstream artifacts from that

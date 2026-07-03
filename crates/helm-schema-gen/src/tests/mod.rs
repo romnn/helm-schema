@@ -80,7 +80,7 @@ impl SchemaSignalSource for &ContractIr {
 
 impl SchemaSignalSource for ContractIr {
     fn into_schema_signals(self) -> ContractSchemaSignals {
-        ContractIr::into_schema_signals(self)
+        self.finalize().into_schema_signals()
     }
 }
 
@@ -417,7 +417,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
         &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
     );
     let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let schema_signals = contract.into_schema_signals();
+    let schema_signals = contract.finalize().into_schema_signals();
     let values_yaml: serde_yaml::Value =
         serde_yaml::from_str(&test_util::read_testdata("charts/surveyor/values.yaml"))
             .expect("values yaml");
@@ -528,7 +528,7 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
         &test_util::read_testdata("charts/zalando-postgres-operator/templates/_helpers.tpl"),
     );
     let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src, &idx);
-    let schema_signals = contract.into_schema_signals();
+    let schema_signals = contract.finalize().into_schema_signals();
     let values_yaml: serde_yaml::Value = serde_yaml::from_str(&test_util::read_testdata(
         "charts/zalando-postgres-operator/values.yaml",
     ))
@@ -3969,6 +3969,7 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
     define_index.add_file_source("helpers.tpl", helpers);
     let schema_signals = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src, &define_index)
+        .finalize()
         .into_schema_signals();
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(Some(values_yaml)),

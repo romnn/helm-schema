@@ -214,7 +214,7 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
 
     contract.map_value_paths(|path| format!("subchart.{path}"));
 
-    let signals = contract.into_schema_signals();
+    let signals = contract.finalize().into_schema_signals();
     sim_assert_eq!(
         have: signals
             .evidence_for("subchart.image.tag")
@@ -265,5 +265,5 @@ fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contr
     let finalized = contract.clone().finalize();
 
     sim_assert_eq!(have: finalized.uses(), want: contract.clone().finalize().uses());
-    sim_assert_eq!(have: finalized.schema_signals(), want: &contract.into_schema_signals());
+    sim_assert_eq!(have: finalized.schema_signals(), want: &contract.finalize().into_schema_signals());
 }

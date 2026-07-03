@@ -92,10 +92,10 @@ fn ignores_unserved_crd_versions() {
 #[test]
 fn inserts_direct_resource_schema_without_crd_envelope() {
     let mut universe = LocalSchemaUniverse::default();
-    universe.insert_resource_schema(LocalResourceSchema::new(
-        "example.com/v1",
-        "Widget",
-        json!({
+    universe.insert_resource_schema(LocalResourceSchema {
+        api_version: "example.com/v1".to_string(),
+        kind: "Widget".to_string(),
+        schema: json!({
             "type": "object",
             "properties": {
                 "spec": {
@@ -106,7 +106,9 @@ fn inserts_direct_resource_schema_without_crd_envelope() {
                 }
             }
         }),
-    ));
+        source_id: "chart-local".to_string(),
+        filename: "example.com_v1_Widget.schema.json".to_string(),
+    });
 
     let schema = universe
         .schema_doc_for_resource(&resource("example.com/v1"))

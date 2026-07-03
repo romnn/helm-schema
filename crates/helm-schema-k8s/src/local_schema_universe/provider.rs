@@ -43,9 +43,9 @@ impl ChartLocalCrdSchemaProvider {
         leaf.pointer().map(|pointer| {
             ProviderSchemaSource::new(
                 ProviderOrigin::ChartLocalCrd,
-                document.source_id().to_string(),
+                document.source_id.clone(),
                 None,
-                document.filename().to_string(),
+                document.filename.clone(),
                 pointer.to_string(),
             )
         })
@@ -62,7 +62,7 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
             return ProviderLookupResult::NotOwned;
         };
 
-        lookup_root_metadata_path(document.schema_doc(), path, |leaf| {
+        lookup_root_metadata_path(&document.doc, path, |leaf| {
             self.source_for_leaf(document, leaf)
         })
     }
@@ -78,9 +78,9 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
 
         self.universe
             .resource_keys()
-            .filter(|key| key.kind() == kind)
+            .filter(|key| key.kind == kind)
             .map(|key| ApiVersionCandidate {
-                api_version: key.api_version().to_string(),
+                api_version: key.api_version.clone(),
                 source: InferenceSource::ChartLocalCrd,
                 origin: ProviderOrigin::ChartLocalCrd,
             })

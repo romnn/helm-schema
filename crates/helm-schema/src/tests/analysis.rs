@@ -10,7 +10,11 @@ use crate::chart;
 
 macro_rules! contract_schema_signals {
     ($collection:expr) => {
-        $collection.contract.clone().into_schema_signals()
+        $collection
+            .contract
+            .clone()
+            .finalize()
+            .into_schema_signals()
     };
 }
 

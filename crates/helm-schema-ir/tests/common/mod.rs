@@ -30,6 +30,7 @@ pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
     let idx = build_define_index(case.define_sources);
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(&src, &idx)
+        .finalize()
         .document();
 
     let actual = serde_json::to_value(ir).expect("serialize");

@@ -29,7 +29,7 @@ fn contract_for(uses: Vec<ContractUse>) -> ContractIr {
 
 fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
     let contract = parse_contract(src);
-    let schema_signals = contract.into_schema_signals();
+    let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
     );
@@ -63,7 +63,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             provenance: Vec::new(),
         },
     ]);
-    let schema_signals = contract.into_schema_signals();
+    let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
     apply_required_inference(
@@ -89,7 +89,7 @@ fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
         resource: None,
         provenance: Vec::new(),
     }]);
-    let schema_signals = contract.into_schema_signals();
+    let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
 
     apply_required_inference(
@@ -118,7 +118,7 @@ fn explicit_nested_values_defaults_suppress_required_inference() {
         resource: None,
         provenance: Vec::new(),
     }]);
-    let schema_signals = contract.into_schema_signals();
+    let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
     let explicit_default_value_paths =
         BTreeSet::from(["controller.kind".to_string(), "controller".to_string()]);
@@ -309,7 +309,7 @@ fn core_schema_generation_yields_no_required() {
         kind: ServiceAccount
         {{- end }}
     "};
-    let schema_signals = parse_contract(src).into_schema_signals();
+    let schema_signals = parse_contract(src).finalize().into_schema_signals();
     let schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
     // The core path must never emit `required` — that's the
     // separation of concerns this module exists to enforce.

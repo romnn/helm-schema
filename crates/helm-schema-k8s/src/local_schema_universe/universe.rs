@@ -8,8 +8,8 @@ use crate::schema_doc::SchemaDoc;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct ResourceDocKey {
-    api_version: String,
-    kind: String,
+    pub(crate) api_version: String,
+    pub(crate) kind: String,
 }
 
 impl ResourceDocKey {
@@ -18,14 +18,6 @@ impl ResourceDocKey {
             api_version: resource.api_version.clone(),
             kind: resource.kind.clone(),
         }
-    }
-
-    pub(crate) fn api_version(&self) -> &str {
-        &self.api_version
-    }
-
-    pub(crate) fn kind(&self) -> &str {
-        &self.kind
     }
 }
 
@@ -43,33 +35,6 @@ pub struct LocalResourceSchema {
     pub filename: String,
 }
 
-impl LocalResourceSchema {
-    #[must_use]
-    pub fn new(api_version: impl Into<String>, kind: impl Into<String>, schema: Value) -> Self {
-        let api_version = api_version.into();
-        let kind = kind.into();
-        let filename = stable_resource_schema_filename(&api_version, &kind);
-        Self {
-            api_version,
-            kind,
-            schema,
-            source_id: "chart-local".to_string(),
-            filename,
-        }
-    }
-
-    #[must_use]
-    pub fn with_source(
-        mut self,
-        source_id: impl Into<String>,
-        filename: impl Into<String>,
-    ) -> Self {
-        self.source_id = source_id.into();
-        self.filename = filename.into();
-        self
-    }
-}
-
 /// Chart-local schemas keyed by Kubernetes resource coordinate.
 ///
 /// The universe is source-agnostic: static `crds/` files populate it today,
@@ -82,28 +47,22 @@ pub struct LocalSchemaUniverse {
 
 #[derive(Clone, Debug)]
 pub(crate) struct LocalSchemaDocument {
-    doc: Arc<SchemaDoc>,
-    source_id: String,
-    filename: String,
-}
-
-impl LocalSchemaDocument {
-    pub(crate) fn schema_doc(&self) -> &SchemaDoc {
-        Arc::as_ref(&self.doc)
-    }
-
-    pub(crate) fn source_id(&self) -> &str {
-        &self.source_id
-    }
-
-    pub(crate) fn filename(&self) -> &str {
-        &self.filename
-    }
+    pub(crate) doc: Arc<SchemaDoc>,
+    pub(crate) source_id: String,
+    pub(crate) filename: String,
 }
 
 impl LocalSchemaUniverse {
     pub fn insert_resource_schema(&mut self, resource_schema: LocalResourceSchema) {
-        insert_resource_schema(&mut self.docs, resource_schema);
+        let key = ResourceDocKey {
+            api_version: resource_schema.api_version,
+            kind: resource_schema.kind,
+        };
+        self.docs.entry(key).or_insert_with(|| LocalSchemaDocument {
+            doc: Arc::new(SchemaDoc::new(resource_schema.schema)),
+            source_id: resource_schema.source_id,
+            filename: resource_schema.filename,
+        });
     }
 
     #[must_use]
@@ -113,7 +72,7 @@ impl LocalSchemaUniverse {
 
     pub(crate) fn schema_doc_for_resource(&self, resource: &ResourceRef) -> Option<&SchemaDoc> {
         self.schema_document_for_resource(resource)
-            .map(LocalSchemaDocument::schema_doc)
+            .map(|document| document.doc.as_ref())
     }
 
     pub(crate) fn schema_document_for_resource(
@@ -139,10 +98,11 @@ pub fn resource_schemas_from_crd_document_with_source(
     let source_filename = (!filename.is_empty()).then_some(filename.as_str());
     let mut resource_schemas = Vec::new();
 
-    if document.pointer("/apiVersion").and_then(Value::as_str) != Some("apiextensions.k8s.io/v1")
-        && document.pointer("/apiVersion").and_then(Value::as_str)
-            != Some("apiextensions.k8s.io/v1beta1")
-    {
+    let api_version = document.pointer("/apiVersion").and_then(Value::as_str);
+    if !matches!(
+        api_version,
+        Some("apiextensions.k8s.io/v1" | "apiextensions.k8s.io/v1beta1")
+    ) {
         return resource_schemas;
     }
     if document.pointer("/kind").and_then(Value::as_str) != Some("CustomResourceDefinition") {
@@ -212,25 +172,17 @@ fn resource_schema_for_version(
     source_filename: Option<&str>,
 ) -> LocalResourceSchema {
     let api_version = format!("{group}/{version}");
-    let filename = source_filename
-        .map(str::to_string)
-        .unwrap_or_else(|| stable_resource_schema_filename(&api_version, kind));
-    LocalResourceSchema::new(api_version, kind, schema).with_source(source_id, filename)
-}
-
-fn insert_resource_schema(
-    docs: &mut BTreeMap<ResourceDocKey, LocalSchemaDocument>,
-    resource_schema: LocalResourceSchema,
-) {
-    let key = ResourceDocKey {
-        api_version: resource_schema.api_version,
-        kind: resource_schema.kind,
-    };
-    docs.entry(key).or_insert_with(|| LocalSchemaDocument {
-        doc: Arc::new(SchemaDoc::new(resource_schema.schema)),
-        source_id: resource_schema.source_id,
-        filename: resource_schema.filename,
-    });
+    let filename = source_filename.map_or_else(
+        || stable_resource_schema_filename(&api_version, kind),
+        str::to_string,
+    );
+    LocalResourceSchema {
+        api_version,
+        kind: kind.to_string(),
+        schema,
+        source_id: source_id.to_string(),
+        filename,
+    }
 }
 
 fn stable_resource_schema_filename(api_version: &str, kind: &str) -> String {

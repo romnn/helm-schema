@@ -194,11 +194,7 @@ fn merge_contract_use_provenance(
     target: &mut ContractUse,
     incoming: Vec<crate::ContractProvenance>,
 ) {
-    for provenance in incoming {
-        if !target.provenance.contains(&provenance) {
-            target.provenance.push(provenance);
-        }
-    }
+    target.provenance.extend(incoming);
     target.provenance.sort();
     target.provenance.dedup();
 }
