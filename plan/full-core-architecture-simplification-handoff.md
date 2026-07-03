@@ -77,8 +77,27 @@ task tokei:core
 reports:
 
 ```text
-Rust Code: 25,866
+Rust Code: 23,991
 ```
+
+Twenty-five consolidation rounds landed on 2026-07-02/03 (commits f7acb84..
+de43ea9). Method: one owner per fact or rule, byte-identical fixtures after
+every round, full suite + luup3 aggregate chart validation before every
+commit. Highlights beyond the earlier rounds: EmissionWitness is the single
+contract-claim terminal (five hand-rolled emission copies deleted); the
+lattice carries provenance (Choice keeps alternatives, Widened carries
+unknown-call taint); output uses project from the value lattice only; the
+guard algebra, branch joins, builtin transfer rules, schema-tree walkers,
+k8s tri-state probe core, and chart-tree walking each state their rules
+once. The workspace lints with zero warnings (twelve pre-existing warnings
+fixed structurally along the way).
+
+Metric integrity note: .gitignore's unanchored `cache/` pattern had been
+excluding the production module crates/helm-schema-k8s/src/cache/ from git
+AND from tokei (which respects gitignore) — a fresh clone could not compile
+and every earlier LOC figure was ~331 lines under. The pattern is anchored,
+the module is tracked, and all figures from commit 8f0a2a1-era onward use
+the honest measure.
 
 Later rounds on 2026-07-02 (commits `a4ebdd5`, `e60280e`, `59ce5d8`) continued
 the ladder: AbstractValue::Widened carries unknown-call provenance in the
@@ -725,20 +744,14 @@ Interpretation:
 Current baseline for the next agent:
 
 ```text
-full core Rust Code: 25,866
+full core Rust Code: 23,991
 ```
 
-Near-term honest target:
-
-```text
-full core Rust Code <= 25,500 (value-lattice concat + guard algebra rounds)
-```
-
-Good next target if that succeeds:
-
-```text
-full core Rust Code <= 24,000 (requires the helper event-stream rewrite)
-```
+The 24K soft goal is crossed. The remaining stretch toward 23K runs
+through the helper event-stream rewrite (the one lever still open) plus
+whatever the next fresh-eyes pass exposes; per-round yields at this depth
+were 25-120 LOC, so treat 23K as several sessions away and stop before
+deletions start costing clarity.
 
 ## Real big levers left
 
