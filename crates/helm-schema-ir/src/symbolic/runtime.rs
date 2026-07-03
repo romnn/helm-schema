@@ -6,6 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_get_binding_from_exprs;
 use crate::contract_sink::{ContractUseContext, EmissionWitness};
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
+use crate::fragment_expr_eval::locals_with_roots;
 use crate::helper_summary::merge_output_use_meta;
 use crate::node_eval::{NodeActionEffectSink, NodeEvalRuntime, push_predicate_contract_guards};
 use crate::range_action_plan::{RangeActionPlan, plan_range_action};
@@ -178,10 +179,8 @@ impl SymbolicWalker<'_> {
 
     fn observe_symbolic_assignment(&mut self, exprs: &[TemplateExpr]) {
         if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
-            let mut locals = self.scope.locals().fragment_values.clone();
-            for (key, value) in &self.root_bindings {
-                locals.insert(key.clone(), value.to_context_value());
-            }
+            let locals =
+                locals_with_roots(&self.scope.locals().fragment_values, &self.root_bindings);
             let current_dot = self
                 .current_dot_binding()
                 .map(|value| value.to_context_value());

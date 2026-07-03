@@ -8,9 +8,9 @@ use helm_schema_ast::TemplateExpr;
 pub(crate) use context::FragmentEvalContext;
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult};
+use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{HelperArgBindings, bindings_for_helper_arg_with, eval_expr};
+use crate::expr_eval::eval_expr;
 use crate::helper_summary::HelperOutputMeta;
 use bound_helper_resolver::{BoundHelperValueResolverParams, eval_expr_result_with_bound_helpers};
 
@@ -71,10 +71,66 @@ pub(crate) fn context_value_from_outer_expr(
         ));
     }
 
-    let env = EvalEnv::from_outer_fragment_expr_context(outer_locals, outer, current_dot);
+    // The outer-fragment dot is the dict of outer bindings when they exist
+    // (so a bare `.` sees the caller's root context), else the ambient dot.
+    let dot = outer
+        .map(|bindings| {
+            AbstractValue::Dict(
+                bindings
+                    .iter()
+                    .map(|(name, binding)| (name.clone(), binding.clone()))
+                    .collect(),
+            )
+        })
+        .or_else(|| current_dot.cloned());
+    let env = EvalEnv {
+        dot,
+        root_fields: outer.cloned().unwrap_or_default(),
+        locals: outer_locals.cloned().unwrap_or_default(),
+        allow_field_root_lookup: true,
+        ..EvalEnv::default()
+    };
     eval_expr(expr, &env)
         .value
         .map(|value| value.to_context_value())
+}
+
+/// The fragment-context value of an expression: the plain outer-fragment
+/// evaluation first, then the bound-helper-resolving fragment evaluation as
+/// the fallback. This is the composition behind with-body dots and `hasKey`
+/// probes at both walkers.
+///
+/// The first arm binds `outer`, so its dot is always the dict of root
+/// bindings; an ambient helper dot cannot reach it (hence no ambient-dot
+/// parameter here).
+pub(crate) fn fragment_context_value(
+    expr: &TemplateExpr,
+    root_bindings: &HashMap<String, AbstractValue>,
+    template_bindings: &HashMap<String, AbstractValue>,
+    fragment_context: FragmentEvalContext<'_>,
+    current_dot_fragment: Option<&AbstractValue>,
+) -> Option<AbstractValue> {
+    let locals = locals_with_roots(template_bindings, root_bindings);
+
+    context_value_from_outer_expr(expr, Some(&locals), Some(root_bindings), None).or_else(|| {
+        fragment_context.fragment_value_from_expr(
+            expr,
+            template_bindings,
+            current_dot_fragment,
+            &mut HashSet::new(),
+        )
+    })
+}
+
+pub(crate) fn locals_with_roots(
+    template_bindings: &HashMap<String, AbstractValue>,
+    root_bindings: &HashMap<String, AbstractValue>,
+) -> HashMap<String, AbstractValue> {
+    let mut locals = template_bindings.clone();
+    for (key, value) in root_bindings {
+        locals.insert(key.clone(), value.to_context_value());
+    }
+    locals
 }
 
 pub(crate) fn helper_result_from_expr_with_fragment_locals(
@@ -84,7 +140,7 @@ pub(crate) fn helper_result_from_expr_with_fragment_locals(
     current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
-) -> crate::eval_effect::EvalResult {
+) -> EvalResult {
     let mut env = EvalEnv::from_helper_context(outer, current_dot);
     env.locals = fragment_locals.bindings.clone();
     if let Some(default_paths) = fragment_locals.default_paths {
@@ -106,51 +162,4 @@ pub(crate) fn helper_result_from_expr_with_fragment_locals(
     );
     result.value = result.value.map(|value| value.to_context_value());
     result
-}
-
-pub(crate) fn helper_result_from_exprs_with_fragment_locals(
-    exprs: &[TemplateExpr],
-    fragment_locals: FragmentLocalFacts<'_>,
-    outer: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen_seed: &HashSet<String>,
-) -> EvalResult {
-    let mut seen = seen_seed.clone();
-    let mut values = Vec::new();
-    let mut effects = Effects::default();
-    for expr in exprs {
-        let result = helper_result_from_expr_with_fragment_locals(
-            expr,
-            fragment_locals,
-            outer,
-            current_dot,
-            context,
-            &mut seen,
-        );
-        values.extend(result.value);
-        effects.merge(result.effects);
-    }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
-}
-
-pub(crate) fn values_for_helper_arg_with_fragment_locals(
-    arg: Option<&TemplateExpr>,
-    outer: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> HelperArgBindings {
-    bindings_for_helper_arg_with(arg, outer, |expr| {
-        helper_result_from_expr_with_fragment_locals(
-            expr,
-            FragmentLocalFacts::bindings_only(fragment_locals),
-            outer,
-            current_dot,
-            context,
-            seen,
-        )
-        .value
-    })
 }

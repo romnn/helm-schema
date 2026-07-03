@@ -30,30 +30,6 @@ impl EvalEnv {
         }
     }
 
-    pub(crate) fn from_outer_fragment_expr_context(
-        fragment_locals: Option<&HashMap<String, AbstractValue>>,
-        root_bindings: Option<&HashMap<String, AbstractValue>>,
-        current_dot: Option<&AbstractValue>,
-    ) -> Self {
-        let dot = root_bindings
-            .map(|bindings| {
-                AbstractValue::Dict(
-                    bindings
-                        .iter()
-                        .map(|(name, binding)| (name.clone(), binding.clone()))
-                        .collect(),
-                )
-            })
-            .or_else(|| current_dot.cloned());
-        Self {
-            dot,
-            root_fields: root_bindings.cloned().unwrap_or_default(),
-            locals: fragment_locals.cloned().unwrap_or_default(),
-            allow_field_root_lookup: true,
-            ..Self::default()
-        }
-    }
-
     pub(crate) fn from_fragment_context(
         locals: &HashMap<String, AbstractValue>,
         current_dot: Option<&AbstractValue>,

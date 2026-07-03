@@ -8,8 +8,6 @@ use crate::helper_summary::HelperOutputMeta;
 mod condition_predicate;
 mod path_resolution;
 
-pub(crate) use path_resolution::computed_with_body_fragment_value_expr;
-
 pub(crate) struct ValuePathContext<'a> {
     pub(crate) root_bindings: &'a HashMap<String, AbstractValue>,
     pub(crate) template_bindings: &'a HashMap<String, AbstractValue>,

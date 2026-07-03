@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::BTreeSet;
 
 use helm_schema_ast::TemplateExpr;
 
@@ -7,35 +7,9 @@ use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{direct_values_path, eval_expr, eval_exprs_effects};
-use crate::fragment_expr_eval::{FragmentEvalContext, context_value_from_outer_expr};
+use crate::fragment_expr_eval::{fragment_context_value, locals_with_roots};
 
 use super::ValuePathContext;
-
-pub(crate) fn computed_with_body_fragment_value_expr(
-    expr: &TemplateExpr,
-    root_bindings: &HashMap<String, AbstractValue>,
-    template_bindings: &HashMap<String, AbstractValue>,
-    fragment_context: FragmentEvalContext<'_>,
-    current_dot_fragment: Option<&AbstractValue>,
-    current_dot_binding: Option<&AbstractValue>,
-) -> Option<AbstractValue> {
-    let locals = locals_with_roots(template_bindings, root_bindings);
-
-    context_value_from_outer_expr(
-        expr,
-        Some(&locals),
-        Some(root_bindings),
-        current_dot_binding,
-    )
-    .or_else(|| {
-        fragment_context.fragment_value_from_expr(
-            expr,
-            template_bindings,
-            current_dot_fragment,
-            &mut HashSet::new(),
-        )
-    })
-}
 
 impl ValuePathContext<'_> {
     pub(crate) fn expression_output_effects(&self, exprs: &[TemplateExpr]) -> Effects {
@@ -100,13 +74,12 @@ impl ValuePathContext<'_> {
         &self,
         expr: &TemplateExpr,
     ) -> Option<AbstractValue> {
-        computed_with_body_fragment_value_expr(
+        fragment_context_value(
             expr,
             self.root_bindings,
             self.template_bindings,
             self.fragment_context,
             self.current_dot_fragment.as_ref(),
-            self.current_dot_binding.as_ref(),
         )
     }
 
@@ -130,15 +103,4 @@ impl ValuePathContext<'_> {
         }
         self.single_resolved_values_path_expr(expr)
     }
-}
-
-fn locals_with_roots(
-    template_bindings: &HashMap<String, AbstractValue>,
-    root_bindings: &HashMap<String, AbstractValue>,
-) -> HashMap<String, AbstractValue> {
-    let mut locals = template_bindings.clone();
-    for (key, value) in root_bindings {
-        locals.insert(key.clone(), value.to_context_value());
-    }
-    locals
 }

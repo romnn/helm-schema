@@ -4,6 +4,7 @@ use helm_schema_ast::is_merge_function;
 use helm_schema_ast::{Literal, TemplateExpr, parse_yaml_key};
 
 use crate::abstract_value::{AbstractValue, OutputProjectionScope};
+use crate::eval_effect::{Effects, EvalResult};
 use crate::expr_eval::{
     eval_helper_exprs_direct_effects, expr_leading_variable, expr_starts_with_helper_call,
 };
@@ -11,10 +12,7 @@ use crate::fragment_assignment::{
     AssignmentKind, ParsedHelperAssignment, apply_local_set_mutations_from_exprs,
     parse_helper_assignment_from_exprs,
 };
-use crate::fragment_expr_eval::{
-    FragmentLocalFacts, helper_result_from_expr_with_fragment_locals,
-    helper_result_from_exprs_with_fragment_locals,
-};
+use crate::fragment_expr_eval::{FragmentLocalFacts, helper_result_from_expr_with_fragment_locals};
 use crate::helper_summary::{HelperFragmentOutputUse, NestedDependencyRows, merge_output_use_meta};
 use crate::helper_walk_state::{DotFrame, FragmentOutputWalkState};
 use crate::{ValueKind, YamlPath};
@@ -70,18 +68,26 @@ pub(crate) fn collect_bound_fragment_output_uses_from_exprs(
     let output_path = static_yaml_fragment_output_path_from_exprs(exprs)
         .map(|output_path| output_path::append_relative_path(relative_path, &output_path))
         .unwrap_or_else(|| relative_path.clone());
-    let result = helper_result_from_exprs_with_fragment_locals(
-        exprs,
-        FragmentLocalFacts::with_output_meta(
-            &state.locals.fragment_values,
-            &state.locals.default_paths,
-            &state.locals.output_meta,
-        ),
-        Some(bindings),
-        dot.helper.as_ref(),
-        state.context,
-        state.seen,
-    );
+    let mut expr_seen = state.seen.clone();
+    let mut values = Vec::new();
+    let mut effects = Effects::default();
+    for expr in exprs {
+        let expr_result = helper_result_from_expr_with_fragment_locals(
+            expr,
+            FragmentLocalFacts::with_output_meta(
+                &state.locals.fragment_values,
+                &state.locals.default_paths,
+                &state.locals.output_meta,
+            ),
+            Some(bindings),
+            dot.helper.as_ref(),
+            state.context,
+            &mut expr_seen,
+        );
+        values.extend(expr_result.value);
+        effects.merge(expr_result.effects);
+    }
+    let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
     let local_effects = &result.effects;
     state.analysis.absorb_effect_hints(local_effects);
     if kind == ValueKind::Scalar && relative_path.0.is_empty() {

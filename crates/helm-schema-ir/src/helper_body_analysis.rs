@@ -6,9 +6,10 @@ use helm_schema_ast::{
 };
 
 use crate::abstract_value::AbstractValue;
+use crate::expr_eval::bindings_for_helper_arg_with;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr,
-    helper_result_from_expr_with_fragment_locals, values_for_helper_arg_with_fragment_locals,
+    FragmentEvalContext, FragmentLocalFacts, context_value_from_outer_expr, fragment_context_value,
+    helper_result_from_expr_with_fragment_locals,
 };
 use crate::helper_fragment_output_uses::collect_bound_fragment_output_uses_from_exprs;
 use crate::helper_runtime_plan::{
@@ -24,7 +25,6 @@ use crate::node_eval::{
     NodeActionEffectSink, NodeEvalRuntime, eval_template_body, push_predicate_contract_guards,
 };
 use crate::symbolic_local_state::SymbolicLocalState;
-use crate::value_path_context::computed_with_body_fragment_value_expr;
 use crate::{ValueKind, YamlPath};
 use helm_schema_core::Predicate;
 
@@ -47,14 +47,17 @@ pub(crate) fn resolve_bound_helper_call(
     params: ResolveBoundHelperCallParams<'_, '_>,
 ) -> BoundHelperCallResolution {
     let mut binding_seen = params.seen.clone();
-    let arg_resolution = values_for_helper_arg_with_fragment_locals(
-        params.arg,
-        params.outer_bindings,
-        params.current_dot,
-        params.fragment_locals,
-        params.context,
-        &mut binding_seen,
-    );
+    let arg_resolution = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
+        helper_result_from_expr_with_fragment_locals(
+            expr,
+            FragmentLocalFacts::bindings_only(params.fragment_locals),
+            params.outer_bindings,
+            params.current_dot,
+            params.context,
+            &mut binding_seen,
+        )
+        .value
+    });
     let mut bindings = arg_resolution.bindings;
 
     // The binding resolution already evaluated the whole arg unless the arg
@@ -411,13 +414,12 @@ impl<'context: 'state, 'state> NodeEvalRuntime for HelperAnalysisRuntime<'contex
         header: &helm_schema_ast::TemplateHeader,
     ) -> Self::ConditionPlan {
         let plan = self.enter_if_condition(header);
-        let dot_binding = computed_with_body_fragment_value_expr(
+        let dot_binding = fragment_context_value(
             header.expr(),
             self.bindings,
             &self.locals.fragment_values,
             self.context,
             self.control.current_fragment_dot(),
-            self.control.current_helper_dot(),
         );
         self.control.push_effect_dot_binding(dot_binding);
         plan
