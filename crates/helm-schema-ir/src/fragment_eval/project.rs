@@ -88,11 +88,11 @@ fn walk_node(
                     EntryKey::Literal(_) => {
                         walk_guarded(&entry.value, path, conditions, out);
                     }
-                    EntryKey::Dynamic(key) => {
-                        // Templated keys: the key's splices are pathless
-                        // scalar uses; the value attributes at the parent
+                    EntryKey::Dynamic(_) => {
+                        // Templated keys: the key's reads were recorded at
+                        // the eval site (where range/branch predicates were
+                        // still ambient); the value attributes at the parent
                         // path without an invented segment.
-                        project_parts(key, &YamlPath(Vec::new()), conditions, out);
                         walk_guarded(&entry.value, path, conditions, out);
                     }
                 }

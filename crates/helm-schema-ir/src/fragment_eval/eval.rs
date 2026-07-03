@@ -25,13 +25,15 @@
 //! - local state: [`SymbolicLocalState`] with the same branch-join rules as
 //!   the symbolic walker.
 //!
-//! Known B1 boundaries (kept honest in the differential scoreboard rather
+//! Known boundaries (kept honest in the differential scoreboard rather
 //! than patched around): document-scope ranges run one symbolic iteration
 //! (the current document walker's model); destructured range variables stay
-//! unbound at document scope (also the current model); static file
-//! templates and exact helper-body inlining are not evaluated; ill-nested
-//! regions re-adopt escaped siblings by span, so late children of a
-//! branch-opened container inherit the branch guard.
+//! unbound at document scope (also the current model); exact helper-body
+//! inlining is not evaluated (helper calls flow through summaries); static
+//! file templates inline at output holes only (not partial-scalar or
+//! block-scalar holes); ill-nested regions re-adopt escaped siblings by
+//! span, so late children of a branch-opened container inherit the branch
+//! guard.
 
 use std::collections::HashMap;
 
@@ -86,22 +88,7 @@ pub(crate) fn eval_document(source: &str, db: &IrAnalysisDb) -> EvaluatedDocumen
         return EvaluatedDocument::default();
     };
     let document = TemplatedDocument::parse_with_root(source, tree.root_node());
-    let mut control_facts = HashMap::new();
-    collect_control_facts(tree.root_node(), source, &mut control_facts);
-    let mut inline_regions = Vec::new();
-    collect_inline_regions(document.roots(), &mut inline_regions);
-
-    let mut interpreter = Interpreter {
-        source,
-        db,
-        control_facts,
-        inline_regions,
-        locals: SymbolicLocalState::default(),
-        dot_stack: Vec::new(),
-        root_bindings: HashMap::new(),
-        active_predicates: Vec::new(),
-        reads: Vec::new(),
-    };
+    let mut interpreter = Interpreter::for_source(source, db, &tree, &document);
     let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
     let contributions = interpreter.eval_node_list(&roots);
     EvaluatedDocument {
@@ -363,6 +350,9 @@ pub(super) struct Interpreter<'a> {
     pub(super) db: &'a IrAnalysisDb,
     pub(super) control_facts: HashMap<usize, ControlFacts>,
     pub(super) inline_regions: Vec<Span>,
+    /// Static file templates currently being inlined (cycle prevention for
+    /// `.Files.Get`-style template requests).
+    pub(super) inline_files: Vec<String>,
     pub(super) locals: SymbolicLocalState,
     pub(super) dot_stack: Vec<Option<AbstractValue>>,
     pub(super) root_bindings: HashMap<String, AbstractValue>,
@@ -371,6 +361,33 @@ pub(super) struct Interpreter<'a> {
 }
 
 impl<'a> Interpreter<'a> {
+    /// A fresh interpreter over one parsed source: control-header facts and
+    /// inline-region spans are collected up front; all evaluation state
+    /// starts empty.
+    pub(super) fn for_source(
+        source: &'a str,
+        db: &'a IrAnalysisDb,
+        tree: &tree_sitter::Tree,
+        document: &TemplatedDocument<'_>,
+    ) -> Self {
+        let mut control_facts = HashMap::new();
+        collect_control_facts(tree.root_node(), source, &mut control_facts);
+        let mut inline_regions = Vec::new();
+        collect_inline_regions(document.roots(), &mut inline_regions);
+        Self {
+            source,
+            db,
+            control_facts,
+            inline_regions,
+            inline_files: Vec::new(),
+            locals: SymbolicLocalState::default(),
+            dot_stack: Vec::new(),
+            root_bindings: HashMap::new(),
+            active_predicates: Vec::new(),
+            reads: Vec::new(),
+        }
+    }
+
     pub(super) fn text(&self, span: Span) -> &'a str {
         self.source.get(span.start..span.end).unwrap_or("")
     }
@@ -422,6 +439,35 @@ impl<'a> Interpreter<'a> {
         };
         if !self.reads.contains(&read) {
             self.reads.push(read);
+        }
+    }
+
+    /// Pathless reads for the splices of a templated mapping key. Keys have
+    /// no guarded arms in the tree, so their reads are recorded at the eval
+    /// site where the ambient predicates (branch and range conditions) are
+    /// still active; the projection deliberately does not re-derive them.
+    pub(super) fn push_key_reads(&mut self, key: &EntryKey) {
+        let EntryKey::Dynamic(string) = key else {
+            return;
+        };
+        for part in &string.parts {
+            match part {
+                StringPart::Text(_) => {}
+                StringPart::Splice(splice) => {
+                    let mut extra = Vec::new();
+                    if splice.meta.defaulted {
+                        extra.push(Guard::Default {
+                            path: splice.values_path.clone(),
+                        });
+                    }
+                    self.push_read(&splice.values_path, &extra);
+                }
+                StringPart::Taint(paths) => {
+                    for path in paths {
+                        self.push_read(path, &[]);
+                    }
+                }
+            }
         }
     }
 
@@ -553,6 +599,7 @@ impl<'a> Interpreter<'a> {
                 .push(StringPart::Text([key_suffix].into_iter().collect()));
         }
         let key = EntryKey::Dynamic(key_string);
+        self.push_key_reads(&key);
         let mut consumed = 1;
         let value = if rest.trim().is_empty() {
             match nodes.get(index + 2).map(|view| view.node) {
@@ -665,6 +712,7 @@ impl<'a> Interpreter<'a> {
         match view.node {
             Node::Mapping(entry) => {
                 let key = self.entry_key(&entry.key);
+                self.push_key_reads(&key);
                 let mut value = Guarded::empty();
                 if let Some(block) = &entry.block {
                     value.extend(self.eval_block_scalar(block));

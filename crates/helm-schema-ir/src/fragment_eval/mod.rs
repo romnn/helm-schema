@@ -13,6 +13,7 @@ mod control;
 mod domain;
 mod dump;
 mod eval;
+mod files;
 mod holes;
 mod lower;
 mod project;

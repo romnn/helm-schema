@@ -217,6 +217,31 @@ fn computed_scoreboard() -> Value {
     json!({ "fixtures": fixtures })
 }
 
+/// Print the full row-level diff for one fixture (set
+/// `FRAGMENT_PARITY_ROWS=<fixture>`): rows only the old pipeline produces
+/// and rows only the fragment projection produces, as canonical
+/// `(values_path, yaml_path, guards)` triples. This is the evidence trail
+/// for divergence adjudication in the scoreboard notes.
+fn dump_row_diff(name: &str) {
+    let Some((_, case)) = fixture_names_and_cases()
+        .into_iter()
+        .find(|(fixture, _)| *fixture == name)
+    else {
+        eprintln!("unknown fixture {name}");
+        return;
+    };
+    let old_rows: BTreeSet<(String, String, String)> =
+        old_rows(case).iter().map(old_row_key).collect();
+    let new_rows: BTreeSet<(String, String, String)> =
+        new_uses(case).iter().map(new_row_key).collect();
+    for (path, yaml, guards) in old_rows.difference(&new_rows) {
+        eprintln!("old only: {path} @ [{yaml}] {guards}");
+    }
+    for (path, yaml, guards) in new_rows.difference(&old_rows) {
+        eprintln!("new only: {path} @ [{yaml}] {guards}");
+    }
+}
+
 /// The committed scoreboard with the human-written `notes` fields removed,
 /// so it compares against the computed facts.
 fn expected_scoreboard() -> Value {
@@ -233,6 +258,9 @@ fn expected_scoreboard() -> Value {
 
 #[test]
 fn fragment_parity_scoreboard_matches() {
+    if let Ok(fixture) = std::env::var("FRAGMENT_PARITY_ROWS") {
+        dump_row_diff(&fixture);
+    }
     let computed = computed_scoreboard();
     if std::env::var("FRAGMENT_PARITY_DUMP").is_ok() {
         eprintln!(

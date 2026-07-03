@@ -54,12 +54,14 @@ use super::domain::{
 pub(crate) const MAX_SCALAR_ARMS: usize = 8;
 
 /// Effect-derived context under which a hole's value lowers: which paths the
-/// expression defaulted or encoded, and which paths carry chart-level `set …
-/// default` normalization.
+/// expression defaulted or encoded, which paths carry chart-level `set …
+/// default` normalization, and the per-path binding-time helper meta of
+/// locals the expression read.
 pub(crate) struct LowerScope<'a> {
     pub(crate) defaulted_paths: &'a BTreeSet<String>,
     pub(crate) encoded_paths: &'a BTreeSet<String>,
     pub(crate) chart_value_defaults: &'a BTreeSet<String>,
+    pub(crate) local_output_meta: &'a std::collections::BTreeMap<String, HelperOutputMeta>,
 }
 
 impl LowerScope<'_> {
@@ -82,6 +84,27 @@ impl LowerScope<'_> {
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),
             },
+        }
+    }
+
+    /// The guarded splice arms for one rendered values path. A path that
+    /// flowed through a local keeps the local's binding-time helper branch
+    /// conditions (recorded in the hole's `local_output_meta`), splitting
+    /// into per-branch arms exactly like a directly rendered helper value —
+    /// transfer functions like `printf` collapse the value shape but the
+    /// recorded meta keeps the per-path facts. Everything else lowers as one
+    /// unconditional arm.
+    pub(super) fn path_splice_arms(
+        &self,
+        path: &str,
+        kind: ValueKind,
+    ) -> Vec<(PathCondition, Splice)> {
+        match self.local_output_meta.get(path) {
+            Some(meta) if !meta.predicates.is_empty() => helper_meta_conditions(meta)
+                .into_iter()
+                .map(|condition| (condition, self.splice(path, kind, Some(meta))))
+                .collect(),
+            _ => vec![(Predicate::True, self.splice(path, kind, None))],
         }
     }
 }
@@ -113,7 +136,11 @@ pub(crate) fn lower_value(
             if path.is_empty() {
                 Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
             } else {
-                Guarded::unconditional(AbstractFragment::Splice(scope.splice(path, kind, None)))
+                let mut out = Guarded::empty();
+                for (condition, splice) in scope.path_splice_arms(path, kind) {
+                    out.arms.push((condition, AbstractFragment::Splice(splice)));
+                }
+                out
             }
         }
         AbstractValue::OutputPath(path, meta) => {
@@ -222,14 +249,11 @@ pub(crate) fn lower_value_scalar_arms(
             if path.is_empty() {
                 Vec::new()
             } else {
-                vec![(
-                    Predicate::True,
-                    vec![StringPart::Splice(scope.splice(
-                        path,
-                        ValueKind::PartialScalar,
-                        None,
-                    ))],
-                )]
+                scope
+                    .path_splice_arms(path, ValueKind::PartialScalar)
+                    .into_iter()
+                    .map(|(condition, splice)| (condition, vec![StringPart::Splice(splice)]))
+                    .collect()
             }
         }
         AbstractValue::OutputPath(path, meta) => helper_meta_conditions(meta)

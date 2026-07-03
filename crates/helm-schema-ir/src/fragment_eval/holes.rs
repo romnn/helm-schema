@@ -10,7 +10,9 @@ use helm_schema_ast::{TemplateExpr, parse_action_expressions, parse_expr_text};
 use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span, parse_go_template};
 
 use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::{BoundValueContext, parse_get_binding_from_exprs};
+use crate::bound_value_analysis::{
+    BoundValueContext, parse_get_binding_from_exprs, parse_literal_list_range_expr,
+};
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
@@ -158,6 +160,7 @@ impl Interpreter<'_> {
             self.eval_assignment_exprs(&exprs);
             return (Guarded::empty(), None);
         }
+        let inlined = self.inline_static_file_fragments(&exprs);
         let width = exprs
             .iter()
             .rev()
@@ -176,17 +179,18 @@ impl Interpreter<'_> {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
+            local_output_meta: &hole.effects.local_output_meta,
         };
         let mut out = match &value {
             Some(value) => lower_value(value, kind, &scope),
             None => Guarded::empty(),
         };
         for path in extra_paths {
-            out.arms.push((
-                Predicate::True,
-                AbstractFragment::Splice(scope.splice(&path, kind, None)),
-            ));
+            for (condition, splice) in scope.path_splice_arms(&path, kind) {
+                out.arms.push((condition, AbstractFragment::Splice(splice)));
+            }
         }
+        out.extend(inlined);
         (out, width)
     }
 
@@ -212,17 +216,24 @@ impl Interpreter<'_> {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
+            local_output_meta: &hole.effects.local_output_meta,
         };
         let mut arms = match &value {
             Some(value) => lower_value_scalar_arms(value, &scope),
             None => Vec::new(),
         };
-        let extra_parts: Vec<StringPart> = extra_paths
-            .into_iter()
-            .map(|path| StringPart::Splice(scope.splice(&path, ValueKind::PartialScalar, None)))
-            .collect();
-        if !extra_parts.is_empty() {
-            arms.push((Predicate::True, extra_parts));
+        let mut plain_parts: Vec<StringPart> = Vec::new();
+        for path in extra_paths {
+            for (condition, splice) in scope.path_splice_arms(&path, ValueKind::PartialScalar) {
+                if condition == Predicate::True {
+                    plain_parts.push(StringPart::Splice(splice));
+                } else {
+                    arms.push((condition, vec![StringPart::Splice(splice)]));
+                }
+            }
+        }
+        if !plain_parts.is_empty() {
+            arms.push((Predicate::True, plain_parts));
         }
         arms
     }
@@ -334,10 +345,11 @@ impl Interpreter<'_> {
         scalar_arms_to_fragment(arms, true)
     }
 
-    /// Evaluate an inline `{{ if }}…{{ end }}` region inside a scalar by
-    /// re-parsing the region text with the Go-template grammar and turning
-    /// its branches into guarded scalar arms. Non-`if` inline regions and
-    /// nested regions degrade to conservative taint.
+    /// Evaluate an inline `{{ if }}…{{ end }}` or `{{ range }}…{{ end }}`
+    /// region inside a scalar by re-parsing the region text with the
+    /// Go-template grammar and turning its branches into guarded scalar
+    /// arms. Other inline regions (`with`) and nested regions degrade to
+    /// conservative taint.
     pub(super) fn eval_inline_region(
         &mut self,
         span: Span,
@@ -348,19 +360,22 @@ impl Interpreter<'_> {
         };
         let root = tree.root_node();
         let mut cursor = root.walk();
-        let Some(if_node) = root
+        let Some(action) = root
             .named_children(&mut cursor)
-            .find(|child| child.kind() == "if_action")
+            .find(|child| matches!(child.kind(), "if_action" | "range_action"))
         else {
             return self.inline_region_taint(text);
         };
+        if action.kind() == "range_action" {
+            return self.eval_inline_range(action, text);
+        }
 
         let mut arm_specs = vec![(
-            control_header(text, if_node),
-            children_with_field(if_node, "consequence"),
+            control_header(text, action),
+            children_with_field(action, "consequence"),
         )];
-        arm_specs.extend(else_if_pairs(if_node, text));
-        arm_specs.push((None, children_with_field(if_node, "alternative")));
+        arm_specs.extend(else_if_pairs(action, text));
+        arm_specs.push((None, children_with_field(action, "alternative")));
 
         let entry_predicates = self.active_predicates.len();
         let mut prior: Vec<PathCondition> = Vec::new();
@@ -377,17 +392,104 @@ impl Interpreter<'_> {
                 arm_condition = and_conditions(arm_condition, own.clone());
                 prior.push(own);
             }
-            let mut parts = Vec::new();
-            for child in children {
-                self.inline_branch_parts(child, text, &mut parts);
+            for (sub_condition, parts) in self.inline_body_arms(&children, text) {
+                arms.push((and_conditions(arm_condition.clone(), sub_condition), parts));
             }
-            arms.push((arm_condition, parts));
         }
         self.active_predicates.truncate(entry_predicates);
         if arms.len() > MAX_SCALAR_ARMS {
             let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
             return vec![(Predicate::True, parts)];
         }
+        arms
+    }
+
+    /// Evaluate an inline `{{ range }}…{{ end }}` region inside a scalar
+    /// with the structural range activation: literal-list domains, the
+    /// direct-path item dot, and the header read under `Guard::Range`; body
+    /// contributions carry the range condition. Body-local bindings stay
+    /// region-local (entry locals are restored, the same boundary as a
+    /// structural branch scope).
+    fn eval_inline_range(
+        &mut self,
+        node: tree_sitter::Node<'_>,
+        text: &str,
+    ) -> Vec<(PathCondition, Vec<StringPart>)> {
+        let Some(header) = helm_schema_ast::range_header_from_source(node, text) else {
+            return self.inline_region_taint(text);
+        };
+        let entry_predicates = self.active_predicates.len();
+        let entry_dots = self.dot_stack.len();
+        let entry_locals = self.locals.clone();
+        if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
+            self.locals.insert_range_domain(variable, literals);
+        }
+        let (source_paths, direct_path) = {
+            let context = self.value_path_context();
+            (
+                context
+                    .resolved_values_paths_from_expr(header.expr())
+                    .into_iter()
+                    .collect::<Vec<_>>(),
+                context.single_direct_iterable_range_path_expr(header.expr()),
+            )
+        };
+        let mut own = Vec::new();
+        for path in &source_paths {
+            let guard = Guard::Range { path: path.clone() };
+            self.push_read(path, std::slice::from_ref(&guard));
+            own.push(Predicate::from(guard.clone()));
+            self.push_predicate(Predicate::from(guard));
+        }
+        let condition = Predicate::all(own);
+        let dot = direct_path.map(|path| AbstractValue::ValuesPath(format!("{path}.*")));
+        self.dot_stack.push(dot);
+        let mut arms = Vec::new();
+        for (sub_condition, parts) in
+            self.inline_body_arms(&children_with_field(node, "body"), text)
+        {
+            arms.push((and_conditions(condition.clone(), sub_condition), parts));
+        }
+        self.dot_stack.truncate(entry_dots);
+        self.active_predicates.truncate(entry_predicates);
+        self.locals = entry_locals;
+        // A `{{ range }}…{{ else }}…{{ end }}` alternative renders when the
+        // iterable is empty; like the structural range arms it decodes no
+        // negated condition.
+        for (sub_condition, parts) in
+            self.inline_body_arms(&children_with_field(node, "alternative"), text)
+        {
+            arms.push((sub_condition, parts));
+        }
+        arms
+    }
+
+    /// Fold one inline branch body into guarded part arms. Conditions
+    /// arising inside the body (helper meta branches) stay on their own
+    /// hole's arms — sibling holes of the same body are not correlated, so
+    /// each part keeps exactly its own conditions (a cartesian product here
+    /// would fabricate contradictory cross-hole combinations).
+    fn inline_body_arms(
+        &mut self,
+        children: &[tree_sitter::Node<'_>],
+        text: &str,
+    ) -> Vec<(PathCondition, Vec<StringPart>)> {
+        let mut base: Vec<StringPart> = Vec::new();
+        let mut conditional = Vec::new();
+        for child in children {
+            for (condition, parts) in self.inline_child_arms(*child, text) {
+                if condition == Predicate::True {
+                    base.extend(parts);
+                } else {
+                    conditional.push((condition, parts));
+                }
+            }
+        }
+        let mut arms = Vec::new();
+        if !base.is_empty() || conditional.is_empty() {
+            arms.push((Predicate::True, base));
+        }
+        arms.extend(conditional);
         arms
     }
 
@@ -412,19 +514,26 @@ impl Interpreter<'_> {
         Some(predicate)
     }
 
-    fn inline_branch_parts(
+    /// One inline body child as guarded part arms. An empty vec means "no
+    /// contribution" (the fold skips it); nested inline control degrades to
+    /// conservative taint.
+    fn inline_child_arms(
         &mut self,
         node: tree_sitter::Node<'_>,
         text: &str,
-        parts: &mut Vec<StringPart>,
-    ) {
+    ) -> Vec<(PathCondition, Vec<StringPart>)> {
         match node_action(text, node) {
             NodeAction::Text => {
                 let content = node.utf8_text(text.as_bytes()).unwrap_or("");
-                if !content.is_empty() {
-                    parts.push(StringPart::Text(
-                        [content.to_string()].into_iter().collect(),
-                    ));
+                if content.is_empty() {
+                    Vec::new()
+                } else {
+                    vec![(
+                        Predicate::True,
+                        vec![StringPart::Text(
+                            [content.to_string()].into_iter().collect(),
+                        )],
+                    )]
                 }
             }
             NodeAction::Output(Some(exprs)) => {
@@ -435,30 +544,35 @@ impl Interpreter<'_> {
                     defaulted_paths: &defaulted,
                     encoded_paths: &hole.effects.encoded_paths,
                     chart_value_defaults: &self.locals.chart_value_defaults,
+                    local_output_meta: &hole.effects.local_output_meta,
                 };
-                if let Some(value) = &hole.value {
-                    for (_, arm_parts) in lower_value_scalar_arms(value, &scope) {
-                        parts.extend(arm_parts);
-                    }
+                match &hole.value {
+                    Some(value) => lower_value_scalar_arms(value, &scope),
+                    None => Vec::new(),
                 }
             }
-            NodeAction::Assignment(Some(exprs)) => self.eval_assignment_exprs(&exprs),
+            NodeAction::Assignment(Some(exprs)) => {
+                self.eval_assignment_exprs(&exprs);
+                Vec::new()
+            }
             NodeAction::If(_) | NodeAction::With(_) | NodeAction::Range(_) => {
                 // Nested inline control: keep the influence, drop the
                 // structure (bounded conservative fallback).
                 let content = node.utf8_text(text.as_bytes()).unwrap_or("");
                 let taint = self.resolved_paths_of_action_text(content);
-                if !taint.is_empty() {
-                    parts.push(StringPart::Taint(taint));
+                if taint.is_empty() {
+                    Vec::new()
+                } else {
+                    vec![(Predicate::True, vec![StringPart::Taint(taint)])]
                 }
             }
-            NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {}
+            NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {
+                Vec::new()
+            }
             NodeAction::Descend => {
                 let mut cursor = node.walk();
                 let children: Vec<_> = node.children(&mut cursor).collect();
-                for child in children {
-                    self.inline_branch_parts(child, text, parts);
-                }
+                self.inline_body_arms(&children, text)
             }
         }
     }

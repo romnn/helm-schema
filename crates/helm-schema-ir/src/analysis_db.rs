@@ -32,6 +32,9 @@ impl ParsedHelperBody<'_> {
 
 pub(crate) struct IrAnalysisDb {
     define_bodies: HashMap<String, CachedDefineBody>,
+    /// Raw template file sources by index path (static `files/*` templates
+    /// requested through `.Files.Get` resolve here).
+    file_sources: HashMap<String, String>,
     define_trees: RefCell<HashMap<String, tree_sitter::Tree>>,
     define_attributions: RefCell<HashMap<String, AttributionIndex>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, HelperSummary>>,
@@ -41,7 +44,9 @@ impl IrAnalysisDb {
     #[tracing::instrument(skip_all)]
     pub(crate) fn new(defines: &DefineIndex) -> Self {
         let mut define_bodies = HashMap::new();
+        let mut file_sources = HashMap::new();
         for (path, src) in defines.file_sources() {
+            file_sources.insert(path.to_string(), src.to_string());
             for block in extract_define_blocks(src) {
                 define_bodies.insert(
                     block.name,
@@ -55,6 +60,7 @@ impl IrAnalysisDb {
         }
         Self {
             define_bodies,
+            file_sources,
             define_trees: RefCell::new(HashMap::new()),
             define_attributions: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
@@ -63,6 +69,10 @@ impl IrAnalysisDb {
 
     pub(crate) fn has_helper(&self, name: &str) -> bool {
         self.define_bodies.contains_key(name)
+    }
+
+    pub(crate) fn file_source(&self, path: &str) -> Option<&str> {
+        self.file_sources.get(path).map(String::as_str)
     }
 
     #[tracing::instrument(skip_all)]

@@ -150,9 +150,10 @@ pub enum EntryKey {
     /// A plain literal key (unquoted).
     Literal(String),
     /// A templated key. Projections attribute the entry's value at the
-    /// *parent* path (no invented segment) and surface the key's splices as
-    /// pathless scalar uses, mirroring the line model's refusal to guess a
-    /// segment for templated keys.
+    /// *parent* path (no invented segment), mirroring the line model's
+    /// refusal to guess a segment for templated keys; the key's own splices
+    /// are recorded as pathless reads at the eval site, where the ambient
+    /// range/branch predicates are still known.
     Dynamic(AbstractString),
 }
 

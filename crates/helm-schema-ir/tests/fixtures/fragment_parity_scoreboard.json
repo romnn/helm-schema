@@ -6,7 +6,7 @@
       "level": "b",
       "missing_pairs": 0,
       "missing_paths": 0,
-      "notes": "row diffs are guard-algebra classes: the old pipeline's sibling-source guard injection (extra truthy(commonLabels) on helper label rows) and defaulted-branch predicate pruning are not reproduced; the new model keeps the raw helper branch conditions in the tree.",
+      "notes": "10 row diffs, two algebra classes. (1) Sibling-source injection: old adds truthy(commonLabels) to the four placed nameOverride label rows (metadata.labels..., spec.podSelector..., spec.ingress[*].from[*]..., spec.egress[*].to[*]...app.kubernetes.io/name); new keeps the helper's own branch condition truthy(nameOverride) on the metadata.labels row and the raw branch conditions elsewhere. (2) Pathless read composition: old emits fullnameOverride/nameOverride pathless reads with the fullname helper's branch predicates stacked onto the deepest ambient context ([truthy(networkPolicy.enabled), not(networkPolicy.allowExternal)]); new records one read per call site (ambient-only variants at each ambient depth, meta-predicated variants separately). B3 evidence: the placed-row diff is exactly {+truthy(commonLabels), -truthy(nameOverride)} per label row; retiring output.rs note_sibling_sources/structured_output_guard_sets closes it.",
       "row_diffs": 10,
       "sample_extra_pairs": [],
       "sample_extra_paths": [],
@@ -19,7 +19,7 @@
       "level": "b",
       "missing_pairs": 0,
       "missing_paths": 0,
-      "notes": "row diffs: old injects sibling-source truthy(commonLabels) guards and prunes truthy(nameOverride) from defaulted helper branches; new keeps the helper's own branch conditions.",
+      "notes": "3 row diffs, one placed row plus one read. The nameOverride @ metadata.labels.app.kubernetes.io/name row differs by exactly {old +truthy(commonLabels) (sibling injection), new +truthy(nameOverride) (raw defaulted-branch condition old prunes)}; new additionally records the helper's nameOverride condition-read under the call site ambient [truthy(metrics.enabled), truthy(metrics.prometheusRule.enabled)].",
       "row_diffs": 3,
       "sample_extra_pairs": [],
       "sample_extra_paths": [],
@@ -32,7 +32,7 @@
       "level": "b",
       "missing_pairs": 0,
       "missing_paths": 0,
-      "notes": "row diffs are guard-set differences on placed rows: old's helper meta prune/sibling algebra vs the new model's raw branch conditions, plus with-header context predicates recorded per arm.",
+      "notes": "19 row diffs, two classes. (1) acmesolver.image.* @ ...containers[*].args[*] (14 rows): the arg scalar holds two inline if-regions (registry, digest/tag); old attributes each hole under only its own region condition (registry row: truthy(registry); repository row: unguarded), new keeps the bounded cross-segment product (registry x digest combinations, e.g. repository under all four combos). Disjunction of new's arm set equals old's guard per path - adjudicated equivalent-but-finer; B3 either normalizes complementary-conjunct row families at projection or accepts the split. (2) nodeSelector locals (5 rows, all new-only pathless): new records the with/range header reads through the $nodeSelector local ([with(global.nodeSelector), with(nodeSelector)] and range-guarded variants, plus one bare global.nodeSelector re-assignment read); old records nothing for control headers over locals - adjudicated: new preserves true condition reads the old model drops.",
       "row_diffs": 19,
       "sample_extra_pairs": [],
       "sample_extra_paths": [],
@@ -68,52 +68,28 @@
     "nats_service": {
       "extra_pairs": 0,
       "extra_paths": 0,
-      "level": "none",
-      "missing_pairs": 5,
-      "missing_paths": 35,
-      "notes": "B1 boundary: static file templates (files/*.yaml rendered via nats.loadMergePatch/tplYaml) are not inlined by the fragment interpreter yet, so all config.* paths and file-derived placements are missing. Planned for the B2 cutover round.",
-      "row_diffs": 42,
+      "level": "b",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "static file templates (files/service.yaml via nats.loadMergePatch) are now inlined by the fragment interpreter; all placements and config.* paths match. The 2 remaining row diffs are new-only unguarded pathless reads (fullnameOverride, nameOverride): the fullname helper's unconditional if-header reads, which old suppresses at unplaced resource-less sites when the same path is also a helper output row (output.rs guard-path skip). Adjudicated: the read is a true fact and a strictly-weaker duplicate of the meta-predicated rows both models emit - expected schema-neutral; verify at B3 with full-schema diff.",
+      "row_diffs": 2,
       "sample_extra_pairs": [],
       "sample_extra_paths": [],
-      "sample_missing_pairs": [
-        "global.labels @ metadata.labels",
-        "nameOverride @ metadata.labels.app.kubernetes.io/name",
-        "nameOverride @ spec.selector.app.kubernetes.io/name",
-        "namespaceOverride @ metadata.namespace",
-        "service.name @ metadata.name"
-      ],
-      "sample_missing_paths": [
-        "config.cluster.enabled",
-        "config.cluster.port",
-        "config.cluster.tls.enabled",
-        "config.gateway.enabled",
-        "config.gateway.port",
-        "config.gateway.tls.enabled",
-        "config.leafnodes.enabled",
-        "config.leafnodes.port"
-      ]
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
     },
     "nats_service_account": {
       "extra_pairs": 0,
       "extra_paths": 0,
-      "level": "none",
-      "missing_pairs": 4,
-      "missing_paths": 3,
-      "notes": "B1 boundary: same static-file-template gap as nats_service.",
-      "row_diffs": 8,
+      "level": "b",
+      "missing_pairs": 0,
+      "missing_paths": 0,
+      "notes": "same static-file-template inlining as nats_service; same 2-row remainder (new-only unguarded fullnameOverride/nameOverride condition-reads that old's unplaced-site guard-path skip drops). Same adjudication.",
+      "row_diffs": 2,
       "sample_extra_pairs": [],
       "sample_extra_paths": [],
-      "sample_missing_pairs": [
-        "global.labels @ metadata.labels",
-        "nameOverride @ metadata.labels.app.kubernetes.io/name",
-        "namespaceOverride @ metadata.namespace",
-        "serviceAccount.name @ metadata.name"
-      ],
-      "sample_missing_paths": [
-        "global.labels",
-        "namespaceOverride",
-        "serviceAccount.name"
-      ]
+      "sample_missing_pairs": [],
+      "sample_missing_paths": []
     },
     "signoz_postgresql_secrets": {
       "extra_pairs": 0,
@@ -121,29 +97,28 @@
       "level": "b",
       "missing_pairs": 0,
       "missing_paths": 0,
-      "notes": "pairs and paths match; row diffs are the helper meta prune algebra (suppressed/related-source predicate pruning) that the new model intentionally does not reproduce.",
-      "row_diffs": 53,
+      "notes": "21 row diffs (down from 53 after locals' binding-time helper meta now lowers into guarded splice arms at transfer-function holes like the printf uri lines). Remaining classes: (1) metadata.name variant stacking: new emits the fullname meta branches per call-site ambient (2 extra fullnameOverride and 2 extra nameOverride variants at metadata.name); old collapses them into its pathless guard-path rows (the old-only fullnameOverride @ [] [truthy(fullnameOverride), truthy(serviceBindings.enabled)]). (2) Pathless nameOverride reads: new records one read per helper call site (7 ambient variants incl. eq(architecture=replication) and ne(username=postgres) sites); old emits 2 meta-predicated variants. (3) Sibling injection on metadata.labels.app.kubernetes.io/name: old +truthy(commonLabels) vs new +truthy(nameOverride), same as the bitnami class. (4) 3 new-only bare reads (auth.username, primary.name, primary.service.ports.postgresql) from top-level assignment sites old's output-source skip drops.",
+      "row_diffs": 21,
       "sample_extra_pairs": [],
       "sample_extra_paths": [],
       "sample_missing_pairs": [],
       "sample_missing_paths": []
     },
     "signoz_zookeeper_statefulset": {
-      "extra_pairs": 7,
+      "extra_pairs": 6,
       "extra_paths": 0,
       "level": "a",
       "missing_pairs": 0,
       "missing_paths": 0,
-      "notes": "extra pairs are a precision improvement: helpers with mixed scalar+fragment summaries (zookeeper.*.secretName printf over include) keep their scalar splices placed at the call site, where the old pipeline demotes every scalar row to pathless once any structured row exists. Row diffs additionally cover the guard prune algebra.",
-      "row_diffs": 99,
+      "notes": "extra pairs are a precision improvement: helpers with mixed scalar+fragment summaries (zookeeper.*.secretName printf over include) keep their scalar splices placed at the call site with full branch guards, where the old pipeline demotes every scalar row to pathless once any structured row exists (the old-only fullnameOverride @ [] x11 rows are the demoted counterparts). The former replicaCount/env[*].value class is closed: inline range regions now evaluate structurally (header read under Guard::Range, body rows carry the range condition and each hole's own meta branches). Remaining row diffs beyond the placement class: sibling/prune algebra variants on serviceName/affinity/configMap.name/storageClassName rows, and securityContext pathless reads where old conjoins truthy(dataLogDir) onto runAsUser/fsGroup variants while new records the dataLogDir read separately.",
+      "row_diffs": 83,
       "sample_extra_pairs": [
         "fullnameOverride @ spec.template.spec.containers[*].env[*].valueFrom.secretKeyRef.name",
         "fullnameOverride @ spec.template.spec.initContainers[*].env[*].valueFrom.secretKeyRef.name",
         "fullnameOverride @ spec.template.spec.volumes[*].secret.secretName",
         "nameOverride @ spec.template.spec.containers[*].env[*].valueFrom.secretKeyRef.name",
         "nameOverride @ spec.template.spec.initContainers[*].env[*].valueFrom.secretKeyRef.name",
-        "nameOverride @ spec.template.spec.volumes[*].secret.secretName",
-        "replicaCount @ spec.template.spec.containers[*].env[*].value"
+        "nameOverride @ spec.template.spec.volumes[*].secret.secretName"
       ],
       "sample_extra_paths": [],
       "sample_missing_pairs": [],
@@ -168,8 +143,8 @@
       "level": "a",
       "missing_pairs": 0,
       "missing_paths": 0,
-      "notes": "extra pairs are a precision improvement: a helper splice inside a partial scalar (name: {{ template \"surveyor.fullname\" . }}-config) is placed at metadata.name with PartialScalar kind, where the old pipeline demotes helper rows at partial slots to pathless.",
-      "row_diffs": 7,
+      "notes": "extra pairs are a precision improvement: a helper splice inside a partial scalar (name: {{ template \"surveyor.fullname\" . }}-config) is placed at metadata.name with PartialScalar kind and identical guards, where the old pipeline demotes helper rows at partial slots to pathless (the two old-only pathless rows are the demoted counterparts). Templated-key reads ({{ .name }}.json inside the accounts range) now record at the eval site and carry the range guard, matching old. Remaining: one new-only bare nameOverride read under [truthy(config.jetstream.enabled)] that old's output-source guard-path skip drops.",
+      "row_diffs": 5,
       "sample_extra_pairs": [
         "fullnameOverride @ metadata.name",
         "nameOverride @ metadata.name"
@@ -262,7 +237,7 @@
       "level": "a",
       "missing_pairs": 0,
       "missing_paths": 0,
-      "notes": "extra pair is a precision improvement: a range-item splice at an iterated terminal (paths[*].path from `- path: {{ . }}`) stays placed, where the old direct_value_path rule demotes any `.*` source to pathless unless the slot's last segment is `[*]`.",
+      "notes": "extra pair is a precision improvement: a range-item splice at an iterated terminal (paths[*].path from `- path: {{ . }}`) stays placed with guards identical to old's pathless row ([truthy(ingress.enabled), range(ingress.hosts), range(ingress.hosts.*.paths)]), where the old direct_value_path rule demotes any `.*` source to pathless unless the slot's last segment is `[*]`. Remaining: one new-only bare nameOverride read under [truthy(ingress.enabled)] (old's output-source guard-path skip).",
       "row_diffs": 3,
       "sample_extra_pairs": [
         "ingress.hosts.*.paths.* @ spec.rules[*].http.paths[*].path"
