@@ -20,7 +20,7 @@ use helm_schema_core::{ContractSchemaSignals, ResourceSchemaOracle};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
-use base_schema::{BaseInsertionDecision, ConditionalTargetIndex, base_insertion_decision};
+use base_schema::{ConditionalTargetIndex, classify_base};
 use condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
@@ -124,29 +124,23 @@ fn build_root_schema(
         .filter(|evidence| evidence.facts.accepted_values_root_fragment)
         .map(|evidence| split_value_path(&evidence.value_path))
         .collect::<Vec<_>>();
-    let mut delayed_replacements = Vec::new();
-    for resolved_path in &resolved_paths {
-        match base_insertion_decision(resolved_path, &conditional_targets) {
-            BaseInsertionDecision::Insert(schema) => {
-                root_schema.insert_path_schema(&resolved_path.path_segments, schema);
-            }
-            BaseInsertionDecision::Replace(schema) => {
-                delayed_replacements.push((resolved_path.path_segments.clone(), schema));
-            }
-        }
-    }
-    // A replaced target under a replaced ancestor adds nothing (the
-    // ancestor's base already owns the subtree) and descending into the
-    // ancestor's non-object base would coerce it into a closed map.
-    let replaced_paths: BTreeSet<Vec<String>> = delayed_replacements
+    let no_replaced_ancestors = BTreeSet::new();
+    let replaced_paths = resolved_paths
         .iter()
-        .map(|(path_segments, _)| path_segments.clone())
-        .collect();
-    for (path_segments, schema) in delayed_replacements {
-        let has_replaced_ancestor = (1..path_segments.len())
-            .any(|length| replaced_paths.contains(&path_segments[..length]));
-        if !has_replaced_ancestor {
-            root_schema.replace_path_schema(&path_segments, schema);
+        .filter(|resolved_path| {
+            classify_base(resolved_path, &conditional_targets, &no_replaced_ancestors).replaces()
+        })
+        .map(|resolved_path| resolved_path.path_segments.clone())
+        .collect::<BTreeSet<_>>();
+    for resolved_path in &resolved_paths {
+        let owner = classify_base(resolved_path, &conditional_targets, &replaced_paths);
+        let Some(schema) = owner.schema(resolved_path) else {
+            continue;
+        };
+        if owner.replaces() {
+            root_schema.replace_path_schema(&resolved_path.path_segments, schema);
+        } else {
+            root_schema.insert_path_schema(&resolved_path.path_segments, schema);
         }
     }
 

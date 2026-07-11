@@ -9,32 +9,73 @@ use crate::schema_model::{is_fixed_object_schema, schema_allows_type};
 use crate::schema_node::{JsonSchemaType, SchemaNode};
 use crate::split_value_path;
 
-pub(crate) enum BaseInsertionDecision {
-    Insert(SchemaNode),
-    Replace(SchemaNode),
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum BaseOwner {
+    /// Not a conditional target: the resolved schema verbatim.
+    Resolved,
+    /// Preserved conditional target: the resolved schema with fixed objects
+    /// unclosed.
+    ResolvedUnclosed,
+    /// Guarded-only fragment target: the open fragment union.
+    OpenFragment,
+    /// Guarded-only non-fragment target: an unconstrained schema.
+    Empty,
+    /// Pathless dependency root with guarded-only descendants.
+    UnknownObject,
+    /// A strict ancestor owns this subtree through replacement.
+    OwnedByAncestor,
 }
 
-pub(crate) fn base_insertion_decision(
+impl BaseOwner {
+    pub(crate) fn schema(self, resolved_path: &ResolvedPathSchema) -> Option<SchemaNode> {
+        match self {
+            Self::Resolved => Some(SchemaNode::foreign(resolved_path.schema.clone())),
+            Self::ResolvedUnclosed => Some(SchemaNode::foreign(unclose_fixed_objects(
+                resolved_path.schema.clone(),
+            ))),
+            Self::OpenFragment => Some(open_fragment_target_base_schema(resolved_path)),
+            Self::Empty => Some(SchemaNode::foreign(crate::schema_model::empty_schema())),
+            Self::UnknownObject => Some(SchemaNode::unknown_object()),
+            Self::OwnedByAncestor => None,
+        }
+    }
+
+    pub(crate) const fn replaces(self) -> bool {
+        matches!(
+            self,
+            Self::ResolvedUnclosed | Self::OpenFragment | Self::Empty
+        )
+    }
+}
+
+pub(crate) fn classify_base(
     resolved_path: &ResolvedPathSchema,
     conditional_targets: &ConditionalTargetIndex,
-) -> BaseInsertionDecision {
+    replaced_ancestors: &BTreeSet<Vec<String>>,
+) -> BaseOwner {
+    let has_replaced_ancestor = (1..resolved_path.path_segments.len())
+        .any(|length| replaced_ancestors.contains(&resolved_path.path_segments[..length]));
+    if has_replaced_ancestor {
+        return BaseOwner::OwnedByAncestor;
+    }
+
     if is_pathless_dependency_root_with_guarded_descendant(resolved_path, conditional_targets) {
-        return BaseInsertionDecision::Insert(SchemaNode::unknown_object());
+        return BaseOwner::UnknownObject;
     }
 
     let Some(target) = conditional_targets
         .targets
         .get(resolved_path.value_path.as_str())
     else {
-        return BaseInsertionDecision::Insert(SchemaNode::foreign(resolved_path.schema.clone()));
+        return BaseOwner::Resolved;
     };
 
     if target.preserve_base_schema {
-        BaseInsertionDecision::Insert(SchemaNode::foreign(unclose_fixed_objects(
-            resolved_path.schema.clone(),
-        )))
+        BaseOwner::ResolvedUnclosed
+    } else if target.open_fragment_base_schema {
+        BaseOwner::OpenFragment
     } else {
-        BaseInsertionDecision::Replace(guarded_only_target_base_schema(resolved_path, target))
+        BaseOwner::Empty
     }
 }
 
@@ -69,23 +110,16 @@ fn is_pathless_dependency_root_with_guarded_descendant(
         && conditional_targets.has_guarded_only_descendant(&resolved_path.path_segments)
 }
 
-fn guarded_only_target_base_schema(
-    resolved_path: &ResolvedPathSchema,
-    target: &ConditionalTargetSummary,
-) -> SchemaNode {
-    let schema = if target.open_fragment_base_schema {
-        if resolved_path.provider_schema_candidate.is_some() {
-            resolved_path.schema.clone()
-        } else if is_fixed_object_schema(&resolved_path.schema) {
-            // Keep the resolved children but unclose the object: a closed
-            // shape at the base would reject keys whose typing now lives
-            // under this target's overlays.
-            unclose_fixed_objects(resolved_path.schema.clone())
-        } else {
-            open_fragment_base_schema(&resolved_path.schema)
-        }
+fn open_fragment_target_base_schema(resolved_path: &ResolvedPathSchema) -> SchemaNode {
+    let schema = if resolved_path.provider_schema_candidate.is_some() {
+        resolved_path.schema.clone()
+    } else if is_fixed_object_schema(&resolved_path.schema) {
+        // Keep the resolved children but unclose the object: a closed
+        // shape at the base would reject keys whose typing now lives
+        // under this target's overlays.
+        unclose_fixed_objects(resolved_path.schema.clone())
     } else {
-        crate::schema_model::empty_schema()
+        open_fragment_base_schema(&resolved_path.schema)
     };
     SchemaNode::foreign(schema)
 }
