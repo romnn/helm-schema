@@ -1,6 +1,163 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "readinessProbe": {}
+              },
+              "required": [
+                "readinessProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "readinessProbe": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "readinessProbe"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configLoggingRestApi": {
+            "properties": {
+              "api_port": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "controllerID": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controllerID"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configTarget": {}
+                  },
+                  "required": [
+                    "configTarget"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "configTarget": {
+                    "not": {
+                      "enum": [
+                        "ConfigMap"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "configTarget"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
   "properties": {
     "affinity": {
       "description": "Affinity is a group of affinity scheduling rules.",
@@ -760,16 +917,7 @@
     "configLoggingRestApi": {
       "additionalProperties": false,
       "properties": {
-        "api_port": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            }
-          ]
-        }
+        "api_port": {}
       },
       "type": "object"
     },
@@ -792,29 +940,7 @@
           "if": {
             "properties": {
               "create": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -1085,17 +1211,31 @@
     },
     "readinessProbe": {
       "additionalProperties": false,
-      "properties": {
-        "initialDelaySeconds": {
-          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        },
-        "periodSeconds": {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/helm-truthy"
+          },
+          "then": {
+            "properties": {
+              "initialDelaySeconds": {
+                "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                "format": "int32",
+                "type": "integer"
+              },
+              "periodSeconds": {
+                "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                "format": "int32",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
         }
+      ],
+      "properties": {
+        "initialDelaySeconds": {},
+        "periodSeconds": {}
       },
       "type": "object"
     },

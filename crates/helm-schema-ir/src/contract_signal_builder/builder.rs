@@ -106,6 +106,17 @@ impl PathSchemaFactsAccumulator {
         }
     }
 
+    /// Union another branch's evidence into this one: the merged branch
+    /// claims "either branch's render may apply", so facts join permissively.
+    fn merge_union(&mut self, other: Self) {
+        for provider_schema_use in other.provider_schema_uses {
+            self.record_provider_schema_use(provider_schema_use);
+        }
+        self.metadata_field_kinds.extend(other.metadata_field_kinds);
+        self.record_facts(other.facts);
+        self.all_uses_nullable &= other.all_uses_nullable;
+    }
+
     fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
         let mut facts = self.facts;
         facts.has_referenced_descendants = has_referenced_descendants;
@@ -324,6 +335,10 @@ impl ContractPathAccumulator {
             has_unconditional_overlay_peer,
             saw_unsupported_overlay,
         } = self;
+        let (conditional_overlay_branches, complements_cover_unconditionally) =
+            minimize_conditional_overlay_branches(conditional_overlay_branches);
+        let has_unconditional_overlay_peer =
+            has_unconditional_overlay_peer || complements_cover_unconditionally;
         // An overlay whose guards could not be lowered poisons every overlay
         // for the path: emitting only the lowerable branches would understate
         // the conditional shape.
@@ -350,6 +365,114 @@ impl ContractPathAccumulator {
             requiredness,
             conditional_overlays,
         }
+    }
+}
+
+/// Guard-set algebra over a path's recorded overlay branches. Branch rows
+/// arrive one per render branch, so `if`/`else` renders of one value produce
+/// complementary keys whose union is a weaker condition or no condition at
+/// all. Resolution conjoins two branches differing in exactly one
+/// complementary truthiness member into their shared key; absorption folds a
+/// branch into a branch keyed by a strict subset; a branch left with an
+/// empty key renders unconditionally (the caller keeps the base schema).
+/// Both rules apply only to branches carrying EQUAL evidence — they simplify
+/// keys, never union facts, so per-branch precision (a nullable arm beside a
+/// strict arm) survives.
+fn minimize_conditional_overlay_branches(
+    mut branches: BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
+) -> (
+    BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
+    bool,
+) {
+    loop {
+        let keys: Vec<Vec<ConditionalGuard>> = branches.keys().cloned().collect();
+        let mut step = None;
+        'search: for (index, left) in keys.iter().enumerate() {
+            for right in &keys[index + 1..] {
+                if branches.get(left) != branches.get(right) {
+                    continue;
+                }
+                if let Some(common) = resolve_complementary_keys(left, right) {
+                    step = Some((left.clone(), Some(right.clone()), common));
+                    break 'search;
+                }
+                if key_is_strict_subset(left, right) {
+                    step = Some((right.clone(), None, left.clone()));
+                    break 'search;
+                }
+                if key_is_strict_subset(right, left) {
+                    step = Some((left.clone(), None, right.clone()));
+                    break 'search;
+                }
+            }
+        }
+        let Some((removed, also_removed, target)) = step else {
+            break;
+        };
+        let mut merged = branches.remove(&removed).unwrap_or_default();
+        if let Some(also_removed) = also_removed
+            && let Some(other) = branches.remove(&also_removed)
+        {
+            merged.merge_union(other);
+        }
+        match branches.entry(target) {
+            std::collections::btree_map::Entry::Occupied(mut entry) => {
+                entry.get_mut().merge_union(merged);
+            }
+            std::collections::btree_map::Entry::Vacant(entry) => {
+                entry.insert(merged);
+            }
+        }
+    }
+    let unconditional = branches.remove(&Vec::new()).is_some();
+    (branches, unconditional)
+}
+
+fn key_is_strict_subset(subset: &[ConditionalGuard], superset: &[ConditionalGuard]) -> bool {
+    subset.len() < superset.len() && subset.iter().all(|guard| superset.contains(guard))
+}
+
+fn resolve_complementary_keys(
+    left: &[ConditionalGuard],
+    right: &[ConditionalGuard],
+) -> Option<Vec<ConditionalGuard>> {
+    if left.len() != right.len() {
+        return None;
+    }
+    let left_only: Vec<&ConditionalGuard> =
+        left.iter().filter(|guard| !right.contains(guard)).collect();
+    let right_only: Vec<&ConditionalGuard> =
+        right.iter().filter(|guard| !left.contains(guard)).collect();
+    let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
+        return None;
+    };
+    if !guards_are_complementary(left_extra, right_extra) {
+        return None;
+    }
+    Some(
+        left.iter()
+            .filter(|guard| *guard != *left_extra)
+            .cloned()
+            .collect(),
+    )
+}
+
+fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuard) -> bool {
+    fn negated_truthy_path(guard: &ConditionalGuard) -> Option<&str> {
+        let ConditionalGuard::Not(inner) = guard else {
+            return None;
+        };
+        match inner.as_ref() {
+            ConditionalGuard::Truthy { path } => Some(path),
+            _ => None,
+        }
+    }
+    match (left, right) {
+        (ConditionalGuard::Truthy { path }, negated)
+        | (negated, ConditionalGuard::Truthy { path }) => {
+            negated_truthy_path(negated) == Some(path)
+        }
+        _ => false,
     }
 }
 
@@ -471,6 +594,13 @@ fn extend_lowerable_predicate(
         }
         Predicate::Guard(Guard::Range { .. }) => return None,
         Predicate::Guard(Guard::Default { path }) if path == target_value_path => {}
+        // The row's own truthiness is nullability evidence (captured as
+        // source null-tolerance), not a conditional shape over *other*
+        // paths; like the self-default and self-negation arms it must not
+        // poison the foreign overlay keys. Root-to-leaf guard stacks put it
+        // on every `with .Values.x`-wrapped render since the fragment
+        // interpreter landed.
+        Predicate::Guard(Guard::Truthy { path }) if path == target_value_path => {}
         // Self-negation carries the branch's own-arm exclusion, not a
         // conditional shape over *other* paths; the overlay keys stay on the
         // foreign conditions.

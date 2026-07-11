@@ -1,4 +1,31 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -9,29 +36,7 @@
             "service": {
               "properties": {
                 "disableBaseClientPort": {
-                  "anyOf": [
-                    {
-                      "const": true
-                    },
-                    {
-                      "not": {
-                        "const": 0
-                      },
-                      "type": "number"
-                    },
-                    {
-                      "minLength": 1,
-                      "type": "string"
-                    },
-                    {
-                      "minItems": 1,
-                      "type": "array"
-                    },
-                    {
-                      "minProperties": 1,
-                      "type": "object"
-                    }
-                  ]
+                  "$ref": "#/$defs/helm-truthy"
                 }
               },
               "required": [
@@ -71,6 +76,773 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "livenessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "livenessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customLivenessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customLivenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "disableBaseClientPort": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableBaseClientPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readinessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readinessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customReadinessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customReadinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "disableBaseClientPort": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableBaseClientPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "containerPorts": {
+            "properties": {
+              "client": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "client": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "client"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "containerPorts": {
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "livenessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "livenessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customLivenessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customLivenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readinessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readinessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customReadinessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customReadinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "containerPorts": {
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "containerSecurityContext": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "containerSecurityContext"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "containerSecurityContext": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "containerSecurityContext"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "quorum": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "quorum"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "containerSecurityContext": {
+            "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
+                "type": "boolean"
+              },
+              "appArmorProfile": {
+                "description": "AppArmorProfile defines a pod or container's AppArmor settings.",
+                "properties": {
+                  "localhostProfile": {
+                    "description": "localhostProfile indicates a profile loaded on the node that should be used. The profile must be preconfigured on the node to work. Must match the loaded name of the profile. Must be set if and only if type is \"Localhost\".",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "type indicates which kind of AppArmor profile will be applied. Valid options are:\n  Localhost - a profile pre-loaded on the node.\n  RuntimeDefault - the container runtime's default profile.\n  Unconfined - no AppArmor enforcement.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object",
+                "x-kubernetes-unions": [
+                  {
+                    "discriminator": "type",
+                    "fields-to-discriminateBy": {
+                      "localhostProfile": "LocalhostProfile"
+                    }
+                  }
+                ]
+              },
+              "capabilities": {
+                "description": "Adds and removes POSIX capabilities from running containers.",
+                "properties": {
+                  "add": {
+                    "description": "Added capabilities",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  "drop": {
+                    "description": "Removed capabilities",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-type": "atomic"
+                  }
+                },
+                "type": "object"
+              },
+              "privileged": {
+                "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
+                "type": "boolean"
+              },
+              "procMount": {
+                "description": "procMount denotes the type of proc mount to use for the containers. The default value is Default which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
+                "type": "string"
+              },
+              "readOnlyRootFilesystem": {
+                "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
+                "type": "boolean"
+              },
+              "runAsGroup": {
+                "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "runAsNonRoot": {
+                "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                "type": "boolean"
+              },
+              "runAsUser": {
+                "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "seLinuxOptions": {
+                "description": "SELinuxOptions are the labels to be applied to the container",
+                "properties": {
+                  "level": {
+                    "description": "Level is SELinux level label that applies to the container.",
+                    "type": "string"
+                  },
+                  "role": {
+                    "description": "Role is a SELinux role label that applies to the container.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Type is a SELinux type label that applies to the container.",
+                    "type": "string"
+                  },
+                  "user": {
+                    "description": "User is a SELinux user label that applies to the container.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "seccompProfile": {
+                "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+                "properties": {
+                  "localhostProfile": {
+                    "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object",
+                "x-kubernetes-unions": [
+                  {
+                    "discriminator": "type",
+                    "fields-to-discriminateBy": {
+                      "localhostProfile": "LocalhostProfile"
+                    }
+                  }
+                ]
+              },
+              "windowsOptions": {
+                "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+                "properties": {
+                  "gmsaCredentialSpec": {
+                    "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+                    "type": "string"
+                  },
+                  "gmsaCredentialSpecName": {
+                    "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+                    "type": "string"
+                  },
+                  "hostProcess": {
+                    "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+                    "type": "boolean"
+                  },
+                  "runAsUserName": {
+                    "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -98,29 +870,1891 @@
                   "persistence": {
                     "properties": {
                       "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "volumePermissions": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "volumePermissions"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "dataLogDir": {
+            "anyOf": [
+              {
+                "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "volumePermissions": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "digest": {
+                    "anyOf": [
+                      {
+                        "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pullPolicy": {
+                    "anyOf": [
+                      {
+                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "repository": {
+                    "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                    "type": "string"
+                  },
+                  "tag": {
+                    "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "resources": {
+                "description": "ResourceRequirements describes the compute resource requirements.",
+                "properties": {
+                  "claims": {
+                    "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis field depends on the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+                    "items": {
+                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                      "properties": {
+                        "name": {
+                          "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                          "type": "string"
+                        },
+                        "request": {
+                          "description": "Request is the name chosen for a request in the referenced claim. If empty, everything from the claim is made available, otherwise only the result of this request.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-map-keys": [
+                      "name"
+                    ],
+                    "x-kubernetes-list-type": "map"
+                  },
+                  "limits": {
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                    "type": "object"
+                  },
+                  "requests": {
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {}
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "registry": {}
                           },
-                          {
-                            "not": {
-                              "const": 0
+                          "required": [
+                            "registry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "registry": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "registry"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {}
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "volumePermissions": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "volumePermissions"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "volumePermissions": {
+                          "properties": {
+                            "image": {
+                              "properties": {
+                                "registry": {}
+                              },
+                              "required": [
+                                "registry"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "volumePermissions"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "volumePermissions": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
                             },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
+                            "required": [
+                              "registry"
+                            ],
                             "type": "object"
                           }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "volumePermissions"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "imageRegistry": {
+                "anyOf": [
+                  {
+                    "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "dataLogDir": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dataLogDir"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {}
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "dataLogDir": {
+                          "properties": {
+                            "existingClaim": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingClaim"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "dataLogDir"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {}
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "existingClaim": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingClaim"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "storageClass": {
+                "anyOf": [
+                  {
+                    "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "client": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "quorum": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "quorum"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "image": {
+            "properties": {
+              "digest": {
+                "anyOf": [
+                  {
+                    "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "pullPolicy": {
+                "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+                "type": "string"
+              },
+              "repository": {
+                "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                "type": "string"
+              },
+              "tag": {
+                "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "global": {
+            "properties": {
+              "imageRegistry": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "imageRegistry"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "image": {
+            "properties": {
+              "registry": {
+                "anyOf": [
+                  {
+                    "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "imageRegistry": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imageRegistry"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "registry": {}
+                      },
+                      "required": [
+                        "registry"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "registry": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "registry"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "image": {
+            "properties": {
+              "repository": {
+                "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                "type": "string"
+              },
+              "tag": {
+                "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "livenessProbe": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "livenessProbe": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "livenessProbe"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "customLivenessProbe": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "customLivenessProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "diagnosticMode": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "diagnosticMode"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "livenessProbe": {
+            "properties": {
+              "probeCommandTimeout": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "nodeAffinityPreset": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "hard"
                         ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nodeAffinityPreset"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "nodeAffinityPreset": {
+                          "properties": {
+                            "type": {}
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "nodeAffinityPreset"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "nodeAffinityPreset": {
+                        "properties": {
+                          "type": {
+                            "not": {
+                              "enum": [
+                                "soft"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "nodeAffinityPreset"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "nodeAffinityPreset": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "soft"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nodeAffinityPreset"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "nodeAffinityPreset": {
+            "properties": {
+              "key": {
+                "description": "The label key that the selector applies to.",
+                "type": "string"
+              },
+              "values": {
+                "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "x-kubernetes-list-type": "atomic"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "dataLogDir": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "dataLogDir"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "dataLogDir": {
+                      "properties": {
+                        "existingClaim": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingClaim"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "dataLogDir"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "dataLogDir": {
+                "properties": {
+                  "size": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "dataLogDir": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dataLogDir"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "dataLogDir": {
+                          "properties": {
+                            "existingClaim": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingClaim"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "dataLogDir"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "existingClaim": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingClaim"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "storageClass": {
+                "anyOf": [
+                  {
+                    "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "readinessProbe": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "readinessProbe": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "customReadinessProbe": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "customReadinessProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "diagnosticMode": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "diagnosticMode"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "readinessProbe": {
+            "properties": {
+              "probeCommandTimeout": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "livenessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "livenessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customLivenessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customLivenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readinessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readinessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customReadinessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customReadinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "client_cert_pem_path": {
+                    "type": "string"
+                  },
+                  "client_key_pem_path": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -172,29 +2806,7 @@
                       "containerSecurityContext": {
                         "properties": {
                           "enabled": {
-                            "anyOf": [
-                              {
-                                "const": true
-                              },
-                              {
-                                "not": {
-                                  "const": 0
-                                },
-                                "type": "number"
-                              },
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "minItems": 1,
-                                "type": "array"
-                              },
-                              {
-                                "minProperties": 1,
-                                "type": "object"
-                              }
-                            ]
+                            "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
@@ -221,29 +2833,7 @@
               "volumePermissions": {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -426,6 +3016,25 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "global": {
+                "properties": {
+                  "imageRegistry": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imageRegistry"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
                 "not": {
@@ -451,29 +3060,7 @@
                   "persistence": {
                     "properties": {
                       "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -494,29 +3081,7 @@
               "volumePermissions": {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -538,276 +3103,16 @@
             "properties": {
               "image": {
                 "properties": {
-                  "pullPolicy": {
+                  "registry": {
                     "anyOf": [
                       {
-                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+                        "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
                         "type": "string"
                       },
                       {
                         "type": "null"
                       }
                     ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "properties": {
-                      "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "volumePermissions": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "repository": {
-                    "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "properties": {
-                      "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "volumePermissions": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "tag": {
-                    "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-                    "type": "string"
                   }
                 },
                 "type": "object"
@@ -1603,11 +3908,47 @@
       "properties": {
         "client": {
           "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "clientUser": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  },
+                  "existingSecret": {
+                    "anyOf": [
+                      {
+                        "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "serverUsers": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
           "properties": {
-            "clientUser": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            },
+            "clientUser": {},
             "enabled": {
               "anyOf": [
                 {
@@ -1619,22 +3960,52 @@
                 }
               ]
             },
-            "existingSecret": {
-              "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "serverUsers": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            }
+            "existingSecret": {},
+            "serverUsers": {}
           },
           "type": "object"
         },
         "quorum": {
           "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "existingSecret": {
+                    "anyOf": [
+                      {
+                        "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "learnerUser": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  },
+                  "serverUsers": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
           "properties": {
             "enabled": {
               "anyOf": [
@@ -1647,21 +4018,9 @@
                 }
               ]
             },
-            "existingSecret": {
-              "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "learnerUser": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            },
-            "serverUsers": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            }
+            "existingSecret": {},
+            "learnerUser": {},
+            "serverUsers": {}
           },
           "type": "object"
         }
@@ -1773,24 +4132,12 @@
           "format": "int32",
           "type": "integer"
         },
-        "tls": {
-          "anyOf": [
-            {
-              "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            }
-          ]
-        }
+        "tls": {}
       },
       "type": "object"
     },
     "containerSecurityContext": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1809,29 +4156,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -4517,30 +6842,9 @@
           },
           "type": "array"
         },
-        "imageRegistry": {
-          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "imageRegistry": {},
         "kubeVersion": {},
-        "storageClass": {
-          "anyOf": [
-            {
-              "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
-              "type": "string"
-            },
-            {
-              "enum": [
-                "-"
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
+        "storageClass": {}
       },
       "type": "object"
     },
@@ -4628,13 +6932,7 @@
           },
           "type": "array"
         },
-        "registry": {
-          "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "registry": {},
         "repository": {
           "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
           "type": "string"
@@ -6362,9 +8660,7 @@
               "format": "int32",
               "type": "integer"
             },
-            "probeCommandTimeout": {
-              "type": "integer"
-            },
+            "probeCommandTimeout": {},
             "successThreshold": {
               "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
               "format": "int32",
@@ -6444,29 +8740,7 @@
           "if": {
             "properties": {
               "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -6522,10 +8796,7 @@
     "nodeAffinityPreset": {
       "additionalProperties": false,
       "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
+        "key": {},
         "type": {
           "anyOf": [
             {
@@ -6543,14 +8814,7 @@
             }
           ]
         },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "x-kubernetes-list-type": "atomic"
-        }
+        "values": {}
       },
       "type": "object"
     },
@@ -6571,6 +8835,128 @@
     },
     "persistence": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "dataLogDir": {
+                "properties": {
+                  "existingClaim": {
+                    "anyOf": [
+                      {
+                        "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "existingClaim": {
+                "anyOf": [
+                  {
+                    "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "size": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "properties": {
         "accessModes": {
           "description": "accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1",
@@ -6598,13 +8984,7 @@
         "dataLogDir": {
           "additionalProperties": false,
           "properties": {
-            "existingClaim": {
-              "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "existingClaim": {},
             "selector": {
               "anyOf": [
                 {
@@ -6657,29 +9037,14 @@
                 }
               ]
             },
-            "size": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
-              ]
-            }
+            "size": {}
           },
           "type": "object"
         },
         "enabled": {
           "type": "boolean"
         },
-        "existingClaim": {
-          "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "existingClaim": {},
         "labels": {
           "anyOf": [
             {
@@ -6747,32 +9112,8 @@
             }
           ]
         },
-        "size": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ]
-        },
-        "storageClass": {
-          "anyOf": [
-            {
-              "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
-              "type": "string"
-            },
-            {
-              "enum": [
-                "-"
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
+        "size": {},
+        "storageClass": {}
       },
       "type": "object"
     },
@@ -6845,7 +9186,7 @@
       "type": "string"
     },
     "podSecurityContext": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -6864,29 +9205,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -7354,9 +9673,7 @@
               "format": "int32",
               "type": "integer"
             },
-            "probeCommandTimeout": {
-              "type": "integer"
-            },
+            "probeCommandTimeout": {},
             "successThreshold": {
               "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
               "format": "int32",
@@ -7505,12 +9822,8 @@
         "tls": {
           "additionalProperties": false,
           "properties": {
-            "client_cert_pem_path": {
-              "type": "string"
-            },
-            "client_key_pem_path": {
-              "type": "string"
-            }
+            "client_cert_pem_path": {},
+            "client_key_pem_path": {}
           },
           "type": "object"
         }
@@ -7519,117 +9832,17 @@
     },
     "serviceAccount": {
       "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "create": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "properties": {
-                "create": {
-                  "anyOf": [
-                    {
-                      "const": true
-                    },
-                    {
-                      "not": {
-                        "const": 0
-                      },
-                      "type": "number"
-                    },
-                    {
-                      "minLength": 1,
-                      "type": "string"
-                    },
-                    {
-                      "minItems": 1,
-                      "type": "array"
-                    },
-                    {
-                      "minProperties": 1,
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "create"
-              ],
-              "type": "object"
-            }
-          },
-          "then": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "create": {
           "type": "boolean"
         },
-        "name": {}
+        "name": {
+          "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "type": "object"
     },
@@ -9159,14 +11372,524 @@
     },
     "tls": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "client": {
+                    "properties": {
+                      "passwordsSecretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "passwordsSecretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "quorum": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "quorum"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "client": {
+                "properties": {
+                  "passwordsSecretKeystoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "passwordsSecretTruststoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "quorum": {
+                    "properties": {
+                      "passwordsSecretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "passwordsSecretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "quorum"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "quorum": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "quorum"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "quorum": {
+                "properties": {
+                  "passwordsSecretKeystoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "passwordsSecretTruststoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "client": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "quorum": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "quorum"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "resources": {
+                "description": "ResourceRequirements describes the compute resource requirements.",
+                "properties": {
+                  "claims": {
+                    "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis field depends on the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+                    "items": {
+                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                      "properties": {
+                        "name": {
+                          "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                          "type": "string"
+                        },
+                        "request": {
+                          "description": "Request is the name chosen for a request in the referenced claim. If empty, everything from the claim is made available, otherwise only the result of this request.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-map-keys": [
+                      "name"
+                    ],
+                    "x-kubernetes-list-type": "map"
+                  },
+                  "limits": {
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                    "type": "object"
+                  },
+                  "requests": {
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "properties": {
         "client": {
           "additionalProperties": false,
-          "properties": {
-            "auth": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "auth": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  },
+                  "existingSecret": {
+                    "anyOf": [
+                      {
+                        "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "keystorePath": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  },
+                  "truststorePath": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
             },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "passwordsSecretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "passwordsSecretName"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoGenerated": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "autoGenerated"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "keystorePassword": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "keystorePassword"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "passwordsSecretName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "passwordsSecretName"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "passwordsSecretKeystoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "passwordsSecretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "passwordsSecretName"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoGenerated": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "autoGenerated"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "passwordsSecretName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "passwordsSecretName"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "truststorePassword": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "truststorePassword"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "passwordsSecretTruststoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "auth": {},
             "autoGenerated": {
               "type": "boolean"
             },
@@ -9184,27 +11907,12 @@
                 }
               ]
             },
-            "existingSecret": {
-              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "existingSecret": {},
             "keystorePassword": {
               "type": "string"
             },
-            "keystorePath": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            },
-            "passwordsSecretKeystoreKey": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "keystorePath": {},
+            "passwordsSecretKeystoreKey": {},
             "passwordsSecretName": {
               "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
               "type": [
@@ -9212,30 +11920,223 @@
                 "null"
               ]
             },
-            "passwordsSecretTruststoreKey": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "passwordsSecretTruststoreKey": {},
             "truststorePassword": {
               "type": "string"
             },
-            "truststorePath": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            }
+            "truststorePath": {}
           },
           "type": "object"
         },
         "quorum": {
           "additionalProperties": false,
-          "properties": {
-            "auth": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "auth": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  },
+                  "existingSecret": {
+                    "anyOf": [
+                      {
+                        "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "keystorePath": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  },
+                  "truststorePath": {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
             },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "passwordsSecretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "passwordsSecretName"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoGenerated": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "autoGenerated"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "keystorePassword": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "keystorePassword"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "passwordsSecretName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "passwordsSecretName"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "passwordsSecretKeystoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "passwordsSecretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "passwordsSecretName"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoGenerated": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "autoGenerated"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "passwordsSecretName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "passwordsSecretName"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "truststorePassword": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "truststorePassword"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "passwordsSecretTruststoreKey": {
+                    "anyOf": [
+                      {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "auth": {},
             "autoGenerated": {
               "type": "boolean"
             },
@@ -9253,27 +12154,12 @@
                 }
               ]
             },
-            "existingSecret": {
-              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "existingSecret": {},
             "keystorePassword": {
               "type": "string"
             },
-            "keystorePath": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            },
-            "passwordsSecretKeystoreKey": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "keystorePath": {},
+            "passwordsSecretKeystoreKey": {},
             "passwordsSecretName": {
               "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
               "type": [
@@ -9281,25 +12167,16 @@
                 "null"
               ]
             },
-            "passwordsSecretTruststoreKey": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "passwordsSecretTruststoreKey": {},
             "truststorePassword": {
               "type": "string"
             },
-            "truststorePath": {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            }
+            "truststorePath": {}
           },
           "type": "object"
         },
         "resources": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "ResourceRequirements describes the compute resource requirements.",
           "properties": {
             "claims": {
@@ -9544,7 +12421,7 @@
       "additionalProperties": false,
       "properties": {
         "containerSecurityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
           "properties": {
             "allowPrivilegeEscalation": {
@@ -9705,13 +12582,7 @@
         "image": {
           "additionalProperties": false,
           "properties": {
-            "digest": {
-              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "digest": {},
             "pullPolicy": {},
             "pullSecrets": {
               "items": {
@@ -9723,20 +12594,14 @@
               },
               "type": "array"
             },
-            "registry": {
-              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "registry": {},
             "repository": {},
             "tag": {}
           },
           "type": "object"
         },
         "resources": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "ResourceRequirements describes the compute resource requirements.",
           "properties": {
             "claims": {

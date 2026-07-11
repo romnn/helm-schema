@@ -323,9 +323,41 @@ pub const ZALANDO_POSTGRES_OPERATOR_POSTGRES_POD_PRIORITY_CLASS: SchemaCorpusCas
         dump_stem: "zalando-postgres-operator.postgres-pod-priority-class",
     };
 
+pub const DICT_CONFIG_PDB: SchemaCorpusCase<'static> = SchemaCorpusCase {
+    template_path: "charts/dict-config/templates/pdb.yaml",
+    values_path: "charts/dict-config/values.yaml",
+    fixture_values_yaml: None,
+    expected_fixture: include_str!("../fixtures/dict_config_pdb.schema.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &["charts/dict-config/templates/_helpers.tpl"],
+        helper_template_dirs: &[],
+        file_sources: &[],
+    },
+    provider: ProviderKind::K8s("v1.35.0"),
+    helper_parse_mode: HelperParseMode::Lenient,
+    dump_stem: "dict-config.pdb",
+};
+
+pub const DICT_CONFIG_INGRESS: SchemaCorpusCase<'static> = SchemaCorpusCase {
+    template_path: "charts/dict-config/templates/ingress.yaml",
+    values_path: "charts/dict-config/values.yaml",
+    fixture_values_yaml: None,
+    expected_fixture: include_str!("../fixtures/dict_config_ingress.schema.json"),
+    define_sources: test_util::DefineSourceSpec {
+        helper_templates: &["charts/dict-config/templates/_helpers.tpl"],
+        helper_template_dirs: &[],
+        file_sources: &[],
+    },
+    provider: ProviderKind::K8s("v1.35.0"),
+    helper_parse_mode: HelperParseMode::Lenient,
+    dump_stem: "dict-config.ingress",
+};
+
 pub const STANDARD_SCHEMA_CASES: &[SchemaCorpusCase<'static>] = &[
     BITNAMI_REDIS_NETWORKPOLICY,
     BITNAMI_REDIS_PROMETHEUSRULE,
+    DICT_CONFIG_PDB,
+    DICT_CONFIG_INGRESS,
     CERT_MANAGER_DEPLOYMENT,
     CERT_MANAGER_SERVICE,
     NATS_OPERATOR_RBAC,
@@ -347,6 +379,8 @@ pub const STANDARD_SCHEMA_CASES: &[SchemaCorpusCase<'static>] = &[
 pub const VALUES_VALIDATION_CASES: &[SchemaCorpusCase<'static>] = &[
     BITNAMI_REDIS_NETWORKPOLICY,
     BITNAMI_REDIS_PROMETHEUSRULE,
+    DICT_CONFIG_PDB,
+    DICT_CONFIG_INGRESS,
     CERT_MANAGER_DEPLOYMENT,
     CERT_MANAGER_SERVICE,
     NATS_OPERATOR_RBAC,

@@ -1,4 +1,31 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -29,29 +56,7 @@
               "service": {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -69,7 +74,27 @@
       },
       "then": {
         "properties": {
+          "global": {
+            "properties": {
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                "properties": {},
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
           "nameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "namespaceOverride": {
+            "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
             "type": [
               "string",
               "null"
@@ -602,11 +627,7 @@
       "additionalProperties": false,
       "properties": {
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "properties": {},
+          "additionalProperties": {},
           "type": "object"
         }
       },
@@ -625,13 +646,7 @@
       "type": "object"
     },
     "nameOverride": {},
-    "namespaceOverride": {
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "namespaceOverride": {},
     "natsBox": {
       "additionalProperties": false,
       "properties": {
@@ -764,29 +779,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [

@@ -135,18 +135,36 @@ fn build_root_schema(
             }
         }
     }
+    // A replaced target under a replaced ancestor adds nothing (the
+    // ancestor's base already owns the subtree) and descending into the
+    // ancestor's non-object base would coerce it into a closed map.
+    let replaced_paths: BTreeSet<Vec<String>> = delayed_replacements
+        .iter()
+        .map(|(path_segments, _)| path_segments.clone())
+        .collect();
     for (path_segments, schema) in delayed_replacements {
-        root_schema.replace_path_schema(&path_segments, schema);
+        let has_replaced_ancestor = (1..path_segments.len())
+            .any(|length| replaced_paths.contains(&path_segments[..length]));
+        if !has_replaced_ancestor {
+            root_schema.replace_path_schema(&path_segments, schema);
+        }
     }
 
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
     root_schema.merge_missing_values_yaml_defaults_under_roots(
         values_yaml_doc,
         &accepted_values_root_paths,
-        &conditional_targets.guarded_only_paths,
+        &conditional_targets.target_paths,
     );
 
     let mut root_schema = root_schema.into_value();
+    let mut provider_definitions = provider_definitions;
+    if value_references_helm_truthy(&root_schema) {
+        provider_definitions.insert(
+            HELM_TRUTHY_DEFINITION_NAME.to_string(),
+            helm_truthy_definition_schema(),
+        );
+    }
     insert_definitions_into_root(&mut root_schema, provider_definitions);
     schema_tree::apply_values_descriptions(&mut root_schema, values_descriptions);
     root_schema
@@ -173,10 +191,34 @@ fn base_insertion_decision(
     };
 
     if target.preserve_base_schema {
-        BaseInsertionDecision::Insert(SchemaNode::foreign(resolved_path.schema.clone()))
+        BaseInsertionDecision::Insert(SchemaNode::foreign(unclose_fixed_objects(
+            resolved_path.schema.clone(),
+        )))
     } else {
         BaseInsertionDecision::Replace(guarded_only_target_base_schema(resolved_path, target))
     }
+}
+
+/// Unclose fixed objects (top level or union arms) in a conditional target's
+/// base: overlays own keys the resolved shape does not know about, so a
+/// closed base would reject values the guarded renders accept.
+fn unclose_fixed_objects(mut schema: Value) -> Value {
+    if is_fixed_object_schema(&schema) {
+        if let Some(object) = schema.as_object_mut() {
+            object.insert("additionalProperties".to_string(), serde_json::json!({}));
+        }
+        return schema;
+    }
+    if let Some(object) = schema.as_object_mut() {
+        for key in ["anyOf", "oneOf"] {
+            if let Some(Value::Array(arms)) = object.get_mut(key) {
+                for arm in arms {
+                    *arm = unclose_fixed_objects(std::mem::take(arm));
+                }
+            }
+        }
+    }
+    schema
 }
 
 fn is_pathless_dependency_root_with_guarded_descendant(
@@ -193,10 +235,13 @@ fn guarded_only_target_base_schema(
     target: &ConditionalTargetSummary,
 ) -> SchemaNode {
     let schema = if target.open_fragment_base_schema {
-        if resolved_path.provider_schema_candidate.is_some()
-            || is_fixed_object_schema(&resolved_path.schema)
-        {
+        if resolved_path.provider_schema_candidate.is_some() {
             resolved_path.schema.clone()
+        } else if is_fixed_object_schema(&resolved_path.schema) {
+            // Keep the resolved children but unclose the object: a closed
+            // shape at the base would reject keys whose typing now lives
+            // under this target's overlays.
+            unclose_fixed_objects(resolved_path.schema.clone())
         } else {
             open_fragment_base_schema(&resolved_path.schema)
         }
@@ -215,6 +260,10 @@ struct ConditionalTargetSummary {
 struct ConditionalTargetIndex {
     targets: BTreeMap<String, ConditionalTargetSummary>,
     guarded_only_paths: BTreeSet<Vec<String>>,
+    /// Every conditional target path, preserved or not: the values-defaults
+    /// merge must not reshape these subtrees (their shape is overlay-owned,
+    /// and inserting into a non-object base would coerce it to a closed map).
+    target_paths: BTreeSet<Vec<String>>,
 }
 
 impl ConditionalTargetIndex {
@@ -238,10 +287,12 @@ impl ConditionalTargetIndex {
             .filter(|(_, target)| !target.preserve_base_schema)
             .map(|(path, _)| split_value_path(path))
             .collect();
+        let target_paths = targets.keys().map(|path| split_value_path(path)).collect();
 
         Self {
             targets,
             guarded_only_paths,
+            target_paths,
         }
     }
 
@@ -259,6 +310,12 @@ fn open_fragment_base_schema(resolved_schema: &Value) -> Value {
     }
     if schema_allows_type(resolved_schema, "array") {
         schemas.push(SchemaNode::array().items(SchemaNode::empty()).into_value());
+    }
+    // tpl-rendered fragments accept a string template alternative alongside
+    // the structured form; the opened base must keep accepting it when the
+    // structured typing moves under a conditional overlay.
+    if schema_allows_type(resolved_schema, "string") {
+        schemas.push(SchemaNode::typed(JsonSchemaType::String).into_value());
     }
     if schema_allows_type(resolved_schema, "null") {
         schemas.push(SchemaNode::typed(JsonSchemaType::Null).into_value());
@@ -302,7 +359,11 @@ fn collect_conditional_schemas(
         };
 
         for overlay in &evidence.conditional_overlays {
-            if !guards_supported_for_conditional_lowering(&overlay.guards, &resolved_by_path) {
+            if !guards_supported_for_conditional_lowering(
+                &overlay.guards,
+                &resolved_by_path,
+                values_yaml_doc,
+            ) {
                 continue;
             }
 
@@ -349,34 +410,50 @@ fn conditional_target_schema(
 ) -> Value {
     let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider);
 
-    let Some(active_by_defaults) = active_by_defaults else {
-        return branch_schema;
+    let declared_default = yaml_value_at_path(values_yaml_doc, target_value_path)
+        .and_then(|value| serde_json::to_value(value).ok());
+    // A branch that rejects the path's own declared default narrows values
+    // the chart itself ships.
+    let rejects_declared_default = |schema: &Value| {
+        declared_default
+            .as_ref()
+            .is_some_and(|default_value| !schema_accepts_json_value(schema, default_value))
     };
-    let branch_schema =
-        if should_merge_values_yaml_into_conditional_branch(&branch_schema, &values_yaml_schema) {
-            merge_schema_list(vec![branch_schema, values_yaml_schema])
-        } else {
-            branch_schema
-        };
-    if !active_by_defaults {
+
+    let branch_schema = if active_by_defaults.is_some()
+        && should_merge_values_yaml_into_conditional_branch(&branch_schema, &values_yaml_schema)
+    {
+        merge_schema_list(vec![branch_schema, values_yaml_schema])
+    } else {
+        branch_schema
+    };
+    // Guards inactive by defaults or undecidable on the values doc can still
+    // be activated by a user who keeps the chart's other defaults.
+    if active_by_defaults != Some(true) {
         if is_placeholder_fragment_object_schema(&branch_schema)
             && !is_placeholder_fragment_object_schema(&resolved_fallback)
         {
-            return resolved_fallback;
+            // The swap gives a vacuous placeholder branch the resolved
+            // content, but never a shape that rejects the shipped default.
+            return if rejects_declared_default(&resolved_fallback) {
+                branch_schema
+            } else {
+                resolved_fallback
+            };
         }
-        return branch_schema;
+        // A branch whose renders all sit behind their own truthiness only
+        // fires for truthy values, so it must keep accepting the shipped
+        // (possibly falsy) default. A branch read unconditionally under its
+        // guard may legitimately narrow the default away.
+        if !overlay.evidence.facts.is_nullable {
+            return branch_schema;
+        }
     }
 
-    let Some(default_value) = yaml_value_at_path(values_yaml_doc, target_value_path) else {
-        return branch_schema;
-    };
-    let Ok(default_value) = serde_json::to_value(default_value) else {
-        return branch_schema;
-    };
-    if schema_accepts_json_value(&branch_schema, &default_value) {
-        branch_schema
-    } else {
+    if rejects_declared_default(&branch_schema) {
         resolved_fallback
+    } else {
+        branch_schema
     }
 }
 
@@ -414,12 +491,22 @@ fn conditional_ancestor_segments(
 fn guards_supported_for_conditional_lowering(
     guards: &[ConditionalGuard],
     resolved_by_path: &BTreeMap<&str, &path_resolver::ResolvedPathSchema>,
+    values_yaml_doc: &YamlValue,
 ) -> bool {
     !guards.is_empty()
         && guards.iter().all(|guard| match guard {
-            ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => resolved_by_path
-                .get(path.as_str())
-                .is_some_and(|resolved| schema_is_boolean_like(&resolved.schema)),
+            // The truthiness condition encoding is type-generic (const true,
+            // non-zero number, non-empty string/array/object), so a guard
+            // path declared by the chart lowers whatever its type. Undeclared
+            // paths still lower only as boolean-like flags: every guard path
+            // gets an accumulator entry, so mere resolution would also admit
+            // paths fabricated by imprecise lookups (`index $vals $a $b`).
+            ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
+                yaml_value_at_path(values_yaml_doc, path).is_some()
+                    || resolved_by_path
+                        .get(path.as_str())
+                        .is_some_and(|resolved| schema_is_boolean_like(&resolved.schema))
+            }
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
@@ -427,9 +514,10 @@ fn guards_supported_for_conditional_lowering(
             ConditionalGuard::Not(inner) => guards_supported_for_conditional_lowering(
                 std::slice::from_ref(inner),
                 resolved_by_path,
+                values_yaml_doc,
             ),
             ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
-                guards_supported_for_conditional_lowering(guards, resolved_by_path)
+                guards_supported_for_conditional_lowering(guards, resolved_by_path, values_yaml_doc)
             }
         })
 }
@@ -449,18 +537,212 @@ fn append_conditional_schemas(
     conditionals: Vec<ConditionalResolvedSchema>,
     values_yaml_doc: &YamlValue,
 ) {
+    // Conditionals sharing one guard set and scope conjoin into one if/then:
+    // `allOf [{if G then A}, {if G then B}]` is `{if G then A ∧ B}`, and the
+    // repeated `if` blocks dominate emitted size on charts with many guarded
+    // blocks. Distinct targets merge disjointly; a leaf collision falls back
+    // to its own conditional.
+    let mut grouped: BTreeMap<
+        (Vec<String>, Vec<ConditionalGuard>),
+        Vec<ConditionalResolvedSchema>,
+    > = BTreeMap::new();
     for conditional in conditionals {
-        let condition = SchemaNode::all_of(build_condition_clauses(
-            &conditional.guards,
-            &conditional.ancestor_segments,
-            values_yaml_doc,
-        ));
-        let then_schema = build_target_fragment(
-            &conditional.relative_target_segments,
-            SchemaNode::foreign(conditional.target_schema),
-        );
-        root_schema.append_conditional(&conditional.ancestor_segments, condition, then_schema);
+        grouped
+            .entry((
+                conditional.ancestor_segments.clone(),
+                conditional.guards.clone(),
+            ))
+            .or_default()
+            .push(conditional);
     }
+    struct ContentGroup {
+        fragment: Value,
+        guard_sets: Vec<Vec<ConditionalGuard>>,
+    }
+    let mut by_content: BTreeMap<(Vec<String>, String), ContentGroup> = BTreeMap::new();
+    for ((ancestor_segments, guards), group) in grouped {
+        let mut merged: Option<Value> = None;
+        let mut separate = Vec::new();
+        for conditional in group {
+            let fragment = build_target_fragment(
+                &conditional.relative_target_segments,
+                SchemaNode::foreign(conditional.target_schema),
+            )
+            .into_value();
+            match &mut merged {
+                None => merged = Some(fragment),
+                Some(target) => {
+                    if !merge_disjoint_property_fragment(target, fragment.clone()) {
+                        separate.push(fragment);
+                    }
+                }
+            }
+        }
+        for fragment in merged.into_iter().chain(separate) {
+            // Conditionals with identical content under one scope disjoin
+            // their guards: `if G1 then X` and `if G2 then X` is
+            // `if anyOf [G1, G2] then X`, and X (often a repeated provider
+            // schema) is the dominant emitted size.
+            by_content
+                .entry((ancestor_segments.clone(), fragment.to_string()))
+                .or_insert_with(|| ContentGroup {
+                    fragment,
+                    guard_sets: Vec::new(),
+                })
+                .guard_sets
+                .push(guards.clone());
+        }
+    }
+    for ((ancestor_segments, _), group) in by_content {
+        let mut conditions: Vec<SchemaNode> = minimize_guard_set_disjunction(group.guard_sets)
+            .into_iter()
+            .map(|guards| {
+                SchemaNode::all_of(build_condition_clauses(
+                    &guards,
+                    &ancestor_segments,
+                    values_yaml_doc,
+                ))
+            })
+            .collect();
+        let condition = if conditions.len() == 1 {
+            conditions.remove(0)
+        } else {
+            SchemaNode::any_of(conditions)
+        };
+        root_schema.append_conditional(
+            &ancestor_segments,
+            condition,
+            SchemaNode::foreign(group.fragment),
+        );
+    }
+}
+
+/// Minimize a disjunction of conjunctive guard sets guarding one shared
+/// constraint. Two sets differing in exactly one complementary truthiness
+/// member resolve into their shared conjuncts, a set that is a superset of
+/// another is implied by it and drops (absorption), and duplicates
+/// collapse. Exact — no approximation.
+fn minimize_guard_set_disjunction(
+    mut guard_sets: Vec<Vec<ConditionalGuard>>,
+) -> Vec<Vec<ConditionalGuard>> {
+    guard_sets.sort();
+    guard_sets.dedup();
+    loop {
+        let mut resolved = None;
+        'search: for (index, left) in guard_sets.iter().enumerate() {
+            for (other_index, right) in guard_sets.iter().enumerate().skip(index + 1) {
+                if let Some(common) = resolve_complementary_guard_sets(left, right) {
+                    resolved = Some((index, other_index, common));
+                    break 'search;
+                }
+            }
+        }
+        let Some((index, other_index, common)) = resolved else {
+            break;
+        };
+        guard_sets.remove(other_index);
+        guard_sets.remove(index);
+        if !guard_sets.contains(&common) {
+            guard_sets.push(common);
+        }
+        guard_sets.sort();
+    }
+    let sets = guard_sets.clone();
+    guard_sets.retain(|candidate| {
+        !sets.iter().any(|other| {
+            other != candidate
+                && other.len() < candidate.len()
+                && other.iter().all(|guard| candidate.contains(guard))
+        })
+    });
+    guard_sets
+}
+
+fn resolve_complementary_guard_sets(
+    left: &[ConditionalGuard],
+    right: &[ConditionalGuard],
+) -> Option<Vec<ConditionalGuard>> {
+    if left.len() != right.len() {
+        return None;
+    }
+    let left_only: Vec<&ConditionalGuard> =
+        left.iter().filter(|guard| !right.contains(guard)).collect();
+    let right_only: Vec<&ConditionalGuard> =
+        right.iter().filter(|guard| !left.contains(guard)).collect();
+    let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
+        return None;
+    };
+    let complementary = |a: &ConditionalGuard, b: &ConditionalGuard| match (a, b) {
+        (ConditionalGuard::Truthy { path }, ConditionalGuard::Not(inner)) => {
+            matches!(inner.as_ref(), ConditionalGuard::Truthy { path: negated } if negated == path)
+        }
+        _ => false,
+    };
+    if !complementary(left_extra, right_extra) && !complementary(right_extra, left_extra) {
+        return None;
+    }
+    Some(
+        left.iter()
+            .filter(|guard| *guard != *left_extra)
+            .cloned()
+            .collect(),
+    )
+}
+
+/// Merge `incoming` into `target` when both are plain `properties` object
+/// fragments whose leaves do not collide; returns false (leaving `target`
+/// unchanged) when they do.
+fn merge_disjoint_property_fragment(target: &mut Value, incoming: Value) -> bool {
+    fn mergeable(target: &Value, incoming: &Value) -> bool {
+        let (Some(target), Some(incoming)) = (target.as_object(), incoming.as_object()) else {
+            return false;
+        };
+        let plain_object = |node: &serde_json::Map<String, Value>| {
+            node.keys().all(|key| key == "properties" || key == "type")
+                && node.get("type").and_then(Value::as_str) == Some("object")
+        };
+        if !plain_object(target) || !plain_object(incoming) {
+            return false;
+        }
+        let (Some(Value::Object(target_props)), Some(Value::Object(incoming_props))) =
+            (target.get("properties"), incoming.get("properties"))
+        else {
+            return false;
+        };
+        incoming_props.iter().all(|(key, value)| {
+            target_props
+                .get(key)
+                .is_none_or(|existing| mergeable(existing, value))
+        })
+    }
+    fn merge(target: &mut Value, incoming: Value) {
+        let Value::Object(mut incoming_object) = incoming else {
+            return;
+        };
+        let Some(Value::Object(incoming_props)) = incoming_object.remove("properties") else {
+            return;
+        };
+        let Some(target_props) = target
+            .as_object_mut()
+            .and_then(|object| object.get_mut("properties"))
+            .and_then(Value::as_object_mut)
+        else {
+            return;
+        };
+        for (key, value) in incoming_props {
+            match target_props.get_mut(&key) {
+                Some(existing) => merge(existing, value),
+                None => {
+                    target_props.insert(key, value);
+                }
+            }
+        }
+    }
+    if !mergeable(target, &incoming) {
+        return false;
+    }
+    merge(target, incoming);
+    true
 }
 
 fn build_condition_clauses(
@@ -561,7 +843,31 @@ fn build_default_aware_leaf_condition_fragment(
     Some(SchemaNode::any_of(vec![absent, explicit]))
 }
 
+fn value_references_helm_truthy(value: &Value) -> bool {
+    match value {
+        Value::Object(object) => object.iter().any(|(key, child)| {
+            (key == "$ref"
+                && child.as_str()
+                    == Some(&format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}") as &str))
+                || value_references_helm_truthy(child)
+        }),
+        Value::Array(items) => items.iter().any(value_references_helm_truthy),
+        _ => false,
+    }
+}
+
+/// Helm truthiness as one shared definition: every truthy/with condition
+/// references it, which keeps the emitted `if` blocks small on charts with
+/// many guarded renders.
+pub(crate) const HELM_TRUTHY_DEFINITION_NAME: &str = "helm-truthy";
+
 fn helm_truthy_condition_schema() -> SchemaNode {
+    SchemaNode::foreign(serde_json::json!({
+        "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
+    }))
+}
+
+pub(crate) fn helm_truthy_definition_schema() -> Value {
     SchemaNode::any_of(vec![
         SchemaNode::const_value(Value::Bool(true)),
         SchemaNode::typed(JsonSchemaType::Number).typed_keyword(
@@ -573,6 +879,7 @@ fn helm_truthy_condition_schema() -> SchemaNode {
         SchemaNode::array().min_items(1),
         SchemaNode::object().min_properties(1),
     ])
+    .into_value()
 }
 
 fn build_required_condition_fragment(

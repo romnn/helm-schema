@@ -1,4 +1,31 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
@@ -15,29 +42,7 @@
           "if": {
             "properties": {
               "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -54,6 +59,17 @@
                 "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
                 "properties": {},
                 "type": "object"
+              },
+              "ingressClassName": {
+                "anyOf": [
+                  {
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -88,13 +104,7 @@
           },
           "type": "array"
         },
-        "ingressClassName": {
-          "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "ingressClassName": {},
         "tls": {
           "items": {
             "additionalProperties": false,

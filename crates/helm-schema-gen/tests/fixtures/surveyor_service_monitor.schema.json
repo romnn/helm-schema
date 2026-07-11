@@ -1,4 +1,31 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -8,29 +35,7 @@
           "serviceMonitor": {
             "properties": {
               "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -43,6 +48,80 @@
           "serviceMonitor"
         ],
         "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "global": {
+            "properties": {
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "fullnameOverride": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "fullnameOverride"
+              ],
+              "type": "object"
+            }
+          }
+        ]
       },
       "then": {
         "properties": {
@@ -62,19 +141,12 @@
     }
   ],
   "properties": {
-    "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "fullnameOverride": {},
     "global": {
       "additionalProperties": false,
       "properties": {
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "type": "object"
         }
       },
@@ -88,29 +160,7 @@
           "if": {
             "properties": {
               "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -125,93 +175,21 @@
                   "type": "string"
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
+              },
+              "interval": {
+                "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
+                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                "type": [
+                  "string",
+                  "null"
                 ]
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
+              },
               "labels": {
                 "additionalProperties": {
                   "type": "string"
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
+              },
               "metricRelabelings": {
                 "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
                 "items": {
@@ -280,47 +258,7 @@
                   "type": "object"
                 },
                 "type": "array"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
+              },
               "relabelings": {
                 "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
                 "items": {
@@ -389,6 +327,14 @@
                   "type": "object"
                 },
                 "type": "array"
+              },
+              "scrapeTimeout": {
+                "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
+                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "type": "object"
@@ -403,14 +349,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "interval": {
-          "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "interval": {},
         "labels": {
           "additionalProperties": {},
           "type": "object"
@@ -553,14 +492,7 @@
           },
           "type": "array"
         },
-        "scrapeTimeout": {
-          "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
+        "scrapeTimeout": {}
       },
       "type": "object"
     }

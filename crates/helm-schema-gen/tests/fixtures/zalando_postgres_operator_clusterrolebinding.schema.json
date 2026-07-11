@@ -1,4 +1,31 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -29,29 +56,7 @@
               "rbac": {
                 "properties": {
                   "create": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -69,83 +74,19 @@
       },
       "then": {
         "properties": {
+          "fullnameOverride": {
+            "description": "Name of the object being referenced.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "nameOverride": {
             "type": [
               "string",
               "null"
             ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
           },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
           "serviceAccount": {
             "properties": {
               "name": {
@@ -164,13 +105,7 @@
     }
   ],
   "properties": {
-    "fullnameOverride": {
-      "description": "Name of the object being referenced.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "fullnameOverride": {},
     "nameOverride": {},
     "rbac": {
       "additionalProperties": false,

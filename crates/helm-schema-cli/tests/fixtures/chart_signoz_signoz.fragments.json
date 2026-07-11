@@ -1,5 +1,4 @@
 {
-  "$comment": "Manual fixture for representative deep fragments of the generated signoz-signoz chart schema. Keep this curated; do not add any snapshot refresh workflow.",
   "pointers": {
     "/properties/alertmanager/properties/ingress": {
       "additionalProperties": false,
@@ -8,12 +7,7 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "className": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "className": {},
         "enabled": {
           "type": "boolean"
         },
@@ -70,12 +64,7 @@
       "additionalProperties": false,
       "properties": {
         "pullPolicy": {},
-        "registry": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "registry": {},
         "repository": {},
         "tag": {}
       },
@@ -91,29 +80,7 @@
           "if": {
             "properties": {
               "enabled": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -128,6 +95,9 @@
                   "type": "string"
                 },
                 "type": "object"
+              },
+              "className": {
+                "type": "string"
               }
             },
             "type": "object"
@@ -139,12 +109,7 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "className": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "className": {},
         "enabled": {
           "type": "boolean"
         },
@@ -238,29 +203,7 @@
               {
                 "properties": {
                   "create": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -277,62 +220,7 @@
                   "type": "string"
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
               },
-              {
-                "properties": {
-                  "create": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
               "name": {
                 "type": [
                   "string",
@@ -359,87 +247,30 @@
     "/properties/signoz-otel-gateway/properties/postgresql/properties/auth": {
       "additionalProperties": false,
       "properties": {
-        "database": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "database": {},
         "enablePostgresUser": {
           "type": "boolean"
         },
-        "existingSecret": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "password": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "existingSecret": {},
+        "password": {},
         "postgresPassword": {
           "type": "string"
         },
-        "replicationPassword": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "replicationPassword": {},
         "replicationUsername": {},
         "secretKeys": {
           "additionalProperties": false,
           "properties": {
-            "adminPasswordKey": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "replicationPasswordKey": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "userPasswordKey": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "adminPasswordKey": {},
+            "replicationPasswordKey": {},
+            "userPasswordKey": {}
           },
           "type": "object"
         },
         "usePasswordFiles": {
           "type": "boolean"
         },
-        "username": {
-          "type": "string"
-        }
+        "username": {}
       },
       "type": "object"
     },
@@ -453,7 +284,9 @@
         "internalNodePort": {
           "type": "null"
         },
-        "internalPort": {},
+        "internalPort": {
+          "type": "integer"
+        },
         "labels": {
           "additionalProperties": {},
           "type": "object"
@@ -467,7 +300,9 @@
         "opampPort": {
           "type": "integer"
         },
-        "port": {},
+        "port": {
+          "type": "integer"
+        },
         "type": {
           "anyOf": [
             {

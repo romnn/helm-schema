@@ -930,11 +930,19 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
     ]);
 
     let overlays = conditional_overlays_for(&signals);
+    // Equal-evidence complementary branches resolve into their shared key:
+    // T under (A && B) or (A && !B) is T under A.
     sim_assert_eq!(
         have: overlays.len(),
-        want: 2,
-        "complementary guarded branches should both survive: {:?}",
+        want: 1,
+        "complementary equal-evidence branches should resolve into one: {:?}",
         overlays
+    );
+    sim_assert_eq!(
+        have: overlays[0].guards,
+        want: vec![ConditionalGuard::Truthy {
+            path: "feature.enabled".to_string(),
+        }],
     );
     assert!(
         overlays.iter().all(|overlay| !overlay.preserve_base_schema),
@@ -986,11 +994,19 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
     ]);
 
     let overlays = conditional_overlays_for(&signals);
+    // The complementary sub-branches resolve into the broad branch they
+    // partition, leaving one branch keyed on the shared condition.
     sim_assert_eq!(
         have: overlays.len(),
-        want: 3,
-        "the broad shared branch and the complementary sub-branches should all survive: {:?}",
+        want: 1,
+        "the partition should collapse into the broad shared branch: {:?}",
         overlays
+    );
+    sim_assert_eq!(
+        have: overlays[0].guards,
+        want: vec![ConditionalGuard::Truthy {
+            path: "feature.enabled".to_string(),
+        }],
     );
     assert!(
         overlays.iter().all(|overlay| !overlay.preserve_base_schema),

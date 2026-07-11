@@ -1,0 +1,5 @@
+{{- with .Values.ingress -}}
+{{- if .enabled -}}
+{{ include "dict-config.ingress" (dict "ctx" $ "config" .) }}
+{{- end }}
+{{- end }}

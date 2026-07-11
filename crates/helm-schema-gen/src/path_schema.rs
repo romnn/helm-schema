@@ -7,8 +7,23 @@ use crate::schema_model::{
 };
 use crate::schema_node::SchemaNode;
 
-pub(crate) fn merge_explicit_empty_placeholder(schema: Value, is_empty_map: bool) -> Value {
+pub(crate) fn merge_explicit_empty_placeholder(
+    schema: Value,
+    is_empty_map: bool,
+    collection_shape_known: bool,
+) -> Value {
     if is_empty_map {
+        if crate::schema_model::is_empty_schema(&schema) {
+            // No merged shape evidence. When descendant rows describe the
+            // collection elsewhere (a list-ranged source), the declared-empty
+            // default is purely the off-state; otherwise the chart iterates
+            // user-supplied entries and the map stays open.
+            return if collection_shape_known {
+                exact_empty_object_schema()
+            } else {
+                SchemaNode::unknown_object().into_value()
+            };
+        }
         if schema_accepts_empty_object(&schema) {
             return schema;
         }

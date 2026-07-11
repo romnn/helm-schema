@@ -1614,16 +1614,51 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
+    // `nameOverride` is only read on the helper's `else` branch, so its
+    // typing (with the default-driven null) lives under the
+    // `not(fullnameOverride)` overlay and the base stays open.
     let expected = serde_json::json!({
+        "$defs": {
+            "helm-truthy": {
+                "anyOf": [
+                    { "const": true },
+                    { "not": { "const": 0 }, "type": "number" },
+                    { "minLength": 1, "type": "string" },
+                    { "minItems": 1, "type": "array" },
+                    { "minProperties": 1, "type": "object" }
+                ]
+            }
+        },
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
+        "allOf": [
+            {
+                "if": {
+                    "not": {
+                        "properties": {
+                            "fullnameOverride": {
+                                "$ref": "#/$defs/helm-truthy"
+                            }
+                        },
+                        "required": ["fullnameOverride"],
+                        "type": "object"
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "nameOverride": {
+                            "type": ["string", "null"]
+                        }
+                    },
+                    "type": "object"
+                }
+            }
+        ],
         "properties": {
             "fullnameOverride": {
                 "type": ["string", "null"]
             },
-            "nameOverride": {
-                "type": ["string", "null"]
-            }
+            "nameOverride": {}
         },
         "type": "object"
     });

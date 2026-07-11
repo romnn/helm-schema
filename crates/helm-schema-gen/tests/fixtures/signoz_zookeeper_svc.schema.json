@@ -1,7 +1,174 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "client": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "LoadBalancer"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "NodePort"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "nodePorts": {
+                "properties": {
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
     {
       "if": {
         "properties": {
@@ -10,29 +177,7 @@
               "client": {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -133,6 +278,52 @@
           "if": {
             "anyOf": [
               {
+                "not": {
+                  "properties": {
+                    "type": {}
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "ClusterIP"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "clusterIP": {
+                "anyOf": [
+                  {
+                    "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
                 "properties": {
                   "type": {
                     "enum": [
@@ -172,32 +363,123 @@
         },
         {
           "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "LoadBalancer"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "loadBalancerIP": {
+                "anyOf": [
+                  {
+                    "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "loadBalancerSourceRanges": {
+                "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "x-kubernetes-list-type": "atomic"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "disableBaseClientPort": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableBaseClientPort"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "LoadBalancer"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "NodePort"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "nodePorts": {
+                "properties": {
+                  "client": {
+                    "anyOf": [
+                      {
+                        "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
             "not": {
               "properties": {
                 "disableBaseClientPort": {
-                  "anyOf": [
-                    {
-                      "const": true
-                    },
-                    {
-                      "not": {
-                        "const": 0
-                      },
-                      "type": "number"
-                    },
-                    {
-                      "minLength": 1,
-                      "type": "string"
-                    },
-                    {
-                      "minItems": 1,
-                      "type": "array"
-                    },
-                    {
-                      "minProperties": 1,
-                      "type": "object"
-                    }
-                  ]
+                  "$ref": "#/$defs/helm-truthy"
                 }
               },
               "required": [
@@ -239,13 +521,7 @@
             }
           ]
         },
-        "clusterIP": {
-          "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "clusterIP": {},
         "disableBaseClientPort": {
           "type": "boolean"
         },
@@ -309,54 +585,13 @@
             }
           ]
         },
-        "loadBalancerIP": {
-          "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "loadBalancerSourceRanges": {
-          "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "x-kubernetes-list-type": "atomic"
-        },
+        "loadBalancerIP": {},
+        "loadBalancerSourceRanges": {},
         "nodePorts": {
           "additionalProperties": false,
           "properties": {
-            "client": {
-              "anyOf": [
-                {
-                  "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "tls": {
-              "anyOf": [
-                {
-                  "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "client": {},
+            "tls": {}
           },
           "type": "object"
         },

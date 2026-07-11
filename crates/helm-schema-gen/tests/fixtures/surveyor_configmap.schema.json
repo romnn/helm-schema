@@ -1,4 +1,31 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -10,29 +37,7 @@
               "jetstream": {
                 "properties": {
                   "enabled": {
-                    "anyOf": [
-                      {
-                        "const": true
-                      },
-                      {
-                        "not": {
-                          "const": 0
-                        },
-                        "type": "number"
-                      },
-                      {
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "minItems": 1,
-                        "type": "array"
-                      },
-                      {
-                        "minProperties": 1,
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -51,6 +56,90 @@
           "config"
         ],
         "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "global": {
+            "properties": {
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                "properties": {},
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "fullnameOverride": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "fullnameOverride"
+              ],
+              "type": "object"
+            }
+          }
+        ]
       },
       "then": {
         "properties": {
@@ -118,21 +207,12 @@
       },
       "type": "object"
     },
-    "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "fullnameOverride": {},
     "global": {
       "additionalProperties": false,
       "properties": {
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "properties": {},
+          "additionalProperties": {},
           "type": "object"
         }
       },

@@ -214,7 +214,11 @@ impl ResolvePolicy {
         } else if preserve_explicit_null_default {
             type_schema("null")
         } else if facts.empty_map_placeholder_has_structural_object_use(&merged) {
-            merge_explicit_empty_placeholder(merged, facts.values_yaml.is_empty_map)
+            merge_explicit_empty_placeholder(
+                merged,
+                facts.values_yaml.is_empty_map,
+                facts.contract.has_referenced_descendants,
+            )
         } else {
             merged
         }

@@ -1384,9 +1384,11 @@ fn nullable_scalar_preserved_for_with_guarded_render_use() {
     );
 }
 
-/// Explicit `null` defaults also stay valid when a scalar is rendered only
-/// from a truthy self-guard inside a larger condition, such as optional
-/// Service nodePorts gated by `not (empty ...)`.
+/// A scalar rendered only from a truthy self-guard inside a larger condition
+/// (optional Service nodePorts gated by `not (empty ...)`) lowers its
+/// provider typing under the foreign condition: the base stays open (null and
+/// everything else stay valid when the guard cannot fire), and the guarded
+/// branch keeps the null alternative the self-guard implies.
 #[test]
 fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
     let src = indoc! {r#"
@@ -1415,10 +1417,16 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
     let node_port = schema
         .pointer("/properties/service/properties/ports/properties/smtp/properties/nodePort")
         .expect("service.ports.smtp.nodePort present");
-    assert!(permits_null(node_port));
+    sim_assert_eq!(have: node_port, want: &serde_json::json!({}));
+    let guarded_node_port = schema
+        .pointer(
+            "/properties/service/allOf/0/then/properties/ports/properties/smtp/properties/nodePort",
+        )
+        .expect("guarded nodePort overlay present");
+    assert!(permits_null(guarded_node_port));
     assert!(
-        permits_type(node_port, "integer"),
-        "nodePort should also accept the provider integer type, got {node_port}"
+        permits_type(guarded_node_port, "integer"),
+        "guarded nodePort should accept the provider integer type, got {guarded_node_port}"
     );
 }
 
@@ -1520,8 +1528,8 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
         "guarded-only paths should stay open outside the branch that consumes them: {schema}"
     );
     sim_assert_eq!(
-        have: schema.pointer("/properties/feature/allOf/0/if/properties/enabled/anyOf/0/const"),
-        want: Some(&serde_json::json!(true)),
+        have: schema.pointer("/properties/feature/allOf/0/if/properties/enabled/$ref"),
+        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
         "guard should lower at the nearest common ancestor, not only at the root: {schema}"
     );
     sim_assert_eq!(
@@ -1605,8 +1613,8 @@ fn negated_boolean_guard_lowers_to_not_condition() {
     );
 
     sim_assert_eq!(
-        have: schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/anyOf/0/const"),
-        want: Some(&serde_json::json!(true)),
+        have: schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/$ref"),
+        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
         "negated boolean guards should lower to JSON Schema `not`: {schema}"
     );
     sim_assert_eq!(
@@ -1826,15 +1834,15 @@ fn or_boolean_guards_lower_to_any_of_condition() {
     );
 
     sim_assert_eq!(
-        have: schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/anyOf/0/const"),
-        want: Some(&serde_json::json!(true)),
+        have: schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/$ref"),
+        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
         "disjunctions should lower to anyOf clauses: {schema}"
     );
     sim_assert_eq!(
         have: schema.pointer(
-            "/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/anyOf/0/const"
+            "/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/$ref"
         ),
-        want: Some(&serde_json::json!(true)),
+        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
         "all boolean branches in the disjunction should be preserved: {schema}"
     );
     sim_assert_eq!(
@@ -2104,7 +2112,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
 }
 
 #[test]
-fn non_boolean_truthy_guard_does_not_lower_to_if_then_overlay() {
+fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
     let schema_signals = schema_signals_for(vec![ContractUse {
         source_expr: "feature.host".to_string(),
         path: YamlPath(vec!["data".to_string(), "host".to_string()]),
@@ -2121,14 +2129,28 @@ fn non_boolean_truthy_guard_does_not_lower_to_if_then_overlay() {
             .with_values_yaml(Some("mode: prod\nfeature:\n  host: example\n")),
     );
 
+    // The truthiness condition encoding is type-generic, so a string-valued
+    // guard lowers like a boolean flag: typing moves under the condition and
+    // the base stays open for the values the guard never reads.
     sim_assert_eq!(
-        have: schema.pointer("/properties/feature/properties/host/type"),
-        want: Some(&serde_json::json!("string")),
-        "string-valued truthy guards are not lowered yet and should stay on the wide/base path: {schema}"
+        have: schema.pointer("/properties/feature/properties/host"),
+        want: Some(&serde_json::json!({})),
+        "guarded-only host typing must leave the base open: {schema}"
     );
+    let guarded_host = schema
+        .pointer("/allOf/0/then/properties/feature/properties/host")
+        .expect("guarded host overlay present");
     assert!(
-        schema.get("allOf").is_none(),
-        "non-boolean truthy guards must not emit conditionals yet: {schema}"
+        permits_type(guarded_host, "string"),
+        "the mode-guarded branch should carry the string typing: {schema}"
+    );
+    // The `if` uses the default-aware form (absent mode falls back to the
+    // truthy declared default), so the mode key sits inside its anyOf arms.
+    assert!(
+        schema
+            .pointer("/allOf/0/if/anyOf/1/properties/mode")
+            .is_some(),
+        "the overlay must key on the mode condition: {schema}"
     );
 }
 
@@ -3157,20 +3179,25 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
         .finalize();
     let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
 
-    let name_override = schema
-        .pointer("/properties/nameOverride")
-        .expect("nameOverride present");
+    // nameOverride's typing lives under the `not(fullnameOverride)` branch
+    // where the chart actually reads it.
     assert!(
-        permits_empty_string(name_override),
-        "defaulted nameOverride should accept the chart's empty-string sentinel, got {name_override}; ir={ir:?}"
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "fullnameOverride": "", "nameOverride": "" })
+        ),
+        "defaulted nameOverride should accept the chart's empty-string sentinel, got {schema}; ir={ir:?}"
+    );
+    let guarded_name = schema
+        .pointer("/allOf/0/then/properties/nameOverride")
+        .expect("guarded nameOverride overlay present");
+    assert!(
+        permits_type(guarded_name, "string"),
+        "nameOverride should stay string-like on its branch, got {guarded_name}; ir={ir:?}"
     );
     assert!(
-        permits_type(name_override, "string"),
-        "nameOverride should stay string-like, got {name_override}; ir={ir:?}"
-    );
-    assert!(
-        !permits_type(name_override, "object"),
-        "scalar helper input should not inherit the Ingress backend object schema, got {name_override}; ir={ir:?}"
+        !permits_type(guarded_name, "object"),
+        "scalar helper input should not inherit the Ingress backend object schema, got {guarded_name}; ir={ir:?}"
     );
 }
 
@@ -3366,12 +3393,22 @@ fn nested_printf_helper_call_preserves_helper_output_guards() {
         permits_null(fullname),
         "nested printf helper output should keep fullnameOverride nullable, got {fullname}; ir={ir:?}"
     );
-    let name = schema
-        .pointer("/properties/nameOverride")
-        .expect("nameOverride present");
+    // nameOverride is only read on the `else` branch, so its typing lives
+    // under the `not(fullnameOverride)` overlay; the declared null default
+    // must stay valid there.
     assert!(
-        permits_null(name),
-        "nested printf helper output should keep nameOverride nullable, got {name}; ir={ir:?}"
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "fullnameOverride": null, "nameOverride": null })
+        ),
+        "declared null overrides must stay valid, got {schema}; ir={ir:?}"
+    );
+    let guarded_name = schema
+        .pointer("/allOf/0/then/properties/nameOverride")
+        .expect("guarded nameOverride overlay present");
+    assert!(
+        permits_null(guarded_name),
+        "nested printf helper output should keep nameOverride nullable on its branch, got {guarded_name}; ir={ir:?}"
     );
 }
 
@@ -3410,12 +3447,19 @@ fn assigned_nested_printf_helper_call_preserves_helper_output_guards() {
         permits_null(fullname),
         "assigned nested helper output should keep fullnameOverride nullable, got {fullname}; ir={ir:?}"
     );
-    let name = schema
-        .pointer("/properties/nameOverride")
-        .expect("nameOverride present");
     assert!(
-        permits_null(name),
-        "assigned nested helper output should keep nameOverride nullable, got {name}; ir={ir:?}"
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "fullnameOverride": null, "nameOverride": null })
+        ),
+        "declared null overrides must stay valid, got {schema}; ir={ir:?}"
+    );
+    let guarded_name = schema
+        .pointer("/allOf/0/then/properties/nameOverride")
+        .expect("guarded nameOverride overlay present");
+    assert!(
+        permits_null(guarded_name),
+        "assigned nested helper output should keep nameOverride nullable on its branch, got {guarded_name}; ir={ir:?}"
     );
 }
 
@@ -5130,9 +5174,21 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
         schema_property_contains_type(probe, "probeCommandTimeout", "integer"),
         "explicit command interpolation should keep probeCommandTimeout, got {probe}"
     );
+    // The whole render is gated on `if .Values.livenessProbe.enabled`, so the
+    // Probe typing must live under that condition, not at the base.
     assert!(
-        schema_property_contains_type(probe, "enabled", "boolean"),
-        "probe enabled guard should keep enabled as boolean, got {probe}"
+        !probe
+            .get("properties")
+            .and_then(Value::as_object)
+            .is_some_and(|properties| properties.contains_key("initialDelaySeconds")),
+        "Probe fields must be guard-scoped, not unconditional, got {probe}"
+    );
+    let guard = probe
+        .pointer("/allOf/0/if")
+        .expect("probe overlay guard present");
+    assert!(
+        guard.to_string().contains("enabled"),
+        "probe overlay must key on the enabled guard, got {guard}"
     );
 }
 

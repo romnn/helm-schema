@@ -1,4 +1,31 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -31,29 +58,7 @@
                   "prometheus": {
                     "properties": {
                       "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -77,29 +82,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "anyOf": [
-                            {
-                              "const": true
-                            },
-                            {
-                              "not": {
-                                "const": 0
-                              },
-                              "type": "number"
-                            },
-                            {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            {
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            {
-                              "minProperties": 1,
-                              "type": "object"
-                            }
-                          ]
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
@@ -124,138 +107,32 @@
       },
       "then": {
         "properties": {
+          "fullnameOverride": {
+            "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "global": {
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                "properties": {},
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
           "nameOverride": {
             "type": [
               "string",
               "null"
             ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
           },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "anyOf": [
-                            {
-                              "const": true
-                            },
-                            {
-                              "not": {
-                                "const": 0
-                              },
-                              "type": "number"
-                            },
-                            {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            {
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            {
-                              "minProperties": 1,
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
           "namespace": {
             "anyOf": [
               {
@@ -266,133 +143,7 @@
                 "type": "null"
               }
             ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
           },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "anyOf": [
-                            {
-                              "const": true
-                            },
-                            {
-                              "not": {
-                                "const": 0
-                              },
-                              "type": "number"
-                            },
-                            {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            {
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            {
-                              "minProperties": 1,
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
           "serviceAnnotations": {
             "additionalProperties": {
               "type": "string"
@@ -400,133 +151,22 @@
             "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
             "properties": {},
             "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
+          },
+          "serviceIPFamilies": {
+            "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "x-kubernetes-list-type": "atomic"
+          },
+          "serviceIPFamilyPolicy": {
+            "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
+            "type": [
+              "string",
+              "null"
             ]
           },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "anyOf": [
-                            {
-                              "const": true
-                            },
-                            {
-                              "not": {
-                                "const": 0
-                              },
-                              "type": "number"
-                            },
-                            {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            {
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            {
-                              "minProperties": 1,
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
           "serviceLabels": {
             "additionalProperties": {
               "type": "string"
@@ -553,22 +193,12 @@
         }
       ]
     },
-    "fullnameOverride": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "fullnameOverride": {},
     "global": {
       "additionalProperties": false,
       "properties": {
         "commonLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "properties": {},
+          "additionalProperties": {},
           "type": "object"
         }
       },
@@ -598,29 +228,7 @@
                   {
                     "properties": {
                       "enabled": {
-                        "anyOf": [
-                          {
-                            "const": true
-                          },
-                          {
-                            "not": {
-                              "const": 0
-                            },
-                            "type": "number"
-                          },
-                          {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          {
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          {
-                            "minProperties": 1,
-                            "type": "object"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -636,29 +244,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "anyOf": [
-                            {
-                              "const": true
-                            },
-                            {
-                              "not": {
-                                "const": 0
-                              },
-                              "type": "number"
-                            },
-                            {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            {
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            {
-                              "minProperties": 1,
-                              "type": "object"
-                            }
-                          ]
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
@@ -732,13 +318,7 @@
       "type": "array",
       "x-kubernetes-list-type": "atomic"
     },
-    "serviceIPFamilyPolicy": {
-      "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "serviceIPFamilyPolicy": {},
     "serviceLabels": {
       "additionalProperties": {},
       "type": "object"
