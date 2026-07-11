@@ -14,6 +14,7 @@ mod values_yaml;
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::ResourceSchemaOracle;
+use helm_schema_core::guard_algebra::minimize_key_disjunction;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
@@ -594,7 +595,7 @@ fn append_conditional_schemas(
         }
     }
     for ((ancestor_segments, _), group) in by_content {
-        let mut conditions: Vec<SchemaNode> = minimize_guard_set_disjunction(group.guard_sets)
+        let mut conditions: Vec<SchemaNode> = minimize_key_disjunction(group.guard_sets)
             .into_iter()
             .map(|guards| {
                 SchemaNode::all_of(build_condition_clauses(
@@ -615,78 +616,6 @@ fn append_conditional_schemas(
             SchemaNode::foreign(group.fragment),
         );
     }
-}
-
-/// Minimize a disjunction of conjunctive guard sets guarding one shared
-/// constraint. Two sets differing in exactly one complementary truthiness
-/// member resolve into their shared conjuncts, a set that is a superset of
-/// another is implied by it and drops (absorption), and duplicates
-/// collapse. Exact — no approximation.
-fn minimize_guard_set_disjunction(
-    mut guard_sets: Vec<Vec<ConditionalGuard>>,
-) -> Vec<Vec<ConditionalGuard>> {
-    guard_sets.sort();
-    guard_sets.dedup();
-    loop {
-        let mut resolved = None;
-        'search: for (index, left) in guard_sets.iter().enumerate() {
-            for (other_index, right) in guard_sets.iter().enumerate().skip(index + 1) {
-                if let Some(common) = resolve_complementary_guard_sets(left, right) {
-                    resolved = Some((index, other_index, common));
-                    break 'search;
-                }
-            }
-        }
-        let Some((index, other_index, common)) = resolved else {
-            break;
-        };
-        guard_sets.remove(other_index);
-        guard_sets.remove(index);
-        if !guard_sets.contains(&common) {
-            guard_sets.push(common);
-        }
-        guard_sets.sort();
-    }
-    let sets = guard_sets.clone();
-    guard_sets.retain(|candidate| {
-        !sets.iter().any(|other| {
-            other != candidate
-                && other.len() < candidate.len()
-                && other.iter().all(|guard| candidate.contains(guard))
-        })
-    });
-    guard_sets
-}
-
-fn resolve_complementary_guard_sets(
-    left: &[ConditionalGuard],
-    right: &[ConditionalGuard],
-) -> Option<Vec<ConditionalGuard>> {
-    if left.len() != right.len() {
-        return None;
-    }
-    let left_only: Vec<&ConditionalGuard> =
-        left.iter().filter(|guard| !right.contains(guard)).collect();
-    let right_only: Vec<&ConditionalGuard> =
-        right.iter().filter(|guard| !left.contains(guard)).collect();
-    let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
-        return None;
-    };
-    let complementary = |a: &ConditionalGuard, b: &ConditionalGuard| match (a, b) {
-        (ConditionalGuard::Truthy { path }, ConditionalGuard::Not(inner)) => {
-            matches!(inner.as_ref(), ConditionalGuard::Truthy { path: negated } if negated == path)
-        }
-        _ => false,
-    };
-    if !complementary(left_extra, right_extra) && !complementary(right_extra, left_extra) {
-        return None;
-    }
-    Some(
-        left.iter()
-            .filter(|guard| *guard != *left_extra)
-            .cloned()
-            .collect(),
-    )
 }
 
 /// Merge `incoming` into `target` when both are plain `properties` object

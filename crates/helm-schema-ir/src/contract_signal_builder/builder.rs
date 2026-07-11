@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
+use helm_schema_core::guard_algebra::{key_is_strict_subset, resolve_complementary_keys};
 use helm_schema_core::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
@@ -426,54 +427,6 @@ fn minimize_conditional_overlay_branches(
     }
     let unconditional = branches.remove(&Vec::new()).is_some();
     (branches, unconditional)
-}
-
-fn key_is_strict_subset(subset: &[ConditionalGuard], superset: &[ConditionalGuard]) -> bool {
-    subset.len() < superset.len() && subset.iter().all(|guard| superset.contains(guard))
-}
-
-fn resolve_complementary_keys(
-    left: &[ConditionalGuard],
-    right: &[ConditionalGuard],
-) -> Option<Vec<ConditionalGuard>> {
-    if left.len() != right.len() {
-        return None;
-    }
-    let left_only: Vec<&ConditionalGuard> =
-        left.iter().filter(|guard| !right.contains(guard)).collect();
-    let right_only: Vec<&ConditionalGuard> =
-        right.iter().filter(|guard| !left.contains(guard)).collect();
-    let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
-        return None;
-    };
-    if !guards_are_complementary(left_extra, right_extra) {
-        return None;
-    }
-    Some(
-        left.iter()
-            .filter(|guard| *guard != *left_extra)
-            .cloned()
-            .collect(),
-    )
-}
-
-fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuard) -> bool {
-    fn negated_truthy_path(guard: &ConditionalGuard) -> Option<&str> {
-        let ConditionalGuard::Not(inner) = guard else {
-            return None;
-        };
-        match inner.as_ref() {
-            ConditionalGuard::Truthy { path } => Some(path),
-            _ => None,
-        }
-    }
-    match (left, right) {
-        (ConditionalGuard::Truthy { path }, negated)
-        | (negated, ConditionalGuard::Truthy { path }) => {
-            negated_truthy_path(negated) == Some(path)
-        }
-        _ => false,
-    }
 }
 
 fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {

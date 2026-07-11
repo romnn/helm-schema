@@ -3,6 +3,7 @@ mod capability_liveness;
 mod contract_signals;
 mod contract_use;
 mod guard;
+pub mod guard_algebra;
 mod output_path;
 mod predicate;
 mod provenance;
