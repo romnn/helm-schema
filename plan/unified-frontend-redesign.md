@@ -17,6 +17,31 @@ PathCondition (extend the predicate lattice if ever needed); the gen
 conditional-append deep-clone is the next perf lever; the double
 self-truthy normalization is corpus-pinned fixpoint insurance.
 
+Post-redesign audit (2026-07-11): an end-to-end old-vs-new schema diff over
+the luup3 corpus found one real regression the corpus fixtures never covered
+— Stage B4's precise root-to-leaf guard stacks put self-truthy members into
+placed rows, which the signal builder's overlay lowering treated as
+unsupported, poisoning every overlay for the path and pushing typed
+constraints to the unconditional base (dict-config helper calls:
+`include "common.x" (dict "config" .Values.y)` under call-site guards).
+Fixed by (a) folding self-truthy members out of overlay keys (they are
+nullability evidence), (b) guard-set algebra in the signal builder
+(equal-evidence branch resolution/absorption; complements prove renders
+unconditional), (c) lowering truthy guards over any values-declared path
+(the "boolean-like flags only" launch policy was the other half of the
+regression — its pinned limitation test now pins the fixed behavior),
+(d) size-safe emission: same-guard conditionals conjoin, same-content
+conditionals disjoin their guards, guard-set disjunctions minimize, and
+the helm-truthiness condition is one shared `$defs` entry, and (e) branch
+schemas never reject the chart's own declared default (uniform
+default-acceptance fallback). Along the way the audit surfaced and fixed a
+pre-existing narrowing: an evidence-less declared-empty map with structural
+map use (`runtimeEnv: {}` + `range $k, $v := .Values.runtimeEnv`) lowered to
+the closed empty object; it is an open map now, while list-ranged sources
+with descendant rows keep the exact-empty off-state. Pinned by the
+`dict-config` corpus chart and `fragment_dict_config_guards` golden tests.
+Core LOC 25,310.
+
 Originally: approved direction (2026-07-03). This supersedes the incremental
 consolidation campaign recorded in
 `plan/full-core-architecture-simplification-handoff.md`, which closed at the
