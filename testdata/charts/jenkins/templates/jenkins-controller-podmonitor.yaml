@@ -1,0 +1,24 @@
+{{- if .Values.controller.googlePodMonitor.enabled }}
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+
+metadata:
+  name: {{ template "jenkins.fullname" . }}
+{{- if .Values.controller.googlePodMonitor.serviceMonitorNamespace }}
+  namespace: {{ .Values.controller.googlePodMonitor.serviceMonitorNamespace }}
+{{- else }}
+  namespace: {{ template "jenkins.namespace" . }}
+{{- end }}
+  labels:
+    {{ include "jenkins.labels" . | nindent 4 }}
+
+spec:
+  endpoints:
+  - interval: {{ .Values.controller.googlePodMonitor.scrapeInterval }}
+    port: http
+    path: {{ .Values.controller.jenkinsUriPrefix }}{{ .Values.controller.googlePodMonitor.scrapeEndpoint }}
+  selector:
+    matchLabels:
+      "app.kubernetes.io/instance": "{{ .Release.Name }}"
+      "app.kubernetes.io/component": "{{ .Values.controller.componentName }}"
+{{- end }}

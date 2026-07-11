@@ -1,0 +1,148 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ template "aws-load-balancer-controller.fullname" . }}-leader-election-role
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aws-load-balancer-controller.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: [configmaps]
+  verbs: [create]
+- apiGroups: [""]
+  resources: [configmaps]
+  resourceNames: [aws-load-balancer-controller-leader]
+  verbs: [get, patch, update]
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - leases
+  resourceNames:
+  - aws-load-balancer-controller-leader
+  verbs:
+  - get
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ template "aws-load-balancer-controller.fullname" . }}-leader-election-rolebinding
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aws-load-balancer-controller.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "aws-load-balancer-controller.fullname" . }}-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: {{ template "aws-load-balancer-controller.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "aws-load-balancer-controller.fullname" . }}-role
+  labels:
+    {{- include "aws-load-balancer-controller.labels" . | nindent 4 }}
+rules:
+# AUTO-GENERATED from config/rbac/role.yaml by hack/sync-rbac-to-helm.sh
+# Do not edit these rules manually. Run 'make manifests' to update.
+- apiGroups: [""]
+  resources: [configmaps]
+  verbs: [create, delete, get, update]
+- apiGroups: [""]
+  resources: [endpoints, namespaces, nodes, pods]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [events]
+  verbs: [create, patch]
+- apiGroups: [""]
+  resources: [pods/status, services/status]
+  verbs: [patch, update]
+- apiGroups: [""]
+  resources: [services]
+  verbs: [get, list, patch, update, watch]
+- apiGroups: ["aga.k8s.aws"]
+  resources: [globalaccelerators]
+  verbs: [get, list, patch, watch]
+- apiGroups: ["aga.k8s.aws"]
+  resources: [globalaccelerators/finalizers, globalaccelerators/status]
+  verbs: [patch, update]
+- apiGroups: ["discovery.k8s.io"]
+  resources: [endpointslices]
+  verbs: [get, list, watch]
+- apiGroups: ["elbv2.k8s.aws"]
+  resources: [albtargetcontrolconfigs]
+  verbs: [get]
+- apiGroups: ["elbv2.k8s.aws"]
+  resources: [ingressclassparams]
+  verbs: [get, list, watch]
+- apiGroups: ["elbv2.k8s.aws"]
+  resources: [targetgroupbindings]
+  verbs: [create, delete, get, list, patch, update, watch]
+- apiGroups: ["elbv2.k8s.aws"]
+  resources: [targetgroupbindings/status]
+  verbs: [patch, update]
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources: [ingresses]
+  verbs: [get, list, patch, update, watch]
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources: [ingresses/status]
+  verbs: [patch, update]
+- apiGroups: ["gateway.k8s.aws"]
+  resources: [listenerruleconfigurations, loadbalancerconfigurations, targetgroupconfigurations]
+  verbs: [get, list, patch, watch]
+- apiGroups: ["gateway.k8s.aws"]
+  resources: [listenerruleconfigurations/finalizers, loadbalancerconfigurations/finalizers, targetgroupconfigurations/finalizers]
+  verbs: [patch, update]
+- apiGroups: ["gateway.k8s.aws"]
+  resources: [listenerruleconfigurations/status, loadbalancerconfigurations/status, targetgroupconfigurations/status]
+  verbs: [get, patch, update]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: [gatewayclasses, gateways, referencegrants]
+  verbs: [get, list, patch, watch]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: [gatewayclasses/finalizers, gateways/finalizers]
+  verbs: [patch, update]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: [gatewayclasses/status, gateways/status, grpcroutes/status, httproutes/status, listenersets/status, tcproutes/status, tlsroutes/status, udproutes/status]
+  verbs: [get, patch, update]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: [grpcroutes, httproutes, listenersets, tcproutes, tlsroutes, udproutes]
+  verbs: [get, list, watch]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: [grpcroutes/finalizers, httproutes/finalizers, listenersets/finalizers, tcproutes/finalizers, tlsroutes/finalizers, udproutes/finalizers]
+  verbs: [update]
+- apiGroups: ["networking.k8s.io"]
+  resources: [ingressclasses]
+  verbs: [get, list, watch]
+{{- if .Values.clusterSecretsPermissions.allowAllSecrets }}
+- apiGroups: [""]
+  resources: [secrets]
+  verbs: [get, list, watch]
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "aws-load-balancer-controller.fullname" . }}-rolebinding
+  labels:
+    {{- include "aws-load-balancer-controller.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "aws-load-balancer-controller.fullname" . }}-role
+subjects:
+- kind: ServiceAccount
+  name: {{ template "aws-load-balancer-controller.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

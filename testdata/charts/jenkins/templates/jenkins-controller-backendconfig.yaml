@@ -1,0 +1,18 @@
+{{- if .Values.controller.backendconfig.enabled }}
+apiVersion: {{ .Values.controller.backendconfig.apiVersion }}
+kind: BackendConfig
+metadata:
+  name: {{ .Values.controller.backendconfig.name }}
+  namespace: {{ template "jenkins.namespace" . }}
+  labels:
+    {{- include "jenkins.labels" . | nindent 4 }}
+{{- if .Values.controller.backendconfig.labels }}
+{{ toYaml .Values.controller.backendconfig.labels | indent 4 }}
+{{- end }}
+{{- if .Values.controller.backendconfig.annotations }}
+  annotations:
+{{ toYaml .Values.controller.backendconfig.annotations | indent 4 }}
+{{- end }}
+spec:
+{{ toYaml .Values.controller.backendconfig.spec | indent 2 }}
+{{- end }}

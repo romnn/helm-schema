@@ -1,0 +1,15 @@
+{{- if .Values.controller.initScripts -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "jenkins.fullname" . }}-init-scripts
+  namespace: {{ template "jenkins.namespace" . }}
+  labels:
+    {{ include "jenkins.labels" . | nindent 4 }}
+data:
+{{- range $key, $val := .Values.controller.initScripts }}
+  init{{ $key }}.groovy: |-
+{{ tpl $val $ | indent 4 }}
+{{- end }}
+{{- end }}
