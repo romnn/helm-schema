@@ -1,0 +1,1275 @@
+{
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbacManager": {
+                  "properties": {
+                    "deploy": {}
+                  },
+                  "required": [
+                    "deploy"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbacManager"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbacManager": {
+                "properties": {
+                  "deploy": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "deploy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbacManager"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "customLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Add custom `labels` to the Crossplane pod deployment.",
+            "type": "object"
+          },
+          "deploymentStrategy": {
+            "description": "The deployment strategy for the Crossplane and RBAC Manager pods.",
+            "type": "string"
+          },
+          "image": {
+            "properties": {
+              "pullPolicy": {
+                "description": "The image pull policy used for Crossplane and RBAC Manager pods.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "nameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "podSecurityContextRBACManager": {
+            "additionalProperties": {},
+            "description": "Add a custom `securityContext` to the RBAC Manager pod.",
+            "type": "object"
+          },
+          "resourcesRBACManager": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "securityContextRBACManager": {
+            "additionalProperties": {},
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbacManager": {
+                          "properties": {
+                            "deploy": {}
+                          },
+                          "required": [
+                            "deploy"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbacManager"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbacManager": {
+                        "properties": {
+                          "deploy": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "deploy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbacManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "rbacManager": {
+                      "properties": {
+                        "skipAggregatedClusterRoles": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "skipAggregatedClusterRoles"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbacManager"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhooks": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhooks"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhooks": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhooks"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "customLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Add custom `labels` to the Crossplane pod deployment.",
+            "type": "object"
+          },
+          "nameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "affinity": {
+      "additionalProperties": {},
+      "description": "Add `affinities` to the Crossplane pod deployment.",
+      "type": "object"
+    },
+    "args": {
+      "description": "Add custom arguments to the Crossplane pod.",
+      "items": {},
+      "type": "array"
+    },
+    "configuration": {
+      "additionalProperties": false,
+      "properties": {
+        "packages": {
+          "description": "A list of Configuration packages to install.",
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "customAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Add custom `annotations` to the Crossplane pod deployment.",
+      "type": "object"
+    },
+    "customLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Add custom `labels` to the Crossplane pod deployment.",
+      "type": "object"
+    },
+    "deploymentStrategy": {
+      "description": "The deployment strategy for the Crossplane and RBAC Manager pods.",
+      "type": "string"
+    },
+    "dnsPolicy": {
+      "description": "Specify the `dnsPolicy` to be used by the Crossplane pod.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "extraEnvVarsCrossplane": {
+      "additionalProperties": {},
+      "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
+      "type": "object"
+    },
+    "extraEnvVarsCrossplaneInit": {
+      "additionalProperties": {},
+      "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
+      "type": "object"
+    },
+    "extraEnvVarsRBACManager": {
+      "additionalProperties": {},
+      "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
+      "type": "object"
+    },
+    "extraObjects": {
+      "description": "To add arbitrary Kubernetes Objects during a Helm Install",
+      "items": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "extraVolumeMountsCrossplane": {
+      "additionalProperties": {},
+      "description": "Add custom `volumeMounts` to the Crossplane pod. Supports template expressions.",
+      "type": "object"
+    },
+    "extraVolumesCrossplane": {
+      "additionalProperties": {},
+      "description": "Add custom `volumes` to the Crossplane pod. Supports template expressions.",
+      "type": "object"
+    },
+    "function": {
+      "additionalProperties": false,
+      "properties": {
+        "packages": {
+          "description": "A list of Function packages to install",
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "functionCache": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "pvc": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "pvc"
+              ],
+              "type": "object"
+            }
+          },
+          "then": {
+            "properties": {
+              "medium": {
+                "description": "Set to `Memory` to hold the function cache in a RAM backed file system. Useful for Crossplane development.",
+                "type": "string"
+              },
+              "sizeLimit": {
+                "description": "The size limit for the function cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "medium": {
+          "description": "Set to `Memory` to hold the function cache in a RAM backed file system. Useful for Crossplane development."
+        },
+        "pvc": {
+          "description": "The name of a PersistentVolumeClaim to use as the function cache. Disables the default function cache `emptyDir` Volume.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sizeLimit": {
+          "description": "The size limit for the function cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory."
+        }
+      },
+      "type": "object"
+    },
+    "hostNetwork": {
+      "description": "Enable `hostNetwork` for the Crossplane deployment. Caution: enabling `hostNetwork` grants the Crossplane Pod access to the host network namespace. Consider setting `dnsPolicy` to `ClusterFirstWithHostNet`.",
+      "type": "boolean"
+    },
+    "image": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "ignoreTag": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "ignoreTag"
+              ],
+              "type": "object"
+            }
+          },
+          "then": {
+            "properties": {
+              "repository": {
+                "description": "Repository for the Crossplane pod image.",
+                "type": "string"
+              },
+              "tag": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The Crossplane image tag. Defaults to the value of `appVersion` in `Chart.yaml`."
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ignoreTag": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "ignoreTag"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "repository": {
+                "description": "Repository for the Crossplane pod image.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "ignoreTag": {
+          "description": "Do not use the {{ .image.tag }} value to compute the image uri.",
+          "type": "boolean"
+        },
+        "pullPolicy": {
+          "description": "The image pull policy used for Crossplane and RBAC Manager pods.",
+          "type": "string"
+        },
+        "repository": {
+          "description": "Repository for the Crossplane pod image."
+        },
+        "tag": {
+          "description": "The Crossplane image tag. Defaults to the value of `appVersion` in `Chart.yaml`."
+        }
+      },
+      "type": "object"
+    },
+    "imagePullSecrets": {
+      "description": "The imagePullSecret names to add to the Crossplane ServiceAccount.",
+      "items": {},
+      "type": "array"
+    },
+    "leaderElection": {
+      "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the Crossplane pod.",
+      "type": "boolean"
+    },
+    "metrics": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "port": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The port the metrics server listens on."
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "description": "Enable Prometheus path, port and scrape annotations and expose port 8080 for both the Crossplane and RBAC Manager pods.",
+          "type": "boolean"
+        },
+        "port": {
+          "description": "The port the metrics server listens on."
+        }
+      },
+      "type": "object"
+    },
+    "nameOverride": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nodeSelector": {
+      "additionalProperties": {},
+      "description": "Add `nodeSelectors` to the Crossplane pod deployment.",
+      "type": "object"
+    },
+    "packageCache": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "pvc": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "pvc"
+              ],
+              "type": "object"
+            }
+          },
+          "then": {
+            "properties": {
+              "configMap": {
+                "description": "The name of a ConfigMap to use as the package cache. Disables the default package cache `emptyDir` Volume.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "configMap"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "pvc": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "pvc"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "medium": {
+                "description": "Set to `Memory` to hold the package cache in a RAM backed file system. Useful for Crossplane development.",
+                "type": "string"
+              },
+              "sizeLimit": {
+                "description": "The size limit for the package cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "configMap": {
+          "description": "The name of a ConfigMap to use as the package cache. Disables the default package cache `emptyDir` Volume."
+        },
+        "medium": {
+          "description": "Set to `Memory` to hold the package cache in a RAM backed file system. Useful for Crossplane development."
+        },
+        "pvc": {
+          "description": "The name of a PersistentVolumeClaim to use as the package cache. Disables the default package cache `emptyDir` Volume.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sizeLimit": {
+          "description": "The size limit for the package cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory."
+        }
+      },
+      "type": "object"
+    },
+    "podSecurityContextCrossplane": {
+      "additionalProperties": {},
+      "description": "Add a custom `securityContext` to the Crossplane pod.",
+      "type": "object"
+    },
+    "podSecurityContextRBACManager": {
+      "additionalProperties": {},
+      "description": "Add a custom `securityContext` to the RBAC Manager pod.",
+      "type": "object"
+    },
+    "priorityClassName": {
+      "description": "The PriorityClass name to apply to the Crossplane and RBAC Manager pods.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "provider": {
+      "additionalProperties": false,
+      "properties": {
+        "defaultActivations": {
+          "description": "Define entries for the default managed resource activation policy. If defined, a default MRAP will contain these activations.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "packages": {
+          "description": "A list of Provider packages to install.",
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "rbacManager": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "deploy": {}
+                  },
+                  "required": [
+                    "deploy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "deploy": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "deploy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Add `affinities` to the RBAC Manager pod deployment.",
+                "type": "object"
+              },
+              "leaderElection": {
+                "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod.",
+                "type": "boolean"
+              },
+              "nodeSelector": {
+                "additionalProperties": {},
+                "description": "Add `nodeSelectors` to the RBAC Manager pod deployment.",
+                "type": "object"
+              },
+              "replicas": {
+                "description": "The number of RBAC Manager pod `replicas` to deploy.",
+                "type": "integer"
+              },
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Add `tolerations` to the RBAC Manager pod deployment."
+              },
+              "topologySpreadConstraints": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "affinity": {
+          "additionalProperties": {},
+          "description": "Add `affinities` to the RBAC Manager pod deployment.",
+          "type": "object"
+        },
+        "args": {
+          "description": "Add custom arguments to the RBAC Manager pod.",
+          "items": {},
+          "type": "array"
+        },
+        "deploy": {
+          "description": "Deploy the RBAC Manager pod and its required roles.",
+          "type": "boolean"
+        },
+        "leaderElection": {
+          "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
+        },
+        "nodeSelector": {
+          "additionalProperties": {},
+          "description": "Add `nodeSelectors` to the RBAC Manager pod deployment.",
+          "type": "object"
+        },
+        "replicas": {
+          "description": "The number of RBAC Manager pod `replicas` to deploy."
+        },
+        "revisionHistoryLimit": {
+          "description": "The number of RBAC Manager ReplicaSets to retain.",
+          "type": "null"
+        },
+        "skipAggregatedClusterRoles": {
+          "description": "Don't install aggregated Crossplane ClusterRoles.",
+          "type": "boolean"
+        },
+        "tolerations": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Add `tolerations` to the RBAC Manager pod deployment."
+        },
+        "topologySpreadConstraints": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
+        }
+      },
+      "type": "object"
+    },
+    "readiness": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The port the readyz server listens on."
+        }
+      },
+      "type": "object"
+    },
+    "registryCaBundleConfig": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "key": {
+                "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "key": {
+          "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The ConfigMap name containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "replicas": {
+      "description": "The number of Crossplane pod `replicas` to deploy.",
+      "type": "integer"
+    },
+    "resourcesCrossplane": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "cpu": {
+            "type": "string"
+          },
+          "memory": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "properties": {
+        "limits": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "cpu": {
+              "description": "CPU resource limits for the Crossplane pod.",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Memory resource limits for the Crossplane pod.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "requests": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "cpu": {
+              "description": "CPU resource requests for the Crossplane pod.",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Memory resource requests for the Crossplane pod.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "resourcesRBACManager": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "revisionHistoryLimit": {
+      "description": "The number of Crossplane ReplicaSets to retain.",
+      "type": "null"
+    },
+    "runtimeClassName": {
+      "description": "The runtimeClassName name to apply to the Crossplane and RBAC Manager pods.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "secrets": {
+      "additionalProperties": false,
+      "properties": {
+        "customAnnotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Add custom annotations to Crossplane Secret resources.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "securityContextCrossplane": {
+      "additionalProperties": false,
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "description": "Enable `allowPrivilegeEscalation` for the Crossplane pod.",
+          "type": "boolean"
+        },
+        "readOnlyRootFilesystem": {
+          "description": "Set the Crossplane pod root file system as read-only.",
+          "type": "boolean"
+        },
+        "runAsGroup": {
+          "description": "The group ID used by the Crossplane pod.",
+          "type": "integer"
+        },
+        "runAsUser": {
+          "description": "The user ID used by the Crossplane pod.",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "securityContextRBACManager": {
+      "additionalProperties": {},
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "description": "Enable `allowPrivilegeEscalation` for the RBAC Manager pod.",
+          "type": "boolean"
+        },
+        "readOnlyRootFilesystem": {
+          "description": "Set the RBAC Manager pod root file system as read-only.",
+          "type": "boolean"
+        },
+        "runAsGroup": {
+          "description": "The group ID used by the RBAC Manager pod.",
+          "type": "integer"
+        },
+        "runAsUser": {
+          "description": "The user ID used by the RBAC Manager pod.",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "customAnnotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "customAnnotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Add custom `annotations` to the Crossplane ServiceAccount.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "create": {}
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "create": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "description": "Provide the name of an already created Crossplane ServiceAccount. Required when `serviceAccount.create` is `false`",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "create": {
+          "description": "Specifies whether Crossplane ServiceAccount should be created",
+          "type": "boolean"
+        },
+        "customAnnotations": {
+          "additionalProperties": {},
+          "description": "Add custom `annotations` to the Crossplane ServiceAccount.",
+          "type": "object"
+        },
+        "name": {
+          "description": "Provide the name of an already created Crossplane ServiceAccount. Required when `serviceAccount.create` is `false`"
+        }
+      },
+      "type": "object"
+    },
+    "sidecarsCrossplane": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Add sidecar containers to the Crossplane pod. Supports template expressions."
+    },
+    "tolerations": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Add `tolerations` to the Crossplane pod deployment."
+    },
+    "topologySpreadConstraints": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Add `topologySpreadConstraints` to the Crossplane pod deployment."
+    },
+    "webhooks": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "port": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The port the webhook server listens on."
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "description": "Enable webhooks for Crossplane and installed Provider packages.",
+          "type": "boolean"
+        },
+        "port": {
+          "description": "The port the webhook server listens on."
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

@@ -1,3 +1,7 @@
+//! Semantic assertions for bitnami-redis: values-comment descriptions must
+//! land on the right schema nodes. Values validation and the full-schema pin
+//! live in `chart_corpus.rs`.
+
 use test_util::prelude::sim_assert_eq;
 #[path = "common/descriptions.rs"]
 mod descriptions;
@@ -5,11 +9,8 @@ mod descriptions;
 mod schema_roundtrip;
 
 #[test]
-fn bitnami_redis_values_yaml_validates() -> color_eyre::eyre::Result<()> {
+fn bitnami_redis_values_descriptions_apply() -> color_eyre::eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("bitnami-redis")?;
-    let values_json = schema_roundtrip::values_yaml_as_json_for_path("bitnami-redis")?;
-    schema_roundtrip::assert_values_json_validates(&values_json, &schema);
-
     assert_schema_description(
         &schema,
         "/properties/auth/properties/enabled/description",

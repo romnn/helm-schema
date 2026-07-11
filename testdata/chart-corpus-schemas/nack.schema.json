@@ -1,0 +1,423 @@
+{
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {},
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "namespaced": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "namespaced"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "additionalVolumeMounts": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "additionalVolumeMounts are the additional volume mounts to add"
+    },
+    "additionalVolumes": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "additionalVolumes are the additional volumes to add"
+    },
+    "affinity": {
+      "additionalProperties": {},
+      "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
+      "type": "object"
+    },
+    "automountServiceAccountToken": {},
+    "containerSecurityContext": {
+      "additionalProperties": {},
+      "description": "Configure a container security context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\ncontainerSecurityContext:\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true",
+      "type": "object"
+    },
+    "global": {
+      "additionalProperties": false,
+      "properties": {
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "global labels will be applied to all resources deployed by the chart",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "imagePullSecrets": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "jetstream": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalArgs": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Additional arguments to pass to the controller process"
+        },
+        "controlLoop": {
+          "description": "Enable controller-runtime backend\nSee https://github.com/nats-io/nack/blob/50d1f5/README.md#controller-modes",
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "pullPolicy": {
+              "description": "registry: docker.io",
+              "type": "string"
+            },
+            "registry": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "klogLevel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nats": {
+          "additionalProperties": false,
+          "description": "NATS URL",
+          "properties": {
+            "credentials": {
+              "additionalProperties": false,
+              "properties": {
+                "secret": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {}
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "nkey": {
+              "additionalProperties": false,
+              "properties": {
+                "secret": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {}
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "pullPolicy": {},
+        "tls": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "settings": {
+                    "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
+                    "properties": {
+                      "client_ca": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "client_cert": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "client_key": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "secretName": {
+              "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS",
+              "type": "null"
+            },
+            "settings": {
+              "additionalProperties": false,
+              "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
+              "properties": {
+                "client_ca": {},
+                "client_cert": {},
+                "client_key": {},
+                "timeout": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "tlsFirst": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "nameOverride": {},
+    "namespaceOverride": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "namespaced": {
+      "description": "restrict the controller to only watch resources in it's current namespace",
+      "type": "boolean"
+    },
+    "nodeSelector": {
+      "additionalProperties": {},
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
+      "type": "object"
+    },
+    "podAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "priorityClassName": {
+      "description": "Pod priority class name\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rbacRules": {
+      "description": "Rules to be applied to ClusterRole or Role\nSet as a string so that it can be templated to allow further customization",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "readOnly": {
+      "description": "Toggle to prevent the controller making changes to NATS streams/consumers.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "resources": {
+      "additionalProperties": {},
+      "description": "Resource requests and limits for primary nack container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": "object"
+    },
+    "securityContext": {
+      "additionalProperties": {},
+      "description": "Toggle whether to use setup a Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/\nsecurityContext:\nfsGroup: 1000\nrunAsUser: 1000\nrunAsNonRoot: true",
+      "type": "object"
+    },
+    "serviceAccountName": {
+      "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tolerations": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\""
+    },
+    "useLegacyNames": {
+      "description": "Use legacy naming and labels for backwards compatibility with existing installations.\nWhen true: uses .Release.Name for resource names and simple labels (app, chart)\nWhen false: uses .Chart.Name for resource names and modern Kubernetes labels (app.kubernetes.io/*)\nSet to false when using NACK as a subchart to avoid naming collisions and use standard labels.",
+      "type": "boolean"
+    }
+  },
+  "type": "object"
+}

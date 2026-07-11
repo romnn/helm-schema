@@ -1,0 +1,2182 @@
+{
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "clusterWide": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                },
+                "required": [
+                  "clusterWide"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Annotations to be added to all other resources.",
+            "type": "object"
+          },
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "serviceAccount": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "monitoring": {
+                "properties": {
+                  "podMonitorEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podMonitorEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Annotations to be added to all other resources.",
+            "type": "object"
+          },
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Annotations to be added to all other resources.",
+            "type": "object"
+          },
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "namespaceOverride": {
+            "type": "string"
+          },
+          "serviceAccount": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "mutating": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "mutating"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "mutating": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "mutating"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Annotations to be added to all other resources.",
+            "type": "object"
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "namespaceOverride": {
+            "type": "string"
+          },
+          "service": {
+            "properties": {
+              "name": {
+                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+                "type": "string"
+              },
+              "port": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "config": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Annotations to be added to all other resources.",
+            "type": "object"
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "validating": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "validating"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "validating": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "validating"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "namespaceOverride": {
+            "type": "string"
+          },
+          "rbac": {
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "service": {
+            "properties": {
+              "name": {
+                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+                "type": "string"
+              },
+              "port": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "config": {
+                  "properties": {
+                    "secret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "secret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "clusterWide": {}
+                    },
+                    "required": [
+                      "clusterWide"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "config": {
+                  "properties": {
+                    "clusterWide": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "clusterWide"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "namespaceOverride": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "additionalArgs": {
+      "description": "Additional arguments to be added to the operator's args list.",
+      "items": {},
+      "type": "array"
+    },
+    "additionalEnv": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Array containing extra environment variables which can be templated.\nFor example:\n- name: RELEASE_NAME\nvalue: \"{{ .Release.Name }}\"\n- name: MY_VAR\nvalue: \"mySpecialKey\""
+    },
+    "affinity": {
+      "additionalProperties": {},
+      "description": "Affinity for the operator to be installed.",
+      "type": "object"
+    },
+    "commonAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Annotations to be added to all other resources.",
+      "type": "object"
+    },
+    "config": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "additionalProperties": {},
+                "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "description": "The name of the configmap/secret to use.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "Operator configuration.",
+      "properties": {
+        "clusterWide": {
+          "anyOf": [
+            {
+              "enum": [
+                false
+              ]
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "This option determines if the operator is responsible for observing\nevents across the entire Kubernetes cluster or if its focus should be\nnarrowed down to the specific namespace within which it has been deployed."
+        },
+        "create": {
+          "description": "Specifies whether the secret should be created.",
+          "type": "boolean"
+        },
+        "data": {
+          "additionalProperties": {},
+          "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b",
+          "type": "object"
+        },
+        "maxConcurrentReconciles": {
+          "description": "The maximum number of concurrent reconciles. Defaults to 10.",
+          "type": "integer"
+        },
+        "name": {
+          "description": "The name of the configmap/secret to use.",
+          "type": "string"
+        },
+        "secret": {
+          "description": "Specifies whether it should be stored in a secret, instead of a configmap.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "containerSecurityContext": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "properties": {
+              "drop": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "description": "Container Security Context.",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "properties": {
+            "drop": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean"
+        },
+        "runAsGroup": {
+          "type": "integer"
+        },
+        "runAsUser": {
+          "type": "integer"
+        },
+        "seccompProfile": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "crds": {
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "description": "Specifies whether the CRDs should be created when installing the chart.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "dnsPolicy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fullnameOverride": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "hostNetwork": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "image": {
+      "additionalProperties": false,
+      "properties": {
+        "pullPolicy": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "tag": {
+          "description": "Overrides the image tag whose default is the chart appVersion.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "imagePullSecrets": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "monitoring": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "podMonitorEnabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "podMonitorEnabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "podMonitorAdditionalLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Additional labels for the podMonitor",
+                "type": "object"
+              },
+              "podMonitorMetricRelabelings": {
+                "description": "Metrics relabel configurations to apply to samples before ingestion.",
+                "items": {
+                  "additionalProperties": false,
+                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                  "properties": {
+                    "action": {
+                      "default": "replace",
+                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                      "enum": [
+                        "replace",
+                        "Replace",
+                        "keep",
+                        "Keep",
+                        "drop",
+                        "Drop",
+                        "hashmod",
+                        "HashMod",
+                        "labelmap",
+                        "LabelMap",
+                        "labeldrop",
+                        "LabelDrop",
+                        "labelkeep",
+                        "LabelKeep",
+                        "lowercase",
+                        "Lowercase",
+                        "uppercase",
+                        "Uppercase",
+                        "keepequal",
+                        "KeepEqual",
+                        "dropequal",
+                        "DropEqual"
+                      ],
+                      "type": "string"
+                    },
+                    "modulus": {
+                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "regex": {
+                      "description": "regex defines the regular expression against which the extracted value is matched.",
+                      "type": "string"
+                    },
+                    "replacement": {
+                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    },
+                    "separator": {
+                      "description": "separator defines the string between concatenated SourceLabels.",
+                      "type": "string"
+                    },
+                    "sourceLabels": {
+                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                      "items": {
+                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "targetLabel": {
+                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "podMonitorRelabelings": {
+                "description": "Relabel configurations to apply to samples before scraping.",
+                "items": {
+                  "additionalProperties": false,
+                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                  "properties": {
+                    "action": {
+                      "default": "replace",
+                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                      "enum": [
+                        "replace",
+                        "Replace",
+                        "keep",
+                        "Keep",
+                        "drop",
+                        "Drop",
+                        "hashmod",
+                        "HashMod",
+                        "labelmap",
+                        "LabelMap",
+                        "labeldrop",
+                        "LabelDrop",
+                        "labelkeep",
+                        "LabelKeep",
+                        "lowercase",
+                        "Lowercase",
+                        "uppercase",
+                        "Uppercase",
+                        "keepequal",
+                        "KeepEqual",
+                        "dropequal",
+                        "DropEqual"
+                      ],
+                      "type": "string"
+                    },
+                    "modulus": {
+                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "regex": {
+                      "description": "regex defines the regular expression against which the extracted value is matched.",
+                      "type": "string"
+                    },
+                    "replacement": {
+                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    },
+                    "separator": {
+                      "description": "separator defines the string between concatenated SourceLabels.",
+                      "type": "string"
+                    },
+                    "sourceLabels": {
+                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                      "items": {
+                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "targetLabel": {
+                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        },
+        "global": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "grafanaDashboard": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "annotations": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Annotations that ConfigMaps can have to get configured in Grafana.",
+                    "type": "object"
+                  },
+                  "configMapName": {
+                    "description": "The name of the ConfigMap containing the dashboard.",
+                    "type": "string"
+                  },
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Allows overriding the namespace where the ConfigMap will be created, defaulting to the same one as the Release."
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "sidecarLabel": {}
+                              },
+                              "required": [
+                                "sidecarLabel"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "sidecarLabel": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "sidecarLabel"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "labels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labels"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "not": {
+                                  "properties": {
+                                    "sidecarLabel": {}
+                                  },
+                                  "required": [
+                                    "sidecarLabel"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              {
+                                "properties": {
+                                  "sidecarLabel": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "sidecarLabel"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "sidecarLabel": {}
+                              },
+                              "required": [
+                                "sidecarLabel"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "sidecarLabel": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "sidecarLabel"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "labels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labels"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "not": {
+                                  "properties": {
+                                    "sidecarLabel": {}
+                                  },
+                                  "required": [
+                                    "sidecarLabel"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              {
+                                "properties": {
+                                  "sidecarLabel": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "sidecarLabel"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "sidecarLabelValue": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Label value that ConfigMaps should have to be loaded as dashboards. DEPRECATED: Use labels instead."
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "annotations": {
+              "additionalProperties": {},
+              "description": "Annotations that ConfigMaps can have to get configured in Grafana.",
+              "type": "object"
+            },
+            "configMapName": {
+              "description": "The name of the ConfigMap containing the dashboard."
+            },
+            "create": {
+              "type": "boolean"
+            },
+            "labels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Labels that ConfigMaps should have to get configured in Grafana.",
+              "type": "object"
+            },
+            "namespace": {
+              "description": "Allows overriding the namespace where the ConfigMap will be created, defaulting to the same one as the Release."
+            },
+            "sidecarLabel": {
+              "description": "Label that ConfigMaps should have to be loaded as dashboards. DEPRECATED: Use labels instead.",
+              "type": "string"
+            },
+            "sidecarLabelValue": {
+              "description": "Label value that ConfigMaps should have to be loaded as dashboards. DEPRECATED: Use labels instead."
+            }
+          },
+          "type": "object"
+        },
+        "nameOverride": {
+          "type": "string"
+        },
+        "podMonitorAdditionalLabels": {
+          "additionalProperties": {},
+          "description": "Additional labels for the podMonitor",
+          "type": "object"
+        },
+        "podMonitorEnabled": {
+          "description": "Specifies whether the monitoring should be enabled. Requires Prometheus Operator CRDs.",
+          "type": "boolean"
+        },
+        "podMonitorMetricRelabelings": {
+          "description": "Metrics relabel configurations to apply to samples before ingestion.",
+          "items": {
+            "additionalProperties": false,
+            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+            "properties": {
+              "action": {
+                "default": "replace",
+                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                "enum": [
+                  "replace",
+                  "Replace",
+                  "keep",
+                  "Keep",
+                  "drop",
+                  "Drop",
+                  "hashmod",
+                  "HashMod",
+                  "labelmap",
+                  "LabelMap",
+                  "labeldrop",
+                  "LabelDrop",
+                  "labelkeep",
+                  "LabelKeep",
+                  "lowercase",
+                  "Lowercase",
+                  "uppercase",
+                  "Uppercase",
+                  "keepequal",
+                  "KeepEqual",
+                  "dropequal",
+                  "DropEqual"
+                ],
+                "type": "string"
+              },
+              "modulus": {
+                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "regex": {
+                "description": "regex defines the regular expression against which the extracted value is matched.",
+                "type": "string"
+              },
+              "replacement": {
+                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                "type": "string"
+              },
+              "separator": {
+                "description": "separator defines the string between concatenated SourceLabels.",
+                "type": "string"
+              },
+              "sourceLabels": {
+                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                "items": {
+                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "targetLabel": {
+                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "podMonitorRelabelings": {
+          "description": "Relabel configurations to apply to samples before scraping.",
+          "items": {
+            "additionalProperties": false,
+            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+            "properties": {
+              "action": {
+                "default": "replace",
+                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                "enum": [
+                  "replace",
+                  "Replace",
+                  "keep",
+                  "Keep",
+                  "drop",
+                  "Drop",
+                  "hashmod",
+                  "HashMod",
+                  "labelmap",
+                  "LabelMap",
+                  "labeldrop",
+                  "LabelDrop",
+                  "labelkeep",
+                  "LabelKeep",
+                  "lowercase",
+                  "Lowercase",
+                  "uppercase",
+                  "Uppercase",
+                  "keepequal",
+                  "KeepEqual",
+                  "dropequal",
+                  "DropEqual"
+                ],
+                "type": "string"
+              },
+              "modulus": {
+                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "regex": {
+                "description": "regex defines the regular expression against which the extracted value is matched.",
+                "type": "string"
+              },
+              "replacement": {
+                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                "type": "string"
+              },
+              "separator": {
+                "description": "separator defines the string between concatenated SourceLabels.",
+                "type": "string"
+              },
+              "sourceLabels": {
+                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                "items": {
+                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "targetLabel": {
+                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "monitoringQueriesConfigMap": {
+      "additionalProperties": false,
+      "description": "Default monitoring queries",
+      "properties": {
+        "name": {
+          "description": "The name of the default monitoring configmap.",
+          "type": "string"
+        },
+        "queries": {
+          "description": "A string representation of a YAML defining monitoring queries.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "nameOverride": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "namespaceOverride": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nodeSelector": {
+      "additionalProperties": {},
+      "description": "Nodeselector for the operator to be installed.",
+      "type": "object"
+    },
+    "podAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Annotations to be added to the pod.",
+      "type": "object"
+    },
+    "podLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Labels to be added to the pod.",
+      "type": "object"
+    },
+    "podSecurityContext": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "description": "Security Context for the whole pod.",
+      "properties": {
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "seccompProfile": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "type": {
+              "description": "fsGroup: 2000",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "priorityClassName": {
+      "description": "Priority indicates the importance of a Pod relative to other Pods.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rbac": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregateClusterRoles": {
+          "description": "Aggregate ClusterRoles to Kubernetes default user-facing roles.\nRef: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
+          "type": "boolean"
+        },
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "create": {
+          "description": "Specifies whether ClusterRole and ClusterRoleBinding should be created.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "replicaCount": {
+      "type": "integer"
+    },
+    "resources": {
+      "additionalProperties": {},
+      "description": "If you want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 200Mi\nrequests:\ncpu: 100m\nmemory: 100Mi",
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "ipFamilies": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Sets the families that should be supported and the order in which they should be applied to ClusterIP as well. Can be IPv4 and/or IPv6."
+        },
+        "ipFamilyPolicy": {
+          "description": "Set the ip family policy to configure dual-stack see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {},
+          "then": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "create": {
+          "description": "Specifies whether the service account should be created.",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
+        }
+      },
+      "type": "object"
+    },
+    "tolerations": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Tolerations for the operator to be installed."
+    },
+    "topologySpreadConstraints": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Topology Spread Constraints for the operator to be installed."
+    },
+    "updateStrategy": {
+      "additionalProperties": {},
+      "description": "Update strategy for the operator.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy\nFor example:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%",
+      "type": "object"
+    },
+    "webhook": {
+      "additionalProperties": false,
+      "description": "The webhook configuration.",
+      "properties": {
+        "livenessProbe": {
+          "additionalProperties": false,
+          "properties": {
+            "initialDelaySeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "mutating": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "failurePolicy": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "create": {
+              "type": "boolean"
+            },
+            "failurePolicy": {}
+          },
+          "type": "object"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "readinessProbe": {
+          "additionalProperties": false,
+          "properties": {
+            "initialDelaySeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "startupProbe": {
+          "additionalProperties": false,
+          "properties": {
+            "failureThreshold": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "periodSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "validating": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "failurePolicy": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "create": {
+              "type": "boolean"
+            },
+            "failurePolicy": {}
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

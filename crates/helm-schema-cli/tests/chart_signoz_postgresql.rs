@@ -2,6 +2,8 @@
 mod helm_samples;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_validation.rs"]
+mod values_validation;
 
 use indoc::indoc;
 
@@ -9,8 +11,8 @@ use indoc::indoc;
 fn signoz_postgresql_values_yaml_and_guard_samples_validate() -> color_eyre::eyre::Result<()> {
     let chart_path = "signoz-signoz/charts/signoz-otel-gateway/charts/postgresql";
     let schema = schema_roundtrip::generate_chart_schema_for_path(chart_path)?;
-    let values_json = schema_roundtrip::values_yaml_as_json_for_path(chart_path)?;
-    schema_roundtrip::assert_values_json_validates(&values_json, &schema);
+    let values_json = values_validation::values_yaml_as_json_for_path(chart_path)?;
+    values_validation::assert_values_json_validates(&values_json, &schema);
     helm_samples::assert_generated_schema_accepts_helm_samples_for_path(
         chart_path,
         &schema,

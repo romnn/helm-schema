@@ -1,0 +1,917 @@
+{
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "clusterScoped": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "clusterScoped"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "cluster": {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "antiAffinity": {
+                "enum": [
+                  "hard"
+                ]
+              }
+            },
+            "required": [
+              "antiAffinity"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "antiAffinity": {}
+                      },
+                      "required": [
+                        "antiAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "antiAffinity": {
+                        "enum": [
+                          "soft"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "antiAffinity"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "antiAffinity": {}
+                      },
+                      "required": [
+                        "antiAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "antiAffinity": {
+                        "not": {
+                          "enum": [
+                            "hard"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "antiAffinity"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "antiAffinity": {
+      "anyOf": [
+        {
+          "enum": [
+            "hard"
+          ]
+        },
+        {
+          "enum": [
+            "soft"
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard"
+    },
+    "cluster": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "annotations": {
+                "description": "Optional custom annotations to add to Pods in the cluster",
+                "type": "object",
+                "x-kubernetes-preserve-unknown-fields": true
+              },
+              "configReload": {
+                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "pullPolicy": {
+                    "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "resources": {
+                    "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi",
+                    "type": "object",
+                    "x-kubernetes-preserve-unknown-fields": true
+                  },
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "metrics": {
+                "description": "Prometheus Metrics Exporter",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "pullPolicy": {
+                    "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "name": {
+                "type": "string"
+              },
+              "resources": {
+                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi",
+                "type": "object",
+                "x-kubernetes-preserve-unknown-fields": true
+              },
+              "size": {
+                "description": "Cluster Size",
+                "type": "integer"
+              },
+              "version": {
+                "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "auth": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "auth"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "auth": {
+                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                "properties": {
+                  "enableServiceAccounts": {
+                    "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled.",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "servicemonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "servicemonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "metrics": {
+                "description": "Prometheus Metrics Exporter",
+                "properties": {
+                  "servicemonitor": {
+                    "description": "Prometheus Operator ServiceMonitor config",
+                    "properties": {
+                      "prometheusInstance": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "routesSecret": {
+                    "type": "string"
+                  },
+                  "serverSecret": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "annotations": {
+          "description": "Optional custom annotations to add to Pods in the cluster",
+          "type": "object",
+          "x-kubernetes-preserve-unknown-fields": true
+        },
+        "auth": {
+          "additionalProperties": false,
+          "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+          "properties": {
+            "defaultPermissions": {
+              "additionalProperties": {},
+              "description": "publish: [\"SANDBOX.*\"]\nsubscribe: [\"PUBLIC.>\"]",
+              "type": "object"
+            },
+            "enableServiceAccounts": {
+              "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled."
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "password": {
+              "type": "string"
+            },
+            "username": {
+              "description": "This is where you enter a username/password for 1 user",
+              "type": "string"
+            },
+            "users": {
+              "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "configReload": {
+          "additionalProperties": false,
+          "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+          "properties": {
+            "enabled": {},
+            "pullPolicy": {},
+            "registry": {
+              "type": "string"
+            },
+            "repository": {},
+            "resources": {
+              "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi",
+              "type": "object",
+              "x-kubernetes-preserve-unknown-fields": true
+            },
+            "tag": {}
+          },
+          "type": "object"
+        },
+        "create": {
+          "description": "Create a NATS Cluster when installing the operator",
+          "type": "boolean"
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "description": "Prometheus Metrics Exporter",
+          "properties": {
+            "enabled": {},
+            "pullPolicy": {},
+            "registry": {
+              "type": "string"
+            },
+            "repository": {},
+            "servicemonitor": {
+              "additionalProperties": false,
+              "description": "Prometheus Operator ServiceMonitor config",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "prometheusInstance": {}
+              },
+              "type": "object"
+            },
+            "tag": {}
+          },
+          "type": "object"
+        },
+        "name": {},
+        "namespace": {
+          "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
+        },
+        "resources": {
+          "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi",
+          "type": "object",
+          "x-kubernetes-preserve-unknown-fields": true
+        },
+        "size": {
+          "description": "Cluster Size"
+        },
+        "tls": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "serverSecret:\nroutesSecret:",
+              "type": "boolean"
+            },
+            "routesSecret": {},
+            "serverSecret": {}
+          },
+          "type": "object"
+        },
+        "version": {
+          "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags"
+        }
+      },
+      "type": "object"
+    },
+    "clusterScoped": {
+      "description": "Operator scope\nNOTE: If true\n* Make sure that no other NATS operator is running in the cluster\n* The Release namespace must be \"nats-io\"",
+      "type": "boolean"
+    },
+    "image": {
+      "additionalProperties": false,
+      "properties": {
+        "pullPolicy": {
+          "description": "Specify an imagePullPolicy\nDefaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images\nOptionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistrKeySecretName",
+          "type": "string"
+        },
+        "pullSecrets": {},
+        "registry": {
+          "description": "natsio/nats-operator:0.8.3",
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "livenessProbe": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "failureThreshold": {
+                "type": "integer"
+              },
+              "initialDelaySeconds": {
+                "type": "integer"
+              },
+              "periodSeconds": {
+                "type": "integer"
+              },
+              "successThreshold": {
+                "type": "integer"
+              },
+              "timeoutSeconds": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "Configure extra options for liveness and readiness probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "failureThreshold": {},
+        "initialDelaySeconds": {},
+        "periodSeconds": {},
+        "successThreshold": {},
+        "timeoutSeconds": {}
+      },
+      "type": "object"
+    },
+    "nameOverride": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nodeSelector": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "podAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Pod annotations\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/",
+      "type": "object"
+    },
+    "podLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/",
+      "type": "object"
+    },
+    "rbacEnabled": {
+      "description": "Specify if RBAC authorization is enabled.\nref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+      "type": "boolean"
+    },
+    "readinessProbe": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "failureThreshold": {
+                "type": "integer"
+              },
+              "initialDelaySeconds": {
+                "type": "integer"
+              },
+              "periodSeconds": {
+                "type": "integer"
+              },
+              "successThreshold": {
+                "type": "integer"
+              },
+              "timeoutSeconds": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "failureThreshold": {},
+        "initialDelaySeconds": {},
+        "periodSeconds": {},
+        "successThreshold": {},
+        "timeoutSeconds": {}
+      },
+      "type": "object"
+    },
+    "replicaCount": {
+      "description": "Set default Replica Count for the Operator",
+      "type": "integer"
+    },
+    "resources": {
+      "additionalProperties": {},
+      "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 64Mi",
+      "type": "object"
+    },
+    "rollingUpdateMaxSurge": {},
+    "rollingUpdateMaxUnavailable": {},
+    "schedulerName": {},
+    "securityContext": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "fsGroup": {
+                "type": "integer"
+              },
+              "runAsUser": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "NATS Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "fsGroup": {},
+        "runAsUser": {}
+      },
+      "type": "object"
+    },
+    "tolerations": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "updateStrategy": {
+      "anyOf": [
+        {
+          "enum": [
+            "RollingUpdate"
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%"
+    }
+  },
+  "type": "object"
+}

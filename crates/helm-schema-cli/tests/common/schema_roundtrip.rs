@@ -5,7 +5,6 @@ use color_eyre::eyre::{Report, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
-use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 pub(crate) fn physical_chart_dir(chart_relative_path: &str) -> PathBuf {
@@ -32,41 +31,6 @@ pub(crate) fn read_values_yaml_for_path(
         .read_to_string(&mut out)
         .wrap_err("read values.yaml")?;
     Ok(out)
-}
-
-fn drop_nulls(v: &Value) -> Value {
-    match v {
-        Value::Null => Value::Null,
-        Value::Bool(_) | Value::Number(_) | Value::String(_) => v.clone(),
-        Value::Array(arr) => Value::Array(
-            arr.iter()
-                .filter(|x| !x.is_null())
-                .map(drop_nulls)
-                .collect(),
-        ),
-        Value::Object(map) => {
-            let mut out = serde_json::Map::new();
-            for (k, v) in map {
-                if v.is_null() {
-                    continue;
-                }
-                out.insert(k.clone(), drop_nulls(v));
-            }
-            Value::Object(out)
-        }
-    }
-}
-
-fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<String> {
-    let validator = match jsonschema::validator_for(schema) {
-        Ok(validator) => validator,
-        Err(err) => return vec![format!("failed to compile JSON schema: {err}")],
-    };
-
-    validator
-        .iter_errors(instance)
-        .map(|e| format!("{path}: {msg}", path = e.instance_path(), msg = e))
-        .collect()
 }
 
 pub fn generate_chart_schema_for_path(
@@ -97,18 +61,4 @@ pub fn generate_chart_schema_for_path(
         .map(|generated| generated.schema)
         .map_err(Report::from)
         .wrap_err("generate schema")
-}
-
-pub fn values_yaml_as_json_for_path(
-    chart_relative_path: &str,
-) -> std::result::Result<Value, Report> {
-    let values_yaml =
-        read_values_yaml_for_path(chart_relative_path).wrap_err("read values.yaml")?;
-    let values_json: Value = serde_yaml::from_str(&values_yaml).wrap_err("parse values.yaml")?;
-    Ok(drop_nulls(&values_json))
-}
-
-pub fn assert_values_json_validates(values_json: &Value, schema: &Value) {
-    let errors = validate_json_against_schema(values_json, schema);
-    sim_assert_eq!(have: errors, want: Vec::<String>::new());
 }

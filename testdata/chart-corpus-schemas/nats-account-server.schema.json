@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "accountserver": {
+      "additionalProperties": false,
+      "description": "Copyright 2020 The NATS Authors\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\nhttp://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.",
+      "properties": {
+        "image": {
+          "type": "string"
+        },
+        "pullPolicy": {
+          "type": "string"
+        },
+        "resources": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "nats": {
+      "additionalProperties": {},
+      "properties": {
+        "credentials": {
+          "additionalProperties": false,
+          "properties": {
+            "secret": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "operator": {
+      "additionalProperties": {},
+      "properties": {
+        "operatorjwt": {
+          "additionalProperties": {},
+          "properties": {
+            "configMap": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "systemaccountjwt": {
+          "additionalProperties": {},
+          "properties": {
+            "configMap": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "store": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "type": {}
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "file"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "file": {
+                "properties": {
+                  "storageSize": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "file": {
+          "additionalProperties": false,
+          "properties": {
+            "storageSize": {}
+          },
+          "type": "object"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "file"
+              ]
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

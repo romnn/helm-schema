@@ -1,0 +1,3179 @@
+{
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "promExporter": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "promExporter"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "description": "NATS config",
+            "properties": {
+              "monitor": {
+                "properties": {
+                  "port": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "hosts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "hosts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "ports": {
+                          "properties": {
+                            "websocket": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "websocket"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ports"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "ports": {
+                        "properties": {
+                          "websocket": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "websocket"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ports"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "description": "NATS config",
+            "properties": {
+              "websocket": {
+                "properties": {
+                  "ingress": {
+                    "description": "ingress\nservice must be enabled also",
+                    "properties": {
+                      "className": {
+                        "description": "sets to the ingress class name",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "name": {
+                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}-ws\"",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "tlsSecretName": {
+                        "description": "set to an existing secret name to enable TLS on the ingress; applies to all hosts",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "global": {
+            "description": "Global options",
+            "properties": {
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "global labels will be applied to all resources deployed by the chart",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "namespaceOverride": {
+            "description": "override the namespace that resources are installed into",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "tlsSecretName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tlsSecretName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "ports": {
+                          "properties": {
+                            "websocket": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "websocket"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ports"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "ports": {
+                        "properties": {
+                          "websocket": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "websocket"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ports"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "description": "NATS config",
+            "properties": {
+              "websocket": {
+                "properties": {
+                  "ingress": {
+                    "description": "ingress\nservice must be enabled also",
+                    "properties": {
+                      "hosts": {
+                        "anyOf": [
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "must contain at least 1 host otherwise ingress will not be created"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "natsBox": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "natsBox"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "natsBox": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "natsBox"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "podDisruptionBudget": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podDisruptionBudget"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "podDisruptionBudget": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podDisruptionBudget"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "promExporter": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "promExporter"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "promExporter": {
+                    "properties": {
+                      "podMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podMonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "promExporter"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Global options",
+            "properties": {
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "global labels will be applied to all resources deployed by the chart",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "namespaceOverride": {
+            "description": "override the namespace that resources are installed into",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "config": {
+      "additionalProperties": false,
+      "description": "NATS config",
+      "properties": {
+        "cluster": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "replicas": {
+                    "description": "must be 2 or higher when jetstream is enabled",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the cluster config\nhttps://docs.nats.io/running-a-nats-service/configuration/clustering/cluster_config",
+              "type": "object"
+            },
+            "noAdvertise": {
+              "description": "set to false to allow cluster nodes to advertise their addresses\nso that clients can reconnect without extra DNS lookups.\nNote: in case clients have external connectivity make sure to define the `advertise` section as well.\nIf clients are behind a load balancer it is best to leave this as is.",
+              "type": "boolean"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "replicas": {
+              "description": "must be 2 or higher when jetstream is enabled"
+            },
+            "routeURLs": {
+              "additionalProperties": false,
+              "description": "apply to generated route URLs that connect to other pods in the StatefulSet",
+              "properties": {
+                "k8sClusterDomain": {
+                  "type": "string"
+                },
+                "password": {},
+                "useFQDN": {
+                  "description": "set to true to use FQDN in route URLs",
+                  "type": "boolean"
+                },
+                "user": {
+                  "description": "if both user and password are set, they will be added to route URLs\nand the cluster authorization block"
+                }
+              },
+              "type": "object"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cert": {
+                  "type": "string"
+                },
+                "dir": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls",
+                  "type": "object"
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "secretName": {
+                  "description": "set secretName in order to mount an existing secret to dir"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "gateway": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the gateway config\nhttps://docs.nats.io/running-a-nats-service/configuration/gateways/gateway#gateway-configuration-block",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cert": {
+                  "type": "string"
+                },
+                "dir": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls",
+                  "type": "object"
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "secretName": {
+                  "description": "set secretName in order to mount an existing secret to dir"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "jetstream": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "fileStore": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "fileStore"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "fileStore": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "fileStore"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "fileStore": {
+                              "properties": {
+                                "pvc": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "pvc"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "fileStore"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "fileStore": {
+                            "properties": {
+                              "pvc": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "pvc"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "fileStore"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "fileStore": {
+                    "properties": {
+                      "pvc": {
+                        "description": "stateful set -> volume claim templates -> jetstream pvc",
+                        "properties": {
+                          "name": {
+                            "description": "defaults to \"{{ include \"nats.fullname\" $ }}-js\"",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "size": {
+                            "type": "string"
+                          },
+                          "storageClassName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "fileStore": {
+              "additionalProperties": false,
+              "properties": {
+                "dir": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxSize": {
+                  "description": "defaults to the PVC size"
+                },
+                "pvc": {
+                  "additionalProperties": false,
+                  "description": "stateful set -> volume claim templates -> jetstream pvc",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "merge": {
+                      "additionalProperties": {},
+                      "description": "merge or patch the jetstream pvc\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#persistentvolumeclaim-v1-core",
+                      "type": "object"
+                    },
+                    "name": {
+                      "description": "defaults to \"{{ include \"nats.fullname\" $ }}-js\""
+                    },
+                    "patch": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "size": {},
+                    "storageClassName": {}
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "memoryStore": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxSize": {
+                  "description": "ensure that container has a sufficient memory limit greater than maxSize",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the jetstream config\nhttps://docs.nats.io/running-a-nats-service/configuration#jetstream",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "leafnodes": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the leafnodes config\nhttps://docs.nats.io/running-a-nats-service/configuration/leafnodes/leafnode_conf",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cert": {
+                  "type": "string"
+                },
+                "dir": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls",
+                  "type": "object"
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "secretName": {
+                  "description": "set secretName in order to mount an existing secret to dir"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the nats config\nhttps://docs.nats.io/running-a-nats-service/configuration\nfollowing special rules apply\n1. strings that start with << and end with >> will be unquoted\nuse this for variables and numbers with units\n2. keys ending in $include will be switched to include directives\nkeys are sorted alphabetically, use prefix before $includes to control includes ordering\npaths should be relative to /etc/nats-config/nats.conf\nexample:\nmerge:\n$include: ./my-config.conf\nzzz$include: ./my-config-last.conf\nserver_name: nats\nauthorization:\ntoken: << $TOKEN >>\njetstream:\nmax_memory_store: << 1GB >>\nwill yield the config:\n{\ninclude ./my-config.conf;\n\"authorization\": {\n\"token\": $TOKEN\n},\n\"jetstream\": {\n\"max_memory_store\": 1GB\n},\n\"server_name\": \"nats\",\ninclude ./my-config-last.conf;\n}",
+          "type": "object"
+        },
+        "monitor": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "port": {},
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "description": "config.nats.tls must be enabled also\nwhen enabled, monitoring port will use HTTPS with the options from config.nats.tls\nif promExporter is also enabled, consider setting promExporter.monitorDomain",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "mqtt": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the mqtt config\nhttps://docs.nats.io/running-a-nats-service/configuration/mqtt/mqtt_config",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cert": {
+                  "type": "string"
+                },
+                "dir": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls",
+                  "type": "object"
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "secretName": {
+                  "description": "set secretName in order to mount an existing secret to dir"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "nats": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cert": {
+                  "type": "string"
+                },
+                "dir": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls",
+                  "type": "object"
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "secretName": {
+                  "description": "set secretName in order to mount an existing secret to dir"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        },
+        "profiling": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "resolver": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "pvc": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "pvc"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "pvc": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "pvc"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "pvc": {
+                    "description": "stateful set -> volume claim templates -> resolver pvc",
+                    "properties": {
+                      "name": {
+                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}-resolver\"",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "size": {
+                        "type": "string"
+                      },
+                      "storageClassName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "dir": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the resolver\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/auth_intro/jwt/resolver",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            },
+            "pvc": {
+              "additionalProperties": false,
+              "description": "stateful set -> volume claim templates -> resolver pvc",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the pvc\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#persistentvolumeclaim-v1-core",
+                  "type": "object"
+                },
+                "name": {
+                  "description": "defaults to \"{{ include \"nats.fullname\" $ }}-resolver\""
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "size": {},
+                "storageClassName": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "serverNamePrefix": {
+          "description": "adds a prefix to the server name, which defaults to the pod name\nhelpful for ensuring server name is unique in a super cluster",
+          "type": "string"
+        },
+        "websocket": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ingress": {
+              "additionalProperties": false,
+              "description": "ingress\nservice must be enabled also",
+              "properties": {
+                "className": {
+                  "description": "sets to the ingress class name"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "hosts": {
+                  "anyOf": [
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "must contain at least 1 host otherwise ingress will not be created"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the ingress\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#ingress-v1-networking-k8s-io",
+                  "type": "object"
+                },
+                "name": {
+                  "description": "defaults to \"{{ include \"nats.fullname\" $ }}-ws\""
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "pathType": {
+                  "type": "string"
+                },
+                "tlsSecretName": {
+                  "description": "set to an existing secret name to enable TLS on the ingress; applies to all hosts"
+                }
+              },
+              "type": "object"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the websocket config\nhttps://docs.nats.io/running-a-nats-service/configuration/websocket/websocket_conf",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "tls": {
+              "additionalProperties": false,
+              "properties": {
+                "cert": {
+                  "type": "string"
+                },
+                "dir": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls",
+                  "type": "object"
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "secretName": {
+                  "description": "set secretName in order to mount an existing secret to dir"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "configMap": {
+      "additionalProperties": false,
+      "description": "config map",
+      "properties": {
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the config map\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#configmap-v1-core",
+          "type": "object"
+        },
+        "name": {
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-config\"",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "container": {
+      "additionalProperties": false,
+      "description": "stateful set -> pod template -> nats container",
+      "properties": {
+        "env": {
+          "additionalProperties": {},
+          "description": "map with key as env var name, value can be string or map\nexample:\nenv:\nGOMEMLIMIT: 7GiB\nTOKEN:\nvalueFrom:\nsecretKeyRef:\nname: nats-auth\nkey: token",
+          "type": "object"
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "digest": {
+              "description": "if digest is provided, it overrides tag (example: \"sha256:abcdef1234567890\")"
+            },
+            "fullImageName": {
+              "description": "if fullImageName is provided, it overrides registry, repository, tag, and digest"
+            },
+            "pullPolicy": {},
+            "registry": {},
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
+          "type": "object"
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        },
+        "ports": {
+          "additionalProperties": false,
+          "description": "container port options\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#containerport-v1-core",
+          "properties": {
+            "cluster": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "gateway": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "leafnodes": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "monitor": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "mqtt": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "nats": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "profiling": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "websocket": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "resources": {
+          "additionalProperties": {},
+          "description": "container resources\nrequests:\ncpu: 100m\nmemory: 128Mi\nlimits:\ncpu: 100m\nmemory: 128Mi",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "extraResources": {
+      "description": "Extra user-defined resources\nadd arbitrary user-generated resources\nexample:\nconfig:\nwebsocket:\nenabled: true\nextraResources:\n- apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\nname:\n$tplYaml: >\n{{ include \"nats.fullname\" $ | quote }}\nlabels:\n$tplYaml: |\n{{ include \"nats.labels\" $ }}\nspec:\nhosts:\n- demo.nats.io\ngateways:\n- my-gateway\nhttp:\n- name: default\nmatch:\n- name: root\nuri:\nexact: /\nroute:\n- destination:\nhost:\n$tplYaml: >\n{{ .Values.service.name | quote }}\nport:\nnumber:\n$tplYaml: >\n{{ .Values.config.websocket.port }}",
+      "items": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fullnameOverride": {
+      "description": "override full name of the chart+release",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "global": {
+      "additionalProperties": false,
+      "description": "Global options",
+      "properties": {
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "pullPolicy": {
+              "description": "global image pull policy to use for all container images in the chart\ncan be overridden by individual image pullPolicy"
+            },
+            "pullSecretNames": {
+              "description": "global list of secret names to use as image pull secrets for all pod specs in the chart\nsecrets must exist in the same namespace\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "registry": {
+              "description": "global registry to use for all container images in the chart\ncan be overridden by individual image registry"
+            }
+          },
+          "type": "object"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "global labels will be applied to all resources deployed by the chart",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "headlessService": {
+      "additionalProperties": false,
+      "description": "headless service",
+      "properties": {
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the headless service\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#service-v1-core",
+          "type": "object"
+        },
+        "name": {
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-headless\"",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "nameOverride": {
+      "description": "Common options\noverride name of the chart",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "namespaceOverride": {
+      "description": "override the namespace that resources are installed into",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "natsBox": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "container": {
+                "description": "deployment -> pod template -> nats-box container",
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "digest": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "repository": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "resources": {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "contentsSecret": {
+                "description": "contents secret",
+                "properties": {
+                  "name": {
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contents\"",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "contextsSecret": {
+                "description": "contexts secret",
+                "properties": {
+                  "name": {
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contexts\"",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "deployment": {
+                "description": "deployment",
+                "properties": {
+                  "name": {
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\"",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "container": {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "digest": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "digest"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "container"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "container": {
+                "description": "deployment -> pod template -> nats-box container",
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "tag": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "serviceAccount": {
+                "description": "service account",
+                "properties": {
+                  "name": {
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\"",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "natsBox\nNATS Box Deployment and associated resources",
+      "properties": {
+        "container": {
+          "additionalProperties": false,
+          "description": "deployment -> pod template -> nats-box container",
+          "properties": {
+            "env": {
+              "additionalProperties": {},
+              "description": "env var map, see nats.env for an example",
+              "type": "object"
+            },
+            "image": {
+              "additionalProperties": false,
+              "properties": {
+                "digest": {},
+                "fullImageName": {
+                  "type": "null"
+                },
+                "global": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "image": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "pullPolicy": {},
+                        "registry": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "pullPolicy": {
+                  "type": "null"
+                },
+                "registry": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "repository": {},
+                "resources": {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                "tag": {}
+              },
+              "type": "object"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            },
+            "resources": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "contentsSecret": {
+          "additionalProperties": false,
+          "description": "contents secret",
+          "properties": {
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the contents secret\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#secret-v1-core",
+              "type": "object"
+            },
+            "name": {
+              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contents\""
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "contexts": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "cert": {
+                      "type": "string"
+                    },
+                    "contents": {},
+                    "dir": {},
+                    "key": {
+                      "type": "string"
+                    },
+                    "secretName": {}
+                  },
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                }
+              ]
+            },
+            "properties": {
+              "creds": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "properties": {
+                  "contents": {},
+                  "dir": {},
+                  "key": {
+                    "type": "string"
+                  },
+                  "secretName": {}
+                },
+                "type": "object"
+              },
+              "merge": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "nkey": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "properties": {
+                  "contents": {},
+                  "dir": {},
+                  "key": {
+                    "type": "string"
+                  },
+                  "secretName": {}
+                },
+                "type": "object"
+              },
+              "patch": {
+                "items": {},
+                "type": "array"
+              },
+              "tls": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "properties": {
+                  "cert": {
+                    "type": "string"
+                  },
+                  "dir": {},
+                  "key": {
+                    "type": "string"
+                  },
+                  "secretName": {}
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "description": "NATS contexts",
+          "properties": {
+            "default": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "properties": {
+                      "cert": {
+                        "type": "string"
+                      },
+                      "contents": {},
+                      "dir": {},
+                      "key": {
+                        "type": "string"
+                      },
+                      "secretName": {}
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ]
+              },
+              "properties": {
+                "creds": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "contents": {
+                      "description": "set contents in order to create a secret with the creds file contents"
+                    },
+                    "dir": {
+                      "description": "defaults to /etc/nats-creds/<context-name>"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "secretName": {
+                      "description": "set secretName in order to mount an existing secret to dir"
+                    }
+                  },
+                  "type": "object"
+                },
+                "merge": {
+                  "additionalProperties": {},
+                  "description": "merge or patch the context\nhttps://docs.nats.io/using-nats/nats-tools/nats_cli#nats-contexts",
+                  "type": "object"
+                },
+                "nkey": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "contents": {
+                      "description": "set contents in order to create a secret with the nkey file contents"
+                    },
+                    "dir": {
+                      "description": "defaults to /etc/nats-nkeys/<context-name>"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "secretName": {
+                      "description": "set secretName in order to mount an existing secret to dir"
+                    }
+                  },
+                  "type": "object"
+                },
+                "patch": {
+                  "items": {},
+                  "type": "array"
+                },
+                "tls": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "used to connect with client certificates",
+                  "properties": {
+                    "cert": {
+                      "type": "string"
+                    },
+                    "dir": {
+                      "description": "defaults to /etc/nats-certs/<context-name>"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "secretName": {
+                      "description": "set secretName in order to mount an existing secret to dir"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "contextsSecret": {
+          "additionalProperties": false,
+          "description": "contexts secret",
+          "properties": {
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the context secret\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#secret-v1-core",
+              "type": "object"
+            },
+            "name": {
+              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contexts\""
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "defaultContextName": {
+          "description": "name of context to select by default",
+          "type": "string"
+        },
+        "deployment": {
+          "additionalProperties": false,
+          "description": "deployment",
+          "properties": {
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the deployment\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#deployment-v1-apps",
+              "type": "object"
+            },
+            "name": {
+              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "podTemplate": {
+          "additionalProperties": false,
+          "description": "deployment -> pod template",
+          "properties": {
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the pod template\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#pod-v1-core",
+              "type": "object"
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "serviceAccount": {
+          "additionalProperties": false,
+          "description": "service account",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core",
+              "type": "object"
+            },
+            "name": {
+              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "podDisruptionBudget": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "description": "defaults to \"{{ include \"nats.fullname\" $ }}\"",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "pod disruption budget",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the pod disruption budget\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#poddisruptionbudget-v1-policy",
+          "type": "object"
+        },
+        "name": {
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "podTemplate": {
+      "additionalProperties": false,
+      "description": "stateful set -> pod template",
+      "properties": {
+        "configChecksumAnnotation": {
+          "description": "adds a hash of the ConfigMap as a pod annotation\nthis will cause the StatefulSet to roll when the ConfigMap is updated\nset to true to force pod rollouts on config changes instead of using the reloader for hot updates",
+          "type": "boolean"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the pod template\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#pod-v1-core",
+          "type": "object"
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        },
+        "topologySpreadConstraints": {
+          "additionalProperties": {},
+          "description": "map of topologyKey: topologySpreadConstraint\nlabelSelector will be added to match StatefulSet pods\ntopologySpreadConstraints:\nkubernetes.io/hostname:\nmaxSkew: 1",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "promExporter": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "digest": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "repository": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "monitorDomain": {
+                "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate",
+                "type": "string"
+              },
+              "port": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "digest": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "digest"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "podMonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podMonitor"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "podMonitor": {
+                "description": "prometheus pod monitor",
+                "properties": {
+                  "name": {
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}\"",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "env": {
+          "additionalProperties": {},
+          "description": "env var map, see nats.env for an example",
+          "type": "object"
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "digest": {},
+            "fullImageName": {
+              "type": "null"
+            },
+            "global": {
+              "additionalProperties": false,
+              "properties": {
+                "image": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "pullPolicy": {},
+                    "registry": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "pullPolicy": {
+              "type": "null"
+            },
+            "registry": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "repository": {},
+            "tag": {}
+          },
+          "type": "object"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
+          "type": "object"
+        },
+        "monitorDomain": {
+          "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate"
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        },
+        "podMonitor": {
+          "additionalProperties": false,
+          "description": "prometheus pod monitor",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "merge": {
+              "additionalProperties": {},
+              "description": "merge or patch the pod monitor\nhttps://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor",
+              "type": "object"
+            },
+            "name": {
+              "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+            },
+            "patch": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "port": {}
+      },
+      "type": "object"
+    },
+    "reloader": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "digest": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "repository": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "digest": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "digest"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "stateful set -> pod template -> reloader container",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "env": {
+          "additionalProperties": {},
+          "description": "env var map, see nats.env for an example",
+          "type": "object"
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "digest": {},
+            "fullImageName": {
+              "type": "null"
+            },
+            "global": {
+              "additionalProperties": false,
+              "properties": {
+                "image": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "pullPolicy": {},
+                    "registry": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "pullPolicy": {
+              "type": "null"
+            },
+            "registry": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "repository": {},
+            "tag": {}
+          },
+          "type": "object"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
+          "type": "object"
+        },
+        "natsVolumeMountPrefixes": {
+          "description": "all nats container volume mounts with the following prefixes\nwill be mounted into the reloader container",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "description": "service",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the service\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#service-v1-core",
+          "type": "object"
+        },
+        "name": {
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\"",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        },
+        "ports": {
+          "additionalProperties": false,
+          "description": "service port options\nadditional boolean field enable to control whether port is exposed in the service\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceport-v1-core",
+          "properties": {
+            "cluster": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "gateway": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "leafnodes": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "monitor": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "mqtt": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "nats": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "profiling": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "websocket": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "description": "defaults to \"{{ include \"nats.fullname\" $ }}\"",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "service account",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core",
+          "type": "object"
+        },
+        "name": {
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "statefulSet": {
+      "additionalProperties": false,
+      "description": "stateful set",
+      "properties": {
+        "merge": {
+          "additionalProperties": {},
+          "description": "merge or patch the stateful set\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#statefulset-v1-apps",
+          "type": "object"
+        },
+        "name": {
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\"",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "patch": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "tlsCA": {
+      "additionalProperties": false,
+      "description": "reference a common CA Certificate or Bundle in all nats config `tls` blocks and nats-box contexts\nnote: `tls.verify` still must be set in the appropriate nats config `tls` blocks to require mTLS",
+      "properties": {
+        "configMapName": {
+          "description": "set configMapName in order to mount an existing configMap to dir",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dir": {
+          "description": "directory to mount the configMap or secret to",
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "key": {
+          "description": "key in the configMap or secret that contains the CA Certificate or Bundle",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secretName": {
+          "description": "set secretName in order to mount an existing secretName to dir",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

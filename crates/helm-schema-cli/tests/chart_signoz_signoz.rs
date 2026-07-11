@@ -1,3 +1,9 @@
+//! Semantic assertions for the signoz umbrella chart: description placement,
+//! `helm template` sample validation, and guard accept/reject behavior.
+//! Values validation and the full-schema pin live in `chart_corpus.rs`;
+//! these assertions state WHY the schema must look the way the fixture says,
+//! so a fixture regeneration cannot silently pin a regression.
+
 use test_util::prelude::sim_assert_eq;
 #[path = "common/descriptions.rs"]
 mod descriptions;
@@ -6,23 +12,12 @@ mod helm_samples;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
 
-use color_eyre::eyre::{OptionExt as _, WrapErr as _};
 use indoc::indoc;
 use serde_json::{Map, Value};
 
 #[test]
-fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<()> {
+fn signoz_signoz_schema_semantics_hold() -> color_eyre::eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("signoz-signoz")?;
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        let path = std::env::temp_dir().join("helm-schema.cli.chart-signoz-signoz.schema.json");
-        std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(&schema).wrap_err("serialize signoz schema dump")?,
-        )
-        .wrap_err("write signoz schema dump")?;
-    }
-    let values_json = schema_roundtrip::values_yaml_as_json_for_path("signoz-signoz")?;
-    schema_roundtrip::assert_values_json_validates(&values_json, &schema);
     assert_schema_description(
         &schema,
         "/properties/alertmanager/properties/ingress/properties/enabled/description",
@@ -484,44 +479,6 @@ fn signoz_signoz_values_yaml_and_fragments_match() -> color_eyre::eyre::Result<(
         ),
         "disabled signoz-otel-gateway ServiceAccount annotations should not be constrained by guarded-only metadata evidence: {schema}"
     );
-    let fixture: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/chart_signoz_signoz.fragments.json"))
-            .wrap_err("parse signoz fixture")?;
-
-    let mut actual_keys: Vec<String> = schema
-        .get("properties")
-        .and_then(serde_json::Value::as_object)
-        .ok_or_eyre("schema.properties must be an object")?
-        .keys()
-        .cloned()
-        .collect();
-    actual_keys.sort();
-
-    let mut expected_keys: Vec<String> = serde_json::from_value(
-        fixture
-            .get("top_level_keys")
-            .ok_or_eyre("fixture missing top_level_keys")?
-            .clone(),
-    )
-    .wrap_err("parse fixture top_level_keys")?;
-    expected_keys.sort();
-
-    sim_assert_eq!(have: actual_keys, want: expected_keys);
-
-    let pointers = fixture
-        .get("pointers")
-        .and_then(serde_json::Value::as_object)
-        .ok_or_eyre("fixture missing pointers object")?;
-
-    for (pointer, expected) in pointers {
-        let mut actual = schema
-            .pointer(pointer)
-            .ok_or_eyre(format!("schema missing pointer {pointer}"))?
-            .clone();
-        strip_description_annotations(&mut actual);
-        sim_assert_eq!(have: &actual, want: expected, "schema mismatch at {pointer}");
-    }
-
     Ok(())
 }
 
@@ -586,24 +543,4 @@ fn assert_schema_description(schema: &serde_json::Value, pointer: &str, expected
         want: Some(expected),
         "schema description mismatch at {pointer}"
     );
-}
-
-fn strip_description_annotations(value: &mut serde_json::Value) {
-    match value {
-        serde_json::Value::Object(object) => {
-            object.remove("description");
-            for child in object.values_mut() {
-                strip_description_annotations(child);
-            }
-        }
-        serde_json::Value::Array(items) => {
-            for item in items {
-                strip_description_annotations(item);
-            }
-        }
-        serde_json::Value::Null
-        | serde_json::Value::Bool(_)
-        | serde_json::Value::Number(_)
-        | serde_json::Value::String(_) => {}
-    }
 }

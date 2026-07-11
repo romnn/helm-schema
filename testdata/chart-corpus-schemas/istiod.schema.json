@@ -1,0 +1,1419 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {
+                    "enum": [
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {
+                    "enum": [
+                      "namespace"
+                    ]
+                  }
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "_original": {
+            "additionalProperties": {},
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "_internal_defaults_do_not_set": {
+      "additionalProperties": false,
+      "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+      "properties": {
+        "affinity": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "autoscaleBehavior": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "autoscaleEnabled": {
+          "type": "boolean"
+        },
+        "autoscaleMax": {
+          "type": "integer"
+        },
+        "autoscaleMin": {
+          "type": "integer"
+        },
+        "base": {
+          "additionalProperties": false,
+          "properties": {
+            "enableIstioConfigCRDs": {
+              "description": "For istioctl usage to disable istio config crds in base\nOverride the failurePolicy for the validation webhook.\nBy default, the webhook starts with \"Ignore\" and istiod flips it to \"Fail\" once ready.\nSet to \"Fail\" to avoid the flip-flop, which is useful for server-side apply tools\nthat do not support .Release.IsUpgrade (e.g. helm template | kubectl apply --server-side).\nvalidationFailurePolicy: Fail",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "cni": {
+          "additionalProperties": false,
+          "description": "Whether to use an existing CNI installation",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "provider": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "configMap": {
+          "description": "Install the mesh config map, generated from values.yaml.\nIf false, pilot wil use default values (by default) or user-supplied values.",
+          "type": "boolean"
+        },
+        "cpu": {
+          "additionalProperties": false,
+          "properties": {
+            "targetAverageUtilization": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "deploymentAnnotations": {
+          "additionalProperties": {},
+          "description": "Annotations to apply to the istiod deployment.",
+          "type": "object"
+        },
+        "deploymentLabels": {
+          "additionalProperties": {},
+          "description": "Additional labels to apply to the deployment.",
+          "type": "object"
+        },
+        "env": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "envVarFrom": {
+          "items": {},
+          "type": "array"
+        },
+        "experimental": {
+          "additionalProperties": false,
+          "properties": {
+            "stableValidationPolicy": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "extraContainerArgs": {
+          "description": "Additional container arguments",
+          "items": {},
+          "type": "array"
+        },
+        "gatewayClasses": {
+          "additionalProperties": {},
+          "description": "gatewayClasses allows customizing the configuration of the default deployment of Gateways per GatewayClass.\nFor example:\ngatewayClasses:\nistio:\nservice:\nspec:\ntype: ClusterIP\nPer-Gateway configuration can also be set in the `Gateway.spec.infrastructure.parametersRef` field.",
+          "type": "object"
+        },
+        "gateways": {
+          "additionalProperties": false,
+          "description": "Gateway Settings",
+          "properties": {
+            "seccompProfile": {
+              "additionalProperties": {},
+              "description": "Set to `type: RuntimeDefault` to use the default profile for templated gateways, if your container runtime supports it",
+              "type": "object"
+            },
+            "securityContext": {
+              "additionalProperties": {},
+              "description": "Define the security context for the pod.\nIf unset, this will be automatically set to the minimum privileges required to bind to port 80 and 443.\nOn Kubernetes 1.22+, this only requires the `net.ipv4.ip_unprivileged_port_start` sysctl.",
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "global": {
+          "additionalProperties": false,
+          "properties": {
+            "caAddress": {
+              "description": "The customized CA address to retrieve certificates for the pods in the cluster.\nCSR clients such as the Istio Agent and ingress gateways can use this to specify the CA endpoint.\nIf not set explicitly, default to the Istio discovery address.",
+              "type": "string"
+            },
+            "caName": {
+              "description": "The name of the CA for workload certificates.\nFor example, when caName=GkeWorkloadCertificate, GKE workload certificates\nwill be used as the certificates for workloads.\nThe default value is \"\" and when caName=\"\", the CA will be configured by other\nmechanisms (e.g., environmental variable CA_PROVIDER).",
+              "type": "string"
+            },
+            "certSigners": {
+              "description": "List of cert-signers to allow \"approve\" action in the istio cluster role\ncertSigners:\n- clusterissuers.cert-manager.io/istio-ca",
+              "items": {},
+              "type": "array"
+            },
+            "configCluster": {
+              "description": "Configure a remote cluster as the config cluster for an external istiod.",
+              "type": "boolean"
+            },
+            "configValidation": {
+              "description": "configValidation enables the validation webhook for Istio configuration.",
+              "type": "boolean"
+            },
+            "defaultPodDisruptionBudget": {
+              "additionalProperties": false,
+              "description": "enable pod disruption budget for the control plane, which is used to\nensure Istio control plane components are gradually upgraded or recovered.",
+              "properties": {
+                "enabled": {
+                  "description": "The values aren't mutable due to a current PodDisruptionBudget limitation\nminAvailable: 1",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "defaultResources": {
+              "additionalProperties": false,
+              "description": "A minimal set of requested resources to applied to all deployments so that\nHorizontal Pod Autoscaler will be able to function (if set).\nEach component can overwrite these default values by adding its own resources\nblock in the relevant section below and setting the desired resources values.",
+              "properties": {
+                "requests": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cpu": {
+                      "description": "memory: 128Mi\nlimits:\ncpu: 100m\nmemory: 128Mi",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "externalIstiod": {
+              "description": "Enable control of remote clusters.",
+              "type": "boolean"
+            },
+            "hub": {
+              "description": "Default hub for Istio images.\nReleases are published to docker hub under 'istio' project.\nDev builds from prow are on registry.istio.io/testing.",
+              "type": "string"
+            },
+            "imagePullPolicy": {
+              "description": "Specify image pull policy if default behavior isn't desired.\nDefault behavior: latest images will be Always else IfNotPresent.",
+              "type": "string"
+            },
+            "imagePullSecrets": {
+              "description": "ImagePullSecrets for all ServiceAccount, list of secrets in the same namespace\nto use for pulling any images in pods that reference this ServiceAccount.\nFor components that don't use ServiceAccounts (i.e. grafana, servicegraph, tracing)\nImagePullSecrets will be added to the corresponding Deployment(StatefulSet) objects.\nMust be set for any cluster configured with private docker registry.\n- private-registry-key",
+              "items": {},
+              "type": "array"
+            },
+            "istioNamespace": {
+              "description": "Used to locate istiod.",
+              "type": "string"
+            },
+            "istiod": {
+              "additionalProperties": false,
+              "description": "Enabled by default in master for maximising testing.",
+              "properties": {
+                "enableAnalysis": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "logAsJson": {
+              "description": "To output all istio components logs in json format by adding --log_as_json argument to each container argument",
+              "type": "boolean"
+            },
+            "logging": {
+              "additionalProperties": false,
+              "description": "Comma-separated minimum per-scope logging level of messages to output, in the form of <scope>:<level>,<scope>:<level>\nThe control plane has different scopes depending on component, but can configure default log level across all components\nIf empty, default scope and level will be used as configured in code",
+              "properties": {
+                "level": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "meshID": {
+              "description": "Mesh ID means Mesh Identifier. It should be unique within the scope where\nmeshes will interact with each other, but it is not required to be\nglobally/universally unique. For example, if any of the following are true,\nthen two meshes must have different Mesh IDs:\n- Meshes will have their telemetry aggregated in one place\n- Meshes will be federated together\n- Policy will be written referencing one mesh from the other\nIf an administrator expects that any of these conditions may become true in\nthe future, they should ensure their meshes have different Mesh IDs\nassigned.\nWithin a multicluster mesh, each cluster must be (manually or auto)\nconfigured to have the same Mesh ID value. If an existing cluster 'joins' a\nmulticluster mesh, it will need to be migrated to the new mesh ID. Details\nof migration TBD, and it may be a disruptive operation to change the Mesh\nID post-install.\nIf the mesh admin does not specify a value, Istio will use the value of the\nmesh's Trust Domain. The best practice is to select a proper Trust Domain\nvalue.",
+              "type": "string"
+            },
+            "meshNetworks": {
+              "additionalProperties": {},
+              "description": "Configure the mesh networks to be used by the Split Horizon EDS.\nThe following example defines two networks with different endpoints association methods.\nFor `network1` all endpoints that their IP belongs to the provided CIDR range will be\nmapped to network1. The gateway for this network example is specified by its public IP\naddress and port.\nThe second network, `network2`, in this example is defined differently with all endpoints\nretrieved through the specified Multi-Cluster registry being mapped to network2. The\ngateway is also defined differently with the name of the gateway service on the remote\ncluster. The public IP for the gateway will be determined from that remote service (only\nLoadBalancer gateway service type is currently supported, for a NodePort type gateway service,\nit still need to be configured manually).\nmeshNetworks:\nnetwork1:\nendpoints:\n- fromCidr: \"192.168.0.1/24\"\ngateways:\n- address: 1.1.1.1\nport: 80\nnetwork2:\nendpoints:\n- fromRegistry: reg1\ngateways:\n- registryServiceName: istio-ingressgateway.istio-system.svc.cluster.local\nport: 443",
+              "type": "object"
+            },
+            "mountMtlsCerts": {
+              "description": "Use the user-specified, secret volume mounted key and certs for Pilot and workloads.",
+              "type": "boolean"
+            },
+            "multiCluster": {
+              "additionalProperties": false,
+              "properties": {
+                "clusterName": {
+                  "description": "Should be set to the name of the cluster this installation will run in. This is required for sidecar injection\nto properly label proxies",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "nativeNftables": {
+              "description": "In order to use native nftable rules instead of iptable rules, set this flag to true.",
+              "type": "boolean"
+            },
+            "network": {
+              "description": "Network defines the network this cluster belong to. This name\ncorresponds to the networks in the map of mesh networks.",
+              "type": "string"
+            },
+            "networkPolicy": {
+              "additionalProperties": false,
+              "description": "When enabled, default NetworkPolicy resources will be created",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "omitSidecarInjectorConfigMap": {
+              "type": "boolean"
+            },
+            "operatorManageWebhooks": {
+              "description": "Configure whether Operator manages webhook configurations. The current behavior\nof Istiod is to manage its own webhook configurations.\nWhen this option is set as true, Istio Operator, instead of webhooks, manages the\nwebhook configurations. When this option is set as false, webhooks manage their\nown webhook configurations.",
+              "type": "boolean"
+            },
+            "pilotCertProvider": {
+              "description": "Configure the certificate provider for control plane communication.\nCurrently, two providers are supported: \"kubernetes\" and \"istiod\".\nAs some platforms may not have kubernetes signing APIs,\nIstiod is the default",
+              "type": "string"
+            },
+            "priorityClassName": {
+              "description": "Kubernetes >=v1.11.0 will create two PriorityClass, including system-cluster-critical and\nsystem-node-critical, it is better to configure this in order to make sure your Istio pods\nwill not be killed because of low priority class.\nRefer to https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass\nfor more detail.",
+              "type": "string"
+            },
+            "proxy": {
+              "additionalProperties": false,
+              "properties": {
+                "autoInject": {
+                  "description": "This controls the 'policy' in the sidecar injector.",
+                  "type": "string"
+                },
+                "clusterDomain": {
+                  "description": "CAUTION: It is important to ensure that all Istio helm charts specify the same clusterDomain value\ncluster domain. Default value is \"cluster.local\".",
+                  "type": "string"
+                },
+                "componentLogLevel": {
+                  "description": "Per Component log level for proxy, applies to gateways and sidecars. If a component level is\nnot set, then the global \"logLevel\" will be used.",
+                  "type": "string"
+                },
+                "excludeIPRanges": {
+                  "type": "string"
+                },
+                "excludeInboundPorts": {
+                  "description": "istio ingress capture allowlist\nexamples:\nRedirect only selected ports:            --includeInboundPorts=\"80,8080\"",
+                  "type": "string"
+                },
+                "excludeOutboundPorts": {
+                  "type": "string"
+                },
+                "image": {
+                  "type": "string"
+                },
+                "includeIPRanges": {
+                  "description": "istio egress capture allowlist\nhttps://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly\nexample: includeIPRanges: \"172.30.0.0/16,172.20.0.0/16\"\nwould only capture egress traffic on those two IP Ranges, all other outbound traffic would\nbe allowed by the sidecar",
+                  "type": "string"
+                },
+                "includeInboundPorts": {
+                  "type": "string"
+                },
+                "includeOutboundPorts": {
+                  "type": "string"
+                },
+                "logLevel": {
+                  "description": "Log level for proxy, applies to gateways and sidecars.\nExpected values are: trace|debug|info|warning|error|critical|off",
+                  "type": "string"
+                },
+                "outlierLogPath": {
+                  "description": "Specify the path to the outlier event log.\nExample: /dev/stdout",
+                  "type": "string"
+                },
+                "privileged": {
+                  "description": "If set to true, istio-proxy container will have privileged securityContext",
+                  "type": "boolean"
+                },
+                "readinessFailureThreshold": {
+                  "description": "The number of successive failed probes before indicating readiness failure.",
+                  "type": "integer"
+                },
+                "readinessInitialDelaySeconds": {
+                  "description": "The initial delay for readiness probes in seconds.",
+                  "type": "integer"
+                },
+                "readinessPeriodSeconds": {
+                  "description": "The period between readiness probes.",
+                  "type": "integer"
+                },
+                "resources": {
+                  "additionalProperties": false,
+                  "description": "Resources for the sidecar.",
+                  "properties": {
+                    "limits": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requests": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "seccompProfile": {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                "startupProbe": {
+                  "additionalProperties": false,
+                  "description": "Enables or disables a startup probe.\nFor optimal startup times, changing this should be tied to the readiness probe values.\nIf the probe is enabled, it is recommended to have delay=0s,period=15s,failureThreshold=4.\nThis ensures the pod is marked ready immediately after the startup probe passes (which has a 1s poll interval),\nand doesn't spam the readiness endpoint too much\nIf the probe is disabled, it is recommended to have delay=1s,period=2s,failureThreshold=30.\nThis ensures the startup is reasonable fast (polling every 2s). 1s delay is used since the startup is not often ready instantly.",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "failureThreshold": {
+                      "description": "10 minutes",
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "statusPort": {
+                  "description": "Default port for Pilot agent health checks. A value of 0 will disable health checking.",
+                  "type": "integer"
+                },
+                "tracer": {
+                  "description": "Specify which tracer to use. One of: zipkin, lightstep, datadog, stackdriver, none.\nIf using stackdriver tracer outside GCP, set env GOOGLE_APPLICATION_CREDENTIALS to the GCP credential file.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "proxy_init": {
+              "additionalProperties": false,
+              "properties": {
+                "forceApplyIptables": {
+                  "description": "Bypasses iptables idempotency handling, and attempts to apply iptables rules regardless of table state, which may cause unrecoverable failures.\nDo not use unless you need to work around an issue of the idempotency handling. This flag will be removed in future releases.",
+                  "type": "boolean"
+                },
+                "image": {
+                  "description": "Base name for the proxy_init container, used to configure iptables.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "remotePilotAddress": {
+              "description": "configure remote pilot and istiod service and endpoint",
+              "type": "string"
+            },
+            "resourceScope": {
+              "description": "resourceScope controls what resources will be processed by helm.\nThis is useful when installing Istio on a cluster where some resources need to be owned by a cluster administrator and some can be owned by the mesh administrator.\nIt can be one of:\n- all: all resources are processed\n- cluster: only cluster-scoped resources are processed\n- namespace: only namespace-scoped resources are processed",
+              "type": "string"
+            },
+            "sds": {
+              "additionalProperties": false,
+              "properties": {
+                "token": {
+                  "additionalProperties": false,
+                  "description": "The JWT token for SDS and the aud field of such JWT. See RFC 7519, section 4.1.3.\nWhen a CSR is sent from Istio Agent to the CA (e.g. Istiod), this aud is to make sure the\nJWT is intended for the CA.",
+                  "properties": {
+                    "aud": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "sts": {
+              "additionalProperties": false,
+              "properties": {
+                "servicePort": {
+                  "description": "The service port used by Security Token Service (STS) server to handle token exchange requests.\nSetting this port to a non-zero value enables STS server.",
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "tag": {
+              "description": "Default tag for Istio images.",
+              "type": "string"
+            },
+            "variant": {
+              "description": "Variant of the image to use.\nCurrently supported are: [debug, distroless]",
+              "type": "string"
+            },
+            "waypoint": {
+              "additionalProperties": false,
+              "properties": {
+                "affinity": {
+                  "additionalProperties": {},
+                  "description": "If specified, affinity defines the scheduling constraints of waypoint pods.",
+                  "type": "object"
+                },
+                "nodeSelector": {
+                  "additionalProperties": {},
+                  "description": "Node labels for the waypoint proxy.",
+                  "type": "object"
+                },
+                "resources": {
+                  "additionalProperties": false,
+                  "description": "Resources for the waypoint proxy.",
+                  "properties": {
+                    "limits": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requests": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "tolerations": {
+                  "description": "Tolerations for the waypoint proxy.",
+                  "items": {},
+                  "type": "array"
+                },
+                "topologySpreadConstraints": {
+                  "description": "Topology Spread Constraints for the waypoint proxy.",
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "hub": {
+          "type": "string"
+        },
+        "image": {
+          "description": "Can be a full hub/image:tag",
+          "type": "string"
+        },
+        "initContainers": {
+          "description": "Inject initContainers into the istiod pod",
+          "items": {},
+          "type": "array"
+        },
+        "ipFamilies": {
+          "items": {},
+          "type": "array"
+        },
+        "ipFamilyPolicy": {
+          "description": "Setup how istiod Service is configured. See https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services",
+          "type": "string"
+        },
+        "istiodRemote": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "If `true`, indicates that this cluster/install should consume a \"remote istiod\" installation,\nand istiod itself will NOT be installed in this cluster - only the support resources necessary\nto utilize a remote instance.",
+              "type": "boolean"
+            },
+            "enabledLocalInjectorIstiod": {
+              "description": "If `true`, indicates that this cluster/install should consume a \"local istiod\" installation,\nlocal istiod inject sidecars",
+              "type": "boolean"
+            },
+            "injectionCABundle": {
+              "type": "string"
+            },
+            "injectionPath": {
+              "description": "Sidecar injector mutating webhook configuration path value for the clientConfig.service field.\nOverride to pass env variables, for example: /inject/cluster/remote/net/network2",
+              "type": "string"
+            },
+            "injectionURL": {
+              "description": "Sidecar injector mutating webhook configuration clientConfig.url value.\nFor example: https://$remotePilotAddress:15017/inject\nThe host should not refer to a service running in the cluster; use a service reference by specifying\nthe clientConfig.service field instead.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "jwksResolverExtraRootCA": {
+          "description": "You can use jwksResolverExtraRootCA to provide a root certificate\nin PEM format. This will then be trusted by pilot when resolving\nJWKS URIs.",
+          "type": "string"
+        },
+        "keepaliveMaxServerConnectionAge": {
+          "description": "The following is used to limit how long a sidecar can be connected\nto a pilot. It balances out load across pilot instances at the cost of\nincreasing system churn.",
+          "type": "string"
+        },
+        "memory": {
+          "additionalProperties": {},
+          "description": "targetAverageUtilization: 80",
+          "type": "object"
+        },
+        "meshConfig": {
+          "additionalProperties": false,
+          "description": "meshConfig defines runtime configuration of components, including Istiod and istio-agent behavior\nSee https://istio.io/docs/reference/config/istio.mesh.v1alpha1/ for all available options",
+          "properties": {
+            "enablePrometheusMerge": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "nodeSelector": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "ownerName": {
+          "description": "For Helm compatibility.",
+          "type": "string"
+        },
+        "pdb": {
+          "additionalProperties": false,
+          "properties": {
+            "minAvailable": {
+              "description": "Minimum available pods set in PodDisruptionBudget.\nDefine either 'minAvailable' or 'maxUnavailable', never both.",
+              "type": "integer"
+            },
+            "unhealthyPodEvictionPolicy": {
+              "description": "Eviction policy for unhealthy pods guarded by PodDisruptionBudget.\nRef: https://kubernetes.io/blog/2023/01/06/unhealthy-pod-eviction-policy-for-pdbs/",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "podAnnotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "podLabels": {
+          "additionalProperties": {},
+          "description": "Additional labels to apply on the pod level for monitoring and logging configuration.",
+          "type": "object"
+        },
+        "replicaCount": {
+          "type": "integer"
+        },
+        "resources": {
+          "additionalProperties": false,
+          "description": "Resources for a small pilot install",
+          "properties": {
+            "requests": {
+              "additionalProperties": false,
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "revision": {
+          "description": "Revision is set as 'version' label and part of the resource names when installing multiple control planes.",
+          "type": "string"
+        },
+        "revisionTags": {
+          "description": "Revision tags are aliases to Istio control plane revisions",
+          "items": {},
+          "type": "array"
+        },
+        "rollingMaxSurge": {
+          "type": "string"
+        },
+        "rollingMaxUnavailable": {
+          "type": "string"
+        },
+        "seccompProfile": {
+          "additionalProperties": {},
+          "description": "Set to `type: RuntimeDefault` to use the default profile if available.",
+          "type": "object"
+        },
+        "serviceAccountAnnotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "serviceAnnotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "sidecarInjectorWebhook": {
+          "additionalProperties": false,
+          "properties": {
+            "alwaysInjectSelector": {
+              "items": {},
+              "type": "array"
+            },
+            "defaultTemplates": {
+              "description": "Default templates specifies a set of default templates that are used in sidecar injection.\nBy default, a template `sidecar` is always provided, which contains the template of default sidecar.\nTo inject other additional templates, define it using the `templates` option, and add it to\nthe default templates list.\nFor example:\ntemplates:\nhello: |\nmetadata:\nlabels:\nhello: world\ndefaultTemplates: [\"sidecar\", \"hello\"]",
+              "items": {},
+              "type": "array"
+            },
+            "enableNamespacesByDefault": {
+              "description": "This enables injection of sidecar in all namespaces,\nwith the exception of namespaces with \"istio-injection:disabled\" annotation\nOnly one environment should have this enabled.",
+              "type": "boolean"
+            },
+            "injectedAnnotations": {
+              "additionalProperties": {},
+              "description": "injectedAnnotations are additional annotations that will be added to the pod spec after injection\nThis is primarily to support PSP annotations. For example, if you defined a PSP with the annotations:\nannotations:\napparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default\napparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default\nThe PSP controller would add corresponding annotations to the pod spec for each container. However, this happens before\nthe inject adds additional containers, so we must specify them explicitly here. With the above example, we could specify:\ninjectedAnnotations:\ncontainer.apparmor.security.beta.kubernetes.io/istio-init: runtime/default\ncontainer.apparmor.security.beta.kubernetes.io/istio-proxy: runtime/default",
+              "type": "object"
+            },
+            "neverInjectSelector": {
+              "description": "You can use the field called alwaysInjectSelector and neverInjectSelector which will always inject the sidecar or\nalways skip the injection on pods that match that label selector, regardless of the global policy.\nSee https://istio.io/docs/setup/kubernetes/additional-setup/sidecar-injection/#more-control-adding-exceptions",
+              "items": {},
+              "type": "array"
+            },
+            "reinvocationPolicy": {
+              "description": "Mutations that occur after the sidecar injector are not handled by default, as the Istio sidecar injector is only run\nonce. For example, an OPA sidecar injected after the Istio sidecar will not have it's liveness/readiness probes rewritten.\nSetting this to `IfNeeded` will result in the sidecar injector being run again if additional mutations occur.",
+              "type": "string"
+            },
+            "rewriteAppHTTPProbe": {
+              "type": "boolean"
+            },
+            "templates": {
+              "additionalProperties": {},
+              "description": "Templates defines a set of custom injection templates that can be used. For example, defining:\ntemplates:\nhello: |\nmetadata:\nlabels:\nhello: world\nThen starting a pod with the `inject.istio.io/templates: hello` annotation, will result in the pod\nbeing injected with the hello=world labels.\nThis is intended for advanced configuration only; most users should use the built in template",
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "sidecarInjectorWebhookAnnotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "taint": {
+          "additionalProperties": false,
+          "description": "Settings related to the untaint controller\nThis controller will remove `cni.istio.io/not-ready` from nodes when the istio-cni pod becomes ready\nIt should be noted that cluster operator/owner is responsible for having the taint set by their infrastructure provider when new nodes are added to the cluster; the untaint controller does not taint nodes",
+          "properties": {
+            "enabled": {
+              "description": "Controls whether or not the untaint controller is active\nWhen enabled, this automatically sets PILOT_ENABLE_NODE_UNTAINT_CONTROLLERS environment variable to true in the istiod deployment.",
+              "type": "boolean"
+            },
+            "namespace": {
+              "description": "What namespace the untaint controller should watch for istio-cni pods. This is only required when istio-cni is running in a different namespace than istiod",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "telemetry": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "v2": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "description": "For Null VM case now.\nThis also enables metadata exchange.",
+                  "type": "boolean"
+                },
+                "prometheus": {
+                  "additionalProperties": false,
+                  "description": "Indicate if prometheus stats filter is enabled or not",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "stackdriver": {
+                  "additionalProperties": false,
+                  "description": "stackdriver filter settings.",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tolerations": {
+          "items": {},
+          "type": "array"
+        },
+        "topologySpreadConstraints": {
+          "items": {},
+          "type": "array"
+        },
+        "traceSampling": {
+          "type": "number"
+        },
+        "trustedZtunnelName": {
+          "description": "Set this if you install ztunnel with a name different from the default.",
+          "type": "string"
+        },
+        "trustedZtunnelNamespace": {
+          "description": "Ambient mode only.\nSet this if you install ztunnel to a different namespace from `istiod`.\nIf set, `istiod` will allow connections from trusted node proxy ztunnels\nin the provided namespace.\nIf unset, `istiod` will assume the trusted node proxy ztunnel resides\nin the same namespace as itself.",
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "volumeMounts": {
+          "description": "Additional volumeMounts to the istiod container",
+          "items": {},
+          "type": "array"
+        },
+        "volumes": {
+          "description": "Additional volumes to the istiod pod",
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "_original": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "affinity": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "autoscaleBehavior": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "autoscaleEnabled": {},
+    "autoscaleMax": {},
+    "autoscaleMin": {},
+    "base": {
+      "additionalProperties": false,
+      "properties": {
+        "validationCABundle": {},
+        "validationFailurePolicy": {},
+        "validationURL": {}
+      },
+      "type": "object"
+    },
+    "compatibilityVersion": {},
+    "configMap": {},
+    "cpu": {
+      "additionalProperties": false,
+      "properties": {
+        "targetAverageUtilization": {}
+      },
+      "type": "object"
+    },
+    "crlConfigMapName": {},
+    "defaults": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "deploymentAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "deploymentLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "env": {
+      "additionalProperties": {},
+      "properties": {
+        "CA_TRUSTED_NODE_ACCOUNTS": {},
+        "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+          "anyOf": [
+            {
+              "enum": [
+                true
+              ]
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "EXTERNAL_CA": {},
+        "MCS_API_GROUP": {},
+        "PILOT_ENABLE_GATEWAY_API_DEPLOYMENT_CONTROLLER": {}
+      },
+      "type": "object"
+    },
+    "envVarFrom": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "experimental": {
+      "additionalProperties": false,
+      "properties": {
+        "stableValidationPolicy": {}
+      },
+      "type": "object"
+    },
+    "extraContainerArgs": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "gatewayClasses": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "gateways": {},
+    "global": {
+      "additionalProperties": {},
+      "properties": {
+        "certSigners": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "configCluster": {},
+        "configValidation": {},
+        "defaultPodDisruptionBudget": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {}
+          },
+          "type": "object"
+        },
+        "externalIstiod": {},
+        "hub": {
+          "type": "string"
+        },
+        "imagePullPolicy": {},
+        "imagePullSecrets": {
+          "items": {},
+          "type": "array"
+        },
+        "ipFamilies": {
+          "items": {},
+          "type": "array"
+        },
+        "ipFamilyPolicy": {},
+        "istioNamespace": {
+          "type": "string"
+        },
+        "istiod": {
+          "additionalProperties": false,
+          "properties": {
+            "enableAnalysis": {}
+          },
+          "type": "object"
+        },
+        "logAsJson": {},
+        "logging": {
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "meshID": {},
+        "meshNetworks": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "multiCluster": {
+          "additionalProperties": false,
+          "properties": {
+            "clusterName": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "networkPolicy": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {}
+          },
+          "type": "object"
+        },
+        "omitSidecarInjectorConfigMap": {},
+        "operatorManageWebhooks": {},
+        "pilotCertProvider": {},
+        "platform": {},
+        "priorityClassName": {},
+        "profile": {},
+        "proxy": {
+          "additionalProperties": false,
+          "properties": {
+            "autoInject": {},
+            "clusterDomain": {},
+            "tracer": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "datadog"
+                  ]
+                },
+                {
+                  "enum": [
+                    "lightstep"
+                  ]
+                },
+                {
+                  "enum": [
+                    "stackdriver"
+                  ]
+                },
+                {
+                  "enum": [
+                    "zipkin"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "variant": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "remotePilotAddress": {},
+        "resourceScope": {},
+        "sds": {
+          "additionalProperties": false,
+          "properties": {
+            "token": {
+              "additionalProperties": false,
+              "properties": {
+                "aud": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "tracer": {
+          "additionalProperties": false,
+          "properties": {
+            "datadog": {
+              "additionalProperties": false,
+              "properties": {
+                "address": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            "lightstep": {
+              "additionalProperties": false,
+              "properties": {
+                "accessToken": {},
+                "address": {}
+              },
+              "type": "object"
+            },
+            "stackdriver": {
+              "additionalProperties": false,
+              "properties": {
+                "debug": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "maxNumberOfAnnotations": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "maxNumberOfAttributes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "maxNumberOfMessageEvents": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            "zipkin": {
+              "additionalProperties": false,
+              "properties": {
+                "address": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "trustBundleName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "variant": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "hub": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "image": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "initContainers": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "ipFamilies": {
+      "items": {},
+      "type": "array"
+    },
+    "ipFamilyPolicy": {},
+    "istiodRemote": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {},
+        "enabledLocalInjectorIstiod": {},
+        "injectionCABundle": {},
+        "injectionPath": {},
+        "injectionURL": {}
+      },
+      "type": "object"
+    },
+    "jwksResolverExtraRootCA": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "keepaliveMaxServerConnectionAge": {},
+    "memory": {
+      "additionalProperties": false,
+      "properties": {
+        "targetAverageUtilization": {}
+      },
+      "type": "object"
+    },
+    "meshConfig": {
+      "additionalProperties": {},
+      "properties": {
+        "defaultProviders": {},
+        "rootNamespace": {}
+      },
+      "type": "object"
+    },
+    "nodeSelector": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "ownerName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "pdb": {
+      "additionalProperties": {},
+      "properties": {
+        "maxUnavailable": {},
+        "minAvailable": {},
+        "unhealthyPodEvictionPolicy": {}
+      },
+      "type": "object"
+    },
+    "pilot": {},
+    "platform": {},
+    "podAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "podLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "profile": {},
+    "replicaCount": {},
+    "resources": {},
+    "revision": {
+      "anyOf": [
+        {
+          "enum": [
+            ""
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "revisionTags": {},
+    "rollingMaxSurge": {},
+    "rollingMaxUnavailable": {},
+    "seccompProfile": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "serviceAccountAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "serviceAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "sidecarInjectorWebhook": {
+      "additionalProperties": false,
+      "properties": {
+        "alwaysInjectSelector": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "defaultTemplates": {},
+        "enableNamespacesByDefault": {},
+        "injectedAnnotations": {},
+        "neverInjectSelector": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "reinvocationPolicy": {},
+        "templates": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "sidecarInjectorWebhookAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "tag": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "taint": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {},
+        "namespace": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "telemetry": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {},
+        "v2": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {},
+            "prometheus": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {}
+              },
+              "type": "object"
+            },
+            "stackdriver": {
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "tolerations": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "topologySpreadConstraints": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "traceSampling": {},
+    "trafficDistribution": {},
+    "trustedZtunnelName": {},
+    "trustedZtunnelNamespace": {},
+    "variant": {
+      "type": "string"
+    },
+    "volumeMounts": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "volumes": {
+      "additionalProperties": {},
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

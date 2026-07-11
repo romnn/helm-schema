@@ -1,0 +1,1777 @@
+{
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "additionalLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Additional labels to add into metadata.\napp: karpenter",
+            "type": "object"
+          },
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's computed fullname."
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's name."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's name."
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "additionalAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Additional annotations to add into metadata.",
+      "type": "object"
+    },
+    "additionalClusterRoleRules": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Specifies additional rules for the core ClusterRole."
+    },
+    "additionalLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Additional labels to add into metadata.\napp: karpenter",
+      "type": "object"
+    },
+    "affinity": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "items": {
+                  "additionalProperties": {
+                    "items": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "properties": {
+                    "matchExpressions": {
+                      "items": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "properties": {
+                "nodeSelectorTerms": {
+                  "items": {
+                    "additionalProperties": {
+                      "items": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "properties": {
+                      "matchExpressions": {
+                        "items": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "operator": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "properties": {
+                  "topologyKey": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "properties": {
+          "requiredDuringSchedulingIgnoredDuringExecution": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "items": {
+                    "additionalProperties": {
+                      "items": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "properties": {
+                      "matchExpressions": {
+                        "items": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "operator": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "properties": {
+                  "nodeSelectorTerms": {
+                    "items": {
+                      "additionalProperties": {
+                        "items": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "operator": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "properties": {
+                        "matchExpressions": {
+                          "items": {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "operator": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "topologyKey": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+      "properties": {
+        "nodeAffinity": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": {
+                  "items": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "operator": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "properties": {
+                  "matchExpressions": {
+                    "items": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "properties": {
+              "nodeSelectorTerms": {
+                "items": {
+                  "additionalProperties": {
+                    "items": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "properties": {
+                    "matchExpressions": {
+                      "items": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "properties": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "additionalProperties": {
+                "items": {
+                  "additionalProperties": {
+                    "items": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "properties": {
+                    "matchExpressions": {
+                      "items": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "properties": {
+                "nodeSelectorTerms": {
+                  "items": {
+                    "additionalProperties": {
+                      "items": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "properties": {
+                      "matchExpressions": {
+                        "items": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "operator": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "podAffinity": {
+          "additionalProperties": false,
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "podAffinityTerm": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "podAntiAffinity": {
+          "additionalProperties": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {
+                "topologyKey": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "podAffinityTerm": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "properties": {
+                  "topologyKey": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "controller": {
+      "additionalProperties": false,
+      "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
+      "properties": {
+        "containerName": {
+          "description": "Distinguishing container name (containerName: karpenter-controller).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "env": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Additional environment variables for the controller pod."
+        },
+        "envFrom": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "- name: AWS_REGION\nvalue: eu-west-1"
+        },
+        "extraVolumeMounts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Additional volumeMounts for the controller container.\n- name: aws-iam-token\nmountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount\nreadOnly: true"
+        },
+        "healthProbe": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "description": "The container port to use for http health probe.",
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "digest": {
+              "description": "SHA256 digest of the controller image.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "repository": {
+              "description": "Repository path to the controller image.",
+              "type": "string"
+            },
+            "tag": {
+              "description": "Tag of the controller image.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "metrics": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "description": "The container port to use for metrics.",
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "resources": {
+          "additionalProperties": {},
+          "description": "Resources for the controller container.\nWe usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nrequests:\ncpu: 1\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 1Gi",
+          "type": "object"
+        },
+        "securityContext": {
+          "additionalProperties": false,
+          "properties": {
+            "appArmorProfile": {
+              "additionalProperties": {},
+              "description": "AppArmor profile for the controller container.",
+              "type": "object"
+            },
+            "seLinuxOptions": {
+              "additionalProperties": {},
+              "description": "SELinux options for the controller container.",
+              "type": "object"
+            },
+            "seccompProfile": {
+              "additionalProperties": {},
+              "description": "Seccomp profile for the controller container.",
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "sidecarContainer": {
+          "description": "Additional sidecarContainer config",
+          "items": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "sidecarVolumeMounts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Additional volumeMounts for the sidecar - this will be added to the volume mounts on top of extraVolumeMounts"
+        }
+      },
+      "type": "object"
+    },
+    "dnsConfig": {
+      "additionalProperties": {},
+      "description": "Configure DNS Config for the pod\noptions:\n- name: ndots\nvalue: \"1\"",
+      "type": "object"
+    },
+    "dnsPolicy": {
+      "description": "Configure the DNS Policy for the pod",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "extraVolumes": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Additional volumes for the pod."
+    },
+    "fullnameOverride": {
+      "description": "Overrides the chart's computed fullname.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "hostNetwork": {
+      "description": "Bind the pod to the host network.\nThis is required when using a custom CNI.",
+      "type": "boolean"
+    },
+    "imagePullPolicy": {
+      "description": "Image pull policy for Docker images.",
+      "type": "string"
+    },
+    "imagePullSecrets": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Image pull secrets for Docker images."
+    },
+    "initContainers": {
+      "additionalProperties": {},
+      "description": "add additional initContainers to run before karpenter container starts\n- name: list-ec2-instances\nimage: amazon/aws-cli:latest\ncommand: [ 'aws', 'ec2', 'describe-instance-types']",
+      "type": "object"
+    },
+    "logErrorOutputPaths": {
+      "description": "Log errorOutputPaths - defaults to stderr only",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "logLevel": {
+      "description": "Global log level, defaults to 'info'",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "logOutputPaths": {
+      "description": "Log outputPaths - defaults to stdout only",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "nameOverride": {
+      "description": "Overrides the chart's name.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nodeSelector": {
+      "additionalProperties": false,
+      "description": "Node selectors to schedule the pod to nodes with labels.",
+      "properties": {
+        "kubernetes.io/os": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "podAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Additional annotations for the pod.",
+      "type": "object"
+    },
+    "podDisruptionBudget": {
+      "additionalProperties": false,
+      "properties": {
+        "maxUnavailable": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "podLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Additional labels for the pod.",
+      "type": "object"
+    },
+    "podSecurityContext": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "description": "SecurityContext for the pod.",
+      "properties": {
+        "fsGroup": {
+          "type": "integer"
+        },
+        "seccompProfile": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "priorityClassName": {
+      "description": "PriorityClass name for the pod.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "replicas": {
+      "description": "Number of replicas.",
+      "type": "integer"
+    },
+    "revisionHistoryLimit": {
+      "description": "The number of old ReplicaSets to retain to allow rollback.",
+      "type": "integer"
+    },
+    "schedulerName": {
+      "description": "Specify which Kubernetes scheduler should dispatch the pod.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Additional annotations for the Service.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {},
+          "then": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Additional annotations for the ServiceAccount.",
+          "type": "object"
+        },
+        "create": {
+          "description": "Specifies if a ServiceAccount should be created.",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."
+        }
+      },
+      "type": "object"
+    },
+    "serviceMonitor": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "additionalLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Additional labels for the ServiceMonitor.",
+                "type": "object"
+              },
+              "endpointConfig": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                      "properties": {
+                        "action": {
+                          "default": "replace",
+                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                          "enum": [
+                            "replace",
+                            "Replace",
+                            "keep",
+                            "Keep",
+                            "drop",
+                            "Drop",
+                            "hashmod",
+                            "HashMod",
+                            "labelmap",
+                            "LabelMap",
+                            "labeldrop",
+                            "LabelDrop",
+                            "labelkeep",
+                            "LabelKeep",
+                            "lowercase",
+                            "Lowercase",
+                            "uppercase",
+                            "Uppercase",
+                            "keepequal",
+                            "KeepEqual",
+                            "dropequal",
+                            "DropEqual"
+                          ],
+                          "type": "string"
+                        },
+                        "modulus": {
+                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                          "format": "int64",
+                          "type": "integer"
+                        },
+                        "regex": {
+                          "description": "regex defines the regular expression against which the extracted value is matched.",
+                          "type": "string"
+                        },
+                        "replacement": {
+                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                          "type": "string"
+                        },
+                        "separator": {
+                          "description": "separator defines the string between concatenated SourceLabels.",
+                          "type": "string"
+                        },
+                        "sourceLabels": {
+                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                          "items": {
+                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "targetLabel": {
+                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
+              },
+              "metricRelabelings": {
+                "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs",
+                "items": {
+                  "additionalProperties": false,
+                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                  "properties": {
+                    "action": {
+                      "default": "replace",
+                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                      "enum": [
+                        "replace",
+                        "Replace",
+                        "keep",
+                        "Keep",
+                        "drop",
+                        "Drop",
+                        "hashmod",
+                        "HashMod",
+                        "labelmap",
+                        "LabelMap",
+                        "labeldrop",
+                        "LabelDrop",
+                        "labelkeep",
+                        "LabelKeep",
+                        "lowercase",
+                        "Lowercase",
+                        "uppercase",
+                        "Uppercase",
+                        "keepequal",
+                        "KeepEqual",
+                        "dropequal",
+                        "DropEqual"
+                      ],
+                      "type": "string"
+                    },
+                    "modulus": {
+                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "regex": {
+                      "description": "regex defines the regular expression against which the extracted value is matched.",
+                      "type": "string"
+                    },
+                    "replacement": {
+                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    },
+                    "separator": {
+                      "description": "separator defines the string between concatenated SourceLabels.",
+                      "type": "string"
+                    },
+                    "sourceLabels": {
+                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                      "items": {
+                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "targetLabel": {
+                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "relabelings": {
+                "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                "items": {
+                  "additionalProperties": false,
+                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                  "properties": {
+                    "action": {
+                      "default": "replace",
+                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                      "enum": [
+                        "replace",
+                        "Replace",
+                        "keep",
+                        "Keep",
+                        "drop",
+                        "Drop",
+                        "hashmod",
+                        "HashMod",
+                        "labelmap",
+                        "LabelMap",
+                        "labeldrop",
+                        "LabelDrop",
+                        "labelkeep",
+                        "LabelKeep",
+                        "lowercase",
+                        "Lowercase",
+                        "uppercase",
+                        "Uppercase",
+                        "keepequal",
+                        "KeepEqual",
+                        "dropequal",
+                        "DropEqual"
+                      ],
+                      "type": "string"
+                    },
+                    "modulus": {
+                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "regex": {
+                      "description": "regex defines the regular expression against which the extracted value is matched.",
+                      "type": "string"
+                    },
+                    "replacement": {
+                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    },
+                    "separator": {
+                      "description": "separator defines the string between concatenated SourceLabels.",
+                      "type": "string"
+                    },
+                    "sourceLabels": {
+                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                      "items": {
+                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "targetLabel": {
+                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "additionalLabels": {
+          "additionalProperties": {},
+          "description": "Additional labels for the ServiceMonitor.",
+          "type": "object"
+        },
+        "enabled": {
+          "description": "Specifies whether a ServiceMonitor should be created.",
+          "type": "boolean"
+        },
+        "endpointConfig": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
+          "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
+        },
+        "metricRelabelings": {
+          "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs",
+          "items": {
+            "additionalProperties": false,
+            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+            "properties": {
+              "action": {
+                "default": "replace",
+                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                "enum": [
+                  "replace",
+                  "Replace",
+                  "keep",
+                  "Keep",
+                  "drop",
+                  "Drop",
+                  "hashmod",
+                  "HashMod",
+                  "labelmap",
+                  "LabelMap",
+                  "labeldrop",
+                  "LabelDrop",
+                  "labelkeep",
+                  "LabelKeep",
+                  "lowercase",
+                  "Lowercase",
+                  "uppercase",
+                  "Uppercase",
+                  "keepequal",
+                  "KeepEqual",
+                  "dropequal",
+                  "DropEqual"
+                ],
+                "type": "string"
+              },
+              "modulus": {
+                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "regex": {
+                "description": "regex defines the regular expression against which the extracted value is matched.",
+                "type": "string"
+              },
+              "replacement": {
+                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                "type": "string"
+              },
+              "separator": {
+                "description": "separator defines the string between concatenated SourceLabels.",
+                "type": "string"
+              },
+              "sourceLabels": {
+                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                "items": {
+                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "targetLabel": {
+                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "relabelings": {
+          "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+          "items": {
+            "additionalProperties": false,
+            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+            "properties": {
+              "action": {
+                "default": "replace",
+                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                "enum": [
+                  "replace",
+                  "Replace",
+                  "keep",
+                  "Keep",
+                  "drop",
+                  "Drop",
+                  "hashmod",
+                  "HashMod",
+                  "labelmap",
+                  "LabelMap",
+                  "labeldrop",
+                  "LabelDrop",
+                  "labelkeep",
+                  "LabelKeep",
+                  "lowercase",
+                  "Lowercase",
+                  "uppercase",
+                  "Uppercase",
+                  "keepequal",
+                  "KeepEqual",
+                  "dropequal",
+                  "DropEqual"
+                ],
+                "type": "string"
+              },
+              "modulus": {
+                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                "format": "int64",
+                "type": "integer"
+              },
+              "regex": {
+                "description": "regex defines the regular expression against which the extracted value is matched.",
+                "type": "string"
+              },
+              "replacement": {
+                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                "type": "string"
+              },
+              "separator": {
+                "description": "separator defines the string between concatenated SourceLabels.",
+                "type": "string"
+              },
+              "sourceLabels": {
+                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                "items": {
+                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "targetLabel": {
+                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "sampleLimit": {
+          "description": "Specifies the sampleLimit for prometheus scrapes.\nPer-scrape limit on the number of scraped samples that will be accepted.\nIf more than this number of samples are present after metric relabeling\nthe entire scrape will be treated as failed. 0 means no limit.",
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "settings": {
+      "additionalProperties": false,
+      "description": "Global Settings to configure Karpenter",
+      "properties": {
+        "batchIdleDuration": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The maximum amount of time with no new ending pods that if exceeded ends the current batching window. If pods arrive\nfaster than this time, the batching window will be extended up to the maxDuration. If they arrive slower, the pods\nwill be batched separately."
+        },
+        "batchMaxDuration": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The maximum length of a batch window. The longer this is, the more pods we can consider for provisioning at one\ntime which usually results in fewer but larger nodes."
+        },
+        "clusterCABundle": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Cluster CA bundle for TLS configuration of provisioned nodes. If not set, this is taken from the controller's TLS configuration for the API server."
+        },
+        "clusterEndpoint": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Cluster endpoint. If not set, will be discovered during startup (EKS only)."
+        },
+        "clusterName": {
+          "description": "Cluster name.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disableClusterStateObservability": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Disable cluster state metrics and events."
+        },
+        "disableDryRun": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Disable dry run validation for EC2NodeClasses."
+        },
+        "eksControlPlane": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Marking this true means that your cluster is running with an EKS control plane and Karpenter should attempt to discover cluster details from the DescribeCluster API."
+        },
+        "featureGates": {
+          "additionalProperties": false,
+          "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
+          "properties": {
+            "nodeOverlay": {
+              "description": "nodeOverlay is ALPHA and is disabled by default.\nSetting this will allow the use of node overlay to impact scheduling decisions",
+              "type": "boolean"
+            },
+            "nodeRepair": {
+              "description": "nodeRepair is ALPHA and is disabled by default.\nSetting this to true will enable node repair.",
+              "type": "boolean"
+            },
+            "reservedCapacity": {
+              "description": "reservedCapacity is BETA and is enabled by default.\nSetting this will enable native on-demand capacity reservation support.",
+              "type": "boolean"
+            },
+            "spotToSpotConsolidation": {
+              "description": "spotToSpotConsolidation is ALPHA and is disabled by default.\nSetting this to true will enable spot replacement consolidation for both single and multi-node consolidation.",
+              "type": "boolean"
+            },
+            "staticCapacity": {
+              "description": "staticCapacity is ALPHA and is disabled by default.\nSetting this to true will enable static capacity provisioning.",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "ignoreDRARequests": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Ignore pods' DRA requests during scheduling simulations."
+        },
+        "interruptionQueue": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Interruption queue is the name of the SQS queue used for processing interruption events from EC2.\nInterruption handling is disabled if not specified. Enabling interruption handling may\nrequire additional permissions on the controller service account. Additional permissions are outlined in the docs."
+        },
+        "isolatedVPC": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "If true then assume we can't reach AWS services which don't have a VPC endpoint.\nThis also has the effect of disabling look-ups to the AWS pricing endpoint."
+        },
+        "minValuesPolicy": {
+          "description": "How the Karpenter scheduler treats min values. Options include 'Strict' (fails scheduling when min values can't be met) and 'BestEffort' (relaxes min values when they can't be met).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preferencePolicy": {
+          "description": "How the Karpenter scheduler should treat preferences. Preferences include preferredDuringSchedulingIgnoreDuringExecution\nnode and pod affinities/anti-affinities and ScheduleAnyways topologySpreadConstraints. Can be one of 'Ignore' and 'Respect'",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reservedENIs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Reserved ENIs are not included in the calculations for max-pods or kube-reserved.\nThis is most often used in the VPC CNI custom networking setup https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html."
+        },
+        "vmMemoryOverheadPercent": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The VM memory overhead as a percent that will be subtracted from the total memory for all instance types. The value of `0.075` equals to 7.5%."
+        }
+      },
+      "type": "object"
+    },
+    "strategy": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "properties": {
+          "maxUnavailable": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "description": "Strategy for updating the pod.",
+      "properties": {
+        "rollingUpdate": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "properties": {
+            "maxUnavailable": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "terminationGracePeriodSeconds": {
+      "description": "Override the default termination grace period for the pod.",
+      "type": "null"
+    },
+    "tolerations": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Tolerations to allow the pod to be scheduled to nodes with taints."
+    },
+    "topologySpreadConstraints": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "properties": {
+              "maxSkew": {
+                "type": "integer"
+              },
+              "topologyKey": {
+                "type": "string"
+              },
+              "whenUnsatisfiable": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Topology spread constraints to increase the controller resilience by distributing pods across the cluster zones. If an explicit label selector is not provided one will be created from the pod selector labels."
+    }
+  },
+  "type": "object"
+}

@@ -1,0 +1,2098 @@
+{
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Annotations for the StatefulSet",
+            "type": "object"
+          },
+          "extraLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Apply extra labels to common labels.",
+            "type": "object"
+          },
+          "global": {
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Common labels for all object directly managed by this chart.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "labels for tempo",
+            "type": "object"
+          },
+          "tempo": {
+            "properties": {
+              "tag": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "ingress": {}
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "ingress": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "allowExternal": {}
+                        },
+                        "required": [
+                          "allowExternal"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "allowExternal": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "allowExternal"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "extraLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Apply extra labels to common labels.",
+            "properties": {},
+            "type": "object"
+          },
+          "global": {
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Common labels for all object directly managed by this chart.",
+                "properties": {},
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "tempo": {
+            "properties": {
+              "tag": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "extraLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Apply extra labels to common labels.",
+            "type": "object"
+          },
+          "global": {
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Common labels for all object directly managed by this chart.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "tempo": {
+            "properties": {
+              "tag": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "extraLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Apply extra labels to common labels.",
+            "type": "object"
+          },
+          "global": {
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Common labels for all object directly managed by this chart.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "tempo": {
+            "properties": {
+              "tag": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "ingress": {}
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "ingress": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "targetPort": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "properties": {
+    "affinity": {
+      "additionalProperties": {},
+      "description": "Affinity for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
+      "type": "object"
+    },
+    "annotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Annotations for the StatefulSet",
+      "type": "object"
+    },
+    "config": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Tempo configuration file contents"
+    },
+    "extraLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Apply extra labels to common labels.",
+      "properties": {},
+      "type": "object"
+    },
+    "extraVolumes": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Volumes to add"
+    },
+    "fullnameOverride": {
+      "description": "Overrides the chart's computed fullname",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "global": {
+      "additionalProperties": false,
+      "properties": {
+        "commonLabels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Common labels for all object directly managed by this chart.",
+          "properties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "hostAliases": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "hostAliases to add"
+    },
+    "labels": {
+      "additionalProperties": {},
+      "description": "labels for tempo",
+      "type": "object"
+    },
+    "nameOverride": {
+      "description": "Overrides the chart's name",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "networkPolicy": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "egress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "egress"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "egress": {
+                "properties": {
+                  "ports": {
+                    "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443",
+                    "items": {},
+                    "type": "array"
+                  },
+                  "to": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "ingress": {}
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "ingress": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "allowExternal": {}
+                        },
+                        "required": [
+                          "allowExternal"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "allowExternal": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "allowExternal"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "explicitNamespacesSelector": {
+                "additionalProperties": {},
+                "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
+      "properties": {
+        "allowExternal": {
+          "description": "Don't require client label for connections\nan ingress network policy",
+          "type": "boolean"
+        },
+        "egress": {
+          "additionalProperties": false,
+          "properties": {
+            "blockDNSResolution": {
+              "description": "When enabled, DNS resolution will be blocked\nfor all pods in the tempo namespace.",
+              "type": "boolean"
+            },
+            "enabled": {
+              "description": "When enabled, an egress network policy will be\ncreated allowing tempo to connect to external data sources from kubernetes cluster.",
+              "type": "boolean"
+            },
+            "ports": {
+              "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443"
+            },
+            "to": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
+            }
+          },
+          "type": "object"
+        },
+        "enabled": {
+          "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.",
+          "type": "boolean"
+        },
+        "explicitNamespacesSelector": {
+          "additionalProperties": {},
+          "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}",
+          "type": "object"
+        },
+        "ingress": {
+          "description": "The Policy model to apply. When set to false, only pods with the correct\nclient label will have network access to  tempo port defined.\nWhen true, tempo will accept connections from any source\n(with the correct destination port).\nWhen true enables the creation",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "nodeSelector": {
+      "additionalProperties": {},
+      "description": "Node labels for pod assignment. See: https://kubernetes.io/docs/user-guide/node-selection/",
+      "type": "object"
+    },
+    "persistence": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "accessModes": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "storageClassName: local-path"
+              },
+              "annotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "selector": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "size": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "accessModes": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "storageClassName: local-path"
+        },
+        "annotations": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "enableStatefulSetAutoDeletePVC": {
+          "description": "Enable StatefulSetAutoDeletePVC feature",
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "selector": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "size": {},
+        "storageClassName": {}
+      },
+      "type": "object"
+    },
+    "podAnnotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Pod Annotations",
+      "type": "object"
+    },
+    "podLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Pod (extra) Labels",
+      "type": "object"
+    },
+    "priorityClassName": {
+      "description": "The name of the PriorityClass",
+      "type": "null"
+    },
+    "replicas": {
+      "description": "Define the amount of instances",
+      "type": "integer"
+    },
+    "revisionHistoryLimit": {},
+    "securityContext": {
+      "additionalProperties": false,
+      "description": "securityContext for container",
+      "properties": {
+        "fsGroup": {
+          "type": "integer"
+        },
+        "runAsGroup": {
+          "type": "integer"
+        },
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "runAsUser": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "type": {}
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "ClusterIP"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "type": {}
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "type": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "clusterIP": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "type": {}
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "type": {
+                    "not": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "externalIPs": {
+                "additionalProperties": {},
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "LoadBalancer"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "loadBalancerSourceRanges": {
+                "additionalProperties": {},
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "clusterIP": {},
+        "externalIPs": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "loadBalancerIP": {
+          "description": "(string) IP address, in case of 'type: LoadBalancer'",
+          "type": "null"
+        },
+        "loadBalancerSourceRanges": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "protocol": {
+          "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\"",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "targetPort": {},
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "LoadBalancer"
+              ]
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Annotations for the service account",
+                "type": "object"
+              },
+              "automountServiceAccountToken": {
+                "type": "boolean"
+              },
+              "imagePullSecrets": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Image pull secrets for the service account"
+              },
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Labels for the service account",
+                "type": "object"
+              },
+              "name": {
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "create": {}
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "create": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "description": "Annotations for the service account",
+          "type": "object"
+        },
+        "automountServiceAccountToken": {
+          "type": "boolean"
+        },
+        "create": {
+          "description": "Specifies whether a ServiceAccount should be created",
+          "type": "boolean"
+        },
+        "imagePullSecrets": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Image pull secrets for the service account"
+        },
+        "labels": {
+          "additionalProperties": {},
+          "description": "Labels for the service account",
+          "type": "object"
+        },
+        "name": {
+          "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+        }
+      },
+      "type": "object"
+    },
+    "serviceMonitor": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "additionalLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "annotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "scrapeTimeout: 10s",
+                "type": "object"
+              },
+              "interval": {
+                "anyOf": [
+                  {
+                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
+                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "scrapeTimeout": {
+                "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
+                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "additionalLabels": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "annotations": {
+          "additionalProperties": {},
+          "description": "scrapeTimeout: 10s",
+          "type": "object"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "interval": {},
+        "scrapeTimeout": {}
+      },
+      "type": "object"
+    },
+    "tempo": {
+      "additionalProperties": false,
+      "properties": {
+        "extraArgs": {
+          "additionalProperties": {},
+          "description": "allowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nAdditional container arguments",
+          "type": "object"
+        },
+        "extraEnv": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Environment variables to add"
+        },
+        "extraEnvFrom": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Environment variables from secrets or configmaps to add to the ingester pods"
+        },
+        "extraVolumeMounts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Volume mounts to add\n- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim"
+        },
+        "ingester": {
+          "additionalProperties": {},
+          "description": "Configuration options for the ingester.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#ingester\nflush_check_period: 10s\ntrace_idle_period: 10s\nmax_block_duration: 30m\ncomplete_block_timeout: 1h",
+          "type": "object"
+        },
+        "livenessProbe": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "description": "Readiness and Liveness Probe Configuration Options",
+          "properties": {
+            "failureThreshold": {
+              "type": "integer"
+            },
+            "httpGet": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "initialDelaySeconds": {
+              "type": "integer"
+            },
+            "periodSeconds": {
+              "type": "integer"
+            },
+            "successThreshold": {
+              "type": "integer"
+            },
+            "timeoutSeconds": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "memBallastSizeMbs": {
+          "type": "integer"
+        },
+        "metricsGenerator": {
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "If true, enables Tempo's metrics generator (https://grafana.com/docs/tempo/next/metrics-generator/)",
+              "type": "boolean"
+            },
+            "processor": {
+              "additionalProperties": {},
+              "description": "Processor-specific configuration for metrics generator (optional)\nSupports service_graphs, span_metrics, and local_blocks processors\nlocal_blocks:\nflush_to_storage: true\nfilter_server_spans: false\nmax_block_duration: 1m\nservice_graphs:\nwait: 10s\nmax_items: 10000\nspan_metrics:\nenable_target_info: true",
+              "type": "object"
+            },
+            "registry": {
+              "additionalProperties": {},
+              "description": "Registry configuration for metrics generator (optional)\ncollection_interval: 15s\nexternal_labels:\ncluster: \"primary\"",
+              "type": "object"
+            },
+            "remoteWriteUrl": {
+              "type": "string"
+            },
+            "storage": {
+              "additionalProperties": false,
+              "description": "Storage configuration for metrics generator\nThis section configures the storage path and remote write endpoints",
+              "properties": {
+                "path": {
+                  "description": "Path for storing metrics blocks. Defaults to /tmp/tempo for backward compatibility, but /var/tempo/metrics is recommended for production with persistent storage",
+                  "type": "string"
+                },
+                "remote_write": {
+                  "description": "Optional remote write configuration (will use remoteWriteUrl if not specified)\nSupports full Prometheus remote_write config: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write",
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "traces_storage": {
+              "additionalProperties": false,
+              "description": "Traces storage (WAL) configuration for metrics generator\nThis configures the Write Ahead Log for traces used by the metrics generator",
+              "properties": {
+                "path": {
+                  "description": "Path for traces storage WAL used by metrics generator",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "multitenancyEnabled": {
+          "type": "boolean"
+        },
+        "overrides": {
+          "additionalProperties": false,
+          "description": "The standard overrides configuration section. This can include a `defaults` object for applying to all tenants (not to be confused with the `global` property of the same name, which overrides `max_byte_per_trace` for all tenants). For an example on how to enable the metrics generator using the `overrides` object, see the 'Activate metrics generator' section below. Refer to [Standard overrides](https://grafana.com/docs/tempo/latest/configuration/#standard-overrides) for more details.",
+          "properties": {
+            "defaults": {
+              "additionalProperties": {},
+              "description": "Default config values for all tenants, can be overridden by per-tenant overrides. If a tenant's specific overrides are not found in the `per_tenant_overrides` block, the values in this `default` block will be used. Configs inside this block should follow the new overrides indentation format\nmetrics_generator:\nprocessors:\n- service-graphs\n- span-metrics",
+              "type": "object"
+            },
+            "per_tenant_override_config": {
+              "description": "Path to the per tenant override config file. The values of the `per_tenant_overrides` config below will be written to the default path `/conf/overrides.yaml`. Users can set tenant-specific overrides settings in a separate file and point per_tenant_override_config to it if not using the per_tenant_overrides block below.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "per_tenant_overrides": {
+          "additionalProperties": {},
+          "description": "The `per tenant` aka `tenant-specific` runtime overrides. This allows overriding values set in the configuration on a per-tenant basis. Note that *all* values must be given for each per-tenant configuration block. Refer to [Runtime overrides](https://grafana.com/docs/tempo/latest/configuration/#runtime-overrides) and [Tenant-Specific overrides](https://grafana.com/docs/tempo/latest/configuration/#tenant-specific-overrides) documentation for more details.\n'tenant-id':\nmetrics_generator:\nprocessors:\n- service-graphs\n- span-metrics",
+          "type": "object"
+        },
+        "pullPolicy": {
+          "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName",
+          "type": "string"
+        },
+        "pullSecrets": {
+          "items": {},
+          "type": "array"
+        },
+        "querier": {
+          "additionalProperties": {},
+          "description": "Configuration options for the querier.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#querier\nmax_concurrent_queries: 20",
+          "type": "object"
+        },
+        "queryFrontend": {
+          "additionalProperties": {},
+          "description": "Configuration options for the query-fronted.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#query-frontend",
+          "type": "object"
+        },
+        "readinessProbe": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "properties": {
+            "failureThreshold": {
+              "type": "integer"
+            },
+            "httpGet": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "initialDelaySeconds": {
+              "type": "integer"
+            },
+            "periodSeconds": {
+              "type": "integer"
+            },
+            "successThreshold": {
+              "type": "integer"
+            },
+            "timeoutSeconds": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "receivers": {
+          "additionalProperties": false,
+          "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+          "properties": {
+            "jaeger": {
+              "additionalProperties": false,
+              "properties": {
+                "protocols": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "grpc": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "thrift_binary": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "thrift_compact": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "thrift_http": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "opencensus": {},
+            "otlp": {
+              "additionalProperties": false,
+              "properties": {
+                "protocols": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "grpc": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "http": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "registry": {
+          "type": "string"
+        },
+        "reportingEnabled": {
+          "description": "If true, Tempo will report anonymous usage data about the shape of a deployment to Grafana Labs",
+          "type": "boolean"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "resources": {
+          "additionalProperties": {},
+          "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi",
+          "type": "object"
+        },
+        "retention": {
+          "description": "search:\nconcurrent_jobs: 2000",
+          "type": "string"
+        },
+        "securityContext": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "server": {
+          "additionalProperties": false,
+          "description": "Tempo server configuration.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#server",
+          "properties": {
+            "http_listen_port": {
+              "description": "HTTP server listen port",
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "storage": {
+          "additionalProperties": false,
+          "properties": {
+            "trace": {
+              "additionalProperties": false,
+              "properties": {
+                "backend": {
+                  "description": "tempo storage backend.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#storage\nUse s3 for example\nbackend: s3\nstore traces in s3\ns3:\nbucket: <your s3 bucket>                        # store traces in this bucket\nendpoint: s3.dualstack.us-east-2.amazonaws.com  # api endpoint\naccess_key: ...                                 # optional. access key when using static credentials.\nsecret_key: ...                                 # optional. secret key when using static credentials.\ninsecure: false                                 # optional. enable if endpoint is http",
+                  "type": "string"
+                },
+                "local": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "wal": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "updateStrategy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "tempoQuery": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "extraEnv": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Environment variables to add"
+              },
+              "extraVolumeMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Volume mounts to add"
+              },
+              "pullPolicy": {
+                "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nRefers to: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName",
+                "type": "string"
+              },
+              "repository": {
+                "type": "string"
+              },
+              "resources": {
+                "additionalProperties": {},
+                "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi",
+                "type": "object"
+              },
+              "securityContext": {
+                "additionalProperties": {},
+                "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable",
+                "type": "object"
+              },
+              "tag": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "description": "if False the tempo-query container is not deployed",
+          "type": "boolean"
+        },
+        "extraArgs": {
+          "additionalProperties": {},
+          "description": "Additional container arguments",
+          "type": "object"
+        },
+        "extraEnv": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Environment variables to add"
+        },
+        "extraVolumeMounts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Volume mounts to add"
+        },
+        "ingress": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
+                    "type": "object"
+                  },
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "- secretName: tempo-query-tls\nhosts:\n- query.tempo.example.com"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
+          "properties": {
+            "annotations": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated",
+              "type": "object"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "extraPaths": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Extra paths to prepend to every host configuration. This is useful when working with annotation based services.\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nOr for k8s > 1.19\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
+            },
+            "hosts": {
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": "array"
+            },
+            "ingressClassName": {},
+            "labels": {
+              "additionalProperties": {},
+              "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
+              "type": "object"
+            },
+            "path": {
+              "type": "string"
+            },
+            "pathType": {
+              "description": "pathType is only for k8s >= 1.1=",
+              "type": "string"
+            },
+            "tls": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "- secretName: tempo-query-tls\nhosts:\n- query.tempo.example.com"
+            }
+          },
+          "type": "object"
+        },
+        "pullPolicy": {
+          "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nRefers to: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName"
+        },
+        "pullSecrets": {
+          "items": {},
+          "type": "array"
+        },
+        "repository": {},
+        "resources": {
+          "additionalProperties": {},
+          "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi",
+          "type": "object"
+        },
+        "securityContext": {
+          "additionalProperties": {},
+          "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable",
+          "type": "object"
+        },
+        "service": {
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "tag": {}
+      },
+      "type": "object"
+    },
+    "tolerations": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Tolerations for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
+    }
+  },
+  "type": "object"
+}
