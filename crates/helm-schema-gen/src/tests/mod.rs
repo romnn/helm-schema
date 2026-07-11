@@ -106,9 +106,9 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         source_expr: "webhook.serviceAccount.name".to_string(),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
-        guards: vec![Guard::Truthy {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
             path: "webhook.enabled".to_string(),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -158,7 +158,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         source_expr: "image".to_string(),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
-        guards: Vec::new(),
+        condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: Some(ResourceRef::concrete(
             "v1".to_string(),
             "Service".to_string(),
@@ -620,7 +620,7 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
     );
     assert!(
         guarded_target_uses.iter().all(|use_| {
-            !use_.guards.iter().any(|guard| {
+            !use_.single_guard_conjunction().iter().any(|guard| {
                 matches!(
                     guard,
                     Guard::Default { path } if path == "serviceAccount.name"
@@ -669,9 +669,9 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             source_expr: "serviceMonitor.metricRelabelings".to_string(),
             path: YamlPath(Vec::new()),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Truthy {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
                 path: "serviceMonitor.enabled".to_string(),
-            }],
+            }]),
             resource: Some(ResourceRef::concrete(
                 "monitoring.coreos.com/v1".to_string(),
                 "ServiceMonitor".to_string(),
@@ -686,9 +686,9 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
                 "metricRelabelings".to_string(),
             ]),
             kind: ValueKind::Fragment,
-            guards: vec![Guard::Truthy {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
                 path: "serviceMonitor.enabled".to_string(),
-            }],
+            }]),
             resource: Some(ResourceRef::concrete(
                 "monitoring.coreos.com/v1".to_string(),
                 "ServiceMonitor".to_string(),
@@ -721,7 +721,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             source_expr: "first".to_string(),
             path: YamlPath(vec!["spec".to_string(), "first".to_string()]),
             kind: ValueKind::Fragment,
-            guards: Vec::new(),
+            condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: Some(resource.clone()),
             provenance: Vec::new(),
         },
@@ -729,7 +729,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             source_expr: "second".to_string(),
             path: YamlPath(vec!["spec".to_string(), "second".to_string()]),
             kind: ValueKind::Fragment,
-            guards: Vec::new(),
+            condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: Some(resource),
             provenance: Vec::new(),
         },
@@ -768,7 +768,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         source_expr: "name".to_string(),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
-        guards: Vec::new(),
+        condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: Some(ResourceRef::concrete(
             "v1".to_string(),
             "ConfigMap".to_string(),
@@ -1505,9 +1505,9 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Truthy {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
                 path: "feature.enabled".to_string(),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1550,9 +1550,9 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Truthy {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
                 path: "feature.enabled".to_string(),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1597,9 +1597,9 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Not {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Not {
                 path: "feature.enabled".to_string(),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1631,10 +1631,10 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::NotEq {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::NotEq {
                 path: "feature.mode".to_string(),
                 value: GuardValue::string("disabled"),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1705,10 +1705,10 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Eq {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
                 path: "feature.enabled".to_string(),
                 value: GuardValue::Bool(false),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1770,10 +1770,10 @@ fn equal_nil_guard_treats_absent_path_as_matching_nil() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Eq {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
                 path: "feature.tag".to_string(),
                 value: GuardValue::Null,
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1814,12 +1814,12 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Or {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Or {
                 paths: vec![
                     "feature.enabled".to_string(),
                     "global.featureEnabled".to_string(),
                 ],
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1859,7 +1859,7 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
             source_expr: "feature.host".to_string(),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::AnyOf {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::AnyOf {
                 alternatives: vec![
                     vec![
                         Guard::Truthy {
@@ -1875,7 +1875,7 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
                         value: GuardValue::string("prod"),
                     }],
                 ],
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         }]),
@@ -1933,10 +1933,10 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             source_expr: "feature.value".to_string(),
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Eq {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
                 path: "mode".to_string(),
                 value: GuardValue::string("name"),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         },
@@ -1944,10 +1944,10 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             source_expr: "feature.value".to_string(),
             path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             kind: ValueKind::Fragment,
-            guards: vec![Guard::Eq {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
                 path: "mode".to_string(),
                 value: GuardValue::string("labels"),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         },
@@ -2005,10 +2005,10 @@ fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
         source_expr: "feature.value".to_string(),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
-        guards: vec![Guard::Eq {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
             path: "mode".to_string(),
             value: GuardValue::string("enabled"),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -2065,7 +2065,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             source_expr: "feature.value".to_string(),
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
-            guards: Vec::new(),
+            condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: None,
             provenance: Vec::new(),
         },
@@ -2073,10 +2073,10 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             source_expr: "feature.value".to_string(),
             path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             kind: ValueKind::Fragment,
-            guards: vec![Guard::Eq {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
                 path: "mode".to_string(),
                 value: GuardValue::string("labels"),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         },
@@ -2117,9 +2117,9 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
         source_expr: "feature.host".to_string(),
         path: YamlPath(vec!["data".to_string(), "host".to_string()]),
         kind: ValueKind::Scalar,
-        guards: vec![Guard::Truthy {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
             path: "mode".to_string(),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -2917,7 +2917,7 @@ fn wildcard_source_path_creates_array_without_empty_object_variant() {
             "name".to_string(),
         ]),
         kind: ValueKind::Scalar,
-        guards: Vec::new(),
+        condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
     }];
@@ -4374,14 +4374,14 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
         source_expr: "signoz-otel-gateway.serviceAccount.name".to_string(),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
-        guards: vec![
+        condition: helm_schema_core::GuardDnf::from_guards(vec![
             Guard::Truthy {
                 path: "signoz-otel-gateway.serviceAccount.create".to_string(),
             },
             Guard::Default {
                 path: "signoz-otel-gateway.serviceAccount.name".to_string(),
             },
-        ],
+        ]),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -4439,9 +4439,9 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
             "securityContext".to_string(),
         ]),
         kind: ValueKind::Fragment,
-        guards: vec![Guard::Truthy {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
             path: "clickhouse.securityContext.enabled".to_string(),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -4482,9 +4482,9 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             source_expr: "signoz.smtpVars.existingSecret.fromKey".to_string(),
             path: YamlPath(vec!["env[*]".to_string(), "valueFrom".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Truthy {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
                 path: "signoz.smtpVars.enabled".to_string(),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         },
@@ -4497,9 +4497,9 @@ fn referenced_empty_string_child_survives_parent_pruning() {
                 "name".to_string(),
             ]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Truthy {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
                 path: "signoz.smtpVars.enabled".to_string(),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         },
@@ -4565,9 +4565,9 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
             "tolerations".to_string(),
         ]),
         kind: ValueKind::Fragment,
-        guards: vec![Guard::Truthy {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
             path: "alertmanager.enabled".to_string(),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -4603,9 +4603,9 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
         source_expr: "clickhouse.clickhouseOperator.configs.confdFiles".to_string(),
         path: YamlPath(vec!["data".to_string()]),
         kind: ValueKind::Fragment,
-        guards: vec![Guard::Truthy {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
             path: "clickhouse.enabled".to_string(),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -4686,14 +4686,14 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 source_expr: "serviceAccount.name".to_string(),
                 path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
                 kind: ValueKind::Scalar,
-                guards: vec![
+                condition: helm_schema_core::GuardDnf::from_guards(vec![
                     Guard::Truthy {
                         path: "serviceAccount.create".to_string(),
                     },
                     Guard::Default {
                         path: "serviceAccount.name".to_string(),
                     },
-                ],
+                ]),
                 resource: None,
                 provenance: Vec::new(),
             },
@@ -4706,9 +4706,9 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                     "serviceAccountName".to_string(),
                 ]),
                 kind: ValueKind::Scalar,
-                guards: vec![Guard::Not {
+                condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Not {
                     path: "serviceAccount.create".to_string(),
-                }],
+                }]),
                 resource: None,
                 provenance: Vec::new(),
             },
@@ -5809,9 +5809,9 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         source_expr: "image.tag".into(),
         path: YamlPath(vec!["data".into(), "guarded".into()]),
         kind: ValueKind::Scalar,
-        guards: vec![Guard::Default {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Default {
             path: "image.tag".into(),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     };
@@ -5819,7 +5819,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         source_expr: "image.tag".into(),
         path: YamlPath(vec!["data".into(), "bare".into()]),
         kind: ValueKind::Scalar,
-        guards: vec![],
+        condition: helm_schema_core::GuardDnf::from_guards(vec![]),
         resource: None,
         provenance: Vec::new(),
     };

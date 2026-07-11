@@ -52,14 +52,13 @@ use helm_schema_syntax::{
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::contract_sink::merge_guards;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::control_header;
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
 use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
-use helm_schema_core::Predicate;
+use helm_schema_core::{GuardDnf, Predicate};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, PathCondition,
@@ -88,8 +87,8 @@ pub struct ValueRead {
     /// The value shape observed at the read (helper rows demoted at capture
     /// sites keep their fragment/scalar kind).
     pub kind: crate::ValueKind,
-    /// The guards active at the read site (root-to-leaf, in push order).
-    pub guards: Vec<Guard>,
+    /// The disjunction of predicate conjunctions under which the read occurs.
+    pub condition: GuardDnf,
     /// The resource containing the read site, for site-scoped read classes
     /// (condition, bound-value, templated-key, and rendered-effect reads);
     /// helper-internal reads carry none.
@@ -634,8 +633,8 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(super) fn ambient_guards(&self) -> Vec<Guard> {
-        Predicate::contract_guard_stack(&self.active_predicates)
+    pub(super) fn ambient_condition(&self) -> GuardDnf {
+        GuardDnf::from_contract_predicate_conjunction(self.active_predicates.iter().cloned())
     }
 
     pub(super) fn push_predicate(&mut self, predicate: Predicate) {
@@ -675,16 +674,24 @@ impl<'a> Interpreter<'a> {
         provenance: Vec<ContractProvenance>,
         dependency: bool,
     ) {
-        let mut guards = self.ambient_guards();
-        merge_guards(&mut guards, extra_guards);
-        self.push_read_row_with_guards(values_path, kind, guards, resource, provenance, dependency);
+        let condition = self
+            .ambient_condition()
+            .conjoined_with_guards(extra_guards.iter().cloned());
+        self.push_read_row_with_condition(
+            values_path,
+            kind,
+            condition,
+            resource,
+            provenance,
+            dependency,
+        );
     }
 
-    fn push_read_row_with_guards(
+    fn push_read_row_with_condition(
         &mut self,
         values_path: &str,
         kind: crate::ValueKind,
-        guards: Vec<Guard>,
+        condition: GuardDnf,
         resource: Option<ResourceRef>,
         provenance: Vec<ContractProvenance>,
         dependency: bool,
@@ -695,7 +702,7 @@ impl<'a> Interpreter<'a> {
         let read = ValueRead {
             values_path: values_path.to_string(),
             kind,
-            guards,
+            condition,
             resource,
             provenance,
             dependency,
@@ -742,10 +749,9 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    /// Pathless reads for a helper meta row: one read per recorded predicate
-    /// branch, carrying the branch guards and defaultedness. Helper rows have
-    /// no site resource; their provenance is the read site's plus the helper
-    /// body sites recorded in the meta.
+    /// Pathless reads for a helper meta row retain its predicate disjunction
+    /// as one condition. Helper rows have no site resource; their provenance
+    /// is the read site's plus the helper body sites recorded in the meta.
     pub(super) fn push_meta_reads(
         &mut self,
         values_path: &str,
@@ -754,13 +760,12 @@ impl<'a> Interpreter<'a> {
         sibling_claims: &BTreeSet<String>,
         dependency: bool,
     ) {
-        let branches: Vec<Vec<Predicate>> = if meta.predicates.is_empty() {
-            vec![Vec::new()]
+        let helper_condition = if meta.predicates.is_empty() {
+            GuardDnf::unconditional()
         } else {
-            meta.predicates
-                .iter()
-                .map(|branch| branch.iter().cloned().collect())
-                .collect()
+            GuardDnf::from_contract_predicate_disjunction_preserving_evidence(
+                meta.predicates.iter().map(|branch| branch.iter().cloned()),
+            )
         };
         let mut provenance: Vec<ContractProvenance> = self
             .current_site
@@ -769,49 +774,51 @@ impl<'a> Interpreter<'a> {
             .into_iter()
             .collect();
         merge_provenance_sites(&mut provenance, &meta.provenance);
-        let ambient = self.claim_scoped_ambient_guards(values_path, sibling_claims);
-        for branch in branches {
-            let mut guards = ambient.clone();
-            merge_guards(&mut guards, &Predicate::contract_guard_stack(&branch));
-            if meta.defaulted {
-                let default_guard = Guard::Default {
-                    path: values_path.to_string(),
-                };
-                if !guards.contains(&default_guard) {
-                    guards.push(default_guard);
-                }
-            }
-            self.push_read_row_with_guards(
-                values_path,
-                kind,
-                guards,
-                None,
-                provenance.clone(),
-                dependency,
-            );
+        let mut condition = self
+            .claim_scoped_ambient_condition(values_path, sibling_claims)
+            .conjoined(&helper_condition);
+        if meta.defaulted {
+            condition = condition.conjoined_with_guards([Guard::Default {
+                path: values_path.to_string(),
+            }]);
         }
+        self.push_read_row_with_condition(
+            values_path,
+            kind,
+            condition,
+            None,
+            provenance,
+            dependency,
+        );
     }
 
-    /// The ambient guard stack scoped to one helper claim: a truthiness
+    /// The ambient condition scoped to one helper claim: a truthiness
     /// condition about a *different* claim path of the same call describes a
     /// sibling's branch, not this row's, and is dropped unless the paths are
     /// related (the summary lane's sibling-source rule).
-    fn claim_scoped_ambient_guards(
+    fn claim_scoped_ambient_condition(
         &self,
         claim_path: &str,
         sibling_claims: &BTreeSet<String>,
-    ) -> Vec<Guard> {
-        let mut guards = self.ambient_guards();
-        guards.retain(|guard| {
-            let path = match guard {
-                Guard::Truthy { path } | Guard::Not { path } => path,
-                _ => return true,
-            };
-            path == claim_path
-                || !sibling_claims.contains(path)
-                || crate::helper_meta::values_paths_are_related(path, claim_path)
-        });
-        guards
+    ) -> GuardDnf {
+        GuardDnf::from_contract_predicate_conjunction(
+            self.active_predicates
+                .iter()
+                .filter(|predicate| {
+                    let path = match predicate {
+                        Predicate::Guard(Guard::Truthy { path }) => path,
+                        Predicate::Not(inner) => match inner.as_ref() {
+                            Predicate::Guard(Guard::Truthy { path }) => path,
+                            _ => return true,
+                        },
+                        _ => return true,
+                    };
+                    path == claim_path
+                        || !sibling_claims.contains(path)
+                        || crate::helper_meta::values_paths_are_related(path, claim_path)
+                })
+                .cloned(),
+        )
     }
 
     /// Absorb helper-body reads at a call site: each read keeps its
@@ -845,12 +852,13 @@ impl<'a> Interpreter<'a> {
             }
             let mut provenance = site_provenance.clone();
             merge_provenance_sites(&mut provenance, &read.provenance);
-            let mut guards = self.claim_scoped_ambient_guards(&read.values_path, sibling_claims);
-            merge_guards(&mut guards, &read.guards);
-            self.push_read_row_with_guards(
+            let condition = self
+                .claim_scoped_ambient_condition(&read.values_path, sibling_claims)
+                .conjoined(&read.condition);
+            self.push_read_row_with_condition(
                 &read.values_path,
                 read.kind,
-                guards,
+                condition,
                 read.resource.clone(),
                 provenance,
                 read.dependency,

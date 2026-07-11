@@ -33,7 +33,7 @@ use crate::analysis_db::{BoundHelperCallResolution, IrAnalysisDb};
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, merge_provenance_sites};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::{ContractProvenance, ValueKind};
-use helm_schema_core::Predicate;
+use helm_schema_core::{GuardDnf, Predicate};
 
 use super::domain::{AbstractFragment, Guarded, PathCondition, SiteFacts, Splice, StringPart};
 use super::eval::{Interpreter, NodeView, ValueRead};
@@ -541,23 +541,31 @@ fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]
     };
     let mut pruned: Vec<ValueRead> = Vec::new();
     for mut read in reads.drain(..) {
-        let has_truthy_sibling = read.guards.iter().any(|guard| {
-            matches!(guard, crate::Guard::Truthy { path } if unrelated_sibling(path, &read.values_path))
+        let conjunctions = read.condition.disjuncts().iter().map(|conjunction| {
+            let has_truthy_sibling = conjunction.iter().any(|predicate| {
+                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(path, &read.values_path))
+            });
+            let defaulted = conjunction.iter().any(|predicate| {
+                matches!(predicate, Predicate::Guard(crate::Guard::Default { path }) if path == &read.values_path)
+            });
+            let has_self_truthy = conjunction.iter().any(|predicate| {
+                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path)
+            });
+            let mut predicates = conjunction
+                .iter()
+                .filter(|predicate| {
+                    !matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(path, &read.values_path))
+                })
+                .cloned()
+                .collect::<Vec<_>>();
+            if defaulted && (has_self_truthy || has_truthy_sibling) {
+                predicates.retain(|predicate| {
+                    !matches!(predicate, Predicate::Not(inner) if matches!(inner.as_ref(), Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path))
+                });
+            }
+            predicates
         });
-        read.guards.retain(|guard| {
-            !matches!(guard, crate::Guard::Truthy { path } if unrelated_sibling(path, &read.values_path))
-        });
-        let defaulted = read.guards.iter().any(
-            |guard| matches!(guard, crate::Guard::Default { path } if path == &read.values_path),
-        );
-        let has_self_truthy = read.guards.iter().any(
-            |guard| matches!(guard, crate::Guard::Truthy { path } if path == &read.values_path),
-        );
-        if defaulted && (has_self_truthy || has_truthy_sibling) {
-            read.guards.retain(
-                |guard| !matches!(guard, crate::Guard::Not { path } if path == &read.values_path),
-            );
-        }
+        read.condition = GuardDnf::from_disjunction(conjunctions);
         if !pruned.contains(&read) {
             pruned.push(read);
         }
@@ -619,7 +627,6 @@ fn append_suppressed_node_reads(
                     ),
                 };
                 let meta = taint_row_meta(site, provenance, conditions);
-                let guards = Predicate::contract_guard_stack(conditions);
                 for path in paths {
                     if path.trim().is_empty() {
                         continue;
@@ -627,7 +634,9 @@ fn append_suppressed_node_reads(
                     let read = ValueRead {
                         values_path: path.clone(),
                         kind: ValueKind::Scalar,
-                        guards: guards.clone(),
+                        condition: GuardDnf::from_contract_predicate_conjunction(
+                            conditions.iter().cloned(),
+                        ),
                         resource: None,
                         provenance: meta.provenance.clone(),
                         dependency: true,

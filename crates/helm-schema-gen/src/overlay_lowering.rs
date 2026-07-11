@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 
-use helm_schema_core::guard_algebra::minimize_key_disjunction;
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, ResourceSchemaOracle,
 };
@@ -213,16 +212,17 @@ pub(crate) fn append_conditional_schemas(
         }
     }
     for ((ancestor_segments, _), group) in by_content {
-        let mut conditions: Vec<SchemaNode> = minimize_key_disjunction(group.guard_sets)
-            .into_iter()
-            .map(|guards| {
-                SchemaNode::all_of(build_condition_clauses(
-                    &guards,
-                    &ancestor_segments,
-                    values_yaml_doc,
-                ))
-            })
-            .collect();
+        let mut conditions: Vec<SchemaNode> =
+            helm_schema_core::GuardDnf::normalize_conditional_guard_disjunction(group.guard_sets)
+                .into_iter()
+                .map(|guards| {
+                    SchemaNode::all_of(build_condition_clauses(
+                        &guards,
+                        &ancestor_segments,
+                        values_yaml_doc,
+                    ))
+                })
+                .collect();
         let condition = if conditions.len() == 1 {
             conditions.remove(0)
         } else {

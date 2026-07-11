@@ -1,17 +1,18 @@
 //! Projection: contract claims read off the fragment tree.
 //!
-//! A value use is one `(values_path, yaml_path, guards)` claim: splices and
+//! A value use is one `(values_path, yaml_path, condition)` claim: splices and
 //! taint attribute at their tree position with the root-to-leaf conditions
-//! lowered to contract guards; pathless reads (conditions, assignment
-//! right-hand sides, helper-internal guard reads) carry the guards recorded
-//! at their read site. Row facts beyond the claim triple come from the
+//! projected to the contract predicate vocabulary; pathless reads
+//! (conditions, assignment right-hand sides, helper-internal guard reads)
+//! carry the condition recorded at their read site. Row facts beyond the
+//! claim triple come from the
 //! render-site stamps: the containing resource (kept on placed rows, and on
 //! site-scoped reads exactly like the previous emission terminal), List-item
 //! path rebasing, and source provenance.
 
 use crate::contract::ContractIr;
 use crate::{ContractProvenance, ContractUse, Guard, ValueKind, YamlPath};
-use helm_schema_core::{Predicate, sequence_item_path};
+use helm_schema_core::{GuardDnf, Predicate, sequence_item_path};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, SiteFacts, Splice, StringPart,
@@ -30,7 +31,7 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
         &mut contract,
     );
     for read in &document.reads {
-        if guards_are_contradictory(&read.guards) {
+        if read.condition.is_never() {
             continue;
         }
         let kind = if read.kind == ValueKind::PartialScalar {
@@ -38,11 +39,11 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
         } else {
             read.kind
         };
-        let row = ContractUse::with_provenances(
+        let row = ContractUse::with_condition_and_provenances(
             read.values_path.clone(),
             YamlPath(Vec::new()),
             kind,
-            read.guards.clone(),
+            read.condition.clone(),
             read.resource.clone(),
             read.provenance.iter().cloned(),
         );
@@ -59,25 +60,6 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
             .map(|(path, hints)| (path.clone(), hints.clone())),
     );
     contract
-}
-
-/// Whether a lowered guard stack contains an exact complementary pair
-/// (`B ∧ ¬B`): such an arm cannot render (an outer branch condition stacked
-/// onto a helper's opposite-arm meta), so its row is dead by construction.
-fn guards_are_contradictory(guards: &[Guard]) -> bool {
-    guards.iter().any(|guard| match guard {
-        Guard::Truthy { path } => guards
-            .iter()
-            .any(|other| matches!(other, Guard::Not { path: not_path } if not_path == path)),
-        Guard::Eq { path, value } => guards.iter().any(|other| {
-            matches!(
-                other,
-                Guard::NotEq { path: other_path, value: other_value }
-                    if other_path == path && other_value == value
-            )
-        }),
-        _ => false,
-    })
 }
 
 fn walk_guarded(
@@ -144,7 +126,7 @@ fn walk_node(
         }
         AbstractFragment::Splice(splice) => {
             let row = splice_row(splice, path, conditions);
-            if !guards_are_contradictory(&row.guards) {
+            if !row.condition.is_never() {
                 contract.push(row);
             }
         }
@@ -157,7 +139,7 @@ fn walk_node(
                     taint_path.clone(),
                     path,
                     opaque.kind,
-                    Predicate::contract_guard_stack(conditions),
+                    GuardDnf::from_contract_predicate_conjunction(conditions.iter().cloned()),
                     opaque.site.as_deref(),
                     &opaque.provenance,
                 ));
@@ -177,7 +159,7 @@ fn project_parts(
             StringPart::Text(_) => {}
             StringPart::Splice(splice) => {
                 let row = splice_row(splice, path, conditions);
-                if !guards_are_contradictory(&row.guards) {
+                if !row.condition.is_never() {
                     contract.push(row);
                 }
             }
@@ -190,7 +172,7 @@ fn project_parts(
                         taint_path.clone(),
                         path,
                         ValueKind::PartialScalar,
-                        Predicate::contract_guard_stack(conditions),
+                        GuardDnf::from_contract_predicate_conjunction(conditions.iter().cloned()),
                         taint.site.as_deref(),
                         &taint.provenance,
                     ));
@@ -201,14 +183,12 @@ fn project_parts(
 }
 
 fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> ContractUse {
-    let mut guards = Predicate::contract_guard_stack(conditions);
+    let mut condition = GuardDnf::from_contract_predicate_conjunction(conditions.iter().cloned());
     if splice.meta.defaulted {
         let default_guard = Guard::Default {
             path: splice.values_path.clone(),
         };
-        if !guards.contains(&default_guard) {
-            guards.push(default_guard);
-        }
+        condition = condition.conjoined_with_guards([default_guard.clone()]);
     }
     // Encoded renders don't expose the value's shape to the sink schema.
     let kind = if splice.meta.encoded {
@@ -220,7 +200,7 @@ fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> Con
         splice.values_path.clone(),
         path,
         kind,
-        guards,
+        condition,
         splice.meta.site.as_deref(),
         &splice.meta.provenance,
     )
@@ -233,7 +213,7 @@ fn placed_row(
     values_path: String,
     path: &YamlPath,
     kind: ValueKind,
-    guards: Vec<Guard>,
+    condition: GuardDnf,
     site: Option<&SiteFacts>,
     helper_provenance: &[ContractProvenance],
 ) -> ContractUse {
@@ -253,11 +233,11 @@ fn placed_row(
         .into_iter()
         .collect();
     crate::helper_meta::merge_provenance_sites(&mut provenance, helper_provenance);
-    ContractUse::with_provenances(
+    ContractUse::with_condition_and_provenances(
         values_path,
         path,
         kind,
-        guards,
+        condition,
         site.and_then(|site| site.resource.clone()),
         provenance,
     )

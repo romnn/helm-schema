@@ -136,7 +136,7 @@ spec:
         "session contract uses should now retain source provenance"
     );
     let contract_document = session.contract_document()?;
-    sim_assert_eq!(have: contract_document.version, want: 2);
+    sim_assert_eq!(have: contract_document.version, want: 3);
     assert!(
         !contract_document.uses.is_empty(),
         "session contract document should expose canonical uses"
@@ -607,27 +607,35 @@ data:
         explanation
             .exact_uses
             .iter()
-            .any(|use_| use_.guards.as_slice()
-                == [Guard::Truthy {
-                    path: "kid.enabled".to_string()
-                }]
-                .as_slice()),
+            .any(
+                |use_| use_.condition.guard_conjunctions().iter().any(|guards| {
+                    guards.as_slice()
+                        == [Guard::Truthy {
+                            path: "kid.enabled".to_string(),
+                        }]
+                        .as_slice()
+                })
+            ),
         "expected first condition activation branch in explanation: {explanation:#?}"
     );
     assert!(
         explanation
             .exact_uses
             .iter()
-            .any(|use_| use_.guards.as_slice()
-                == [
-                    Guard::Truthy {
-                        path: "global.kidEnabled".to_string()
-                    },
-                    Guard::Absent {
-                        path: "kid.enabled".to_string()
-                    },
-                ]
-                .as_slice()),
+            .any(
+                |use_| use_.condition.guard_conjunctions().iter().any(|guards| {
+                    guards.as_slice()
+                        == [
+                            Guard::Truthy {
+                                path: "global.kidEnabled".to_string(),
+                            },
+                            Guard::Absent {
+                                path: "kid.enabled".to_string(),
+                            },
+                        ]
+                        .as_slice()
+                })
+            ),
         "expected second condition branch guarded by first-condition absence: {explanation:#?}"
     );
     assert!(
@@ -714,7 +722,7 @@ fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::
         decoded
             .uses
             .iter()
-            .any(|use_| !use_.provenance.is_empty() && !use_.guards.is_empty()),
+            .any(|use_| !use_.provenance.is_empty() && !use_.condition.is_unconditional()),
         "round-tripped contract document should retain provenance and guards"
     );
 

@@ -1,15 +1,17 @@
 {
   "uses": [
     {
-      "guards": [
-        {
-          "path": "configGeneral.enable_crd_registration",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "configGeneral.enable_crd_registration",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -20,15 +22,17 @@
       "source_expr": "configGeneral.enable_crd_registration"
     },
     {
-      "guards": [
-        {
-          "path": "configGeneral.kubernetes_use_configmaps",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "configGeneral.kubernetes_use_configmaps",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -39,15 +43,17 @@
       "source_expr": "configGeneral.kubernetes_use_configmaps"
     },
     {
-      "guards": [
-        {
-          "path": "configKubernetes.spilo_privileged",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "configKubernetes.spilo_privileged",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -58,15 +64,17 @@
       "source_expr": "configKubernetes.spilo_privileged"
     },
     {
-      "guards": [
-        {
-          "path": "configKubernetes.storage_resize_mode",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "configKubernetes.storage_resize_mode",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -77,15 +85,17 @@
       "source_expr": "configKubernetes.storage_resize_mode"
     },
     {
-      "guards": [
-        {
-          "path": "enableStreams",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "enableStreams",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -96,15 +106,17 @@
       "source_expr": "enableStreams"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -134,15 +146,17 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -178,19 +192,21 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -220,15 +236,17 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -255,23 +273,25 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -307,11 +327,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -322,15 +344,17 @@
       "source_expr": "rbac.create"
     },
     {
-      "guards": [
-        {
-          "path": "rbac.create",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceAccount.name",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -356,5 +380,5 @@
       "source_expr": "serviceAccount.name"
     }
   ],
-  "version": 2
+  "version": 3
 }

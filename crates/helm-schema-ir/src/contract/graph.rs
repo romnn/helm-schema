@@ -2,7 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::FinalizedContract;
 use crate::contract_normalization::{
-    canonicalize_contract_uses, drop_default_guard_subsumed_duplicates, normalize_contract_uses,
+    canonicalize_contract_uses, drop_default_guard_subsumed_duplicates,
+    drop_self_truthy_subsumed_duplicates, normalize_contract_uses,
 };
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
@@ -81,7 +82,9 @@ impl ContractIr {
     /// `tags:` liveness from `Chart.yaml`.
     pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
         for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
-            crate::contract_sink::merge_guards(&mut contract_use.guards, guards);
+            contract_use.condition = contract_use
+                .condition
+                .conjoined_with_guards(guards.iter().cloned());
         }
     }
 
@@ -167,9 +170,11 @@ impl ContractIr {
             ));
         }
         normalize_contract_uses(&mut uses);
+        drop_self_truthy_subsumed_duplicates(&mut dependency_uses);
         canonicalize_contract_uses(&mut dependency_uses);
         uses.append(&mut dependency_uses);
         drop_default_guard_subsumed_duplicates(&mut uses);
+        drop_self_truthy_subsumed_duplicates(&mut uses);
         canonicalize_contract_uses(&mut uses);
         FinalizedContract::new(uses, type_hints, dependency_values_root_fragments)
     }

@@ -22,7 +22,7 @@ pub fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuar
 
 #[must_use]
 pub fn key_is_strict_subset(subset: &[ConditionalGuard], superset: &[ConditionalGuard]) -> bool {
-    subset.len() < superset.len() && subset.iter().all(|guard| superset.contains(guard))
+    key_is_strict_subset_by(subset, superset)
 }
 
 /// Keys differing in exactly one complementary member resolve to their shared key.
@@ -31,17 +31,27 @@ pub fn resolve_complementary_keys(
     left: &[ConditionalGuard],
     right: &[ConditionalGuard],
 ) -> Option<Vec<ConditionalGuard>> {
+    resolve_complementary_keys_by(left, right, guards_are_complementary)
+}
+
+fn key_is_strict_subset_by<T: PartialEq>(subset: &[T], superset: &[T]) -> bool {
+    subset.len() < superset.len() && subset.iter().all(|item| superset.contains(item))
+}
+
+fn resolve_complementary_keys_by<T: Clone + PartialEq>(
+    left: &[T],
+    right: &[T],
+    are_complementary: impl Fn(&T, &T) -> bool,
+) -> Option<Vec<T>> {
     if left.len() != right.len() {
         return None;
     }
-    let left_only: Vec<&ConditionalGuard> =
-        left.iter().filter(|guard| !right.contains(guard)).collect();
-    let right_only: Vec<&ConditionalGuard> =
-        right.iter().filter(|guard| !left.contains(guard)).collect();
+    let left_only: Vec<&T> = left.iter().filter(|guard| !right.contains(guard)).collect();
+    let right_only: Vec<&T> = right.iter().filter(|guard| !left.contains(guard)).collect();
     let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
         return None;
     };
-    if !guards_are_complementary(left_extra, right_extra) {
+    if !are_complementary(left_extra, right_extra) {
         return None;
     }
     Some(
@@ -55,16 +65,22 @@ pub fn resolve_complementary_keys(
 /// Minimize a disjunction of conjunctive guard keys by exact resolution,
 /// absorption, and deduplication.
 #[must_use]
-pub fn minimize_key_disjunction(
-    mut keys: Vec<Vec<ConditionalGuard>>,
-) -> Vec<Vec<ConditionalGuard>> {
+pub fn minimize_key_disjunction(keys: Vec<Vec<ConditionalGuard>>) -> Vec<Vec<ConditionalGuard>> {
+    minimize_disjunction_by(keys, guards_are_complementary)
+}
+
+pub(crate) fn minimize_disjunction_by<T: Clone + Ord>(
+    mut keys: Vec<Vec<T>>,
+    are_complementary: impl Copy + Fn(&T, &T) -> bool,
+) -> Vec<Vec<T>> {
     keys.sort();
     keys.dedup();
     loop {
         let mut resolved = None;
         'search: for (index, left) in keys.iter().enumerate() {
             for (other_index, right) in keys.iter().enumerate().skip(index + 1) {
-                if let Some(common) = resolve_complementary_keys(left, right) {
+                if let Some(common) = resolve_complementary_keys_by(left, right, are_complementary)
+                {
                     resolved = Some((index, other_index, common));
                     break 'search;
                 }
@@ -84,7 +100,7 @@ pub fn minimize_key_disjunction(
     keys.retain(|candidate| {
         !sets
             .iter()
-            .any(|other| other != candidate && key_is_strict_subset(other, candidate))
+            .any(|other| other != candidate && key_is_strict_subset_by(other, candidate))
     });
     keys
 }

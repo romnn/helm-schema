@@ -11,7 +11,7 @@ pub struct ContractDocument {
 }
 
 impl ContractDocument {
-    pub const VERSION: u32 = 2;
+    pub const VERSION: u32 = 3;
 
     #[must_use]
     pub fn from_contract_uses(mut uses: Vec<ContractUse>) -> Self {

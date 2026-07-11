@@ -1,11 +1,13 @@
 {
   "uses": [
     {
-      "guards": [
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -16,15 +18,17 @@
       "source_expr": "acmesolver.image"
     },
     {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -35,19 +39,35 @@
       "source_expr": "acmesolver.image.digest"
     },
     {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.registry",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.registry",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -64,44 +84,17 @@
       "source_expr": "acmesolver.image.digest"
     },
     {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.registry",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.digest"
-    },
-    {
-      "guards": [
-        {
-          "path": "acmesolver.image.registry",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -112,19 +105,35 @@
       "source_expr": "acmesolver.image.registry"
     },
     {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.registry",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.digest",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -141,77 +150,63 @@
       "source_expr": "acmesolver.image.registry"
     },
     {
-      "guards": [
-        {
-          "path": "acmesolver.image.registry",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.digest",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.registry"
-    },
-    {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.registry",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.repository"
-    },
-    {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.registry",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.registry",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.digest",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image.registry",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -228,81 +223,43 @@
       "source_expr": "acmesolver.image.repository"
     },
     {
-      "guards": [
-        {
-          "path": "acmesolver.image.registry",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.digest",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.repository"
-    },
-    {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image.registry",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        }
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.repository"
-    },
-    {
-      "guards": [
-        {
-          "path": "acmesolver.image.registry",
-          "type": "truthy"
-        },
-        {
-          "path": "acmesolver.image.digest",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        },
-        {
-          "path": "acmesolver.image.tag",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "acmesolver.image.digest",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          },
+          {
+            "path": "acmesolver.image.tag",
+            "type": "default"
+          }
+        ],
+        [
+          {
+            "path": "acmesolver.image.digest",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image.registry",
+            "type": "not"
+          },
+          {
+            "path": "acmesolver.image",
+            "type": "with"
+          },
+          {
+            "path": "acmesolver.image.tag",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -319,44 +276,13 @@
       "source_expr": "acmesolver.image.tag"
     },
     {
-      "guards": [
-        {
-          "path": "acmesolver.image.digest",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image.registry",
-          "type": "not"
-        },
-        {
-          "path": "acmesolver.image",
-          "type": "with"
-        },
-        {
-          "path": "acmesolver.image.tag",
-          "type": "default"
-        }
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.tag"
-    },
-    {
-      "guards": [
-        {
-          "path": "affinity",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "affinity",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -367,11 +293,13 @@
       "source_expr": "affinity"
     },
     {
-      "guards": [
-        {
-          "path": "affinity",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "affinity",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -387,7 +315,9 @@
       "source_expr": "affinity"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -402,11 +332,13 @@
       "source_expr": "automountServiceAccountToken"
     },
     {
-      "guards": [
-        {
-          "path": "clusterResourceNamespace",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "clusterResourceNamespace",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -417,11 +349,13 @@
       "source_expr": "clusterResourceNamespace"
     },
     {
-      "guards": [
-        {
-          "path": "clusterResourceNamespace",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "clusterResourceNamespace",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -438,21 +372,58 @@
       "source_expr": "clusterResourceNamespace"
     },
     {
-      "guards": [],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "config"
-    },
-    {
-      "guards": [
-        {
-          "path": "config",
-          "type": "truthy"
-        }
+      "condition": [
+        [],
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "config",
+              "volumeMounts"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "config",
+              "volumeMounts"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -463,91 +434,13 @@
       "source_expr": "config"
     },
     {
-      "guards": [
-        {
-          "path": "config",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "config",
-            "volumeMounts"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "config"
-    },
-    {
-      "guards": [
-        {
-          "path": "config",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "config"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumeMounts"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "config"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "config"
-    },
-    {
-      "guards": [
-        {
-          "path": "containerSecurityContext",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "containerSecurityContext",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -558,11 +451,13 @@
       "source_expr": "containerSecurityContext"
     },
     {
-      "guards": [
-        {
-          "path": "containerSecurityContext",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "containerSecurityContext",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -579,12 +474,14 @@
       "source_expr": "containerSecurityContext"
     },
     {
-      "guards": [
-        {
-          "path": "creator",
-          "type": "eq",
-          "value": "helm"
-        }
+      "condition": [
+        [
+          {
+            "path": "creator",
+            "type": "eq",
+            "value": "helm"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -604,11 +501,13 @@
       "source_expr": "creator"
     },
     {
-      "guards": [
-        {
-          "path": "deploymentAnnotations",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "deploymentAnnotations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -619,11 +518,13 @@
       "source_expr": "deploymentAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "deploymentAnnotations",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "deploymentAnnotations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -637,11 +538,13 @@
       "source_expr": "deploymentAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "disableAutoApproval",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "disableAutoApproval",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -652,11 +555,13 @@
       "source_expr": "disableAutoApproval"
     },
     {
-      "guards": [
-        {
-          "path": "dns01RecursiveNameservers",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "dns01RecursiveNameservers",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -667,11 +572,13 @@
       "source_expr": "dns01RecursiveNameservers"
     },
     {
-      "guards": [
-        {
-          "path": "dns01RecursiveNameservers",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "dns01RecursiveNameservers",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -688,11 +595,13 @@
       "source_expr": "dns01RecursiveNameservers"
     },
     {
-      "guards": [
-        {
-          "path": "dns01RecursiveNameserversOnly",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "dns01RecursiveNameserversOnly",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -703,11 +612,13 @@
       "source_expr": "dns01RecursiveNameserversOnly"
     },
     {
-      "guards": [
-        {
-          "path": "enableCertificateOwnerRef",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "enableCertificateOwnerRef",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -718,7 +629,9 @@
       "source_expr": "enableCertificateOwnerRef"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -733,11 +646,13 @@
       "source_expr": "enableServiceLinks"
     },
     {
-      "guards": [
-        {
-          "path": "extraArgs",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "extraArgs",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -748,11 +663,13 @@
       "source_expr": "extraArgs"
     },
     {
-      "guards": [
-        {
-          "path": "extraArgs",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "extraArgs",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -769,11 +686,13 @@
       "source_expr": "extraArgs"
     },
     {
-      "guards": [
-        {
-          "path": "extraEnv",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "extraEnv",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -784,11 +703,13 @@
       "source_expr": "extraEnv"
     },
     {
-      "guards": [
-        {
-          "path": "extraEnv",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "extraEnv",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -805,11 +726,13 @@
       "source_expr": "extraEnv"
     },
     {
-      "guards": [
-        {
-          "path": "featureGates",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "featureGates",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -820,11 +743,13 @@
       "source_expr": "featureGates"
     },
     {
-      "guards": [
-        {
-          "path": "featureGates",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "featureGates",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -841,22 +766,24 @@
       "source_expr": "featureGates"
     },
     {
-      "guards": [
-        {
-          "path": "config",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -876,11 +803,13 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -910,11 +839,13 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -940,15 +871,17 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceAccount.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -986,22 +919,24 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "config",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1031,11 +966,13 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "global",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "global",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1046,11 +983,13 @@
       "source_expr": "global"
     },
     {
-      "guards": [
-        {
-          "path": "global.commonLabels",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.commonLabels",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1070,11 +1009,13 @@
       "source_expr": "global.commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "global.commonLabels",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.commonLabels",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1100,11 +1041,13 @@
       "source_expr": "global.commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "global.commonLabels",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.commonLabels",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1132,11 +1075,13 @@
       "source_expr": "global.commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "global",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "global",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1152,15 +1097,17 @@
       "source_expr": "global.hostUsers"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.create",
-          "type": "not"
-        },
-        {
-          "path": "global.imagePullSecrets",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.create",
+            "type": "not"
+          },
+          {
+            "path": "global.imagePullSecrets",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1171,15 +1118,17 @@
       "source_expr": "global.imagePullSecrets"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.create",
-          "type": "not"
-        },
-        {
-          "path": "global.imagePullSecrets",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.create",
+            "type": "not"
+          },
+          {
+            "path": "global.imagePullSecrets",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1195,11 +1144,13 @@
       "source_expr": "global.imagePullSecrets"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1210,15 +1161,17 @@
       "source_expr": "global.leaderElection"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection.leaseDuration",
-          "type": "truthy"
-        },
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection.leaseDuration",
+            "type": "truthy"
+          },
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1229,15 +1182,17 @@
       "source_expr": "global.leaderElection.leaseDuration"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection.leaseDuration",
-          "type": "truthy"
-        },
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection.leaseDuration",
+            "type": "truthy"
+          },
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -1254,11 +1209,13 @@
       "source_expr": "global.leaderElection.leaseDuration"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -1275,15 +1232,17 @@
       "source_expr": "global.leaderElection.namespace"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection.renewDeadline",
-          "type": "truthy"
-        },
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection.renewDeadline",
+            "type": "truthy"
+          },
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1294,15 +1253,17 @@
       "source_expr": "global.leaderElection.renewDeadline"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection.renewDeadline",
-          "type": "truthy"
-        },
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection.renewDeadline",
+            "type": "truthy"
+          },
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -1319,15 +1280,17 @@
       "source_expr": "global.leaderElection.renewDeadline"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection.retryPeriod",
-          "type": "truthy"
-        },
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection.retryPeriod",
+            "type": "truthy"
+          },
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1338,15 +1301,17 @@
       "source_expr": "global.leaderElection.retryPeriod"
     },
     {
-      "guards": [
-        {
-          "path": "global.leaderElection.retryPeriod",
-          "type": "truthy"
-        },
-        {
-          "path": "global.leaderElection",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.leaderElection.retryPeriod",
+            "type": "truthy"
+          },
+          {
+            "path": "global.leaderElection",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -1363,11 +1328,13 @@
       "source_expr": "global.leaderElection.retryPeriod"
     },
     {
-      "guards": [
-        {
-          "path": "global.logLevel",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.logLevel",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1378,11 +1345,13 @@
       "source_expr": "global.logLevel"
     },
     {
-      "guards": [
-        {
-          "path": "global.logLevel",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.logLevel",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -1399,11 +1368,13 @@
       "source_expr": "global.logLevel"
     },
     {
-      "guards": [
-        {
-          "path": "global.nodeSelector",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.nodeSelector",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1414,23 +1385,25 @@
       "source_expr": "global.nodeSelector"
     },
     {
-      "guards": [
-        {
-          "path": "global.nodeSelector",
-          "type": "range"
-        },
-        {
-          "path": "nodeSelector",
-          "type": "range"
-        },
-        {
-          "path": "global.nodeSelector",
-          "type": "with"
-        },
-        {
-          "path": "nodeSelector",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "global.nodeSelector",
+            "type": "with"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1446,11 +1419,13 @@
       "source_expr": "global.nodeSelector"
     },
     {
-      "guards": [
-        {
-          "path": "global.priorityClassName",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.priorityClassName",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1461,11 +1436,13 @@
       "source_expr": "global.priorityClassName"
     },
     {
-      "guards": [
-        {
-          "path": "global.priorityClassName",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.priorityClassName",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1481,11 +1458,13 @@
       "source_expr": "global.priorityClassName"
     },
     {
-      "guards": [
-        {
-          "path": "global.revisionHistoryLimit",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.revisionHistoryLimit",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1496,11 +1475,13 @@
       "source_expr": "global.revisionHistoryLimit"
     },
     {
-      "guards": [
-        {
-          "path": "global.revisionHistoryLimit",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.revisionHistoryLimit",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1514,11 +1495,13 @@
       "source_expr": "global.revisionHistoryLimit"
     },
     {
-      "guards": [
-        {
-          "path": "hostAliases",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "hostAliases",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1529,11 +1512,13 @@
       "source_expr": "hostAliases"
     },
     {
-      "guards": [
-        {
-          "path": "hostAliases",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "hostAliases",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1549,11 +1534,13 @@
       "source_expr": "hostAliases"
     },
     {
-      "guards": [
-        {
-          "path": "http_proxy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "http_proxy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1564,11 +1551,13 @@
       "source_expr": "http_proxy"
     },
     {
-      "guards": [
-        {
-          "path": "http_proxy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "http_proxy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1586,11 +1575,13 @@
       "source_expr": "http_proxy"
     },
     {
-      "guards": [
-        {
-          "path": "https_proxy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "https_proxy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1601,11 +1592,13 @@
       "source_expr": "https_proxy"
     },
     {
-      "guards": [
-        {
-          "path": "https_proxy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "https_proxy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1623,11 +1616,13 @@
       "source_expr": "https_proxy"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1647,15 +1642,17 @@
       "source_expr": "image"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        },
-        {
-          "path": "image.digest",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.digest",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1675,15 +1672,17 @@
       "source_expr": "image.digest"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        },
-        {
-          "path": "image.digest",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.digest",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1712,7 +1711,9 @@
       "source_expr": "image.digest"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -1728,15 +1729,17 @@
       "source_expr": "image.pullPolicy"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        },
-        {
-          "path": "image.registry",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.registry",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1756,15 +1759,17 @@
       "source_expr": "image.registry"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        },
-        {
-          "path": "image.registry",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.registry",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1793,15 +1798,17 @@
       "source_expr": "image.registry"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        },
-        {
-          "path": "image.registry",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.registry",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1830,15 +1837,17 @@
       "source_expr": "image.repository"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        },
-        {
-          "path": "image.registry",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.registry",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1867,19 +1876,21 @@
       "source_expr": "image.repository"
     },
     {
-      "guards": [
-        {
-          "path": "image",
-          "type": "truthy"
-        },
-        {
-          "path": "image.digest",
-          "type": "not"
-        },
-        {
-          "path": "image.tag",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.digest",
+            "type": "not"
+          },
+          {
+            "path": "image.tag",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1908,11 +1919,13 @@
       "source_expr": "image.tag"
     },
     {
-      "guards": [
-        {
-          "path": "ingressShim",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "ingressShim",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1923,15 +1936,17 @@
       "source_expr": "ingressShim"
     },
     {
-      "guards": [
-        {
-          "path": "ingressShim.defaultIssuerGroup",
-          "type": "truthy"
-        },
-        {
-          "path": "ingressShim",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "ingressShim.defaultIssuerGroup",
+            "type": "truthy"
+          },
+          {
+            "path": "ingressShim",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1942,15 +1957,17 @@
       "source_expr": "ingressShim.defaultIssuerGroup"
     },
     {
-      "guards": [
-        {
-          "path": "ingressShim.defaultIssuerGroup",
-          "type": "truthy"
-        },
-        {
-          "path": "ingressShim",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "ingressShim.defaultIssuerGroup",
+            "type": "truthy"
+          },
+          {
+            "path": "ingressShim",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -1967,15 +1984,17 @@
       "source_expr": "ingressShim.defaultIssuerGroup"
     },
     {
-      "guards": [
-        {
-          "path": "ingressShim.defaultIssuerKind",
-          "type": "truthy"
-        },
-        {
-          "path": "ingressShim",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "ingressShim.defaultIssuerKind",
+            "type": "truthy"
+          },
+          {
+            "path": "ingressShim",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1986,15 +2005,17 @@
       "source_expr": "ingressShim.defaultIssuerKind"
     },
     {
-      "guards": [
-        {
-          "path": "ingressShim.defaultIssuerKind",
-          "type": "truthy"
-        },
-        {
-          "path": "ingressShim",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "ingressShim.defaultIssuerKind",
+            "type": "truthy"
+          },
+          {
+            "path": "ingressShim",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -2011,15 +2032,17 @@
       "source_expr": "ingressShim.defaultIssuerKind"
     },
     {
-      "guards": [
-        {
-          "path": "ingressShim.defaultIssuerName",
-          "type": "truthy"
-        },
-        {
-          "path": "ingressShim",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "ingressShim.defaultIssuerName",
+            "type": "truthy"
+          },
+          {
+            "path": "ingressShim",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2030,15 +2053,17 @@
       "source_expr": "ingressShim.defaultIssuerName"
     },
     {
-      "guards": [
-        {
-          "path": "ingressShim.defaultIssuerName",
-          "type": "truthy"
-        },
-        {
-          "path": "ingressShim",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "ingressShim.defaultIssuerName",
+            "type": "truthy"
+          },
+          {
+            "path": "ingressShim",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -2055,11 +2080,13 @@
       "source_expr": "ingressShim.defaultIssuerName"
     },
     {
-      "guards": [
-        {
-          "path": "livenessProbe",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "livenessProbe",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2070,15 +2097,17 @@
       "source_expr": "livenessProbe"
     },
     {
-      "guards": [
-        {
-          "path": "livenessProbe.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "livenessProbe",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "livenessProbe",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2089,15 +2118,17 @@
       "source_expr": "livenessProbe.enabled"
     },
     {
-      "guards": [
-        {
-          "path": "livenessProbe.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "livenessProbe",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "livenessProbe",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2115,15 +2146,17 @@
       "source_expr": "livenessProbe.failureThreshold"
     },
     {
-      "guards": [
-        {
-          "path": "livenessProbe.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "livenessProbe",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "livenessProbe",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2141,15 +2174,17 @@
       "source_expr": "livenessProbe.initialDelaySeconds"
     },
     {
-      "guards": [
-        {
-          "path": "livenessProbe.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "livenessProbe",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "livenessProbe",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2167,15 +2202,17 @@
       "source_expr": "livenessProbe.periodSeconds"
     },
     {
-      "guards": [
-        {
-          "path": "livenessProbe.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "livenessProbe",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "livenessProbe",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2193,15 +2230,17 @@
       "source_expr": "livenessProbe.successThreshold"
     },
     {
-      "guards": [
-        {
-          "path": "livenessProbe.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "livenessProbe",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "livenessProbe",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2219,11 +2258,13 @@
       "source_expr": "livenessProbe.timeoutSeconds"
     },
     {
-      "guards": [
-        {
-          "path": "maxConcurrentChallenges",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "maxConcurrentChallenges",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2234,11 +2275,13 @@
       "source_expr": "maxConcurrentChallenges"
     },
     {
-      "guards": [
-        {
-          "path": "maxConcurrentChallenges",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "maxConcurrentChallenges",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "PartialScalar",
       "path": [
@@ -2255,26 +2298,28 @@
       "source_expr": "maxConcurrentChallenges"
     },
     {
-      "guards": [
-        {
-          "path": "config",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2294,15 +2339,17 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2332,11 +2379,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2363,11 +2412,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2394,19 +2445,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2432,11 +2485,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2464,11 +2519,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2497,11 +2554,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2530,23 +2589,25 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.create",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.create",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2584,30 +2645,32 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "config",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2637,11 +2700,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "namespace",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "namespace",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2667,11 +2732,13 @@
       "source_expr": "namespace"
     },
     {
-      "guards": [
-        {
-          "path": "no_proxy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "no_proxy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2682,11 +2749,13 @@
       "source_expr": "no_proxy"
     },
     {
-      "guards": [
-        {
-          "path": "no_proxy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "no_proxy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2704,11 +2773,13 @@
       "source_expr": "no_proxy"
     },
     {
-      "guards": [
-        {
-          "path": "nodeSelector",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nodeSelector",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2719,23 +2790,25 @@
       "source_expr": "nodeSelector"
     },
     {
-      "guards": [
-        {
-          "path": "global.nodeSelector",
-          "type": "range"
-        },
-        {
-          "path": "nodeSelector",
-          "type": "range"
-        },
-        {
-          "path": "global.nodeSelector",
-          "type": "with"
-        },
-        {
-          "path": "nodeSelector",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "global.nodeSelector",
+            "type": "with"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -2751,23 +2824,31 @@
       "source_expr": "nodeSelector"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "podAnnotations",
-          "type": "not"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "prometheus.servicemonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "podAnnotations",
+            "type": "not"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "prometheus.servicemonitor.enabled",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "podAnnotations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2778,26 +2859,13 @@
       "source_expr": "podAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "podAnnotations",
-          "type": "with"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "podAnnotations"
-    },
-    {
-      "guards": [
-        {
-          "path": "podAnnotations",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "podAnnotations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -2813,11 +2881,13 @@
       "source_expr": "podAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "podDnsConfig",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "podDnsConfig",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2828,11 +2898,13 @@
       "source_expr": "podDnsConfig"
     },
     {
-      "guards": [
-        {
-          "path": "podDnsConfig",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "podDnsConfig",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -2848,11 +2920,13 @@
       "source_expr": "podDnsConfig"
     },
     {
-      "guards": [
-        {
-          "path": "podDnsPolicy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "podDnsPolicy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2863,11 +2937,13 @@
       "source_expr": "podDnsPolicy"
     },
     {
-      "guards": [
-        {
-          "path": "podDnsPolicy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "podDnsPolicy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2883,11 +2959,13 @@
       "source_expr": "podDnsPolicy"
     },
     {
-      "guards": [
-        {
-          "path": "podLabels",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "podLabels",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2898,11 +2976,13 @@
       "source_expr": "podLabels"
     },
     {
-      "guards": [
-        {
-          "path": "podLabels",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "podLabels",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -2918,11 +2998,13 @@
       "source_expr": "podLabels"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2933,19 +3015,21 @@
       "source_expr": "prometheus.enabled"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "prometheus.servicemonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "prometheus.servicemonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2956,15 +3040,17 @@
       "source_expr": "prometheus.podmonitor.enabled"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.servicemonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.servicemonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2975,7 +3061,9 @@
       "source_expr": "prometheus.servicemonitor.enabled"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -2988,11 +3076,13 @@
       "source_expr": "replicaCount"
     },
     {
-      "guards": [
-        {
-          "path": "resources",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "resources",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3003,11 +3093,13 @@
       "source_expr": "resources"
     },
     {
-      "guards": [
-        {
-          "path": "resources",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "resources",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -3024,11 +3116,13 @@
       "source_expr": "resources"
     },
     {
-      "guards": [
-        {
-          "path": "securityContext",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "securityContext",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3039,11 +3133,13 @@
       "source_expr": "securityContext"
     },
     {
-      "guards": [
-        {
-          "path": "securityContext",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "securityContext",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -3059,11 +3155,13 @@
       "source_expr": "securityContext"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3083,11 +3181,13 @@
       "source_expr": "serviceAccount.create"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.create",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.create",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3098,15 +3198,17 @@
       "source_expr": "serviceAccount.create"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.create",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceAccount.name",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.create",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -3134,15 +3236,17 @@
       "source_expr": "serviceAccount.name"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.create",
-          "type": "not"
-        },
-        {
-          "path": "serviceAccount.name",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.create",
+            "type": "not"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -3170,11 +3274,13 @@
       "source_expr": "serviceAccount.name"
     },
     {
-      "guards": [
-        {
-          "path": "strategy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "strategy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3185,11 +3291,13 @@
       "source_expr": "strategy"
     },
     {
-      "guards": [
-        {
-          "path": "strategy",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "strategy",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -3203,11 +3311,13 @@
       "source_expr": "strategy"
     },
     {
-      "guards": [
-        {
-          "path": "tolerations",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "tolerations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3218,11 +3328,13 @@
       "source_expr": "tolerations"
     },
     {
-      "guards": [
-        {
-          "path": "tolerations",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "tolerations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -3238,11 +3350,13 @@
       "source_expr": "tolerations"
     },
     {
-      "guards": [
-        {
-          "path": "topologySpreadConstraints",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "topologySpreadConstraints",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3253,11 +3367,13 @@
       "source_expr": "topologySpreadConstraints"
     },
     {
-      "guards": [
-        {
-          "path": "topologySpreadConstraints",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "topologySpreadConstraints",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -3273,14 +3389,29 @@
       "source_expr": "topologySpreadConstraints"
     },
     {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumeMounts"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "paths": [
+              "config",
+              "volumeMounts"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "volumeMounts",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "config",
+              "volumeMounts"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3291,40 +3422,20 @@
       "source_expr": "volumeMounts"
     },
     {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumeMounts"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "volumeMounts",
-          "type": "with"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "volumeMounts"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumeMounts"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "volumeMounts",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "paths": [
+              "config",
+              "volumeMounts"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "volumeMounts",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -3341,14 +3452,29 @@
       "source_expr": "volumeMounts"
     },
     {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "volumes",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -3359,40 +3485,20 @@
       "source_expr": "volumes"
     },
     {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "volumes",
-          "type": "with"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "volumes"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "config",
-            "volumes"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "volumes",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "volumes",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -3408,5 +3514,5 @@
       "source_expr": "volumes"
     }
   ],
-  "version": 2
+  "version": 3
 }

@@ -56,8 +56,8 @@ fn call_site_guards_wrap_spliced_dict_config_helper() {
                       splice ingress.className scalar
         reads:
           ingress [with(ingress)]
-          ingress.enabled [with(ingress), truthy(ingress.enabled)]
-          ingress.className [with(ingress), truthy(ingress.enabled), truthy(ingress.className)]
+          ingress.enabled [truthy(ingress.enabled), with(ingress)]
+          ingress.className [truthy(ingress.className), truthy(ingress.enabled), with(ingress)]
     "#};
     assert_fragment_dump(source, helpers, expected);
 }

@@ -4,6 +4,7 @@ mod contract_signals;
 mod contract_use;
 mod guard;
 pub mod guard_algebra;
+mod guard_dnf;
 mod output_path;
 mod predicate;
 mod provenance;
@@ -22,6 +23,7 @@ pub use contract_signals::{
 };
 pub use contract_use::ContractUse;
 pub use guard::{Guard, GuardValue};
+pub use guard_dnf::GuardDnf;
 pub use output_path::{
     append_relative_path, sequence_item_path, values_path_has_descendant, values_path_is_descendant,
 };

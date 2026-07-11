@@ -48,7 +48,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             source_expr: "feature".to_string(),
             path: YamlPath(Vec::new()),
             kind: ValueKind::Scalar,
-            guards: Vec::new(),
+            condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: None,
             provenance: Vec::new(),
         },
@@ -56,9 +56,9 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             source_expr: "feature".to_string(),
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
-            guards: vec![Guard::Default {
+            condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Default {
                 path: "feature".to_string(),
-            }],
+            }]),
             resource: None,
             provenance: Vec::new(),
         },
@@ -85,7 +85,7 @@ fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
         source_expr: "feature".to_string(),
         path: YamlPath(Vec::new()),
         kind: ValueKind::Scalar,
-        guards: Vec::new(),
+        condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: None,
         provenance: Vec::new(),
     }]);
@@ -111,10 +111,10 @@ fn explicit_nested_values_defaults_suppress_required_inference() {
         source_expr: "controller.kind".to_string(),
         path: YamlPath(Vec::new()),
         kind: ValueKind::Scalar,
-        guards: vec![Guard::Eq {
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
             path: "controller.kind".to_string(),
             value: GuardValue::string("Deployment"),
-        }],
+        }]),
         resource: None,
         provenance: Vec::new(),
     }]);

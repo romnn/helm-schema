@@ -221,25 +221,33 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
 
     assert!(
         uses.iter().any(|use_| {
-            use_.guards.iter().any(|guard| {
-                matches!(
-                    guard,
-                    Guard::Truthy { path }
-                    if path == "clickhouse.clickhouseOperator.serviceAccount.create"
-                )
-            })
+            use_.condition
+                .guard_conjunctions()
+                .iter()
+                .flatten()
+                .any(|guard| {
+                    matches!(
+                        guard,
+                        Guard::Truthy { path }
+                        if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                    )
+                })
         }),
         "expected a create=true helper-backed branch for {path}; uses={uses:#?}"
     );
     assert!(
         uses.iter().any(|use_| {
-            use_.guards.iter().any(|guard| {
-                matches!(
-                    guard,
-                    Guard::Not { path }
-                    if path == "clickhouse.clickhouseOperator.serviceAccount.create"
-                )
-            })
+            use_.condition
+                .guard_conjunctions()
+                .iter()
+                .flatten()
+                .any(|guard| {
+                    matches!(
+                        guard,
+                        Guard::Not { path }
+                        if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                    )
+                })
         }),
         "expected a create=false branch for {path}; uses={uses:#?}"
     );
@@ -306,7 +314,7 @@ fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
 
     assert!(
         uses.iter().any(|use_| {
-            use_.guards.iter().any(|guard| {
+            use_.single_guard_conjunction().iter().any(|guard| {
                 matches!(
                     guard,
                     Guard::Truthy { path }
@@ -318,7 +326,7 @@ fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
     );
     assert!(
         uses.iter().any(|use_| {
-            use_.guards.iter().any(|guard| {
+            use_.single_guard_conjunction().iter().any(|guard| {
                 matches!(
                     guard,
                     Guard::Not { path }
@@ -360,13 +368,17 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
 
     assert!(
         uses.iter().any(|use_| {
-            use_.guards.iter().any(|guard| {
-                matches!(
-                    guard,
-                    Guard::Default { path }
-                    if path == "signoz-otel-gateway.serviceAccount.name"
-                )
-            })
+            use_.condition
+                .guard_conjunctions()
+                .iter()
+                .flatten()
+                .any(|guard| {
+                    matches!(
+                        guard,
+                        Guard::Default { path }
+                        if path == "signoz-otel-gateway.serviceAccount.name"
+                    )
+                })
         }),
         "expected helper default guard for {path}; uses={uses:#?}"
     );
@@ -690,56 +702,72 @@ data:
         .collect::<Vec<_>>();
 
     assert!(
-        uses.iter().any(|use_| use_.guards.as_slice()
-            == [Guard::Truthy {
-                path: "kid.enabled".to_string()
-            }]
-            .as_slice()),
+        uses.iter().any(|use_| {
+            use_.condition.guard_conjunctions().iter().any(|guards| {
+                guards.as_slice()
+                    == [Guard::Truthy {
+                        path: "kid.enabled".to_string(),
+                    }]
+                    .as_slice()
+            })
+        }),
         "expected first condition activation branch, got {uses:#?}"
     );
     assert!(
-        uses.iter().any(|use_| use_.guards.as_slice()
-            == [
-                Guard::Truthy {
-                    path: "global.kidEnabled".to_string()
-                },
-                Guard::Absent {
-                    path: "kid.enabled".to_string()
-                },
-            ]
-            .as_slice()),
+        uses.iter().any(|use_| {
+            use_.condition.guard_conjunctions().iter().any(|guards| {
+                guards.as_slice()
+                    == [
+                        Guard::Truthy {
+                            path: "global.kidEnabled".to_string(),
+                        },
+                        Guard::Absent {
+                            path: "kid.enabled".to_string(),
+                        },
+                    ]
+                    .as_slice()
+            })
+        }),
         "expected second condition branch guarded by first-condition absence, got {uses:#?}"
     );
     assert!(
-        uses.iter().any(|use_| use_.guards.as_slice()
-            == [
-                Guard::Truthy {
-                    path: "tags.observability".to_string()
-                },
-                Guard::Absent {
-                    path: "global.kidEnabled".to_string()
-                },
-                Guard::Absent {
-                    path: "kid.enabled".to_string()
-                },
-            ]
-            .as_slice()),
+        uses.iter().any(|use_| {
+            use_.condition.guard_conjunctions().iter().any(|guards| {
+                guards.as_slice()
+                    == [
+                        Guard::Truthy {
+                            path: "tags.observability".to_string(),
+                        },
+                        Guard::Absent {
+                            path: "global.kidEnabled".to_string(),
+                        },
+                        Guard::Absent {
+                            path: "kid.enabled".to_string(),
+                        },
+                    ]
+                    .as_slice()
+            })
+        }),
         "expected tag activation branch guarded by condition absence, got {uses:#?}"
     );
     assert!(
-        uses.iter().any(|use_| use_.guards.as_slice()
-            == [
-                Guard::Absent {
-                    path: "global.kidEnabled".to_string()
-                },
-                Guard::Absent {
-                    path: "kid.enabled".to_string()
-                },
-                Guard::Absent {
-                    path: "tags.observability".to_string()
-                },
-            ]
-            .as_slice()),
+        uses.iter().any(|use_| {
+            use_.condition.guard_conjunctions().iter().any(|guards| {
+                guards.as_slice()
+                    == [
+                        Guard::Absent {
+                            path: "global.kidEnabled".to_string(),
+                        },
+                        Guard::Absent {
+                            path: "kid.enabled".to_string(),
+                        },
+                        Guard::Absent {
+                            path: "tags.observability".to_string(),
+                        },
+                    ]
+                    .as_slice()
+            })
+        }),
         "expected default-active branch when no activation values exist, got {uses:#?}"
     );
 

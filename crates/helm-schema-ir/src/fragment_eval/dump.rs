@@ -22,8 +22,10 @@ pub fn dump_document(document: &EvaluatedDocument) -> String {
                 out,
                 "  {} [{}]",
                 read.values_path,
-                read.guards
+                read.condition
+                    .guard_conjunctions()
                     .iter()
+                    .flatten()
                     .map(fmt_guard)
                     .collect::<Vec<_>>()
                     .join(", "),

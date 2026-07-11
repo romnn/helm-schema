@@ -1,7 +1,9 @@
 {
   "uses": [
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Fragment",
       "path": [
         "spec",
@@ -16,11 +18,13 @@
       "source_expr": "affinity"
     },
     {
-      "guards": [
-        {
-          "path": "readinessProbe",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "readinessProbe",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -39,12 +43,14 @@
       "source_expr": "configLoggingRestApi.api_port"
     },
     {
-      "guards": [
-        {
-          "path": "configTarget",
-          "type": "eq",
-          "value": "ConfigMap"
-        }
+      "condition": [
+        [
+          {
+            "path": "configTarget",
+            "type": "eq",
+            "value": "ConfigMap"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -55,11 +61,13 @@
       "source_expr": "configTarget"
     },
     {
-      "guards": [
-        {
-          "path": "controllerID.create",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "controllerID.create",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -70,15 +78,17 @@
       "source_expr": "controllerID.create"
     },
     {
-      "guards": [
-        {
-          "path": "controllerID.create",
-          "type": "truthy"
-        },
-        {
-          "path": "controllerID.name",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "controllerID.create",
+            "type": "truthy"
+          },
+          {
+            "path": "controllerID.name",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -108,11 +118,13 @@
       "source_expr": "controllerID.name"
     },
     {
-      "guards": [
-        {
-          "path": "enableJsonLogging",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "enableJsonLogging",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -123,11 +135,13 @@
       "source_expr": "enableJsonLogging"
     },
     {
-      "guards": [
-        {
-          "path": "extraEnvs",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "extraEnvs",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -138,11 +152,13 @@
       "source_expr": "extraEnvs"
     },
     {
-      "guards": [
-        {
-          "path": "extraEnvs",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "extraEnvs",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -159,15 +175,29 @@
       "source_expr": "extraEnvs"
     },
     {
-      "guards": [
-        {
-          "path": "controllerID.create",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "configTarget",
+            "type": "eq",
+            "value": "ConfigMap"
+          }
+        ],
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "configTarget",
+            "type": "not_eq",
+            "value": "ConfigMap"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -181,27 +211,19 @@
             "start": 479
           },
           "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.controllerID"
-          ],
-          "span": {
-            "end": 1644,
-            "start": 1564
-          },
-          "template_path": "<inline:0>"
         }
       ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -231,16 +253,17 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "configTarget",
-          "type": "eq",
-          "value": "ConfigMap"
-        }
+      "condition": [
+        [
+          {
+            "path": "controllerID.create",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -254,33 +277,14 @@
             "start": 479
           },
           "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
         },
         {
-          "path": "configTarget",
-          "type": "not_eq",
-          "value": "ConfigMap"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
           "helper_chain": [
-            "postgres-operator.fullname"
+            "postgres-operator.controllerID"
           ],
           "span": {
-            "end": 844,
-            "start": 479
+            "end": 1644,
+            "start": 1564
           },
           "template_path": "<inline:0>"
         }
@@ -289,11 +293,13 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -319,15 +325,69 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "configTarget",
+            "type": "eq",
+            "value": "ConfigMap"
+          }
+        ],
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "configTarget",
+            "type": "not_eq",
+            "value": "ConfigMap"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "env[*]",
+        "value"
+      ],
+      "provenance": [
         {
-          "path": "controllerID.create",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 575,
+            "start": 515
+          },
+          "template_path": "<inline:0>"
         }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "controllerID.create",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -367,89 +427,13 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "configTarget",
-          "type": "eq",
-          "value": "ConfigMap"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 575,
-            "start": 515
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "configTarget",
-          "type": "not_eq",
-          "value": "ConfigMap"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 575,
-            "start": 515
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -487,7 +471,9 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -503,7 +489,9 @@
       "source_expr": "image.pullPolicy"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "PartialScalar",
       "path": [
         "spec",
@@ -519,7 +507,9 @@
       "source_expr": "image.registry"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "PartialScalar",
       "path": [
         "spec",
@@ -535,7 +525,9 @@
       "source_expr": "image.repository"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "PartialScalar",
       "path": [
         "spec",
@@ -551,11 +543,13 @@
       "source_expr": "image.tag"
     },
     {
-      "guards": [
-        {
-          "path": "imagePullSecrets",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "imagePullSecrets",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -566,11 +560,13 @@
       "source_expr": "imagePullSecrets"
     },
     {
-      "guards": [
-        {
-          "path": "imagePullSecrets",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "imagePullSecrets",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -586,19 +582,37 @@
       "source_expr": "imagePullSecrets"
     },
     {
-      "guards": [
-        {
-          "path": "controllerID.create",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "configTarget",
+            "type": "eq",
+            "value": "ConfigMap"
+          }
+        ],
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "configTarget",
+            "type": "not_eq",
+            "value": "ConfigMap"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -612,31 +626,23 @@
             "start": 647
           },
           "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.controllerID"
-          ],
-          "span": {
-            "end": 1644,
-            "start": 1564
-          },
-          "template_path": "<inline:0>"
         }
       ],
       "resource": null,
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -666,20 +672,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "configTarget",
-          "type": "eq",
-          "value": "ConfigMap"
-        }
+      "condition": [
+        [
+          {
+            "path": "controllerID.create",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -693,37 +700,14 @@
             "start": 647
           },
           "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
         },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "configTarget",
-          "type": "not_eq",
-          "value": "ConfigMap"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
         {
           "helper_chain": [
-            "postgres-operator.fullname"
+            "postgres-operator.controllerID"
           ],
           "span": {
-            "end": 832,
-            "start": 647
+            "end": 1644,
+            "start": 1564
           },
           "template_path": "<inline:0>"
         }
@@ -732,11 +716,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -763,19 +749,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -801,11 +789,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -833,11 +823,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -866,23 +858,93 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "configTarget",
+            "type": "eq",
+            "value": "ConfigMap"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ],
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "configTarget",
+            "type": "not_eq",
+            "value": "ConfigMap"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "env[*]",
+        "value"
+      ],
+      "provenance": [
         {
-          "path": "controllerID.create",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 820,
+            "start": 750
+          },
+          "template_path": "<inline:0>"
         }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "controllerID.create",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -922,113 +984,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "configTarget",
-          "type": "eq",
-          "value": "ConfigMap"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 820,
-            "start": 750
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
           },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "configTarget",
-          "type": "not_eq",
-          "value": "ConfigMap"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 820,
-            "start": 750
+          {
+            "path": "nameOverride",
+            "type": "not"
           },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1066,7 +1036,9 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Fragment",
       "path": [
         "spec",
@@ -1081,11 +1053,13 @@
       "source_expr": "nodeSelector"
     },
     {
-      "guards": [
-        {
-          "path": "podAnnotations",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "podAnnotations",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1096,11 +1070,13 @@
       "source_expr": "podAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "podAnnotations",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "podAnnotations",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1116,11 +1092,13 @@
       "source_expr": "podAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "podLabels",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "podLabels",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1131,11 +1109,13 @@
       "source_expr": "podLabels"
     },
     {
-      "guards": [
-        {
-          "path": "podLabels",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "podLabels",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1151,11 +1131,13 @@
       "source_expr": "podLabels"
     },
     {
-      "guards": [
-        {
-          "path": "priorityClassName",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "priorityClassName",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1166,11 +1148,13 @@
       "source_expr": "priorityClassName"
     },
     {
-      "guards": [
-        {
-          "path": "priorityClassName",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "priorityClassName",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1186,11 +1170,13 @@
       "source_expr": "priorityClassName"
     },
     {
-      "guards": [
-        {
-          "path": "readinessProbe",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "readinessProbe",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1201,11 +1187,13 @@
       "source_expr": "readinessProbe"
     },
     {
-      "guards": [
-        {
-          "path": "readinessProbe",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "readinessProbe",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1223,11 +1211,13 @@
       "source_expr": "readinessProbe.initialDelaySeconds"
     },
     {
-      "guards": [
-        {
-          "path": "readinessProbe",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "readinessProbe",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1245,7 +1235,9 @@
       "source_expr": "readinessProbe.periodSeconds"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Fragment",
       "path": [
         "spec",
@@ -1261,7 +1253,9 @@
       "source_expr": "resources"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Fragment",
       "path": [
         "spec",
@@ -1277,11 +1271,13 @@
       "source_expr": "securityContext"
     },
     {
-      "guards": [
-        {
-          "path": "serviceAccount.name",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "serviceAccount.name",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1309,7 +1305,9 @@
       "source_expr": "serviceAccount.name"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Fragment",
       "path": [
         "spec",
@@ -1324,5 +1322,5 @@
       "source_expr": "tolerations"
     }
   ],
-  "version": 2
+  "version": 3
 }

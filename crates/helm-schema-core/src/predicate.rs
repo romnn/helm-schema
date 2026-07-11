@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use crate::Guard;
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Predicate {
     True,
     False,
@@ -195,6 +195,31 @@ impl Predicate {
             }
         }
         guards
+    }
+
+    #[must_use]
+    pub fn map_value_paths<F>(self, map: &mut F) -> Self
+    where
+        F: FnMut(&str) -> String,
+    {
+        match self {
+            Self::True => Self::True,
+            Self::False => Self::False,
+            Self::Guard(guard) => Self::Guard(guard.map_value_paths(map)),
+            Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),
+            Self::And(predicates) => Self::And(
+                predicates
+                    .into_iter()
+                    .map(|predicate| predicate.map_value_paths(map))
+                    .collect(),
+            ),
+            Self::Or(predicates) => Self::Or(
+                predicates
+                    .into_iter()
+                    .map(|predicate| predicate.map_value_paths(map))
+                    .collect(),
+            ),
+        }
     }
 }
 

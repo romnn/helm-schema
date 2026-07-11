@@ -1,23 +1,25 @@
 {
   "uses": [
     {
-      "guards": [
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "commonAnnotations",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "commonAnnotations",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -37,76 +39,32 @@
       "source_expr": "commonAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "guards": [
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 363,
-            "start": 326
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        }
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          }
+        ]
       ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
@@ -114,23 +72,25 @@
       "source_expr": "commonAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "commonAnnotations",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "commonAnnotations",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -156,16 +116,57 @@
       "source_expr": "commonAnnotations"
     },
     {
-      "guards": [
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "annotations"
+      ],
+      "provenance": [
         {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "schema_type": "string",
-          "type": "type_is"
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 363,
+            "start": 326
+          },
+          "template_path": "<inline:2>"
         }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "commonAnnotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "commonLabels",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -185,11 +186,13 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -200,46 +203,18 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 363,
-            "start": 326
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+          {
+            "path": "commonLabels",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -265,11 +240,45 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "labels"
+      ],
+      "provenance": [
         {
-          "path": "fullnameOverride",
-          "type": "truthy"
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 363,
+            "start": 326
+          },
+          "template_path": "<inline:2>"
         }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "commonLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -289,11 +298,13 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -319,15 +330,17 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -347,11 +360,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -388,19 +403,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -426,11 +443,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -467,11 +486,13 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "namespaceOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "namespaceOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -491,11 +512,13 @@
       "source_expr": "namespaceOverride"
     },
     {
-      "guards": [
-        {
-          "path": "namespaceOverride",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "namespaceOverride",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -521,23 +544,25 @@
       "source_expr": "namespaceOverride"
     },
     {
-      "guards": [
-        {
-          "path": "service.annotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "service.annotations",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.annotations",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "service.annotations",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -557,76 +582,32 @@
       "source_expr": "service.annotations"
     },
     {
-      "guards": [
-        {
-          "path": "service.annotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.annotations"
-    },
-    {
-      "guards": [
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.annotations"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.annotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 363,
-            "start": 326
+      "condition": [
+        [
+          {
+            "path": "service.annotations",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        }
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          }
+        ]
       ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
@@ -634,23 +615,25 @@
       "source_expr": "service.annotations"
     },
     {
-      "guards": [
-        {
-          "path": "service.annotations",
-          "type": "truthy"
-        },
-        {
-          "paths": [
-            "commonAnnotations",
-            "service.annotations"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "service.annotations",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.annotations",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "service.annotations",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -676,11 +659,52 @@
       "source_expr": "service.annotations"
     },
     {
-      "guards": [
+      "condition": [
+        [
+          {
+            "path": "service.annotations",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Fragment",
+      "path": [
+        "metadata",
+        "annotations"
+      ],
+      "provenance": [
         {
-          "path": "service.clusterIP",
-          "type": "truthy"
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 363,
+            "start": 326
+          },
+          "template_path": "<inline:2>"
         }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.annotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "service.clusterIP",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -691,16 +715,18 @@
       "source_expr": "service.clusterIP"
     },
     {
-      "guards": [
-        {
-          "path": "service.clusterIP",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "ClusterIP"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.clusterIP",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "ClusterIP"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -714,11 +740,13 @@
       "source_expr": "service.clusterIP"
     },
     {
-      "guards": [
-        {
-          "path": "service.disableBaseClientPort",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.disableBaseClientPort",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -729,26 +757,28 @@
       "source_expr": "service.disableBaseClientPort"
     },
     {
-      "guards": [
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
             ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
-          ],
-          "type": "any_of"
-        }
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -762,16 +792,18 @@
       "source_expr": "service.externalTrafficPolicy"
     },
     {
-      "guards": [
-        {
-          "path": "service.extraPorts",
-          "type": "truthy"
-        },
-        {
-          "path": "service.extraPorts",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.extraPorts",
+            "type": "truthy"
+          },
+          {
+            "path": "service.extraPorts",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -791,11 +823,13 @@
       "source_expr": "service.extraPorts"
     },
     {
-      "guards": [
-        {
-          "path": "service.extraPorts",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.extraPorts",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -806,46 +840,18 @@
       "source_expr": "service.extraPorts"
     },
     {
-      "guards": [
-        {
-          "path": "service.extraPorts",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "ports"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 363,
-            "start": 326
+      "condition": [
+        [
+          {
+            "path": "service.extraPorts",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.extraPorts"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.extraPorts",
-          "type": "truthy"
-        },
-        {
-          "path": "service.extraPorts",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+          {
+            "path": "service.extraPorts",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -871,16 +877,50 @@
       "source_expr": "service.extraPorts"
     },
     {
-      "guards": [
+      "condition": [
+        [
+          {
+            "path": "service.extraPorts",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "ports"
+      ],
+      "provenance": [
         {
-          "path": "service.loadBalancerIP",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "LoadBalancer"
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 363,
+            "start": 326
+          },
+          "template_path": "<inline:2>"
         }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "service.extraPorts"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "service.loadBalancerIP",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "LoadBalancer"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -891,16 +931,18 @@
       "source_expr": "service.loadBalancerIP"
     },
     {
-      "guards": [
-        {
-          "path": "service.loadBalancerIP",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "LoadBalancer"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.loadBalancerIP",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "LoadBalancer"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -914,16 +956,18 @@
       "source_expr": "service.loadBalancerIP"
     },
     {
-      "guards": [
-        {
-          "path": "service.loadBalancerSourceRanges",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "LoadBalancer"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.loadBalancerSourceRanges",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "LoadBalancer"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -934,16 +978,18 @@
       "source_expr": "service.loadBalancerSourceRanges"
     },
     {
-      "guards": [
-        {
-          "path": "service.loadBalancerSourceRanges",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "LoadBalancer"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.loadBalancerSourceRanges",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "LoadBalancer"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -957,34 +1003,36 @@
       "source_expr": "service.loadBalancerSourceRanges"
     },
     {
-      "guards": [
-        {
-          "path": "service.nodePorts.client",
-          "type": "truthy"
-        },
-        {
-          "path": "service.disableBaseClientPort",
-          "type": "not"
-        },
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
+      "condition": [
+        [
+          {
+            "path": "service.nodePorts.client",
+            "type": "truthy"
+          },
+          {
+            "path": "service.disableBaseClientPort",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
             ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
-          ],
-          "type": "any_of"
-        }
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -995,34 +1043,36 @@
       "source_expr": "service.nodePorts.client"
     },
     {
-      "guards": [
-        {
-          "path": "service.nodePorts.client",
-          "type": "truthy"
-        },
-        {
-          "path": "service.disableBaseClientPort",
-          "type": "not"
-        },
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
+      "condition": [
+        [
+          {
+            "path": "service.nodePorts.client",
+            "type": "truthy"
+          },
+          {
+            "path": "service.disableBaseClientPort",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
             ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
-          ],
-          "type": "any_of"
-        }
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1037,34 +1087,36 @@
       "source_expr": "service.nodePorts.client"
     },
     {
-      "guards": [
-        {
-          "path": "service.nodePorts.tls",
-          "type": "truthy"
-        },
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
+      "condition": [
+        [
+          {
+            "path": "service.nodePorts.tls",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
             ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
-          ],
-          "type": "any_of"
-        }
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1075,34 +1127,36 @@
       "source_expr": "service.nodePorts.tls"
     },
     {
-      "guards": [
-        {
-          "path": "service.nodePorts.tls",
-          "type": "truthy"
-        },
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
+      "condition": [
+        [
+          {
+            "path": "service.nodePorts.tls",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
             ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
-          ],
-          "type": "any_of"
-        }
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1117,11 +1171,13 @@
       "source_expr": "service.nodePorts.tls"
     },
     {
-      "guards": [
-        {
-          "path": "service.disableBaseClientPort",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.disableBaseClientPort",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1136,7 +1192,9 @@
       "source_expr": "service.ports.client"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -1150,7 +1208,9 @@
       "source_expr": "service.ports.election"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -1164,11 +1224,13 @@
       "source_expr": "service.ports.follower"
     },
     {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1183,11 +1245,13 @@
       "source_expr": "service.ports.tls"
     },
     {
-      "guards": [
-        {
-          "path": "service.sessionAffinity",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.sessionAffinity",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1198,11 +1262,13 @@
       "source_expr": "service.sessionAffinity"
     },
     {
-      "guards": [
-        {
-          "path": "service.sessionAffinity",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.sessionAffinity",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1216,16 +1282,18 @@
       "source_expr": "service.sessionAffinity"
     },
     {
-      "guards": [
-        {
-          "path": "service.sessionAffinityConfig",
-          "type": "truthy"
-        },
-        {
-          "path": "service.sessionAffinityConfig",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.sessionAffinityConfig",
+            "type": "truthy"
+          },
+          {
+            "path": "service.sessionAffinityConfig",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1245,11 +1313,13 @@
       "source_expr": "service.sessionAffinityConfig"
     },
     {
-      "guards": [
-        {
-          "path": "service.sessionAffinityConfig",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.sessionAffinityConfig",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1260,46 +1330,18 @@
       "source_expr": "service.sessionAffinityConfig"
     },
     {
-      "guards": [
-        {
-          "path": "service.sessionAffinityConfig",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "sessionAffinityConfig"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 363,
-            "start": 326
+      "condition": [
+        [
+          {
+            "path": "service.sessionAffinityConfig",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.sessionAffinityConfig"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.sessionAffinityConfig",
-          "type": "truthy"
-        },
-        {
-          "path": "service.sessionAffinityConfig",
-          "schema_type": "string",
-          "type": "type_is"
-        }
+          {
+            "path": "service.sessionAffinityConfig",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1325,170 +1367,150 @@
       "source_expr": "service.sessionAffinityConfig"
     },
     {
-      "guards": [
-        {
-          "path": "service.clusterIP",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "ClusterIP"
-        }
+      "condition": [
+        [
+          {
+            "path": "service.sessionAffinityConfig",
+            "type": "truthy"
+          }
+        ]
       ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "ClusterIP"
-        }
+      "kind": "Fragment",
+      "path": [
+        "spec",
+        "sessionAffinityConfig"
       ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
+      "provenance": [
         {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        },
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
-            ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
+          "helper_chain": [
+            "common.tplvalues.render"
           ],
-          "type": "any_of"
+          "span": {
+            "end": 363,
+            "start": 326
+          },
+          "template_path": "<inline:2>"
         }
       ],
-      "kind": "Scalar",
-      "path": [],
       "resource": {
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "service.type"
+      "source_expr": "service.sessionAffinityConfig"
     },
     {
-      "guards": [
-        {
-          "path": "service.disableBaseClientPort",
-          "type": "not"
-        },
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "ClusterIP"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.disableBaseClientPort",
-          "type": "not"
-        },
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
+      "condition": [
+        [
+          {
+            "path": "service.clusterIP",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "ClusterIP"
+          }
+        ],
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "ClusterIP"
+          }
+        ],
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
             ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
-          ],
-          "type": "any_of"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
-        {
-          "path": "service.type",
-          "type": "eq",
-          "value": "LoadBalancer"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
-      "source_expr": "service.type"
-    },
-    {
-      "guards": [
-        {
-          "alternatives": [
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "LoadBalancer"
-              }
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "service.disableBaseClientPort",
+            "type": "not"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "ClusterIP"
+          }
+        ],
+        [
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "LoadBalancer"
+          }
+        ],
+        [
+          {
+            "path": "service.disableBaseClientPort",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
             ],
-            [
-              {
-                "path": "service.type",
-                "type": "eq",
-                "value": "NodePort"
-              }
-            ]
-          ],
-          "type": "any_of"
-        }
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "LoadBalancer"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "eq",
+                  "value": "NodePort"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1499,7 +1521,9 @@
       "source_expr": "service.type"
     },
     {
-      "guards": [],
+      "condition": [
+        []
+      ],
       "kind": "Scalar",
       "path": [
         "spec",
@@ -1512,11 +1536,13 @@
       "source_expr": "service.type"
     },
     {
-      "guards": [
-        {
-          "path": "tls.client.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1527,5 +1553,5 @@
       "source_expr": "tls.client.enabled"
     }
   ],
-  "version": 2
+  "version": 3
 }

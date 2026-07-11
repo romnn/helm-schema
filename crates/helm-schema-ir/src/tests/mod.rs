@@ -8,7 +8,7 @@ mod resource_identity;
 mod symbolic_local_state;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
-use helm_schema_core::Predicate;
+use helm_schema_core::{GuardDnf, Predicate};
 
 /// The raw per-branch guard stacks of one helper meta (branch predicates in
 /// canonical guard order plus the defaulted marker), the same lowering the
@@ -27,22 +27,13 @@ pub(crate) fn raw_guard_sets(
             .map(|branch| branch.iter().cloned().collect())
             .collect()
     };
-    let mut guard_sets = Vec::new();
-    for branch in branches {
-        let mut guards = Predicate::contract_guard_stack(&branch);
-        if meta.defaulted {
-            let default_guard = Guard::Default {
-                path: source_expr.to_string(),
-            };
-            if !guards.contains(&default_guard) {
-                guards.push(default_guard);
-            }
-        }
-        if !guard_sets.contains(&guards) {
-            guard_sets.push(guards);
-        }
+    let mut condition = GuardDnf::from_contract_predicate_disjunction_preserving_evidence(branches);
+    if meta.defaulted {
+        condition = condition.conjoined_with_guards([Guard::Default {
+            path: source_expr.to_string(),
+        }]);
     }
-    guard_sets
+    condition.guard_conjunctions()
 }
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;
@@ -60,14 +51,14 @@ foo: {{ .Values.name }}
         .finalize();
 
     assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
-        && u.guards
+        && u.single_guard_conjunction()
             == vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]));
     assert!(ir.uses().iter().any(|u| u.source_expr == "name"
         && u.path == YamlPath(vec!["foo".to_string()])
         && u.kind == ValueKind::Scalar
-        && u.guards
+        && u.single_guard_conjunction()
             == vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]));
@@ -163,7 +154,7 @@ metadata:
         .expect("serviceName use");
 
     sim_assert_eq!(
-        have: name_use.guards,
+        have: name_use.single_guard_conjunction(),
         want: vec![Guard::Truthy {
             path: "enabled".to_string()
         }]
@@ -210,8 +201,10 @@ spec:
         .collect::<Vec<_>>();
     assert!(
         pathless_name_override_uses.iter().all(|use_| !use_
-            .guards
+            .condition
+            .guard_conjunctions()
             .iter()
+            .flatten()
             .any(|guard| matches!(guard, Guard::Truthy { path } if path == "commonLabels"))),
         "commonLabels is the custom-label source, not a guard for the pathless common.names.name dependency: {pathless_name_override_uses:#?}"
     );
@@ -227,9 +220,14 @@ spec:
         },
     ];
     assert!(
-        name_override_uses
-            .iter()
-            .any(|use_| { use_.path == YamlPath(Vec::new()) && use_.guards == own_default_branch }),
+        name_override_uses.iter().any(|use_| {
+            use_.path == YamlPath(Vec::new())
+                && use_
+                    .condition
+                    .guard_conjunctions()
+                    .iter()
+                    .any(|guards| guards == &own_default_branch)
+        }),
         "expected pathless nameOverride dependency to keep its own branch guards: {name_override_uses:#?}"
     );
     let app_name_path = YamlPath(vec![
@@ -242,8 +240,10 @@ spec:
             .iter()
             .filter(|use_| use_.path == app_name_path)
             .all(|use_| !use_
-                .guards
+                .condition
+                .guard_conjunctions()
                 .iter()
+                .flatten()
                 .any(|guard| matches!(guard, Guard::Not { path } if path == "nameOverride"))),
         "a customLabels branch should not keep nameOverride=false after common.names.name is projected: {name_override_uses:#?}"
     );
@@ -276,7 +276,7 @@ metadata:
         ir.uses().iter().any(|use_| {
             use_.source_expr == "nameOverride"
                 && use_.path == YamlPath(vec!["metadata".to_string(), "name".to_string()])
-                && use_.guards.contains(&Guard::Default {
+                && use_.single_guard_conjunction().contains(&Guard::Default {
                     path: "nameOverride".to_string(),
                 })
         }),

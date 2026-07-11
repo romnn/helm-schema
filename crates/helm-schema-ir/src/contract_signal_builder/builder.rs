@@ -1,7 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
-use helm_schema_core::guard_algebra::{key_is_strict_subset, resolve_complementary_keys};
 use helm_schema_core::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
@@ -107,8 +106,6 @@ impl PathSchemaFactsAccumulator {
         }
     }
 
-    /// Union another branch's evidence into this one: the merged branch
-    /// claims "either branch's render may apply", so facts join permissively.
     fn merge_union(&mut self, other: Self) {
         for provider_schema_use in other.provider_schema_uses {
             self.record_provider_schema_use(provider_schema_use);
@@ -144,12 +141,22 @@ fn record_contract_use(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
 ) {
-    let predicates = contract_use
-        .guards
+    let conjunctions = contract_use
+        .condition
+        .disjuncts()
         .iter()
-        .cloned()
-        .map(Predicate::from)
+        .map(|conjunction| conjunction.iter().cloned().collect::<Vec<_>>())
         .collect::<Vec<_>>();
+    for predicates in conjunctions {
+        record_contract_use_conjunction(paths, contract_use, &predicates);
+    }
+}
+
+fn record_contract_use_conjunction(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    contract_use: &ContractUse,
+    predicates: &[Predicate],
+) {
     let has_source = !contract_use.source_expr.trim().is_empty();
     let path_is_empty = contract_use.path.0.is_empty();
     let range_guard_paths = predicates
@@ -182,7 +189,7 @@ fn record_contract_use(
         };
         if !path_is_empty {
             facts.record_render_use(self_range_guarded, Some(has_matching_self_guard));
-            facts.has_unconditional_render_use = contract_use.guards.is_empty();
+            facts.has_unconditional_render_use = predicates.is_empty();
         }
 
         let positive_header = contract_use.kind == ValueKind::Scalar
@@ -197,7 +204,7 @@ fn record_contract_use(
         acc.record_source_use(
             facts,
             path_is_empty || has_matching_self_guard,
-            lowerable_conditional_guard_set(contract_use, &predicates),
+            lowerable_conditional_guard_set(contract_use, predicates),
             provider_schema_use(contract_use, self_range_guarded),
             metadata_field_kind,
         );
@@ -220,7 +227,7 @@ fn record_contract_use(
             .has_default_fallback = true;
     }
     if has_source {
-        for predicate in conditional_guard_predicates(&predicates) {
+        for predicate in conditional_guard_predicates(predicates) {
             for path in predicate.value_paths() {
                 let acc = path_accumulator(paths, &path);
                 if !acc.guard_predicates.contains(&predicate) {
@@ -333,13 +340,43 @@ impl ContractPathAccumulator {
             requiredness,
             type_hints,
             conditional_overlay_branches,
-            has_unconditional_overlay_peer,
+            mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
         } = self;
-        let (conditional_overlay_branches, complements_cover_unconditionally) =
-            minimize_conditional_overlay_branches(conditional_overlay_branches);
-        let has_unconditional_overlay_peer =
-            has_unconditional_overlay_peer || complements_cover_unconditionally;
+        let mut evidence_groups: Vec<(PathSchemaFactsAccumulator, Vec<Vec<ConditionalGuard>>)> =
+            Vec::new();
+        for (guards, branch) in conditional_overlay_branches {
+            if let Some((_, guard_sets)) = evidence_groups
+                .iter_mut()
+                .find(|(evidence, _)| evidence == &branch)
+            {
+                guard_sets.push(guards);
+            } else {
+                evidence_groups.push((branch, vec![guards]));
+            }
+        }
+        let mut conditional_overlay_branches: BTreeMap<
+            Vec<ConditionalGuard>,
+            PathSchemaFactsAccumulator,
+        > = BTreeMap::new();
+        for (branch, guard_sets) in evidence_groups {
+            for guards in
+                helm_schema_core::GuardDnf::normalize_conditional_guard_disjunction(guard_sets)
+            {
+                if guards.is_empty() {
+                    has_unconditional_overlay_peer = true;
+                    continue;
+                }
+                match conditional_overlay_branches.entry(guards) {
+                    std::collections::btree_map::Entry::Occupied(mut entry) => {
+                        entry.get_mut().merge_union(branch.clone());
+                    }
+                    std::collections::btree_map::Entry::Vacant(entry) => {
+                        entry.insert(branch.clone());
+                    }
+                }
+            }
+        }
         // An overlay whose guards could not be lowered poisons every overlay
         // for the path: emitting only the lowerable branches would understate
         // the conditional shape.
@@ -367,66 +404,6 @@ impl ContractPathAccumulator {
             conditional_overlays,
         }
     }
-}
-
-/// Guard-set algebra over a path's recorded overlay branches. Branch rows
-/// arrive one per render branch, so `if`/`else` renders of one value produce
-/// complementary keys whose union is a weaker condition or no condition at
-/// all. Resolution conjoins two branches differing in exactly one
-/// complementary truthiness member into their shared key; absorption folds a
-/// branch into a branch keyed by a strict subset; a branch left with an
-/// empty key renders unconditionally (the caller keeps the base schema).
-/// Both rules apply only to branches carrying EQUAL evidence — they simplify
-/// keys, never union facts, so per-branch precision (a nullable arm beside a
-/// strict arm) survives.
-fn minimize_conditional_overlay_branches(
-    mut branches: BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
-) -> (
-    BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
-    bool,
-) {
-    loop {
-        let keys: Vec<Vec<ConditionalGuard>> = branches.keys().cloned().collect();
-        let mut step = None;
-        'search: for (index, left) in keys.iter().enumerate() {
-            for right in &keys[index + 1..] {
-                if branches.get(left) != branches.get(right) {
-                    continue;
-                }
-                if let Some(common) = resolve_complementary_keys(left, right) {
-                    step = Some((left.clone(), Some(right.clone()), common));
-                    break 'search;
-                }
-                if key_is_strict_subset(left, right) {
-                    step = Some((right.clone(), None, left.clone()));
-                    break 'search;
-                }
-                if key_is_strict_subset(right, left) {
-                    step = Some((left.clone(), None, right.clone()));
-                    break 'search;
-                }
-            }
-        }
-        let Some((removed, also_removed, target)) = step else {
-            break;
-        };
-        let mut merged = branches.remove(&removed).unwrap_or_default();
-        if let Some(also_removed) = also_removed
-            && let Some(other) = branches.remove(&also_removed)
-        {
-            merged.merge_union(other);
-        }
-        match branches.entry(target) {
-            std::collections::btree_map::Entry::Occupied(mut entry) => {
-                entry.get_mut().merge_union(merged);
-            }
-            std::collections::btree_map::Entry::Vacant(entry) => {
-                entry.insert(merged);
-            }
-        }
-    }
-    let unconditional = branches.remove(&Vec::new()).is_some();
-    (branches, unconditional)
 }
 
 fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {

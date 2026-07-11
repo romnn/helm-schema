@@ -1,20 +1,22 @@
 {
   "uses": [
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -25,15 +27,17 @@
       "source_expr": "architecture"
     },
     {
-      "guards": [
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -56,15 +60,17 @@
       "source_expr": "commonAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "commonAnnotations",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -100,15 +106,17 @@
       "source_expr": "commonAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -188,19 +196,40 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          }
+        ],
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -230,58 +259,13 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -311,19 +295,21 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -379,11 +365,13 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -429,24 +417,45 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "commonLabels",
+            "type": "not"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -505,95 +514,35 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "type": "not"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "egress[*]",
-        "to[*]",
-        "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
+          {
+            "path": "commonLabels",
+            "type": "not"
           },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        }
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -652,86 +601,27 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "type": "not"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+          {
+            "path": "commonLabels",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -788,80 +678,31 @@
       "source_expr": "commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "commonLabels",
-          "type": "not"
-        }
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "podSelector",
-        "matchLabels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -881,47 +722,17 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1225,
-            "start": 775
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "<inline:6>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        }
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -932,15 +743,17 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -966,20 +779,22 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -995,11 +810,13 @@
       "source_expr": "master.containerPorts.redis"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1015,15 +832,17 @@
       "source_expr": "master.containerPorts.redis"
     },
     {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1039,15 +858,17 @@
       "source_expr": "metrics.containerPorts.http"
     },
     {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1058,19 +879,21 @@
       "source_expr": "metrics.enabled"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1140,15 +963,17 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1178,19 +1003,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1201,23 +1028,25 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1284,15 +1113,17 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1359,23 +1190,25 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1401,24 +1234,26 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1468,19 +1303,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1530,15 +1367,17 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1586,15 +1425,17 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "namespaceOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "namespaceOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -1620,15 +1461,17 @@
       "source_expr": "namespaceOverride"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1639,15 +1482,17 @@
       "source_expr": "networkPolicy.allowExternal"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1658,11 +1503,13 @@
       "source_expr": "networkPolicy.allowExternalEgress"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1673,19 +1520,21 @@
       "source_expr": "networkPolicy.enabled"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.extraEgress",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.extraEgress",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1708,19 +1557,21 @@
       "source_expr": "networkPolicy.extraEgress"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.extraEgress",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.extraEgress",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1756,15 +1607,17 @@
       "source_expr": "networkPolicy.extraEgress"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.extraIngress",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.extraIngress",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1787,15 +1640,17 @@
       "source_expr": "networkPolicy.extraIngress"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.extraIngress",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.extraIngress",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1831,26 +1686,70 @@
       "source_expr": "networkPolicy.extraIngress"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.ingressNSMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "range"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1861,90 +1760,32 @@
       "source_expr": "networkPolicy.ingressNSMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.ingressNSMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.ingressNSMatchLabels",
-          "type": "range"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.ingressNSMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.ingressNSMatchLabels",
-          "type": "range"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "range"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -1961,26 +1802,70 @@
       "source_expr": "networkPolicy.ingressNSMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.ingressNSPodMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "range"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -1991,90 +1876,32 @@
       "source_expr": "networkPolicy.ingressNSPodMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.ingressNSPodMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.ingressNSPodMatchLabels",
-          "type": "range"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSPodMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSPodMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.ingressNSPodMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.ingressNSMatchLabels",
-            "networkPolicy.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.ingressNSPodMatchLabels",
-          "type": "range"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "range"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -2091,19 +1918,21 @@
       "source_expr": "networkPolicy.ingressNSPodMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2114,30 +1943,82 @@
       "source_expr": "networkPolicy.metrics.allowExternal"
     },
     {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "range"
+          }
+        ],
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2148,102 +2029,36 @@
       "source_expr": "networkPolicy.metrics.ingressNSMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSMatchLabels",
-          "type": "range"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSMatchLabels",
-          "type": "range"
-        }
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "range"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -2260,30 +2075,82 @@
       "source_expr": "networkPolicy.metrics.ingressNSMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "range"
+          }
+        ],
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2294,102 +2161,36 @@
       "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-          "type": "range"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
-    },
-    {
-      "guards": [
-        {
-          "path": "metrics.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.metrics.allowExternal",
-          "type": "not"
-        },
-        {
-          "paths": [
-            "networkPolicy.metrics.ingressNSMatchLabels",
-            "networkPolicy.metrics.ingressNSPodMatchLabels"
-          ],
-          "type": "or"
-        },
-        {
-          "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-          "type": "range"
-        }
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "range"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -2406,24 +2207,26 @@
       "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "sentinel.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "sentinel.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2439,15 +2242,17 @@
       "source_expr": "sentinel.containerPorts.sentinel"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "sentinel.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "sentinel.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -2463,43 +2268,36 @@
       "source_expr": "sentinel.containerPorts.sentinel"
     },
     {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "sentinel.enabled",
-          "type": "truthy"
-        }
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "sentinel.enabled"
-    },
-    {
-      "guards": [
-        {
-          "path": "networkPolicy.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "sentinel.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "networkPolicy.allowExternalEgress",
-          "type": "not"
-        },
-        {
-          "path": "architecture",
-          "type": "eq",
-          "value": "replication"
-        }
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "sentinel.enabled",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "sentinel.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          },
+          {
+            "path": "architecture",
+            "type": "eq",
+            "value": "replication"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -2510,5 +2308,5 @@
       "source_expr": "sentinel.enabled"
     }
   ],
-  "version": 2
+  "version": 3
 }

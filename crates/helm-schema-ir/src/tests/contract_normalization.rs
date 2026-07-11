@@ -13,7 +13,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             source_expr: "image.tag".to_string(),
             path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             kind: ValueKind::Scalar,
-            guards: Vec::new(),
+            condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: None,
             provenance: vec![ContractProvenance::new(
                 "templates/a.yaml",
@@ -25,7 +25,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             source_expr: "image.tag".to_string(),
             path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             kind: ValueKind::Scalar,
-            guards: Vec::new(),
+            condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: None,
             provenance: vec![ContractProvenance::new(
                 "templates/b.yaml",
@@ -39,18 +39,89 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
 
     sim_assert_eq!(have: uses.len(), want: 1);
     sim_assert_eq!(have: uses[0].provenance.len(), want: 2);
-    assert!(
-        uses[0]
-            .provenance
-            .iter()
-            .any(|provenance| provenance.template_path == "templates/a.yaml")
+}
+
+#[test]
+fn canonicalization_preserves_different_conditions_at_distinct_render_sites() {
+    let mut uses = vec![
+        ContractUse::with_provenances(
+            "image.tag".to_string(),
+            YamlPath(vec!["spec".to_string(), "tag".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+            vec![ContractProvenance::new(
+                "templates/a.yaml",
+                SourceSpan::new(10, 20),
+                Vec::new(),
+            )],
+        ),
+        ContractUse::with_provenances(
+            "image.tag".to_string(),
+            YamlPath(vec!["spec".to_string(), "tag".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Not {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+            vec![ContractProvenance::new(
+                "templates/b.yaml",
+                SourceSpan::new(30, 40),
+                Vec::new(),
+            )],
+        ),
+    ];
+
+    canonicalize_contract_uses(&mut uses);
+
+    sim_assert_eq!(have: uses.len(), want: 2);
+}
+
+#[test]
+fn canonicalization_collapses_conditions_from_the_same_render_site() {
+    let provenance = ContractProvenance::new(
+        "templates/deployment.yaml",
+        SourceSpan::new(10, 20),
+        vec!["helper.render".to_string()],
     );
-    assert!(
-        uses[0]
-            .provenance
-            .iter()
-            .any(|provenance| provenance.template_path == "templates/b.yaml"
-                && provenance.helper_chain == vec!["helper.render".to_string()])
+    let mut uses = vec![
+        ContractUse::with_provenances(
+            "image.tag".to_string(),
+            YamlPath(vec!["spec".to_string(), "tag".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+            vec![provenance.clone()],
+        ),
+        ContractUse::with_provenances(
+            "image.tag".to_string(),
+            YamlPath(vec!["spec".to_string(), "tag".to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Not {
+                path: "feature.enabled".to_string(),
+            }],
+            None,
+            vec![provenance],
+        ),
+    ];
+
+    canonicalize_contract_uses(&mut uses);
+
+    sim_assert_eq!(have: uses.len(), want: 1);
+    sim_assert_eq!(
+        have: uses[0].condition.guard_conjunctions(),
+        want: vec![
+            vec![Guard::Truthy {
+                path: "feature.enabled".to_string(),
+            }],
+            vec![Guard::Not {
+                path: "feature.enabled".to_string(),
+            }],
+        ]
     );
 }
 
@@ -100,7 +171,7 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
     sim_assert_eq!(have: uses.len(), want: 1);
     assert!(
         uses[0]
-            .guards
+            .single_guard_conjunction()
             .iter()
             .any(|guard| { matches!(guard, Guard::Truthy { path } if path == "auth.password") })
     );

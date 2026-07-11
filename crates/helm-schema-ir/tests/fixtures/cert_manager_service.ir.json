@@ -1,20 +1,22 @@
 {
   "uses": [
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "creator",
-          "type": "eq",
-          "value": "helm"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "creator",
+            "type": "eq",
+            "value": "helm"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -34,19 +36,21 @@
       "source_expr": "creator"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -66,19 +70,21 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "fullnameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -104,19 +110,21 @@
       "source_expr": "fullnameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "global.commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -136,19 +144,21 @@
       "source_expr": "global.commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "global.commonLabels",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "global.commonLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -174,23 +184,25 @@
       "source_expr": "global.commonLabels"
     },
     {
-      "guards": [
-        {
-          "path": "nameOverride",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -210,19 +222,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -249,19 +263,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -288,27 +304,29 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "fullnameOverride",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "not"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "not"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -334,19 +352,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "nameOverride",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -373,19 +393,21 @@
       "source_expr": "nameOverride"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "namespace",
-          "type": "default"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "namespace",
+            "type": "default"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -411,11 +433,13 @@
       "source_expr": "namespace"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -426,15 +450,17 @@
       "source_expr": "prometheus.enabled"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -445,15 +471,17 @@
       "source_expr": "prometheus.podmonitor.enabled"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -468,19 +496,21 @@
       "source_expr": "prometheus.servicemonitor.targetPort"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "serviceAnnotations",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "serviceAnnotations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -491,19 +521,21 @@
       "source_expr": "serviceAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "serviceAnnotations",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "serviceAnnotations",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -517,19 +549,21 @@
       "source_expr": "serviceAnnotations"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceIPFamilies",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceIPFamilies",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -540,19 +574,21 @@
       "source_expr": "serviceIPFamilies"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceIPFamilies",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceIPFamilies",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -566,19 +602,21 @@
       "source_expr": "serviceIPFamilies"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceIPFamilyPolicy",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceIPFamilyPolicy",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -589,19 +627,21 @@
       "source_expr": "serviceIPFamilyPolicy"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "serviceIPFamilyPolicy",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceIPFamilyPolicy",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -615,19 +655,21 @@
       "source_expr": "serviceIPFamilyPolicy"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "serviceLabels",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "serviceLabels",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -638,19 +680,21 @@
       "source_expr": "serviceLabels"
     },
     {
-      "guards": [
-        {
-          "path": "prometheus.enabled",
-          "type": "truthy"
-        },
-        {
-          "path": "prometheus.podmonitor.enabled",
-          "type": "not"
-        },
-        {
-          "path": "serviceLabels",
-          "type": "with"
-        }
+      "condition": [
+        [
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "serviceLabels",
+            "type": "with"
+          }
+        ]
       ],
       "kind": "Fragment",
       "path": [
@@ -664,5 +708,5 @@
       "source_expr": "serviceLabels"
     }
   ],
-  "version": 2
+  "version": 3
 }

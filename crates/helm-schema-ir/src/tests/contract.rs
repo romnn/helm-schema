@@ -29,8 +29,8 @@ fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicat
 
     sim_assert_eq!(have: value_uses.len(), want: 1);
     sim_assert_eq!(
-        have: value_uses.first().map(|value_use| &value_use.guards),
-        want: Some(&vec![Guard::Default {
+        have: value_uses.first().map(ContractUse::single_guard_conjunction),
+        want: Some(vec![Guard::Default {
             path: "serviceAccount.name".to_string(),
         }])
     );
@@ -163,7 +163,7 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
         want: YamlPath(vec!["metadata".to_string(), "name".to_string()])
     );
     sim_assert_eq!(
-        have: value_use.guards,
+        have: value_use.single_guard_conjunction(),
         want: vec![
             Guard::Truthy {
                 path: "subchart.serviceAccount.enabled".to_string(),
@@ -201,7 +201,7 @@ fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
     sim_assert_eq!(have: value_uses[0].source_expr, want: "extraConfig");
     sim_assert_eq!(have: value_uses[0].path, want: YamlPath(Vec::new()));
     sim_assert_eq!(have: value_uses[0].kind, want: ValueKind::Scalar);
-    assert!(value_uses[0].guards.is_empty());
+    assert!(value_uses[0].single_guard_conjunction().is_empty());
     assert!(value_uses[0].resource.is_none());
 }
 

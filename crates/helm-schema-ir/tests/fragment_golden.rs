@@ -57,7 +57,7 @@ fn branchy_mapping_merges_guarded_entry_arms() {
                             scalar [text{"\"true\""}]
         reads:
           commonAnnotations [truthy(commonAnnotations)]
-          legacyAnnotations [not(commonAnnotations), truthy(legacyAnnotations)]
+          legacyAnnotations [truthy(legacyAnnotations), not(commonAnnotations)]
     "#};
     assert_fragment_dump(source, "", expected);
 }

@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
-use helm_schema_core as output_path;
+use helm_schema_core::{self as output_path, Predicate};
 
 /// Apply semantic finalization to claims produced by the interpreter.
 ///
@@ -27,19 +27,36 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
 #[tracing::instrument(skip_all)]
 pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
     canonicalize_contract_use_inputs(uses);
+    expand_condition_disjuncts(uses);
     uses.sort_by(contract_use_semantic_cmp);
 
-    let mut merged = Vec::with_capacity(uses.len());
+    let mut semantic_rows = Vec::with_capacity(uses.len());
     for contract_use in std::mem::take(uses) {
-        if let Some(existing) = merged.last_mut()
+        if let Some(existing) = semantic_rows.last_mut()
             && contract_use_semantic_cmp(existing, &contract_use).is_eq()
         {
             merge_contract_use_provenance(existing, contract_use.provenance);
             continue;
         }
-        merged.push(contract_use);
+        semantic_rows.push(contract_use);
     }
-    *uses = merged;
+
+    semantic_rows.sort_by(|left, right| {
+        contract_use_render_site_cmp(left, right).then_with(|| left.condition.cmp(&right.condition))
+    });
+    let mut merged_sites: Vec<ContractUse> = Vec::with_capacity(semantic_rows.len());
+    for contract_use in semantic_rows {
+        if let Some(existing) = merged_sites.last_mut()
+            && contract_use_render_site_cmp(existing, &contract_use).is_eq()
+        {
+            existing
+                .condition
+                .union_preserving_disjuncts(contract_use.condition);
+            continue;
+        }
+        merged_sites.push(contract_use);
+    }
+    *uses = merged_sites;
 }
 
 fn canonicalize_contract_use_inputs(uses: &mut [ContractUse]) {
@@ -51,7 +68,7 @@ fn canonicalize_contract_use_inputs(uses: &mut [ContractUse]) {
 #[tracing::instrument(skip_all)]
 fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
     let mut merged: Vec<ContractUse> = Vec::with_capacity(uses.len());
-    let mut pathless_index_by_identity: BTreeMap<(String, ValueKind, Vec<Guard>), usize> =
+    let mut pathless_index_by_identity: BTreeMap<(String, ValueKind, BTreeSet<Predicate>), usize> =
         BTreeMap::new();
 
     for mut contract_use in std::mem::take(uses) {
@@ -59,7 +76,7 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
             let key = (
                 contract_use.source_expr.clone(),
                 contract_use.kind,
-                contract_use.guards.clone(),
+                contract_predicates(&contract_use),
             );
             if let Some(existing) = pathless_index_by_identity
                 .get(&key)
@@ -84,6 +101,7 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
+    expand_condition_disjuncts(uses);
     let defaulted_render_sites: BTreeSet<_> = uses
         .iter()
         .filter(|contract_use| has_self_default_guard(contract_use))
@@ -99,7 +117,8 @@ pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>
 }
 
 #[tracing::instrument(skip_all)]
-fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
+pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
+    expand_condition_disjuncts(uses);
     // The subsumption scan only ever compares rows sharing one render site
     // (source, path, kind, resource), so group indices once and keep the
     // quadratic candidate scan inside those buckets instead of over all rows.
@@ -118,6 +137,7 @@ fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
     }
 
     let mut keep = vec![true; uses.len()];
+    let predicates_by_index = uses.iter().map(contract_predicates).collect::<Vec<_>>();
     for indices in buckets.values() {
         if indices.len() < 2 {
             continue;
@@ -126,32 +146,36 @@ fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
             let Some(contract_use) = uses.get(index) else {
                 continue;
             };
-            let has_self_truthy = contract_use.guards.iter().any(
-                |guard| matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr),
+            let predicates = predicates_by_index.get(index).cloned().unwrap_or_default();
+            let has_self_truthy = predicates.iter().any(
+                |predicate| matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &contract_use.source_expr),
             );
-            if contract_use.guards.iter().any(
-                |guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr),
+            if predicates.iter().any(
+                |predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr),
             ) {
                 continue;
             }
             let subsumed = indices
                 .iter()
-                .filter_map(|&other_index| uses.get(other_index))
-                .any(|other| {
+                .filter_map(|&other_index| {
+                    uses.get(other_index)
+                        .zip(predicates_by_index.get(other_index))
+                })
+                .any(|(other, other_predicates)| {
                     !other.provenance.is_empty()
                         && ((contract_use.provenance.is_empty()
                             && contract_use.resource.is_some())
                             || other.provenance == contract_use.provenance)
-                        && other.guards.len() > contract_use.guards.len()
-                        && contract_use
-                            .guards
-                            .iter()
-                            .all(|guard| other.guards.contains(guard))
+                        && other_predicates.len() > predicates.len()
+                        && predicates.is_subset(other_predicates)
                         && ((!has_self_truthy
-                            && other.guards.iter().any(|guard| {
-                                matches!(guard, Guard::Truthy { path } if path == &contract_use.source_expr)
+                            && other_predicates.iter().any(|predicate| {
+                                matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &contract_use.source_expr)
                             }))
-                            || extra_guards_are_truthy_parents(contract_use, other))
+                            || extra_predicates_are_truthy_parents(
+                                &predicates,
+                                other_predicates,
+                            ))
                 });
             if subsumed && let Some(flag) = keep.get_mut(index) {
                 *flag = false;
@@ -167,19 +191,21 @@ fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
     });
 }
 
-fn extra_guards_are_truthy_parents(contract_use: &ContractUse, other: &ContractUse) -> bool {
-    other
-        .guards
+fn extra_predicates_are_truthy_parents(
+    predicates: &BTreeSet<Predicate>,
+    other_predicates: &BTreeSet<Predicate>,
+) -> bool {
+    other_predicates
         .iter()
-        .filter(|guard| !contract_use.guards.contains(guard))
-        .all(|guard| {
-            let Guard::Truthy { path: parent } = guard else {
+        .filter(|predicate| !predicates.contains(predicate))
+        .all(|predicate| {
+            let Predicate::Guard(Guard::Truthy { path: parent }) = predicate else {
                 return false;
             };
-            contract_use.guards.iter().any(|existing| {
+            predicates.iter().any(|existing| {
                 matches!(
                     existing,
-                    Guard::Truthy { path: child }
+                    Predicate::Guard(Guard::Truthy { path: child })
                         if output_path::values_path_is_descendant(child, parent)
                 )
             })
@@ -198,19 +224,48 @@ fn render_site(contract_use: &ContractUse) -> RenderSite {
 }
 
 fn has_self_default_guard(contract_use: &ContractUse) -> bool {
-    contract_use
-        .guards
+    contract_predicates(contract_use)
         .iter()
-        .any(|guard| matches!(guard, Guard::Default { path } if path == &contract_use.source_expr))
+        .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr))
+}
+
+fn contract_predicates(contract_use: &ContractUse) -> BTreeSet<Predicate> {
+    contract_use
+        .condition
+        .disjuncts()
+        .iter()
+        .next()
+        .cloned()
+        .unwrap_or_default()
+}
+
+fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {
+    let mut expanded = Vec::new();
+    for contract_use in std::mem::take(uses) {
+        for conjunction in contract_use.condition.disjuncts() {
+            let mut branch = contract_use.clone();
+            branch.condition =
+                helm_schema_core::GuardDnf::from_conjunction(conjunction.iter().cloned());
+            expanded.push(branch);
+        }
+    }
+    *uses = expanded;
 }
 
 fn contract_use_semantic_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
+    contract_use_base_cmp(left, right).then_with(|| left.condition.cmp(&right.condition))
+}
+
+fn contract_use_render_site_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
+    contract_use_base_cmp(left, right).then_with(|| left.provenance.cmp(&right.provenance))
+}
+
+fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
     left.source_expr
         .cmp(&right.source_expr)
         .then_with(|| left.path.0.cmp(&right.path.0))
         .then_with(|| (left.kind as u8).cmp(&(right.kind as u8)))
         .then_with(|| left.resource.cmp(&right.resource))
-        .then_with(|| left.guards.cmp(&right.guards))
 }
 
 fn merge_contract_use_provenance(

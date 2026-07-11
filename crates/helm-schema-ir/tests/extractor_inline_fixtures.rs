@@ -92,10 +92,10 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
         .expect("header scalar use present");
 
     assert!(
-        header_use.guards == [range_guard("map")],
+        header_use.single_guard_conjunction() == [range_guard("map")],
         "the destructured range header's source use should carry only Range(map); \
          got guards: {:?}",
-        header_use.guards,
+        header_use.single_guard_conjunction(),
     );
 
     let fragment_use = map_uses
@@ -106,9 +106,11 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
         })
         .expect("range fragment use present");
     assert!(
-        fragment_use.guards.contains(&range_guard("map")),
+        fragment_use
+            .single_guard_conjunction()
+            .contains(&range_guard("map")),
         "the fragment use should inherit Range(map); got guards: {:?}",
-        fragment_use.guards,
+        fragment_use.single_guard_conjunction(),
     );
 }
 
@@ -147,10 +149,10 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
         .find(|use_| use_.path.0.is_empty() && use_.kind == helm_schema_ir::ValueKind::Scalar)
         .expect("header scalar use present");
     assert!(
-        header_use.guards == [range_guard("fallbackMap")],
+        header_use.single_guard_conjunction() == [range_guard("fallbackMap")],
         "destructured range header use should carry only Range(fallbackMap), but got \
          guards: {:?}",
-        header_use.guards,
+        header_use.single_guard_conjunction(),
     );
 
     let fragment_use = fallback_map_uses
@@ -161,9 +163,11 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
         })
         .expect("range fragment use present");
     assert!(
-        fragment_use.guards.contains(&range_guard("fallbackMap")),
+        fragment_use
+            .single_guard_conjunction()
+            .contains(&range_guard("fallbackMap")),
         "the fragment use should inherit Range(fallbackMap); got guards: {:?}",
-        fragment_use.guards,
+        fragment_use.single_guard_conjunction(),
     );
 
     // No phantom paths from misparsing `default`, `(dict)`, etc.
@@ -210,9 +214,11 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
         "expected exactly one `suffix` use inside range body; got: {ir:#?}",
     );
     assert!(
-        suffix_uses[0].guards.contains(&range_guard("themap")),
+        suffix_uses[0]
+            .single_guard_conjunction()
+            .contains(&range_guard("themap")),
         "expected `suffix` use guarded by Range(themap); got: {:?}",
-        suffix_uses[0].guards,
+        suffix_uses[0].single_guard_conjunction(),
     );
 
     // `fallback` is OUTSIDE the range — must NOT carry that guard.
@@ -225,7 +231,7 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
     assert!(
         fallback_uses
             .iter()
-            .all(|u| !u.guards.contains(&truthy("themap"))),
+            .all(|u| !u.single_guard_conjunction().contains(&truthy("themap"))),
         "`fallback` use outside the range body must NOT inherit the \
          range's Truthy guard; got: {fallback_uses:#?}",
     );
@@ -498,9 +504,11 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         "expected exactly one then-branch use; got {ir:#?}",
     );
     assert!(
-        primary_uses[0].guards.contains(&truthy("enabled")),
+        primary_uses[0]
+            .single_guard_conjunction()
+            .contains(&truthy("enabled")),
         "then-branch use should inherit Truthy(enabled); got {:?}",
-        primary_uses[0].guards,
+        primary_uses[0].single_guard_conjunction(),
     );
 
     let fallback_uses: Vec<&ContractUse> = ir
@@ -513,9 +521,11 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         "expected exactly one else-branch use; got {ir:#?}",
     );
     assert!(
-        fallback_uses[0].guards.contains(&not("enabled")),
+        fallback_uses[0]
+            .single_guard_conjunction()
+            .contains(&not("enabled")),
         "else-branch use should inherit Not(enabled); got {:?}",
-        fallback_uses[0].guards,
+        fallback_uses[0].single_guard_conjunction(),
     );
 
     let after_uses: Vec<&ContractUse> = ir
@@ -528,10 +538,14 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
         "expected exactly one post-branch use; got {ir:#?}",
     );
     assert!(
-        !after_uses[0].guards.contains(&truthy("enabled"))
-            && !after_uses[0].guards.contains(&not("enabled")),
+        !after_uses[0]
+            .single_guard_conjunction()
+            .contains(&truthy("enabled"))
+            && !after_uses[0]
+                .single_guard_conjunction()
+                .contains(&not("enabled")),
         "branch guards must not leak to following nodes; got {:?}",
-        after_uses[0].guards,
+        after_uses[0].single_guard_conjunction(),
     );
 }
 
@@ -558,8 +572,10 @@ fn local_storage_class_alias_emits_guarded_leaf_use() {
     assert!(
         matching_uses.iter().any(|use_| {
             use_.path.0 == ["spec".to_string(), "storageClassName".to_string()]
-                && use_.guards.contains(&truthy("global.storageClass"))
-                && use_.guards.contains(&Guard::Default {
+                && use_
+                    .single_guard_conjunction()
+                    .contains(&truthy("global.storageClass"))
+                && use_.single_guard_conjunction().contains(&Guard::Default {
                     path: "global.storageClass".to_string(),
                 })
         }),
@@ -592,9 +608,9 @@ fn scalar_item_range_keeps_parent_collection_path() {
         })
         .expect("scalar-item range should keep a collection-level parent use");
     assert!(
-        parent_use.guards == [range_guard("accessModes")],
+        parent_use.single_guard_conjunction() == [range_guard("accessModes")],
         "the collection-level range header use should carry only Range(accessModes); got: {:?}",
-        parent_use.guards,
+        parent_use.single_guard_conjunction(),
     );
 
     let item_use = ir
@@ -606,9 +622,11 @@ fn scalar_item_range_keeps_parent_collection_path() {
         })
         .expect("scalar-item range should still emit per-item uses");
     assert!(
-        item_use.guards.contains(&range_guard("accessModes")),
+        item_use
+            .single_guard_conjunction()
+            .contains(&range_guard("accessModes")),
         "the item use should inherit Range(accessModes); got: {:?}",
-        item_use.guards,
+        item_use.single_guard_conjunction(),
     );
 }
 
@@ -660,10 +678,14 @@ fn scalar_range_wrapped_into_object_item_stays_on_leaf_path() {
         })
         .expect("scalar path item should still surface as a value use");
     assert!(
-        leaf_use.guards.contains(&range_guard("hosts"))
-            && leaf_use.guards.contains(&range_guard("hosts.*.paths")),
+        leaf_use
+            .single_guard_conjunction()
+            .contains(&range_guard("hosts"))
+            && leaf_use
+                .single_guard_conjunction()
+                .contains(&range_guard("hosts.*.paths")),
         "the wrapped scalar item use should retain both enclosing range guards; got: {:?}",
-        leaf_use.guards,
+        leaf_use.single_guard_conjunction(),
     );
 }
 
@@ -1136,7 +1158,7 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
     // same convention document-level condition reads always had (the
     // summary lane used to flatten these to unconditional reads).
     sim_assert_eq!(
-        have: flag_uses[0].guards.clone(),
+        have: flag_uses[0].single_guard_conjunction(),
         want: vec![helm_schema_ir::Guard::Truthy {
             path: "featureFlag".to_string()
         }],
@@ -1296,7 +1318,7 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
         want: 1,
         "expected exactly one `payload` use inside the if-body; got: {ir:#?}",
     );
-    let payload_guards = &payload_uses[0].guards;
+    let payload_guards = payload_uses[0].single_guard_conjunction();
     assert!(
         payload_guards.contains(&eq("mode", ".Values.fake")),
         "expected `payload` body use guarded by Eq(mode, \".Values.fake\"); \

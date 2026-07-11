@@ -10,26 +10,26 @@ fn contract_document_serializes_stable_guard_shape() {
         source_expr: "kid.enabled".to_string(),
         path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
         kind: ValueKind::Scalar,
-        guards: vec![
+        condition: helm_schema_core::GuardDnf::from_guards(vec![
             Guard::AnyOf {
                 alternatives: vec![
+                    vec![Guard::Truthy {
+                        path: "kid.enabled".to_string(),
+                    }],
                     vec![Guard::Eq {
                         path: "kid.mode".to_string(),
                         value: crate::GuardValue::string("prod"),
-                    }],
-                    vec![Guard::Truthy {
-                        path: "kid.enabled".to_string(),
                     }],
                 ],
             },
             Guard::Or {
                 paths: vec![
-                    "tags.observability".to_string(),
-                    "kid.enabled".to_string(),
                     "global.kidEnabled".to_string(),
+                    "kid.enabled".to_string(),
+                    "tags.observability".to_string(),
                 ],
             },
-        ],
+        ]),
         resource: Some(ResourceRef::concrete(
             "v1".to_string(),
             "ConfigMap".to_string(),
@@ -40,7 +40,7 @@ fn contract_document_serializes_stable_guard_shape() {
         source_expr: "alpha.enabled".to_string(),
         path: YamlPath(Vec::new()),
         kind: ValueKind::Scalar,
-        guards: Vec::new(),
+        condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: None,
         provenance: Vec::new(),
     };
@@ -51,18 +51,18 @@ fn contract_document_serializes_stable_guard_shape() {
     sim_assert_eq!(
         have: actual,
         want: json!({
-            "version": 2,
+            "version": 3,
             "uses": [{
                 "source_expr": "alpha.enabled",
                 "path": [],
                 "kind": "Scalar",
-                "guards": [],
+                "condition": [[]],
                 "resource": null
             }, {
                 "source_expr": "kid.enabled",
                 "path": ["data", "enabled"],
                 "kind": "Scalar",
-                "guards": [{
+                "condition": [[{
                     "type": "or",
                     "paths": ["global.kidEnabled", "kid.enabled", "tags.observability"]
                 }, {
@@ -75,7 +75,7 @@ fn contract_document_serializes_stable_guard_shape() {
                         "path": "kid.mode",
                         "value": "prod"
                     }]]
-                }],
+                }]],
                 "resource": {
                     "api_version": "v1",
                     "kind": "ConfigMap"
