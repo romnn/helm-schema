@@ -33,7 +33,7 @@ use referencing::uri;
 use serde_json::{Map, Value};
 use tracing::instrument;
 
-use crate::error::{CliError, CliResult};
+use crate::error::{CliError, EngineResult};
 use crate::fetch_policy::FetchPolicy;
 use crate::load_budget::{LoadBudget, read_to_end_capped};
 
@@ -57,7 +57,7 @@ pub fn flatten_refs(
     base_dir: &Path,
     fetch_policy: FetchPolicy,
     load_budget: LoadBudget,
-) -> CliResult<Value> {
+) -> EngineResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
     let retriever = FsHttpRetrieve::new(fetch_policy, load_budget);
     flatten_with_retriever(schema, &base_uri, retriever)
@@ -69,7 +69,7 @@ pub fn flatten_refs(
 /// responsible for fetching and preparing external refs. If an external ref
 /// reaches this pass, the schema is not self-contained and the run fails.
 #[instrument(skip_all)]
-pub fn flatten_prepared_refs(schema: Value, base_dir: &Path) -> CliResult<Value> {
+pub fn flatten_prepared_refs(schema: Value, base_dir: &Path) -> EngineResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
     flatten_with_retriever(schema, &base_uri, NoExternalRetrieve)
 }
@@ -87,7 +87,7 @@ pub fn bundle_refs(
     base_dir: &Path,
     fetch_policy: FetchPolicy,
     load_budget: LoadBudget,
-) -> CliResult<Value> {
+) -> EngineResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
     let retriever = FsHttpRetrieve::new(fetch_policy, load_budget);
     bundle_with_retriever(schema, &base_uri, retriever)
@@ -99,7 +99,7 @@ pub fn bundle_refs(
 /// Internal refs are preserved. External refs fail, because input assembly
 /// should have already re-homed them under root-level `$defs`.
 #[instrument(skip_all)]
-pub fn bundle_prepared_refs(schema: Value, base_dir: &Path) -> CliResult<Value> {
+pub fn bundle_prepared_refs(schema: Value, base_dir: &Path) -> EngineResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
     bundle_with_retriever(schema, &base_uri, NoExternalRetrieve)
 }
@@ -119,7 +119,7 @@ pub fn flatten_with_retriever(
     schema: Value,
     base_uri: &str,
     retriever: impl Retrieve + 'static,
-) -> CliResult<Value> {
+) -> EngineResult<Value> {
     let dereferenced = jsonschema::options()
         .with_base_uri(base_uri.to_string())
         .with_retriever(retriever)
@@ -138,7 +138,7 @@ pub fn bundle_with_retriever(
     mut schema: Value,
     base_uri: &str,
     retriever: impl Retrieve,
-) -> CliResult<Value> {
+) -> EngineResult<Value> {
     let root_document_uri = document_uri(&uri::from_str(base_uri)?)?;
     let root_base_uri = effective_base_uri(&schema, &root_document_uri)?;
     let root_document_uris = BTreeSet::from([
@@ -181,7 +181,7 @@ impl<R: Retrieve> BundleState<R> {
         &mut self,
         schema: &mut Value,
         current_document_uri: &Uri<String>,
-    ) -> CliResult<()> {
+    ) -> EngineResult<()> {
         let current_document_uri = effective_base_uri(schema, current_document_uri)?;
         if let Some(reference) = schema_reference(schema) {
             let target_uri = uri::resolve_against(&current_document_uri.borrow(), &reference)?;
@@ -202,13 +202,13 @@ impl<R: Retrieve> BundleState<R> {
         &self,
         target_uri: &Uri<String>,
         current_document_uri: &Uri<String>,
-    ) -> CliResult<bool> {
+    ) -> EngineResult<bool> {
         let target_document_uri = document_uri(target_uri)?;
         Ok(self.is_root_document(&target_document_uri)
             && self.is_root_document(current_document_uri))
     }
 
-    fn definition_name_for_target(&mut self, target_uri: &Uri<String>) -> CliResult<String> {
+    fn definition_name_for_target(&mut self, target_uri: &Uri<String>) -> EngineResult<String> {
         let target_key = target_uri.as_str().to_string();
         if let Some(name) = self.names_by_target_uri.get(&target_key) {
             return Ok(name.clone());
@@ -229,7 +229,7 @@ impl<R: Retrieve> BundleState<R> {
         &self,
         target_uri: &Uri<String>,
         target_document_uri: &Uri<String>,
-    ) -> CliResult<Value> {
+    ) -> EngineResult<Value> {
         if self.is_root_document(target_document_uri) {
             return Err(CliError::RefBundling(format!(
                 "cannot bundle non-local ref back to root document: {target_uri}"
@@ -255,7 +255,7 @@ impl<R: Retrieve> BundleState<R> {
         }
     }
 
-    fn insert_definitions(self, schema: &mut Value) -> CliResult<()> {
+    fn insert_definitions(self, schema: &mut Value) -> EngineResult<()> {
         if self.definitions.is_empty() {
             return Ok(());
         }
@@ -387,7 +387,7 @@ fn schema_reference(schema: &Value) -> Option<String> {
         .map(str::to_string)
 }
 
-fn document_uri(uri: &Uri<String>) -> CliResult<Uri<String>> {
+fn document_uri(uri: &Uri<String>) -> EngineResult<Uri<String>> {
     let document = uri.strip_fragment().as_str().to_string();
     Uri::parse(document)
         .map_err(|err| CliError::RefBundling(format!("parse document uri for {uri}: {err:?}")))
@@ -396,7 +396,7 @@ fn document_uri(uri: &Uri<String>) -> CliResult<Uri<String>> {
 fn effective_base_uri(
     schema: &Value,
     current_document_uri: &Uri<String>,
-) -> CliResult<Uri<String>> {
+) -> EngineResult<Uri<String>> {
     let Some(id) = schema
         .as_object()
         .and_then(|object| object.get("$id"))
@@ -409,7 +409,7 @@ fn effective_base_uri(
     document_uri(&resolved)
 }
 
-fn select_fragment(document: Value, target_uri: &Uri<String>) -> CliResult<Value> {
+fn select_fragment(document: Value, target_uri: &Uri<String>) -> EngineResult<Value> {
     let Some(fragment) = target_uri.fragment() else {
         return Ok(document);
     };

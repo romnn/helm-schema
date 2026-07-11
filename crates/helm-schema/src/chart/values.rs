@@ -8,13 +8,13 @@ use vfs::VfsPath;
 
 use super::paths::scope_values_path;
 use super::types::ChartContext;
-use crate::error::{CliError, CliResult};
+use crate::error::{CliError, EngineResult};
 
 #[instrument(skip_all)]
 pub fn build_composed_values_yaml(
     charts: &[ChartContext],
     include_subchart_values: bool,
-) -> CliResult<Option<String>> {
+) -> EngineResult<Option<String>> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
 
     let root_values_path = root.chart_dir.join("values.yaml")?;
@@ -41,7 +41,7 @@ pub fn build_composed_values_descriptions(
     charts: &[ChartContext],
     include_subchart_values: bool,
     values_files: &[PathBuf],
-) -> CliResult<BTreeMap<String, String>> {
+) -> EngineResult<BTreeMap<String, String>> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
     let mut descriptions = BTreeMap::new();
 
@@ -67,7 +67,7 @@ pub fn build_composed_values_descriptions(
     Ok(descriptions)
 }
 
-fn compose_subchart_values(charts: &[ChartContext], doc: &mut YamlValue) -> CliResult<()> {
+fn compose_subchart_values(charts: &[ChartContext], doc: &mut YamlValue) -> EngineResult<()> {
     // Helm hoists each subchart's `global` values into the root `.Values.global`,
     // then exposes that effective global object back inside every subchart.
     // Mirroring the same shape here keeps the composed values document aligned
@@ -142,7 +142,7 @@ fn add_values_file_descriptions(
     chart_dir: &VfsPath,
     prefix: &[String],
     out: &mut BTreeMap<String, String>,
-) -> CliResult<()> {
+) -> EngineResult<()> {
     let values_path = chart_dir.join("values.yaml")?;
     if !values_path.is_file()? {
         return Ok(());
@@ -161,7 +161,7 @@ fn add_values_file_descriptions(
 fn add_layered_values_file_descriptions(
     values_path: &Path,
     out: &mut BTreeMap<String, String>,
-) -> CliResult<()> {
+) -> EngineResult<()> {
     let source = std::fs::read_to_string(values_path)?;
     let descriptions = extract_values_yaml_descriptions(&source);
 

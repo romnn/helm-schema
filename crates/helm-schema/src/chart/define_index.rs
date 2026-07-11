@@ -4,10 +4,13 @@ use vfs::VfsPath;
 
 use super::types::ChartContext;
 use super::{FileRole, list_chart_files};
-use crate::error::CliResult;
+use crate::error::EngineResult;
 
 #[instrument(skip_all)]
-pub fn build_define_index(charts: &[ChartContext], include_tests: bool) -> CliResult<DefineIndex> {
+pub fn build_define_index(
+    charts: &[ChartContext],
+    include_tests: bool,
+) -> EngineResult<DefineIndex> {
     let mut index = DefineIndex::new();
 
     for chart in charts {

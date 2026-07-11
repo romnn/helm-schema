@@ -8,7 +8,7 @@ use super::local_crd_projection::collect_static_crd_universe;
 use super::manifest_contract::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
 use super::values_seed::seed_top_level_values_yaml_keys;
 use crate::chart;
-use crate::error::CliResult;
+use crate::error::EngineResult;
 use crate::values_roots::ValuesRoots;
 
 /// Contract and auxiliary signals collected from a chart tree.
@@ -23,7 +23,7 @@ pub(crate) fn analyze_charts(
     defines: &DefineIndex,
     include_tests: bool,
     values_roots: &ValuesRoots,
-) -> CliResult<ChartAnalysis> {
+) -> EngineResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_schema_universe = collect_static_crd_universe(charts)?;
     let symbolic_context = SymbolicIrContext::new(defines);

@@ -1,11 +1,14 @@
 use serde_json::Value;
 
-use helm_schema_ir::{
-    ConditionalGuard, ContractValuePathFacts, GuardValue, ProviderSchemaUse, ValueKind,
+use helm_schema_core::{
+    ConditionalGuard, ConditionalPathOverlay, ContractValuePathFacts, GuardValue,
+    ProviderSchemaUse, ResourceSchemaOracle, ValueKind,
 };
+use serde_yaml::Value as YamlValue;
 
 use crate::foreign_schema::ForeignSchemaRestriction;
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
+use crate::overlay_lowering::resolve_overlay_target_schema;
 use crate::path_schema::{
     generalize_fixed_object_schema_to_open_map, merge_explicit_empty_placeholder,
     open_fragment_values_schema,
@@ -17,7 +20,9 @@ use crate::schema_model::{
     schema_type, type_schema,
 };
 use crate::schema_node::SchemaNode;
+use crate::schema_node::is_placeholder_fragment_object_schema;
 use crate::values_yaml::ValuesYamlPathFacts;
+use crate::values_yaml::yaml_value_at_path;
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
@@ -350,6 +355,81 @@ impl ResolvePolicy {
         let base = merge_two_schemas(base, input.type_hint_schema);
         merge_two_schemas(base, input.guard_predicate_schema)
     }
+}
+
+/// The branch schema is the strongest available evidence schema that is not a
+/// vacuous placeholder when real content exists and accepts the chart's
+/// shipped default whenever the branch tolerates its own absence.
+pub(crate) fn conditional_target_schema(
+    target_value_path: &str,
+    overlay: &ConditionalPathOverlay,
+    values_yaml_doc: &YamlValue,
+    provider: &dyn ResourceSchemaOracle,
+    values_yaml_schema: Value,
+    resolved_fallback: Value,
+    active_by_defaults: Option<bool>,
+) -> Value {
+    let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider);
+
+    let declared_default = yaml_value_at_path(values_yaml_doc, target_value_path)
+        .and_then(|value| serde_json::to_value(value).ok());
+    // A branch that rejects the path's own declared default narrows values
+    // the chart itself ships.
+    let rejects_declared_default = |schema: &Value| {
+        declared_default
+            .as_ref()
+            .is_some_and(|default_value| !schema_accepts_json_value(schema, default_value))
+    };
+
+    let branch_schema = if active_by_defaults.is_some()
+        && should_merge_values_yaml_into_conditional_branch(&branch_schema, &values_yaml_schema)
+    {
+        merge_schema_list(vec![branch_schema, values_yaml_schema])
+    } else {
+        branch_schema
+    };
+    // Guards inactive by defaults or undecidable on the values doc can still
+    // be activated by a user who keeps the chart's other defaults.
+    if active_by_defaults != Some(true) {
+        if is_placeholder_fragment_object_schema(&branch_schema)
+            && !is_placeholder_fragment_object_schema(&resolved_fallback)
+        {
+            // The swap gives a vacuous placeholder branch the resolved
+            // content, but never a shape that rejects the shipped default.
+            return if rejects_declared_default(&resolved_fallback) {
+                branch_schema
+            } else {
+                resolved_fallback
+            };
+        }
+        // A branch whose renders all sit behind their own truthiness only
+        // fires for truthy values, so it must keep accepting the shipped
+        // (possibly falsy) default. A branch read unconditionally under its
+        // guard may legitimately narrow the default away.
+        if !overlay.evidence.facts.is_nullable {
+            return branch_schema;
+        }
+    }
+
+    if rejects_declared_default(&branch_schema) {
+        resolved_fallback
+    } else {
+        branch_schema
+    }
+}
+
+fn should_merge_values_yaml_into_conditional_branch(
+    branch_schema: &Value,
+    values_yaml_schema: &Value,
+) -> bool {
+    crate::schema_model::is_empty_schema(branch_schema)
+        || (is_scalar_like_schema(branch_schema) && is_scalar_like_schema(values_yaml_schema))
+}
+
+fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
+    jsonschema::validator_for(schema)
+        .map(|validator| validator.is_valid(instance))
+        .unwrap_or(false)
 }
 
 fn should_open_fragment_values_schema(schema: &Value, facts: ValuePathSchemaFacts) -> bool {

@@ -43,5 +43,5 @@ pub mod provider {
 
 pub use session::{Analysis, AnalysisSession, ValuePathExplanation};
 
-pub use error::{CliError, CliResult};
+pub use error::{CliError, EngineResult};
 pub use generation::{GenerateOptions, GeneratedSchema, ResolvedContract};

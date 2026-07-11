@@ -5,7 +5,7 @@ use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, Val
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
-use helm_schema_ir::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
+use helm_schema_core::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
 
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;

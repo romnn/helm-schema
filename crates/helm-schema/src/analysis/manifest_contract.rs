@@ -5,14 +5,14 @@ use vfs::VfsPath;
 
 use super::local_crd_projection::local_resource_schemas_from_template_source;
 use crate::chart;
-use crate::error::CliResult;
+use crate::error::EngineResult;
 
 #[tracing::instrument(skip_all, fields(prefix_len = chart.values_prefix.len()))]
 pub(crate) fn collect_manifest_contract_for_chart(
     chart: &chart::ChartContext,
     symbolic_context: &SymbolicIrContext,
     include_tests: bool,
-) -> CliResult<ManifestContractAnalysis> {
+) -> EngineResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
     let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation);
@@ -48,7 +48,7 @@ pub(crate) struct ManifestContractAnalysis {
 fn collect_manifest_contract_for_template(
     path: &VfsPath,
     symbolic_context: &SymbolicIrContext,
-) -> CliResult<(ContractIr, Vec<LocalResourceSchema>)> {
+) -> EngineResult<(ContractIr, Vec<LocalResourceSchema>)> {
     let source = path.read_to_string()?;
     let contract = symbolic_context.generate_contract_ir_for_source(&source, path.as_str());
     let local_resource_schemas = local_resource_schemas_from_template_source(

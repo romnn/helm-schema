@@ -8,7 +8,7 @@ use vfs::VfsPath;
 
 use super::paths::scope_values_path;
 use super::types::{ChartContext, ChartDependencyActivation};
-use crate::error::{CliError, CliResult};
+use crate::error::{CliError, EngineResult};
 use crate::load_budget::{LoadBudget, read_to_end_capped};
 
 #[derive(Debug, Deserialize)]
@@ -36,7 +36,7 @@ struct DependencyMetadata {
 }
 
 #[instrument(skip_all)]
-pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<Vec<ChartContext>> {
+pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> EngineResult<Vec<ChartContext>> {
     discover_chart_contexts_with_budget(root_chart_dir, LoadBudget::default())
 }
 
@@ -44,7 +44,7 @@ pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> CliResult<Vec<ChartC
 pub(crate) fn discover_chart_contexts_with_budget(
     root_chart_dir: &VfsPath,
     load_budget: LoadBudget,
-) -> CliResult<Vec<ChartContext>> {
+) -> EngineResult<Vec<ChartContext>> {
     let mut out = Vec::new();
     discover_chart_contexts_inner(
         root_chart_dir,
@@ -62,7 +62,7 @@ fn discover_chart_contexts_inner(
     dependency_activation: ChartDependencyActivation,
     load_budget: LoadBudget,
     out: &mut Vec<ChartContext>,
-) -> CliResult<()> {
+) -> EngineResult<()> {
     let chart_yaml = read_chart_yaml(chart_dir)?;
 
     let is_library = chart_yaml
@@ -162,7 +162,7 @@ fn is_chart_archive(file_name: &str) -> bool {
     is_tgz || is_tar_gz
 }
 
-fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> CliResult<VfsPath> {
+fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> EngineResult<VfsPath> {
     let mut file = path.open_file()?;
     let bytes = read_to_end_capped(
         &mut file,
@@ -209,7 +209,7 @@ fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> CliResult<V
     })
 }
 
-pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> CliResult<()> {
+pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> EngineResult<()> {
     let is_safe = entry_path
         .components()
         .all(|component| matches!(component, Component::Normal(_) | Component::CurDir));
@@ -223,7 +223,7 @@ pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> C
     })
 }
 
-fn find_chart_dir(root: &VfsPath) -> CliResult<Option<VfsPath>> {
+fn find_chart_dir(root: &VfsPath) -> EngineResult<Option<VfsPath>> {
     let direct = root.join("Chart.yaml")?;
     let direct_template = root.join("Chart.template.yaml")?;
     if direct.is_file()? || direct_template.is_file()? {
@@ -328,7 +328,7 @@ fn scope_chart_yaml_value_path(path: &str, prefix: &[String]) -> String {
     scope_values_path(path, prefix)
 }
 
-fn read_chart_yaml(chart_dir: &VfsPath) -> CliResult<ChartYaml> {
+fn read_chart_yaml(chart_dir: &VfsPath) -> EngineResult<ChartYaml> {
     let chart_yaml = chart_dir.join("Chart.yaml")?;
     let chart_template_yaml = chart_dir.join("Chart.template.yaml")?;
 

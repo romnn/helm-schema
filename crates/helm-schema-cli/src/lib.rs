@@ -6,7 +6,7 @@ use std::path::Path;
 
 use helm_schema::diagnostics::DiagnosticSink;
 use helm_schema::output::{FetchPolicy, PolicyInputOptions, write_schema_json};
-use helm_schema::{AnalysisSession, CliResult};
+use helm_schema::{AnalysisSession, EngineResult};
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
@@ -22,7 +22,7 @@ pub use helm_schema::{CliError, flatten, schema_override};
 ///
 /// Returns an error if chart discovery fails, a template/values file cannot be
 /// read/parsed, the schema cannot be generated, or output cannot be written.
-pub fn run(cli: Cli) -> CliResult<()> {
+pub fn run(cli: Cli) -> EngineResult<()> {
     let trace_output = cli.perf.trace_output.clone();
     if let Some(trace_output) = trace_output {
         let trace_file = create_output_file(&trace_output)?;
@@ -41,7 +41,7 @@ pub fn run(cli: Cli) -> CliResult<()> {
     run_inner(cli)
 }
 
-fn run_inner(cli: Cli) -> CliResult<()> {
+fn run_inner(cli: Cli) -> EngineResult<()> {
     let run_span = tracing::info_span!(
         "helm_schema_run",
         chart_dir = %cli.chart_dir.display()
@@ -117,7 +117,7 @@ fn run_inner(cli: Cli) -> CliResult<()> {
     Ok(())
 }
 
-fn create_output_file(path: &Path) -> CliResult<std::fs::File> {
+fn create_output_file(path: &Path) -> EngineResult<std::fs::File> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|err| CliError::CreateOutputDir {
             path: parent.to_path_buf(),

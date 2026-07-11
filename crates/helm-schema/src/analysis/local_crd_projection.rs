@@ -6,7 +6,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use crate::chart::{self, ChartContext, FileRole};
-use crate::error::CliResult;
+use crate::error::EngineResult;
 
 const TEMPLATE_CRD_SOURCE_ID: &str = "chart-template-crd";
 const STATIC_CRD_SOURCE_ID: &str = "chart-static-crd";
@@ -16,7 +16,7 @@ const STATIC_CRD_SOURCE_ID: &str = "chart-static-crd";
 #[tracing::instrument(skip_all)]
 pub(crate) fn collect_static_crd_universe(
     charts: &[ChartContext],
-) -> CliResult<LocalSchemaUniverse> {
+) -> EngineResult<LocalSchemaUniverse> {
     let mut universe = LocalSchemaUniverse::default();
 
     for chart in charts {
@@ -39,7 +39,7 @@ pub(crate) fn local_resource_schemas_from_template_source(
     source: &str,
     filename: &str,
     contains_template_action: bool,
-) -> CliResult<Vec<LocalResourceSchema>> {
+) -> EngineResult<Vec<LocalResourceSchema>> {
     if !contains_template_action {
         return resource_schemas_from_literal_documents(source, TEMPLATE_CRD_SOURCE_ID, filename);
     }
@@ -54,7 +54,7 @@ fn resource_schemas_from_literal_documents(
     source: &str,
     source_id: &str,
     filename: &str,
-) -> CliResult<Vec<LocalResourceSchema>> {
+) -> EngineResult<Vec<LocalResourceSchema>> {
     let mut resource_schemas = Vec::new();
     for document in serde_yaml::Deserializer::from_str(source) {
         let document = Value::deserialize(document)?;

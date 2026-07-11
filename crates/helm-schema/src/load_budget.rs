@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use crate::error::{CliError, CliResult};
+use crate::error::{CliError, EngineResult};
 
 /// Byte budgets for input assembly and local preparation work.
 ///
@@ -37,7 +37,7 @@ pub(crate) fn read_to_end_capped(
     reader: &mut impl Read,
     limit_bytes: usize,
     subject: impl Into<String>,
-) -> CliResult<Vec<u8>> {
+) -> EngineResult<Vec<u8>> {
     let subject = subject.into();
     let limit_plus_one = limit_bytes.saturating_add(1).min(u64::MAX as usize) as u64;
     let mut limited = reader.take(limit_plus_one);

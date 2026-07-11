@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
-use crate::error::CliResult;
+use crate::error::EngineResult;
 use crate::flatten;
 use crate::load_budget::read_to_end_capped;
 use crate::output_pipeline::{PolicyInputOptions, ReferenceMode};
@@ -36,18 +36,18 @@ impl PolicyInputs {
 pub fn load_policy_inputs(
     paths: &[PathBuf],
     options: &PolicyInputOptions,
-) -> CliResult<PolicyInputs> {
+) -> EngineResult<PolicyInputs> {
     let prepared_override_schemas = paths
         .iter()
         .map(|path| load_prepared_override_schema(path, options))
-        .collect::<CliResult<Vec<_>>>()?;
+        .collect::<EngineResult<Vec<_>>>()?;
     Ok(PolicyInputs {
         prepared_override_schemas,
     })
 }
 
 #[tracing::instrument(skip_all)]
-fn load_prepared_override_schema(path: &Path, options: &PolicyInputOptions) -> CliResult<Value> {
+fn load_prepared_override_schema(path: &Path, options: &PolicyInputOptions) -> EngineResult<Value> {
     let mut override_schema = load_json_file(path, options.load_budget.max_schema_document_bytes)?;
 
     // Tag every subtree that carries `$ref` with an internal "replace on
@@ -64,7 +64,7 @@ fn prepare_override_schema(
     schema: Value,
     override_path: &Path,
     options: &PolicyInputOptions,
-) -> CliResult<Value> {
+) -> EngineResult<Value> {
     let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
 
     match options.reference_mode {
@@ -84,7 +84,7 @@ fn prepare_override_schema(
     }
 }
 
-fn load_json_file(path: &Path, max_bytes: usize) -> CliResult<Value> {
+fn load_json_file(path: &Path, max_bytes: usize) -> EngineResult<Value> {
     let mut file = std::fs::File::open(path)?;
     let bytes = read_to_end_capped(&mut file, max_bytes, path.display().to_string())?;
     let value: Value = serde_json::from_slice(&bytes)?;

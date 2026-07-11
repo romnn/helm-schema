@@ -70,4 +70,4 @@ pub enum CliError {
     CliValidation(String),
 }
 
-pub type CliResult<T> = std::result::Result<T, CliError>;
+pub type EngineResult<T> = std::result::Result<T, CliError>;

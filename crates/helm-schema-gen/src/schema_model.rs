@@ -1,4 +1,4 @@
-use helm_schema_ir::GuardValue;
+use helm_schema_core::GuardValue;
 use serde_json::{Number, Value};
 
 use crate::merge::{merge_two_schemas, union_schema_list};

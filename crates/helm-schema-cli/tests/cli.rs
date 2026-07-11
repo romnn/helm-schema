@@ -12,7 +12,7 @@ fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
 
 fn generate_values_schema_for_chart(
     opts: &GenerateOptions,
-) -> helm_schema::CliResult<serde_json::Value> {
+) -> helm_schema::EngineResult<serde_json::Value> {
     AnalysisSession::new(opts.clone())
         .generated_schema()
         .map(|generated| generated.schema)

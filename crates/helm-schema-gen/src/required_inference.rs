@@ -17,7 +17,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_ir::ContractPathSchemaEvidence;
+use helm_schema_core::ContractPathSchemaEvidence;
 use serde_json::Value;
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the

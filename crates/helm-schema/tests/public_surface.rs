@@ -13,7 +13,7 @@ use vfs::VfsPath;
 
 fn generate_values_schema_for_chart(
     opts: &GenerateOptions,
-) -> helm_schema::CliResult<serde_json::Value> {
+) -> helm_schema::EngineResult<serde_json::Value> {
     AnalysisSession::new(opts.clone())
         .generated_schema()
         .map(|generated| generated.schema)

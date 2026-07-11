@@ -3,7 +3,7 @@ use std::path::Path;
 use json_schema_minify::minimize_schema;
 use serde_json::Value;
 
-use crate::error::CliResult;
+use crate::error::EngineResult;
 use crate::flatten;
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
 use crate::output_pipeline::global_mirror::mirror_global_schema_into_subcharts;
@@ -28,7 +28,7 @@ pub fn apply_schema_output_pipeline(
     subchart_value_prefixes: &[Vec<String>],
     base_dir: &Path,
     options: &OutputPipelineOptions,
-) -> CliResult<Value> {
+) -> EngineResult<Value> {
     for override_schema in policy_inputs.into_prepared_override_schemas() {
         schema = schema_override::apply_schema_override(schema, override_schema);
     }
@@ -54,7 +54,7 @@ fn apply_output_transforms(
     mut schema: Value,
     base_dir: &Path,
     options: &OutputPipelineOptions,
-) -> CliResult<Value> {
+) -> EngineResult<Value> {
     match options.reference_mode {
         ReferenceMode::SelfContained => schema = flatten::bundle_prepared_refs(schema, base_dir)?,
         ReferenceMode::FullyInlinedExport => {

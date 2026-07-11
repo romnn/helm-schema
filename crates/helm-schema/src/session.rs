@@ -2,17 +2,17 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
-use helm_schema_ir::{
-    ConditionalGuard, ContractDocument, ContractIr, ContractSchemaSignals, ContractUse,
-    ContractValuePathFacts, FinalizedContract, MetadataFieldKind,
+use helm_schema_core::{
+    ConditionalGuard, ContractSchemaSignals, ContractUse, ContractValuePathFacts, MetadataFieldKind,
 };
+use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
+use helm_schema_ir::{ContractDocument, ContractIr, FinalizedContract};
 use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
 use serde_json::Value;
 
 use crate::analysis::analyze_charts;
 use crate::chart;
-use crate::error::CliResult;
+use crate::error::EngineResult;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
     OutputPipelineOptions, PolicyInputOptions, PolicyInputs, apply_schema_output_pipeline,
@@ -56,7 +56,7 @@ struct PreparedSession {
 }
 
 impl PreparedSession {
-    fn from_generate_options(opts: &GenerateOptions) -> CliResult<Self> {
+    fn from_generate_options(opts: &GenerateOptions) -> EngineResult<Self> {
         let charts = &chart::discover_chart_contexts(&opts.chart_dir)?;
 
         let defines = chart::build_define_index(charts, opts.include_tests)?;
@@ -111,7 +111,7 @@ impl<T> SessionCache<T> {
         }
     }
 
-    fn get_or_try_init(&self, init: impl FnOnce() -> CliResult<T>) -> CliResult<Arc<T>> {
+    fn get_or_try_init(&self, init: impl FnOnce() -> EngineResult<T>) -> EngineResult<Arc<T>> {
         {
             let guard = self.value.lock().expect("session cache mutex");
             if let Some(value) = guard.as_ref() {
@@ -144,17 +144,17 @@ impl AnalysisSession {
     }
 
     /// Return the memoized chart analysis artifact.
-    pub fn analysis(&self) -> CliResult<Analysis> {
+    pub fn analysis(&self) -> EngineResult<Analysis> {
         Ok(self.prepared()?.analysis.clone())
     }
 
     /// Return typed schema-lowering evidence derived from the guarded contract.
-    pub fn contract_schema_signals(&self) -> CliResult<ContractSchemaSignals> {
+    pub fn contract_schema_signals(&self) -> EngineResult<ContractSchemaSignals> {
         Ok(self.finalized_contract()?.schema_signals().clone())
     }
 
     /// Return the stable versioned contract export document.
-    pub fn contract_document(&self) -> CliResult<ContractDocument> {
+    pub fn contract_document(&self) -> EngineResult<ContractDocument> {
         Ok(self.finalized_contract()?.document())
     }
 
@@ -165,13 +165,13 @@ impl AnalysisSession {
     /// `resolved_contract(policy)`: structural contract facts have already
     /// been resolved against providers, but the later heuristic
     /// `--infer-required` mutation has not yet run.
-    pub fn resolved_contract(&self) -> CliResult<ResolvedContract> {
+    pub fn resolved_contract(&self) -> EngineResult<ResolvedContract> {
         Ok((*self.resolved()?).clone())
     }
 
     /// Return the memoized generated values schema: the resolved contract
     /// schema plus the optional `--infer-required` post-pass.
-    pub fn generated_schema(&self) -> CliResult<GeneratedSchema> {
+    pub fn generated_schema(&self) -> EngineResult<GeneratedSchema> {
         Ok((*self.generated_schema.get_or_try_init(|| {
             let resolved = self.resolved()?;
             let mut schema = resolved.schema.clone();
@@ -202,7 +202,7 @@ impl AnalysisSession {
         &self,
         policy_inputs: PolicyInputs,
         output_options: &OutputPipelineOptions,
-    ) -> CliResult<Value> {
+    ) -> EngineResult<Value> {
         let generated = self.generated_schema()?;
         apply_schema_output_pipeline(
             generated.schema,
@@ -219,13 +219,13 @@ impl AnalysisSession {
         override_paths: &[PathBuf],
         policy_input_options: &PolicyInputOptions,
         output_options: &OutputPipelineOptions,
-    ) -> CliResult<Value> {
+    ) -> EngineResult<Value> {
         let policy_inputs = load_policy_inputs(override_paths, policy_input_options)?;
         self.emit(policy_inputs, output_options)
     }
 
     /// Explain one values path using the current contract and chart evidence.
-    pub fn explain(&self, path: &str) -> CliResult<ValuePathExplanation> {
+    pub fn explain(&self, path: &str) -> EngineResult<ValuePathExplanation> {
         let normalized_path = normalize_values_path(path);
         let finalized_contract = self.finalized_contract()?;
         let uses = finalized_contract.uses();
@@ -277,7 +277,7 @@ impl AnalysisSession {
         })
     }
 
-    fn prepared(&self) -> CliResult<Arc<PreparedSession>> {
+    fn prepared(&self) -> EngineResult<Arc<PreparedSession>> {
         self.prepared
             .get_or_try_init(|| PreparedSession::from_generate_options(&self.opts))
     }
@@ -286,14 +286,14 @@ impl AnalysisSession {
         Path::new(self.opts.chart_dir.as_str())
     }
 
-    fn finalized_contract(&self) -> CliResult<Arc<FinalizedContract>> {
+    fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
         self.finalized_contract.get_or_try_init(|| {
             let prepared = self.prepared()?;
             Ok(prepared.analysis.contract.clone().finalize())
         })
     }
 
-    fn resolved(&self) -> CliResult<Arc<ResolvedContract>> {
+    fn resolved(&self) -> EngineResult<Arc<ResolvedContract>> {
         self.resolved_contract.get_or_try_init(|| {
             let prepared = self.prepared()?;
             let finalized_contract = self.finalized_contract()?;

@@ -3,7 +3,7 @@ use std::path::Path;
 
 use vfs::VfsPath;
 
-use crate::error::CliResult;
+use crate::error::EngineResult;
 
 /// Structural role a file plays in chart analysis.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -37,7 +37,7 @@ pub(crate) fn files_with_role(
     chart_dir: &VfsPath,
     include_tests: bool,
     role: FileRole,
-) -> CliResult<Vec<VfsPath>> {
+) -> EngineResult<Vec<VfsPath>> {
     Ok(list_chart_files(chart_dir, include_tests)?
         .into_iter()
         .filter(|file| file.has_role(role))
@@ -49,7 +49,7 @@ pub(crate) fn files_with_role(
 pub(crate) fn list_chart_files(
     chart_dir: &VfsPath,
     include_tests: bool,
-) -> CliResult<Vec<ChartFile>> {
+) -> EngineResult<Vec<ChartFile>> {
     let mut files = ChartFileMap::new();
 
     collect_template_roles(chart_dir, include_tests, &mut files)?;
@@ -75,7 +75,7 @@ fn collect_template_roles(
     chart_dir: &VfsPath,
     include_tests: bool,
     files: &mut ChartFileMap,
-) -> CliResult<()> {
+) -> EngineResult<()> {
     let templates_dir = chart_dir.join("templates")?;
     if !templates_dir.is_dir()? {
         return Ok(());
@@ -102,7 +102,7 @@ fn collect_directory_roles(
     role: FileRole,
     accept: fn(&VfsPath) -> bool,
     files: &mut ChartFileMap,
-) -> CliResult<()> {
+) -> EngineResult<()> {
     let dir = chart_dir.join(dir_name)?;
     if !dir.is_dir()? {
         return Ok(());
@@ -168,7 +168,7 @@ fn list_files_recursive(
     dir: &VfsPath,
     include_tests: bool,
     out: &mut Vec<VfsPath>,
-) -> CliResult<()> {
+) -> EngineResult<()> {
     for ent in dir.read_dir()? {
         if ent.is_dir()? {
             if !include_tests {
