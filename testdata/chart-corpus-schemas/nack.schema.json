@@ -92,7 +92,16 @@
           "namespaceOverride": {
             "anyOf": [
               {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
                 "type": "null"
+              },
+              {
+                "type": "number"
               },
               {
                 "type": "string"
@@ -203,6 +212,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
@@ -219,6 +235,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Configure a container security context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\ncontainerSecurityContext:\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true"
@@ -229,16 +252,13 @@
         "labels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "global labels will be applied to all resources deployed by the chart"
@@ -261,7 +281,7 @@
       ]
     },
     "jetstream": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -346,23 +366,41 @@
           "additionalProperties": {}
         },
         "klogLevel": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
           ]
         },
         "nats": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "NATS URL",
           "properties": {
             "credentials": {
               "additionalProperties": {},
               "properties": {
                 "secret": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "key": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "integer",
+                        "number",
+                        "string"
+                      ]
                     },
                     "name": {}
                   },
@@ -375,10 +413,15 @@
               "additionalProperties": {},
               "properties": {
                 "secret": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "key": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "integer",
+                        "number",
+                        "string"
+                      ]
                     },
                     "name": {}
                   },
@@ -393,7 +436,16 @@
                   "const": null
                 },
                 {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
                   "type": "null"
+                },
+                {
+                  "type": "number"
                 },
                 {
                   "type": "string"
@@ -405,7 +457,7 @@
         },
         "pullPolicy": {},
         "tls": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -427,7 +479,16 @@
                       "client_ca": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -437,7 +498,16 @@
                       "client_cert": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -447,7 +517,16 @@
                       "client_key": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -471,7 +550,7 @@
               "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
             },
             "settings": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
               "properties": {
                 "client_ca": {},
@@ -484,9 +563,22 @@
               "type": "object"
             },
             "tlsFirst": {
-              "type": [
-                "boolean",
-                "null"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           },
@@ -497,9 +589,22 @@
     },
     "nameOverride": {},
     "namespaceOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "namespaced": {
@@ -517,6 +622,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
@@ -524,16 +636,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ]
     },
@@ -545,11 +654,24 @@
       "type": "string"
     },
     "readOnly": {
-      "description": "Toggle to prevent the controller making changes to NATS streams/consumers.",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Toggle to prevent the controller making changes to NATS streams/consumers."
     },
     "resources": {
       "anyOf": [
@@ -562,6 +684,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Resource requests and limits for primary nack container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
@@ -577,16 +706,36 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Toggle whether to use setup a Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/\nsecurityContext:\nfsGroup: 1000\nrunAsUser: 1000\nrunAsNonRoot: true"
     },
     "serviceAccountName": {
-      "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true"
     },
     "tolerations": {
       "anyOf": [

@@ -52,37 +52,65 @@
       "then": {
         "properties": {
           "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations for the StatefulSet",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations for the StatefulSet"
           },
           "extraLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Apply extra labels to common labels.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Apply extra labels to common labels."
           },
           "global": {
             "properties": {
               "commonLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Common labels for all object directly managed by this chart.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Common labels for all object directly managed by this chart."
               }
             },
             "type": "object"
           },
           "labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "labels for tempo",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "labels for tempo"
           },
           "tempo": {
             "properties": {
@@ -192,20 +220,34 @@
       "then": {
         "properties": {
           "extraLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Apply extra labels to common labels.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Apply extra labels to common labels."
           },
           "global": {
             "properties": {
               "commonLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Common labels for all object directly managed by this chart.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Common labels for all object directly managed by this chart."
               }
             },
             "type": "object"
@@ -360,16 +402,15 @@
           "extraLabels": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Apply extra labels to common labels."
@@ -379,16 +420,15 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Common labels for all object directly managed by this chart."
@@ -559,6 +599,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Affinity for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
@@ -566,16 +613,13 @@
     "annotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Annotations for the StatefulSet"
@@ -594,16 +638,13 @@
     "extraLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Apply extra labels to common labels."
@@ -624,11 +665,24 @@
       "description": "Volumes to add"
     },
     "fullnameOverride": {
-      "description": "Overrides the chart's computed fullname",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Overrides the chart's computed fullname"
     },
     "global": {
       "additionalProperties": {},
@@ -636,16 +690,13 @@
         "commonLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Common labels for all object directly managed by this chart."
@@ -669,15 +720,22 @@
       "description": "hostAliases to add"
     },
     "labels": {
-      "additionalProperties": {},
-      "description": "labels for tempo",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "labels for tempo"
     },
     "nameOverride": {
       "description": "Overrides the chart's name"
     },
     "networkPolicy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -732,6 +790,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
@@ -818,14 +879,15 @@
               "explicitNamespacesSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
@@ -842,7 +904,7 @@
           "type": "boolean"
         },
         "egress": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "blockDNSResolution": {
               "description": "When enabled, DNS resolution will be blocked\nfor all pods in the tempo namespace.",
@@ -878,9 +940,20 @@
           "type": "boolean"
         },
         "explicitNamespacesSelector": {
-          "additionalProperties": {},
-          "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
         },
         "ingress": {
           "description": "The Policy model to apply. When set to false, only pods with the correct\nclient label will have network access to  tempo port defined.\nWhen true, tempo will accept connections from any source\n(with the correct destination port).\nWhen true enables the creation",
@@ -900,12 +973,19 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Node labels for pod assignment. See: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "persistence": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -928,10 +1008,11 @@
                     "type": "object"
                   },
                   {
-                    "items": {
-                      "type": "string"
-                    },
+                    "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "storageClassName: local-path"
@@ -943,8 +1024,19 @@
                 "type": "object"
               },
               "selector": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -979,8 +1071,19 @@
           "type": "boolean"
         },
         "selector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "size": {},
         "storageClassName": {}
@@ -990,16 +1093,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Pod Annotations"
@@ -1007,16 +1107,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Pod (extra) Labels"
@@ -1030,26 +1127,33 @@
     },
     "revisionHistoryLimit": {},
     "securityContext": {
-      "additionalProperties": false,
-      "description": "securityContext for container",
-      "properties": {
-        "fsGroup": {
-          "type": "integer"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "fsGroup": {
+              "type": "integer"
+            },
+            "runAsGroup": {
+              "type": "integer"
+            },
+            "runAsNonRoot": {
+              "type": "boolean"
+            },
+            "runAsUser": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
         },
-        "runAsGroup": {
-          "type": "integer"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "type": "integer"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "securityContext for container"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1155,8 +1259,19 @@
           "then": {
             "properties": {
               "externalIPs": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1179,8 +1294,19 @@
           "then": {
             "properties": {
               "loadBalancerSourceRanges": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1252,37 +1378,42 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
         "clusterIP": {},
         "externalIPs": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "labels": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
@@ -1290,8 +1421,19 @@
           "description": "(string) IP address, in case of 'type: LoadBalancer'"
         },
         "loadBalancerSourceRanges": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "protocol": {
           "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\"",
@@ -1317,7 +1459,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1349,11 +1491,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the service account",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the service account"
               },
               "automountServiceAccountToken": {
                 "type": "boolean"
@@ -1367,16 +1516,26 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Image pull secrets for the service account"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels for the service account",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels for the service account"
               },
               "name": {
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
@@ -1434,9 +1593,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the service account",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the service account"
         },
         "automountServiceAccountToken": {
           "type": "boolean"
@@ -1461,9 +1627,16 @@
           "description": "Image pull secrets for the service account"
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Labels for the service account",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels for the service account"
         },
         "name": {
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -1472,7 +1645,7 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1489,17 +1662,31 @@
           "then": {
             "properties": {
               "additionalLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "scrapeTimeout: 10s",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "scrapeTimeout: 10s"
               },
               "interval": {
                 "type": "string"
@@ -1511,13 +1698,27 @@
       ],
       "properties": {
         "additionalLabels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "annotations": {
-          "additionalProperties": {},
-          "description": "scrapeTimeout: 10s",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "scrapeTimeout: 10s"
         },
         "enabled": {
           "type": "boolean"
@@ -1528,16 +1729,10 @@
       "type": "object"
     },
     "tempo": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "extraArgs": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "items": {},
               "type": "array"
@@ -1602,50 +1797,14 @@
           "type": "object"
         },
         "livenessProbe": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "properties": {
-                  "path": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "integer"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "integer"
-              }
-            ]
-          },
+          "additionalProperties": {},
           "description": "Readiness and Liveness Probe Configuration Options",
           "properties": {
             "failureThreshold": {
               "type": "integer"
             },
             "httpGet": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
+              "additionalProperties": {},
               "properties": {
                 "path": {
                   "type": "string"
@@ -1672,10 +1831,15 @@
           "type": "object"
         },
         "memBallastSizeMbs": {
-          "type": "integer"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "metricsGenerator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "If true, enables Tempo's metrics generator (https://grafana.com/docs/tempo/next/metrics-generator/)",
@@ -1695,7 +1859,7 @@
               "type": "string"
             },
             "storage": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Storage configuration for metrics generator\nThis section configures the storage path and remote write endpoints",
               "properties": {
                 "path": {
@@ -1711,7 +1875,7 @@
               "type": "object"
             },
             "traces_storage": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Traces storage (WAL) configuration for metrics generator\nThis configures the Write Ahead Log for traces used by the metrics generator",
               "properties": {
                 "path": {
@@ -1728,7 +1892,7 @@
           "type": "boolean"
         },
         "overrides": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "The standard overrides configuration section. This can include a `defaults` object for applying to all tenants (not to be confused with the `global` property of the same name, which overrides `max_byte_per_trace` for all tenants). For an example on how to enable the metrics generator using the `overrides` object, see the 'Activate metrics generator' section below. Refer to [Standard overrides](https://grafana.com/docs/tempo/latest/configuration/#standard-overrides) for more details.",
           "properties": {
             "defaults": {
@@ -1744,9 +1908,20 @@
           "type": "object"
         },
         "per_tenant_overrides": {
-          "additionalProperties": {},
-          "description": "The `per tenant` aka `tenant-specific` runtime overrides. This allows overriding values set in the configuration on a per-tenant basis. Note that *all* values must be given for each per-tenant configuration block. Refer to [Runtime overrides](https://grafana.com/docs/tempo/latest/configuration/#runtime-overrides) and [Tenant-Specific overrides](https://grafana.com/docs/tempo/latest/configuration/#tenant-specific-overrides) documentation for more details.\n'tenant-id':\nmetrics_generator:\nprocessors:\n- service-graphs\n- span-metrics",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The `per tenant` aka `tenant-specific` runtime overrides. This allows overriding values set in the configuration on a per-tenant basis. Note that *all* values must be given for each per-tenant configuration block. Refer to [Runtime overrides](https://grafana.com/docs/tempo/latest/configuration/#runtime-overrides) and [Tenant-Specific overrides](https://grafana.com/docs/tempo/latest/configuration/#tenant-specific-overrides) documentation for more details.\n'tenant-id':\nmetrics_generator:\nprocessors:\n- service-graphs\n- span-metrics"
         },
         "pullPolicy": {
           "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName",
@@ -1780,49 +1955,13 @@
           "type": "object"
         },
         "readinessProbe": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "properties": {
-                  "path": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "integer"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "integer"
-              }
-            ]
-          },
+          "additionalProperties": {},
           "properties": {
             "failureThreshold": {
               "type": "integer"
             },
             "httpGet": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
+              "additionalProperties": {},
               "properties": {
                 "path": {
                   "type": "string"
@@ -1849,17 +1988,17 @@
           "type": "object"
         },
         "receivers": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
           "properties": {
             "jaeger": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "protocols": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "grpc": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "endpoint": {
                           "type": "string"
@@ -1868,7 +2007,7 @@
                       "type": "object"
                     },
                     "thrift_binary": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "endpoint": {
                           "type": "string"
@@ -1877,7 +2016,7 @@
                       "type": "object"
                     },
                     "thrift_compact": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "endpoint": {
                           "type": "string"
@@ -1886,7 +2025,7 @@
                       "type": "object"
                     },
                     "thrift_http": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "endpoint": {
                           "type": "string"
@@ -1902,13 +2041,13 @@
             },
             "opencensus": {},
             "otlp": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "protocols": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "grpc": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "endpoint": {
                           "type": "string"
@@ -1917,7 +2056,7 @@
                       "type": "object"
                     },
                     "http": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "endpoint": {
                           "type": "string"
@@ -1935,19 +2074,40 @@
           "type": "object"
         },
         "registry": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "reportingEnabled": {
           "description": "If true, Tempo will report anonymous usage data about the shape of a deployment to Grafana Labs",
           "type": "boolean"
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "resources": {
-          "additionalProperties": {},
-          "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
         },
         "retention": {
           "description": "search:\nconcurrent_jobs: 2000",
@@ -1964,11 +2124,18 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
         "server": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Tempo server configuration.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#server",
           "properties": {
             "http_listen_port": {
@@ -1979,17 +2146,17 @@
           "type": "object"
         },
         "storage": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "trace": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "backend": {
                   "description": "tempo storage backend.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#storage\nUse s3 for example\nbackend: s3\nstore traces in s3\ns3:\nbucket: <your s3 bucket>                        # store traces in this bucket\nendpoint: s3.dualstack.us-east-2.amazonaws.com  # api endpoint\naccess_key: ...                                 # optional. access key when using static credentials.\nsecret_key: ...                                 # optional. secret key when using static credentials.\ninsecure: false                                 # optional. enable if endpoint is http",
                   "type": "string"
                 },
                 "local": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "path": {
                       "type": "string"
@@ -1998,7 +2165,7 @@
                   "type": "object"
                 },
                 "wal": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "path": {
                       "type": "string"
@@ -2013,9 +2180,22 @@
           "type": "object"
         },
         "tag": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
           ]
         },
         "updateStrategy": {
@@ -2028,7 +2208,7 @@
       "type": "object"
     },
     "tempoQuery": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2046,12 +2226,6 @@
             "properties": {
               "extraArgs": {
                 "anyOf": [
-                  {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
-                    "type": "object"
-                  },
                   {
                     "properties": {},
                     "type": "object"
@@ -2077,6 +2251,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Environment variables to add"
@@ -2090,6 +2267,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Volume mounts to add"
@@ -2099,32 +2279,70 @@
                 "type": "string"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "resources": {
-                "additionalProperties": {},
-                "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
               },
               "securityContext": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable"
               },
               "tag": {
-                "type": [
-                  "string",
-                  "null"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
                 ]
               }
             },
@@ -2171,7 +2389,7 @@
           "description": "Volume mounts to add"
         },
         "ingress": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -2225,11 +2443,18 @@
                     ]
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
                   }
                 },
                 "type": "object"
@@ -2274,9 +2499,16 @@
             "hosts": {},
             "ingressClassName": {},
             "labels": {
-              "additionalProperties": {},
-              "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
             },
             "path": {
               "type": "string"
@@ -2313,17 +2545,39 @@
         },
         "repository": {},
         "resources": {
-          "additionalProperties": {},
-          "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
         },
         "securityContext": {
-          "additionalProperties": {},
-          "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable"
         },
         "service": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "port": {
               "type": "integer"

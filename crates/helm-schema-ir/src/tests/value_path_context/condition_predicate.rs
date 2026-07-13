@@ -543,3 +543,51 @@ fn with_predicates_preserve_header_projection_semantics() {
         want: Predicate::False,
     );
 }
+
+/// F33: `Files.Get (printf "files/profile-%s.yaml" X)` truthiness decodes
+/// to the FINITE disjunction over the chart's matching indexed files —
+/// never an opaque truthy fallback (istiod profile selection shape).
+#[test]
+fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("files/profile-demo.yaml", "a: 1\n");
+    defines.add_file_source("files/profile-ambient.yaml", "b: 2\n");
+    defines.add_file_source("templates/other.yaml", "kind: ConfigMap\n");
+    let defines = Box::leak(Box::new(defines));
+    let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
+    let context = ValuePathContext {
+        root_bindings: Box::leak(Box::new(HashMap::new())),
+        template_bindings: HashMap::new(),
+        range_domains: Box::leak(Box::new(HashMap::new())),
+        get_bindings: Box::leak(Box::new(HashMap::new())),
+        template_default_paths: Box::leak(Box::new(HashMap::new())),
+        template_output_meta: Box::leak(Box::new(HashMap::new())),
+        typeof_bindings: Box::leak(Box::new(HashMap::new())),
+        fragment_context: FragmentEvalContext::new(analysis_db),
+        current_dot_fragment: None,
+        current_dot_binding: None,
+    };
+
+    let wrapped = r#"{{ .Files.Get (printf "files/profile-%s.yaml" .Values.profile) }}"#;
+    let top = parse_action_expressions(wrapped)
+        .into_iter()
+        .next()
+        .expect("parsed condition expression");
+    let guards = context.condition_predicate_expr(&top).contract_guards();
+
+    sim_assert_eq!(
+        have: guards,
+        want: vec![Guard::AnyOf {
+            alternatives: vec![
+                vec![Guard::Eq {
+                    path: "profile".to_string(),
+                    value: GuardValue::string("ambient"),
+                }],
+                vec![Guard::Eq {
+                    path: "profile".to_string(),
+                    value: GuardValue::string("demo"),
+                }],
+            ],
+        }],
+    );
+}

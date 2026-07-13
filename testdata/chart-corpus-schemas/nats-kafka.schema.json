@@ -258,14 +258,27 @@
   ],
   "properties": {
     "fullnameOverride": {
-      "description": "fullnameOverride overrides nats-kafka.fullname",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "fullnameOverride overrides nats-kafka.fullname"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "description": "registry: docker.io",
@@ -289,7 +302,7 @@
       ]
     },
     "natskafka": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "additionalArguments": {
           "anyOf": [
@@ -322,6 +335,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -336,6 +356,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -350,6 +377,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
@@ -388,21 +422,18 @@
         "deploymentLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
         "logging": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "colors": {
               "type": "boolean"
@@ -423,7 +454,7 @@
           "type": "object"
         },
         "monitoring": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -479,7 +510,7 @@
             },
             "httpsPort": {},
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -503,7 +534,7 @@
           "type": "object"
         },
         "nats": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "connectTimeout": {
               "type": "integer"
@@ -512,7 +543,7 @@
               "additionalProperties": {},
               "properties": {
                 "secret": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "name": {}
                   },
@@ -545,6 +576,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
@@ -552,16 +590,13 @@
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
@@ -569,9 +604,20 @@
           "type": "integer"
         },
         "resources": {
-          "additionalProperties": {},
-          "description": "Resources for nats-kafka container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Resources for nats-kafka container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
         },
         "tolerations": {
           "anyOf": [
@@ -595,7 +641,7 @@
       "type": "integer"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {},

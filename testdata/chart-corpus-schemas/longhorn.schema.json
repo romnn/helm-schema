@@ -392,14 +392,20 @@
                   "windowsCluster": {
                     "properties": {
                       "nodeSelector": {
-                        "additionalProperties": false,
-                        "description": "Node selector for Linux nodes that can run user-deployed Longhorn components.",
-                        "properties": {
-                          "kubernetes.io/os": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "type": "object"
+                          },
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
                             "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ],
+                        "description": "Node selector for Linux nodes that can run user-deployed Longhorn components."
                       }
                     },
                     "type": "object"
@@ -783,25 +789,11 @@
                             "type": "object"
                           },
                           {
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "effect": {
-                                  "type": "string"
-                                },
-                                "key": {
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "type": "string"
-                                },
-                                "value": {
-                                  "type": "string"
-                                }
-                              },
-                              "type": "object"
-                            },
+                            "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Toleration for Linux nodes that can run user-deployed Longhorn components."
@@ -974,8 +966,21 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "imageRegistry": {
-                "description": "Global override for container image registry.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Global override for container image registry."
               }
             },
             "type": "object"
@@ -987,16 +992,55 @@
                   "manager": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the Longhorn Manager image.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the Longhorn Manager image."
                       },
                       "repository": {
-                        "description": "Repository for the Longhorn Manager image.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Repository for the Longhorn Manager image."
                       },
                       "tag": {
-                        "description": "Tag for the Longhorn Manager image.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Tag for the Longhorn Manager image."
                       }
                     },
                     "type": "object"
@@ -1138,8 +1182,21 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "imageRegistry": {
-                "description": "Global override for container image registry.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Global override for container image registry."
               }
             },
             "type": "object"
@@ -1151,12 +1208,38 @@
                   "oauthProxy": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
                       },
                       "tag": {
-                        "description": "Tag for the OAuth Proxy image. Specify OCP/OKD version 4.1 or later (including version 4.18, which is available at quay.io/openshift/origin-oauth-proxy:4.18). This setting applies only to OpenShift users.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Tag for the OAuth Proxy image. Specify OCP/OKD version 4.1 or later (including version 4.18, which is available at quay.io/openshift/origin-oauth-proxy:4.18). This setting applies only to OpenShift users."
                       }
                     },
                     "type": "object"
@@ -2094,8 +2177,21 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "imageRegistry": {
-                "description": "Global override for container image registry.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Global override for container image registry."
               }
             },
             "type": "object"
@@ -2234,9 +2330,20 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "nodeSelector": {
-                "additionalProperties": {},
-                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
               }
             },
             "type": "object"
@@ -2246,14 +2353,15 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Node selector for Longhorn Driver. Specify the nodes allowed to run Longhorn Driver."
@@ -2395,9 +2503,20 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "nodeSelector": {
-                "additionalProperties": {},
-                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
               }
             },
             "type": "object"
@@ -2407,14 +2526,15 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Node selector for Longhorn Manager. Specify the nodes allowed to run Longhorn Manager.\nIf you want to set node selector for Longhorn Manager DaemonSet, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\""
@@ -2556,9 +2676,20 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "nodeSelector": {
-                "additionalProperties": {},
-                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
               }
             },
             "type": "object"
@@ -2569,14 +2700,15 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Node selector for Longhorn UI. Specify the nodes allowed to run Longhorn UI."
@@ -2726,6 +2858,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
@@ -2744,6 +2879,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Toleration for Longhorn Driver on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Driver Deployer Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
@@ -2893,6 +3031,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
@@ -2911,6 +3052,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Toleration for Longhorn Manager on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Manager DaemonSet, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
@@ -3060,6 +3204,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
@@ -3079,6 +3226,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Toleration for Longhorn UI on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn UI Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
@@ -3183,7 +3333,16 @@
                       "repository": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -3237,22 +3396,19 @@
     "annotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Annotation for the Longhorn Manager DaemonSet pods. This setting is optional."
     },
     "csi": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "attacherReplicaCount": {
           "description": "Replica count of the CSI Attacher. When unspecified, Longhorn uses the default value (\"3\")."
@@ -3276,7 +3432,7 @@
       "type": "object"
     },
     "defaultBackupStore": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Setting that allows you to update the default backupstore.",
       "properties": {
         "backupTarget": {
@@ -3292,7 +3448,7 @@
       "type": "object"
     },
     "defaultSettings": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "allowCollectingLonghornUsageMetrics": {
           "description": "Setting that allows Longhorn to periodically collect anonymous usage data for product improvement purposes. Longhorn sends collected data to the [Upgrade Responder](https://github.com/longhorn/upgrade-responder) server, which is the data source of the Longhorn Public Metrics Dashboard (https://metrics.longhorn.io). The Upgrade Responder server does not store data that can be used to identify clients, including IP addresses."
@@ -3622,17 +3778,17 @@
       "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
       "properties": {
         "cattle": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "systemDefaultRegistry": {
               "description": "Default system registry.",
               "type": "string"
             },
             "windowsCluster": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "defaultSetting": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "systemManagedComponentsNodeSelector": {
                       "description": "Node selector for system-managed Longhorn components.",
@@ -3650,14 +3806,16 @@
                   "type": "boolean"
                 },
                 "nodeSelector": {
-                  "additionalProperties": {},
-                  "description": "Node selector for Linux nodes that can run user-deployed Longhorn components.",
-                  "properties": {
-                    "kubernetes.io/os": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
                     }
-                  },
-                  "type": "object"
+                  ],
+                  "description": "Node selector for Linux nodes that can run user-deployed Longhorn components."
                 },
                 "tolerations": {
                   "anyOf": [
@@ -3685,12 +3843,28 @@
         },
         "imageRegistry": {
           "description": "Global override for container image registry.",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
         },
         "timezone": {
           "description": "Set container timezone (TZ env) for all Longhorn workloads. Leave empty to use container default."
@@ -3714,7 +3888,7 @@
       "type": "object"
     },
     "httproute": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3731,11 +3905,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the HTTPRoute resource in the form of key-value pairs.\nExample:\nannotation-key1: \"annotation-value1\"",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the HTTPRoute resource in the form of key-value pairs.\nExample:\nannotation-key1: \"annotation-value1\""
               },
               "hostnames": {
                 "anyOf": [
@@ -3800,9 +3981,16 @@
       "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using kube-lego, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\n- name: longhorn.local-tls\nkey:\ncertificate:",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the HTTPRoute resource in the form of key-value pairs.\nExample:\nannotation-key1: \"annotation-value1\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the HTTPRoute resource in the form of key-value pairs.\nExample:\nannotation-key1: \"annotation-value1\""
         },
         "enabled": {
           "description": "Setting that allows Longhorn to generate HTTPRoute records for the Longhorn UI service using Gateway API.",
@@ -3824,13 +4012,13 @@
       "type": "object"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "csi": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "attacher": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {
@@ -3892,8 +4080,21 @@
                   "then": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value."
                       }
                     },
                     "type": "object"
@@ -3931,7 +4132,16 @@
                       "repository": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -3975,7 +4185,16 @@
                       "tag": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4002,7 +4221,7 @@
               "type": "object"
             },
             "livenessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {
@@ -4064,8 +4283,21 @@
                   "then": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
                       }
                     },
                     "type": "object"
@@ -4103,7 +4335,16 @@
                       "repository": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4147,7 +4388,16 @@
                       "tag": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4174,7 +4424,7 @@
               "type": "object"
             },
             "nodeDriverRegistrar": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {
@@ -4236,8 +4486,21 @@
                   "then": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
                       }
                     },
                     "type": "object"
@@ -4275,7 +4538,16 @@
                       "repository": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4319,7 +4591,16 @@
                       "tag": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4346,7 +4627,7 @@
               "type": "object"
             },
             "provisioner": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {
@@ -4408,8 +4689,21 @@
                   "then": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
                       }
                     },
                     "type": "object"
@@ -4447,7 +4741,16 @@
                       "repository": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4491,7 +4794,16 @@
                       "tag": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4518,7 +4830,7 @@
               "type": "object"
             },
             "resizer": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {
@@ -4580,8 +4892,21 @@
                   "then": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value."
                       }
                     },
                     "type": "object"
@@ -4619,7 +4944,16 @@
                       "repository": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4663,7 +4997,16 @@
                       "tag": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4690,7 +5033,7 @@
               "type": "object"
             },
             "snapshotter": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {
@@ -4752,8 +5095,21 @@
                   "then": {
                     "properties": {
                       "registry": {
-                        "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
                       }
                     },
                     "type": "object"
@@ -4791,7 +5147,16 @@
                       "repository": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4835,7 +5200,16 @@
                       "tag": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -4865,130 +5239,235 @@
           "type": "object"
         },
         "longhorn": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "backingImageManager": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the Backing Image Manager image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "repository": {
                   "description": "Repository for the Backing Image Manager image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
                   "description": "Tag for the Backing Image Manager image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "engine": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Engine image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Engine image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
                   "description": "Tag for the Longhorn Engine image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "instanceManager": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Instance Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Instance Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
                   "description": "Tag for the Longhorn Instance Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "manager": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
                   "description": "Tag for the Longhorn Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "shareManager": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Share Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Share Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
                   "description": "Tag for the Longhorn Share Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "supportBundleKit": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Support Bundle Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Support Bundle Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
                   "description": "Tag for the Longhorn Support Bundle Manager image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "ui": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn UI image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "repository": {
                   "description": "Repository for the Longhorn UI image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
                   "description": "Tag for the Longhorn UI image.",
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
@@ -4997,10 +5476,10 @@
           "type": "object"
         },
         "openshift": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "oauthProxy": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "registry": {
                   "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
@@ -5025,7 +5504,7 @@
       "type": "object"
     },
     "ingress": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5224,10 +5703,10 @@
       "type": "object"
     },
     "longhornDriver": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "log": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "format": {
               "anyOf": [
@@ -5246,9 +5725,20 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for Longhorn Driver. Specify the nodes allowed to run Longhorn Driver.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node selector for Longhorn Driver. Specify the nodes allowed to run Longhorn Driver."
         },
         "priorityClass": {
           "description": "PriorityClass for Longhorn Driver."
@@ -5272,13 +5762,13 @@
       "type": "object"
     },
     "longhornManager": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "distro": {
           "description": "Optional distro identifier used for upgrade responder reporting."
         },
         "log": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "format": {
               "anyOf": [
@@ -5297,9 +5787,20 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for Longhorn Manager. Specify the nodes allowed to run Longhorn Manager.\nIf you want to set node selector for Longhorn Manager DaemonSet, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node selector for Longhorn Manager. Specify the nodes allowed to run Longhorn Manager.\nIf you want to set node selector for Longhorn Manager DaemonSet, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\""
         },
         "priorityClass": {
           "description": "PriorityClass for Longhorn Manager."
@@ -5314,7 +5815,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Resource requests and limits for Longhorn Manager pods."
@@ -5322,16 +5830,13 @@
         "serviceAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Annotation for the Longhorn Manager service."
@@ -5339,16 +5844,13 @@
         "serviceLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "If you want to set annotations for the Longhorn Manager service, delete the `{}` in the line above\nand uncomment this example block\nannotation-key1: \"annotation-value1\"\nannotation-key2: \"annotation-value2\""
@@ -5369,23 +5871,11 @@
           "description": "Toleration for Longhorn Manager on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Manager DaemonSet, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
         },
         "updateStrategy": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "maxUnavailable": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "If you want to set labels for the Longhorn Manager service, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"\nDaemonSet update strategy. Default \"100% unavailable\" matches the upgrade\nflow (old managers removed before new start); override for rolling updates\nif you prefer that behavior.",
           "properties": {
             "rollingUpdate": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "properties": {
                 "maxUnavailable": {
                   "type": "string"
@@ -5400,1312 +5890,29 @@
       "type": "object"
     },
     "longhornUI": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "If you want to set node selector for Longhorn Driver Deployer Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
       "properties": {
         "affinity": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "items": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "properties": {
-                              "matchExpressions": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "labelSelector": {
-                          "additionalProperties": {
-                            "items": {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "properties": {
-                                "key": {
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "properties": {
-                            "matchExpressions": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "topologyKey": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "integer"
-                    }
-                  ]
-                },
-                "properties": {
-                  "podAffinityTerm": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "items": {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "properties": {
-                                "key": {
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "properties": {
-                            "matchExpressions": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "labelSelector": {
-                        "additionalProperties": {
-                          "items": {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                },
-                                {
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "properties": {
-                              "key": {
-                                "type": "string"
-                              },
-                              "operator": {
-                                "type": "string"
-                              },
-                              "values": {
-                                "items": {
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "type": "array"
-                        },
-                        "properties": {
-                          "matchExpressions": {
-                            "items": {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "properties": {
-                                "key": {
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "topologyKey": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "weight": {
-                    "type": "integer"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "properties": {
-              "preferredDuringSchedulingIgnoredDuringExecution": {
-                "items": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "additionalProperties": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              },
-                              "properties": {
-                                "matchExpressions": {
-                                  "items": {
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "items": {
-                                            "type": "string"
-                                          },
-                                          "type": "array"
-                                        },
-                                        {
-                                          "type": "string"
-                                        }
-                                      ]
-                                    },
-                                    "properties": {
-                                      "key": {
-                                        "type": "string"
-                                      },
-                                      "operator": {
-                                        "type": "string"
-                                      },
-                                      "values": {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "properties": {
-                          "labelSelector": {
-                            "additionalProperties": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "properties": {
-                              "matchExpressions": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "topologyKey": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "podAffinityTerm": {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "properties": {
-                              "matchExpressions": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "labelSelector": {
-                          "additionalProperties": {
-                            "items": {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "properties": {
-                                "key": {
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "properties": {
-                            "matchExpressions": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "topologyKey": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "weight": {
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "Affinity for Longhorn UI pods. Specify the affinity you want to use for Longhorn UI.",
           "properties": {
             "podAntiAffinity": {
-              "additionalProperties": {
-                "items": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "additionalProperties": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              },
-                              "properties": {
-                                "matchExpressions": {
-                                  "items": {
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "items": {
-                                            "type": "string"
-                                          },
-                                          "type": "array"
-                                        },
-                                        {
-                                          "type": "string"
-                                        }
-                                      ]
-                                    },
-                                    "properties": {
-                                      "key": {
-                                        "type": "string"
-                                      },
-                                      "operator": {
-                                        "type": "string"
-                                      },
-                                      "values": {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "properties": {
-                          "labelSelector": {
-                            "additionalProperties": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "properties": {
-                              "matchExpressions": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "topologyKey": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "podAffinityTerm": {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "properties": {
-                              "matchExpressions": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "labelSelector": {
-                          "additionalProperties": {
-                            "items": {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "properties": {
-                                "key": {
-                                  "type": "string"
-                                },
-                                "operator": {
-                                  "type": "string"
-                                },
-                                "values": {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "properties": {
-                            "matchExpressions": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "topologyKey": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "weight": {
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
+              "additionalProperties": {},
               "properties": {
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "items": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {
-                                  "items": {
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "items": {
-                                            "type": "string"
-                                          },
-                                          "type": "array"
-                                        },
-                                        {
-                                          "type": "string"
-                                        }
-                                      ]
-                                    },
-                                    "properties": {
-                                      "key": {
-                                        "type": "string"
-                                      },
-                                      "operator": {
-                                        "type": "string"
-                                      },
-                                      "values": {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                },
-                                "properties": {
-                                  "matchExpressions": {
-                                    "items": {
-                                      "additionalProperties": {
-                                        "anyOf": [
-                                          {
-                                            "items": {
-                                              "type": "string"
-                                            },
-                                            "type": "array"
-                                          },
-                                          {
-                                            "type": "string"
-                                          }
-                                        ]
-                                      },
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": "string"
-                                          },
-                                          "type": "array"
-                                        }
-                                      },
-                                      "type": "object"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          },
-                          "properties": {
-                            "labelSelector": {
-                              "additionalProperties": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              },
-                              "properties": {
-                                "matchExpressions": {
-                                  "items": {
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "items": {
-                                            "type": "string"
-                                          },
-                                          "type": "array"
-                                        },
-                                        {
-                                          "type": "string"
-                                        }
-                                      ]
-                                    },
-                                    "properties": {
-                                      "key": {
-                                        "type": "string"
-                                      },
-                                      "operator": {
-                                        "type": "string"
-                                      },
-                                      "values": {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "topologyKey": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        }
-                      ]
-                    },
+                    "additionalProperties": {},
                     "properties": {
                       "podAffinityTerm": {
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "additionalProperties": {
-                                "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "properties": {
-                                    "key": {
-                                      "type": "string"
-                                    },
-                                    "operator": {
-                                      "type": "string"
-                                    },
-                                    "values": {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              },
-                              "properties": {
-                                "matchExpressions": {
-                                  "items": {
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "items": {
-                                            "type": "string"
-                                          },
-                                          "type": "array"
-                                        },
-                                        {
-                                          "type": "string"
-                                        }
-                                      ]
-                                    },
-                                    "properties": {
-                                      "key": {
-                                        "type": "string"
-                                      },
-                                      "operator": {
-                                        "type": "string"
-                                      },
-                                      "values": {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
+                        "additionalProperties": {},
                         "properties": {
                           "labelSelector": {
-                            "additionalProperties": {
-                              "items": {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "items": {
-                                        "type": "string"
-                                      },
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                },
-                                "properties": {
-                                  "key": {
-                                    "type": "string"
-                                  },
-                                  "operator": {
-                                    "type": "string"
-                                  },
-                                  "values": {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
+                            "additionalProperties": {},
                             "properties": {
                               "matchExpressions": {
                                 "items": {
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
+                                  "additionalProperties": {},
                                   "properties": {
                                     "key": {
                                       "type": "string"
@@ -6748,9 +5955,20 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for Longhorn UI. Specify the nodes allowed to run Longhorn UI.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node selector for Longhorn UI. Specify the nodes allowed to run Longhorn UI."
         },
         "priorityClass": {
           "description": "PriorityClass for Longhorn UI."
@@ -6778,10 +5996,10 @@
       "type": "object"
     },
     "metrics": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "serviceMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -6798,18 +6016,32 @@
               "then": {
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Additional labels for the Prometheus ServiceMonitor resource.",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Additional labels for the Prometheus ServiceMonitor resource."
                   },
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Annotations for the Prometheus ServiceMonitor resource.",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations for the Prometheus ServiceMonitor resource."
                   },
                   "interval": {
                     "description": "Interval at which Prometheus scrapes the metrics from the target.",
@@ -6824,6 +6056,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Configures the relabeling rules to apply to the samples before ingestion. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
@@ -6837,6 +6072,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Configures the relabeling rules to apply the target’s metadata labels. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
@@ -6856,14 +6094,28 @@
           ],
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "description": "Additional labels for the Prometheus ServiceMonitor resource.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Additional labels for the Prometheus ServiceMonitor resource."
             },
             "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations for the Prometheus ServiceMonitor resource.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Annotations for the Prometheus ServiceMonitor resource."
             },
             "enabled": {
               "description": "Setting that allows the creation of a Prometheus ServiceMonitor resource for Longhorn Manager components.",
@@ -6921,14 +6173,27 @@
       ]
     },
     "namespaceOverride": {
-      "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
     },
     "networkPolicies": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {
           "description": "Setting that allows you to enable network policies that control access to Longhorn pods.",
@@ -6961,7 +6226,7 @@
       "type": "object"
     },
     "openshift": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7096,7 +6361,7 @@
           "type": "boolean"
         },
         "ui": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "port": {
               "description": "Port for accessing the OpenShift web console."
@@ -7114,7 +6379,7 @@
       "type": "object"
     },
     "persistence": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
           "additionalProperties": {},
@@ -7122,7 +6387,7 @@
           "type": "object"
         },
         "backingImage": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "dataSourceParameters": {
               "description": "Data source parameters of a backing image used in a Longhorn StorageClass.\nYou can specify a JSON string of a map. (Example: `'{\\\"url\\\":\\\"https://backing-image-example.s3-region.amazonaws.com/test-backing-image\\\"}'`)"
@@ -7166,7 +6431,7 @@
           "description": "Data locality of the default Longhorn StorageClass. (Options: \"disabled\", \"best-effort\")"
         },
         "defaultDiskSelector": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enable": {
               "description": "Setting that allows you to enable the disk selector for the default Longhorn StorageClass.",
@@ -7188,7 +6453,7 @@
           "type": "string"
         },
         "defaultNodeSelector": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enable": {
               "description": "Setting that allows you to enable the node selector for the default Longhorn StorageClass.",
@@ -7218,7 +6483,7 @@
           "type": "string"
         },
         "recurringJobSelector": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enable": {
               "description": "Setting that allows you to enable the recurring job selector for a Longhorn StorageClass.",
@@ -7233,7 +6498,7 @@
           "type": "object"
         },
         "shareManagerNodeSelector": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enable": {
               "description": "Setting that allows you to enable the share manager node selector for the default Longhorn StorageClass.",
@@ -7247,7 +6512,7 @@
           "type": "object"
         },
         "shareManagerTolerations": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enable": {
               "description": "Setting that allows you to enable the share manager tolerations for the default Longhorn StorageClass.",
@@ -7275,7 +6540,7 @@
       "type": "object"
     },
     "preUpgradeChecker": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "jobEnabled": {
           "description": "Setting that allows Longhorn to perform pre-upgrade checks. Disable this setting when installing Longhorn using Argo CD or other GitOps solutions.",
@@ -7289,7 +6554,7 @@
       "type": "object"
     },
     "privateRegistry": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7381,10 +6646,10 @@
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "manager": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "If you want to set additional labels for the Longhorn UI service, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
           "properties": {
             "nodePort": {
@@ -7402,7 +6667,7 @@
           "type": "object"
         },
         "ui": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -7425,8 +6690,19 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -7437,16 +6713,13 @@
             "annotations": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Annotation for the Longhorn UI service."
@@ -7454,16 +6727,13 @@
             "labels": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "If you want to set annotations for the Longhorn UI service, delete the `{}` in the line above\nand uncomment this example block\nannotation-key1: \"annotation-value1\"\nannotation-key2: \"annotation-value2\""
@@ -7473,8 +6743,19 @@
             },
             "loadBalancerIP": {},
             "loadBalancerSourceRanges": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "nodePort": {
               "description": "NodePort port number for Longhorn UI. When unspecified, Longhorn selects a free port between 30000 and 32767."
@@ -7504,21 +6785,18 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Annotations to add to the service account"

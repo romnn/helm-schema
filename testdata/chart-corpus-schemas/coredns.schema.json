@@ -82,21 +82,33 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#affinity-v1-core"
               },
               "customFlags": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "extraContainers": {
                 "anyOf": [
@@ -107,6 +119,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "optional array of sidecar containers\n- name: some-container-name\nimage: some-image:latest\nimagePullPolicy: Always"
@@ -125,15 +140,44 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
                   },
                   "repository": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "tag": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -141,72 +185,48 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the coredns proportional autoscaler pods",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the coredns proportional autoscaler pods"
               },
               "resources": {
-                "additionalProperties": {
-                  "additionalProperties": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
                     "type": "string"
-                  },
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "description": "resources for autoscaler pod",
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
                   }
-                },
-                "type": "object"
+                ],
+                "description": "resources for autoscaler pod"
               },
               "tolerations": {
                 "anyOf": [
@@ -217,6 +237,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core"
@@ -225,25 +248,48 @@
             "type": "object"
           },
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "deployment": {
             "properties": {
               "name": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -332,11 +378,18 @@
                 "description": "Options for autoscaler configmap",
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Annotations for the coredns-autoscaler configmap\ni.e. strategy.spinnaker.io/versioned: \"false\" to ensure configmap isn't renamed",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations for the coredns-autoscaler configmap\ni.e. strategy.spinnaker.io/versioned: \"false\" to ensure configmap isn't renamed"
                   }
                 },
                 "type": "object"
@@ -345,11 +398,18 @@
             "type": "object"
           },
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           }
         },
         "type": "object"
@@ -437,6 +497,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
@@ -448,18 +511,32 @@
             "type": "object"
           },
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           }
         },
         "type": "object"
@@ -793,18 +870,32 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "deployment": {
             "properties": {
@@ -823,8 +914,19 @@
           "hpa": {
             "properties": {
               "behavior": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "maxReplicas": {
                 "type": "integer"
@@ -838,6 +940,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -983,18 +1088,32 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "fullnameOverride": {
             "type": [
@@ -1090,20 +1209,34 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "deployment": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the coredns deployment",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the coredns deployment"
               }
             },
             "type": "object"
@@ -1189,11 +1322,18 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "fullnameOverride": {
             "type": [
@@ -1206,10 +1346,17 @@
               "monitor": {
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "honorLabels": {
                     "type": "boolean"
@@ -1226,6 +1373,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -1248,6 +1398,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -1260,28 +1413,30 @@
                   "selector": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
                   "tlsConfig": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   }
@@ -1387,11 +1542,18 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "fullnameOverride": {
             "type": [
@@ -1595,21 +1757,35 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "prometheus": {
             "properties": {
               "service": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -1620,10 +1796,17 @@
           "service": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1716,19 +1899,33 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
-          },
-          "service": {
-            "properties": {
-              "annotations": {
+            "anyOf": [
+              {
                 "additionalProperties": {
                   "type": "string"
                 },
                 "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
+          },
+          "service": {
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1840,19 +2037,33 @@
       "then": {
         "properties": {
           "customAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "annotations": {
+            "anyOf": [
+              {
                 "additionalProperties": {
                   "type": "string"
                 },
                 "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
+          },
+          "serviceAccount": {
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1907,11 +2118,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "env": {
             "anyOf": [
@@ -1922,6 +2140,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "optional array of environment variables for coredns container\npossible usecase: provides username and password for etcd user authentications\n- name: WHATEVER_ENV\nvalue: whatever\n- name: SOME_SECRET_ENV\nvalueFrom:\nsecretKeyRef:\nname: some-secret-name\nkey: secret-key"
@@ -1935,6 +2156,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "optional array of sidecar containers"
@@ -1963,6 +2187,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "- name: some-volume-name\nemptyDir: {}\noptional array of mount points for extraVolumes\n- name: some-volume-name\nmountPath: /etc/wherever"
@@ -1976,6 +2203,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "- name: some-container-name\nimage: some-image:latest\nimagePullPolicy: Always\noptional array of extra volumes to create"
@@ -2000,12 +2230,28 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2019,41 +2265,102 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Configures initcontainers for the coredns deployment."
           },
           "nodeSelector": {
-            "additionalProperties": {},
-            "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
           },
           "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "cluster-autoscaler.kubernetes.io/safe-to-evict: \"false\"",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "cluster-autoscaler.kubernetes.io/safe-to-evict: \"false\""
           },
           "podDisruptionBudget": {
-            "additionalProperties": {},
-            "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget"
           },
           "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "podSecurityContext": {
-            "additionalProperties": {},
-            "description": "Configure the pod level securityContext.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Configure the pod level securityContext."
           },
           "resources": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "rollingUpdate": {
             "properties": {
@@ -2067,19 +2374,52 @@
             "type": "object"
           },
           "securityContext": {
-            "additionalProperties": {},
-            "description": "Configure SecurityContext for Pod.\nEnsure that required linux capability to bind port number below 1024 is assigned (`CAP_NET_BIND_SERVICE`).",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Configure SecurityContext for Pod.\nEnsure that required linux capability to bind port number below 1024 is assigned (`CAP_NET_BIND_SERVICE`)."
           },
           "service": {
             "properties": {
               "clusterIPs": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "externalIPs": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "name": {
                 "anyOf": [
@@ -2093,9 +2433,20 @@
                 "description": "clusterIP: \"\"\nclusterIPs: []\nloadBalancerIP: \"\"\nloadBalancerClass: \"\"\nexternalIPs: []\nexternalTrafficPolicy: \"\"\nipFamilyPolicy: \"\"\ntrafficDistribution: PreferClose\nThe name of the Service\nIf not set, a name is generated using the fullname template"
               },
               "selector": {
-                "additionalProperties": {},
-                "description": "Pod selector",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Pod selector"
               }
             },
             "type": "object"
@@ -2122,6 +2473,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core\nfor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule"
@@ -2214,11 +2568,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "fullnameOverride": {
             "type": [
@@ -2237,6 +2598,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
@@ -2287,11 +2651,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "fullnameOverride": {
             "type": [
@@ -2300,9 +2671,22 @@
             ]
           },
           "nameOverride": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
             ]
           }
         },
@@ -2386,11 +2770,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "fullnameOverride": {
             "type": [
@@ -2405,14 +2796,15 @@
                   "selector": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   }
@@ -2891,6 +3283,81 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscaler": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaler"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "isClusterService": {}
+                  },
+                  "required": [
+                    "isClusterService"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "isClusterService": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "isClusterService"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "k8sAppLabelOverride": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -3128,68 +3595,6 @@
               {
                 "type": "null"
               }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "autoscaler": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "autoscaler"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "isClusterService": {}
-                  },
-                  "required": [
-                    "isClusterService"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "isClusterService": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "isClusterService"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "k8sAppLabelOverride": {
-            "type": [
-              "string",
-              "null"
             ]
           }
         },
@@ -3801,22 +4206,40 @@
       ]
     },
     "autoscaler": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Configue a cluster-proportional-autoscaler for coredns\nSee https://github.com/kubernetes-incubator/cluster-proportional-autoscaler",
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#affinity-v1-core",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#affinity-v1-core"
         },
         "configmap": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Options for autoscaler configmap",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations for the coredns-autoscaler configmap\ni.e. strategy.spinnaker.io/versioned: \"false\" to ensure configmap isn't renamed",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Annotations for the coredns-autoscaler configmap\ni.e. strategy.spinnaker.io/versioned: \"false\" to ensure configmap isn't renamed"
             }
           },
           "type": "object"
@@ -3825,8 +4248,19 @@
           "description": "Number of cores in the cluster per coredns replica"
         },
         "customFlags": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "enabled": {
           "description": "Enabled the cluster-proportional-autoscaler",
@@ -3848,7 +4282,7 @@
           "description": "optional array of sidecar containers\n- name: some-container-name\nimage: some-image:latest\nimagePullPolicy: Always"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "pullPolicy": {},
             "pullSecrets": {
@@ -3876,7 +4310,7 @@
           "type": "boolean"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Enables the livenessProbe for cluster-proportional-autoscaler - this requires version 1.8.0+ of the autoscaler",
           "properties": {
             "enabled": {
@@ -3897,17 +4331,35 @@
           "description": "Min size of replicaCount"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
         },
         "nodesPerReplica": {
           "description": "Number of nodes in the cluster per coredns replica"
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the coredns proportional autoscaler pods",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the coredns proportional autoscaler pods"
         },
         "preventSinglePointFailure": {
           "description": "If true does not allow single points of failure to form",
@@ -3940,7 +4392,7 @@
       "type": "object"
     },
     "clusterRole": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "nameOverride": {
           "description": "By default a name is generated using the fullname template.\nOverride here if desired:"
@@ -3949,17 +4401,31 @@
       "type": "object"
     },
     "customAnnotations": {
-      "additionalProperties": {},
-      "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
     },
     "customLabels": {
-      "additionalProperties": {},
-      "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
     },
     "deployment": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3991,9 +4457,20 @@
           "then": {
             "properties": {
               "dnsConfig": {
-                "additionalProperties": {},
-                "description": "dnsConfig allows fine-grained DNS configuration for the pod.\nOnly used when dnsPolicy is set to \"None\" or when custom DNS settings are needed.\nExample:\ndnsConfig:\nnameservers:\n- 8.8.8.8\nsearches:\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "dnsConfig allows fine-grained DNS configuration for the pod.\nOnly used when dnsPolicy is set to \"None\" or when custom DNS settings are needed.\nExample:\ndnsConfig:\nnameservers:\n- 8.8.8.8\nsearches:\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\""
               },
               "name": {
                 "anyOf": [
@@ -4006,9 +4483,20 @@
                 ]
               },
               "selector": {
-                "additionalProperties": {},
-                "description": "Pod selector",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Pod selector"
               }
             },
             "type": "object"
@@ -4076,14 +4564,32 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the coredns deployment",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the coredns deployment"
         },
         "dnsConfig": {
-          "additionalProperties": {},
-          "description": "dnsConfig allows fine-grained DNS configuration for the pod.\nOnly used when dnsPolicy is set to \"None\" or when custom DNS settings are needed.\nExample:\ndnsConfig:\nnameservers:\n- 8.8.8.8\nsearches:\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "dnsConfig allows fine-grained DNS configuration for the pod.\nOnly used when dnsPolicy is set to \"None\" or when custom DNS settings are needed.\nExample:\ndnsConfig:\nnameservers:\n- 8.8.8.8\nsearches:\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\""
         },
         "dnsPolicy": {
           "description": "dnsPolicy determines how DNS resolution is handled for the pod.\nWhen isClusterService is true, this defaults to \"Default\" to avoid circular DNS resolution.\nOptions: Default, ClusterFirst, ClusterFirstWithHostNet, None\nIf set to \"None\", you must provide dnsConfig."
@@ -4093,9 +4599,20 @@
         },
         "name": {},
         "selector": {
-          "additionalProperties": {},
-          "description": "Pod selector",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Pod selector"
         },
         "skipConfig": {
           "type": "boolean"
@@ -4173,11 +4690,22 @@
     },
     "fullnameOverride": {},
     "hpa": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "behavior": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "enabled": {
           "type": "boolean"
@@ -4202,7 +4730,7 @@
       "type": "object"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {},
         "pullSecrets": {
@@ -4248,7 +4776,7 @@
     },
     "k8sAppLabelOverride": {},
     "livenessProbe": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "To use the livenessProbe, the health plugin needs to be enabled in CoreDNS' server config",
       "properties": {
         "enabled": {
@@ -4264,41 +4792,95 @@
     },
     "nameOverride": {},
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "podAnnotations": {
-      "additionalProperties": {},
-      "description": "cluster-autoscaler.kubernetes.io/safe-to-evict: \"false\"",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "cluster-autoscaler.kubernetes.io/safe-to-evict: \"false\""
     },
     "podDisruptionBudget": {
-      "additionalProperties": {},
-      "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget"
     },
     "podLabels": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "podSecurityContext": {
-      "additionalProperties": {},
-      "description": "Configure the pod level securityContext.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Configure the pod level securityContext."
     },
     "priorityClassName": {
       "description": "Optional priority class to be used for the coredns pods. Used for autoscaler if autoscaler.priorityClassName not set."
     },
     "prometheus": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "monitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "enabled": {
               "type": "boolean"
@@ -4337,29 +4919,69 @@
             "scheme": {},
             "scrapeTimeout": {},
             "selector": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "tlsConfig": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
         },
         "service": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "enabled": {
               "type": "boolean"
             },
             "selector": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
@@ -4368,7 +4990,7 @@
       "type": "object"
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "description": "If true, create & use RBAC resources",
@@ -4380,7 +5002,7 @@
       "type": "object"
     },
     "readinessProbe": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "To use the readinessProbe, the ready plugin needs to be enabled in CoreDNS' server config",
       "properties": {
         "enabled": {
@@ -4400,7 +5022,7 @@
       "type": "object"
     },
     "rollingUpdate": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "maxSurge": {},
         "maxUnavailable": {}
@@ -4408,14 +5030,21 @@
       "type": "object"
     },
     "securityContext": {
-      "additionalProperties": {},
-      "description": "Configure SecurityContext for Pod.\nEnsure that required linux capability to bind port number below 1024 is assigned (`CAP_NET_BIND_SERVICE`).",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Configure SecurityContext for Pod.\nEnsure that required linux capability to bind port number below 1024 is assigned (`CAP_NET_BIND_SERVICE`)."
     },
     "servers": {
       "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
       "items": {
-        "additionalProperties": false,
+        "additionalProperties": {},
         "properties": {
           "configBlock": {},
           "hostPort": {},
@@ -4424,7 +5053,7 @@
           "parameters": {},
           "plugins": {
             "items": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "configBlock": {
                   "type": "string"
@@ -4450,7 +5079,7 @@
           "port": {},
           "zones": {
             "items": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "scheme": {},
                 "use_tcp": {
@@ -4470,20 +5099,49 @@
       "type": "array"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "clusterIP": {},
         "clusterIPs": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "externalIPs": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "externalTrafficPolicy": {},
         "ipFamilyPolicy": {},
@@ -4493,20 +5151,38 @@
           "description": "clusterIP: \"\"\nclusterIPs: []\nloadBalancerIP: \"\"\nloadBalancerClass: \"\"\nexternalIPs: []\nexternalTrafficPolicy: \"\"\nipFamilyPolicy: \"\"\ntrafficDistribution: PreferClose\nThe name of the Service\nIf not set, a name is generated using the fullname template"
         },
         "selector": {
-          "additionalProperties": {},
-          "description": "Pod selector",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Pod selector"
         },
         "trafficDistribution": {}
       },
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "create": {
           "type": "boolean"

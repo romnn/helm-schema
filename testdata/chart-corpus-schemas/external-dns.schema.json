@@ -117,11 +117,18 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Labels to add to all chart resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels to add to all chart resources."
           },
           "fullnameOverride": {
             "description": "(string) Override the full name of the chart.",
@@ -187,11 +194,18 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Labels to add to all chart resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels to add to all chart resources."
           },
           "fullnameOverride": {
             "description": "(string) Override the full name of the chart.",
@@ -281,11 +295,18 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Labels to add to all chart resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels to add to all chart resources."
           },
           "serviceAccount": {
             "properties": {
@@ -349,6 +370,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra [volume mounts](https://kubernetes.io/docs/concepts/storage/volumes/) for the `external-dns` container."
@@ -403,6 +427,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra [volumes](https://kubernetes.io/docs/concepts/storage/volumes/) for the `Pod`."
@@ -732,18 +759,44 @@
       "then": {
         "properties": {
           "namespaceOverride": {
-            "description": "(string) Override the namespace that chart resources are rendered into.\nDefaults to the release namespace. Useful when installing the chart as a\nsubchart that should live in its own namespace, separate from the umbrella\nrelease namespace.",
-            "type": [
-              "string",
-              "null"
-            ]
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "(string) Override the namespace that chart resources are rendered into.\nDefaults to the release namespace. Useful when installing the chart as a\nsubchart that should live in its own namespace, separate from the umbrella\nrelease namespace."
           },
           "sourceNamespace": {
-            "description": "Source namespace to watch for Kubernetes resources other than Gateway API gateways.\nUsed only when `namespaced=true`. Defaults to Release.Namespace",
-            "type": [
-              "string",
-              "null"
-            ]
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Source namespace to watch for Kubernetes resources other than Gateway API gateways.\nUsed only when `namespaced=true`. Defaults to Release.Namespace"
           }
         },
         "type": "object"
@@ -787,11 +840,18 @@
       "then": {
         "properties": {
           "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to add to the `Pod`.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to add to the `Pod`."
           }
         },
         "type": "object"
@@ -872,6 +932,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ]
                       },
@@ -884,20 +947,24 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ]
                       },
                       "tlsConfig": {
                         "anyOf": [
                           {
-                            "additionalProperties": false,
-                            "maxProperties": 0,
-                            "properties": {},
+                            "additionalProperties": {},
                             "type": "object"
                           },
                           {
-                            "additionalProperties": {},
-                            "type": "object"
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ]
                       }
@@ -989,6 +1056,303 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "mountPath": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountPath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "extraVolumeMounts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraVolumeMounts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "secretConfiguration": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secretConfiguration"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "secretConfiguration": {
+            "properties": {
+              "mountPath": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Mount path for the `Secret`, this can be templated."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "extraVolumeMounts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraVolumeMounts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "secretConfiguration": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secretConfiguration"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "secretConfiguration": {
+            "properties": {
+              "mountPath": {
+                "description": "Mount path for the `Secret`, this can be templated.",
+                "type": "string"
+              },
+              "subPath": {
+                "description": "Sub-path for mounting the `Secret`, this can be templated.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "subPath": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "subPath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "subPath": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "subPath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "extraVolumeMounts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraVolumeMounts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "secretConfiguration": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secretConfiguration"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "secretConfiguration": {
+            "properties": {
+              "subPath": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Sub-path for mounting the `Secret`, this can be templated."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "not": {
           "properties": {
             "txtPrefix": {
@@ -1004,11 +1368,24 @@
       "then": {
         "properties": {
           "txtSuffix": {
-            "description": "(string) Specify a suffix for the domain names of TXT records created for the `txt` registry.\nMutually exclusive with `txtPrefix`.",
-            "type": [
-              "string",
-              "null"
-            ]
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "(string) Specify a suffix for the domain names of TXT records created for the `txt` registry.\nMutually exclusive with `txtPrefix`."
           }
         },
         "type": "object"
@@ -1057,8 +1434,19 @@
           "additionalProperties": {},
           "properties": {
             "nodeAffinity": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "podAffinity": {
               "additionalProperties": {},
@@ -1067,14 +1455,25 @@
                   "anyOf": [
                     {
                       "items": {
-                        "additionalProperties": false,
+                        "additionalProperties": {},
                         "properties": {
                           "podAffinityTerm": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "labelSelector": {}
-                            },
-                            "type": "object"
+                            "anyOf": [
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "labelSelector": {}
+                                },
+                                "type": "object"
+                              },
+                              {
+                                "items": {},
+                                "type": "array"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
                           },
                           "weight": {}
                         },
@@ -1094,11 +1493,22 @@
                   "anyOf": [
                     {
                       "items": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "labelSelector": {}
-                        },
-                        "type": "object"
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "properties": {
+                              "labelSelector": {}
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       },
                       "type": "array"
                     },
@@ -1120,14 +1530,25 @@
                   "anyOf": [
                     {
                       "items": {
-                        "additionalProperties": false,
+                        "additionalProperties": {},
                         "properties": {
                           "podAffinityTerm": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "labelSelector": {}
-                            },
-                            "type": "object"
+                            "anyOf": [
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "labelSelector": {}
+                                },
+                                "type": "object"
+                              },
+                              {
+                                "items": {},
+                                "type": "array"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
                           },
                           "weight": {}
                         },
@@ -1147,11 +1568,22 @@
                   "anyOf": [
                     {
                       "items": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "labelSelector": {}
-                        },
-                        "type": "object"
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "properties": {
+                              "labelSelector": {}
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       },
                       "type": "array"
                     },
@@ -1178,7 +1610,16 @@
           "const": null
         },
         {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "number"
         },
         {
           "type": "string"
@@ -1192,7 +1633,16 @@
           "const": null
         },
         {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "number"
         },
         {
           "type": "string"
@@ -1206,16 +1656,13 @@
     "commonLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Labels to add to all chart resources."
@@ -1223,22 +1670,19 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Annotations to add to the `Deployment`."
     },
     "deploymentStrategy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "[Deployment Strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy).",
       "properties": {
         "type": {
@@ -1257,7 +1701,14 @@
           "const": null
         },
         {
+          "items": {},
+          "type": "array"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "(object) [DNS config](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) for the pod, if not set the default will be used."
@@ -1269,7 +1720,12 @@
       "anyOf": [
         {
           "items": {
-            "type": "string"
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
           },
           "type": "array"
         },
@@ -1311,7 +1767,12 @@
       "anyOf": [
         {
           "items": {
-            "type": "string"
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
           },
           "type": "array"
         },
@@ -1331,40 +1792,18 @@
       "allOf": [
         {
           "if": {
-            "type": "array"
-          },
-          "then": {
             "anyOf": [
-              {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "properties": {},
-                "type": "object"
-              },
               {
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
-                "type": "null"
+                "type": "object"
               }
             ]
-          }
-        },
-        {
-          "if": {
-            "type": "object"
           },
           "then": {
             "anyOf": [
               {
-                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
@@ -1492,7 +1931,7 @@
       "type": "object"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "type": "string"
@@ -1534,7 +1973,12 @@
     },
     "interval": {
       "description": "Interval for DNS updates.",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "labelFilter": {
       "anyOf": [
@@ -1542,7 +1986,16 @@
           "const": null
         },
         {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "number"
         },
         {
           "type": "string"
@@ -1551,36 +2004,14 @@
       "description": "Filter resources queried for endpoints by label selector."
     },
     "livenessProbe": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "path": {
-                "type": "string"
-              },
-              "port": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
+      "additionalProperties": {},
       "description": "[Liveness probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) configuration for the `external-dns` container.",
       "properties": {
         "failureThreshold": {
           "type": "integer"
         },
         "httpGet": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "path": {
               "type": "string"
@@ -1608,17 +2039,32 @@
     },
     "logFormat": {
       "description": "Log format.",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "logLevel": {
       "description": "Log level.",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "managedRecordTypes": {
       "anyOf": [
         {
           "items": {
-            "type": "string"
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
           },
           "type": "array"
         },
@@ -1676,79 +2122,80 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Node labels to match for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)."
     },
     "podAnnotations": {
-      "additionalProperties": {},
-      "description": "Annotations to add to the `Pod`.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Annotations to add to the `Pod`."
     },
     "podLabels": {
       "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
         {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Labels to add to the `Pod`."
     },
     "podSecurityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "type": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
-      "description": "[Pod security context](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#podsecuritycontext-v1-core), this supports full customisation.",
-      "properties": {
-        "fsGroup": {
-          "type": "integer"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "seccompProfile": {
-          "additionalProperties": {
-            "type": "string"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "type": {
-              "type": "string"
+            "fsGroup": {
+              "type": "integer"
+            },
+            "runAsNonRoot": {
+              "type": "boolean"
+            },
+            "seccompProfile": {
+              "additionalProperties": {},
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "[Pod security context](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#podsecuritycontext-v1-core), this supports full customisation."
     },
     "policy": {
       "description": "How DNS records are synchronized between sources and providers; available values are `create-only`, `sync`, & `upsert-only`.",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "priorityClassName": {
       "description": "(string) Priority class name for the `Pod`."
@@ -1756,6 +2203,34 @@
     "provider": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "not": {
+              "type": "string"
+            }
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
         {
           "if": {
             "allOf": [
@@ -1792,6 +2267,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -1804,6 +2282,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -1816,6 +2297,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -1828,140 +2312,62 @@
                     "type": "object"
                   },
                   "livenessProbe": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "path": {
-                              "type": "string"
-                            },
-                            "port": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "failureThreshold": {
-                        "type": "integer"
-                      },
-                      "httpGet": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "path": {
-                            "type": "string"
-                          },
-                          "port": {
-                            "type": "string"
-                          }
-                        },
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
                         "type": "object"
                       },
-                      "initialDelaySeconds": {
-                        "type": "integer"
+                      {
+                        "items": {},
+                        "type": "array"
                       },
-                      "periodSeconds": {
-                        "type": "integer"
-                      },
-                      "successThreshold": {
-                        "type": "integer"
-                      },
-                      "timeoutSeconds": {
-                        "type": "integer"
+                      {
+                        "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ]
                   },
                   "readinessProbe": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "path": {
-                              "type": "string"
-                            },
-                            "port": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "failureThreshold": {
-                        "type": "integer"
-                      },
-                      "httpGet": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "path": {
-                            "type": "string"
-                          },
-                          "port": {
-                            "type": "string"
-                          }
-                        },
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
                         "type": "object"
                       },
-                      "initialDelaySeconds": {
-                        "type": "integer"
+                      {
+                        "items": {},
+                        "type": "array"
                       },
-                      "periodSeconds": {
-                        "type": "integer"
-                      },
-                      "successThreshold": {
-                        "type": "integer"
-                      },
-                      "timeoutSeconds": {
-                        "type": "integer"
+                      {
+                        "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ]
                   },
                   "resources": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
                   "securityContext": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -1983,7 +2389,7 @@
       ]
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2023,6 +2429,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               }
@@ -2053,36 +2462,14 @@
       "type": "object"
     },
     "readinessProbe": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "path": {
-                "type": "string"
-              },
-              "port": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
+      "additionalProperties": {},
       "description": "[Readiness probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) configuration for the `external-dns` container.",
       "properties": {
         "failureThreshold": {
           "type": "integer"
         },
         "httpGet": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "path": {
               "type": "string"
@@ -2110,7 +2497,12 @@
     },
     "registry": {
       "description": "Specify the registry for storing ownership and labels.\nValid values are `txt`, `aws-sd`, `dynamodb` & `noop`.",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "resources": {
       "anyOf": [
@@ -2123,6 +2515,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "[Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for the `external-dns` container."
@@ -2131,7 +2530,7 @@
       "description": "(int) Specify the number of old `ReplicaSets` to retain to allow rollback of the `Deployment``."
     },
     "secretConfiguration": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2155,6 +2554,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -2162,6 +2562,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "`Secret` data."
@@ -2191,89 +2594,62 @@
       "type": "object"
     },
     "securityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "properties": {
-              "drop": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
-      "description": "[Security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container) for the `external-dns` container.",
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
-        },
-        "capabilities": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "drop": {
-              "items": {
-                "type": "string"
+            "allowPrivilegeEscalation": {
+              "type": "boolean"
+            },
+            "capabilities": {
+              "additionalProperties": {},
+              "properties": {
+                "drop": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
               },
-              "type": "array"
+              "type": "object"
+            },
+            "privileged": {
+              "type": "boolean"
+            },
+            "readOnlyRootFilesystem": {
+              "type": "boolean"
+            },
+            "runAsGroup": {
+              "type": "integer"
+            },
+            "runAsNonRoot": {
+              "type": "boolean"
+            },
+            "runAsUser": {
+              "type": "integer"
             }
           },
           "type": "object"
         },
-        "privileged": {
-          "type": "boolean"
-        },
-        "readOnlyRootFilesystem": {
-          "type": "boolean"
-        },
-        "runAsGroup": {
-          "type": "integer"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "type": "integer"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "[Security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container) for the `external-dns` container."
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Service annotations."
@@ -2304,7 +2680,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2359,11 +2735,18 @@
                 "type": "boolean"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels to add to the service account.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels to add to the service account."
               },
               "name": {
                 "description": "(string) If this is set and `serviceAccount.create` is `true` this will be used for the created `ServiceAccount` name, if set and `serviceAccount.create` is `false` then this will define an existing `ServiceAccount` to use.",
@@ -2431,9 +2814,16 @@
           "type": "boolean"
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Labels to add to the service account.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels to add to the service account."
         },
         "name": {
           "description": "(string) If this is set and `serviceAccount.create` is `true` this will be used for the created `ServiceAccount` name, if set and `serviceAccount.create` is `false` then this will define an existing `ServiceAccount` to use."
@@ -2442,7 +2832,7 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2459,18 +2849,32 @@
           "then": {
             "properties": {
               "additionalLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional labels for the `ServiceMonitor`.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional labels for the `ServiceMonitor`."
               },
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to add to the `ServiceMonitor`.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to add to the `ServiceMonitor`."
               },
               "metricRelabelings": {
                 "anyOf": [
@@ -2481,6 +2885,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "[Metric relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs) to apply to samples before ingestion."
@@ -2501,6 +2908,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "[Relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) to apply to samples before ingestion."
@@ -2514,6 +2924,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Provide target labels for the `ServiceMonitor`."
@@ -2521,14 +2934,15 @@
               "tlsConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Configure the `ServiceMonitor` [TLS config](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig)."
@@ -2540,14 +2954,28 @@
       ],
       "properties": {
         "additionalLabels": {
-          "additionalProperties": {},
-          "description": "Additional labels for the `ServiceMonitor`.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional labels for the `ServiceMonitor`."
         },
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add to the `ServiceMonitor`.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to add to the `ServiceMonitor`."
         },
         "bearerTokenFile": {
           "description": "(string) Provide a bearer token file for the `ServiceMonitor`."
@@ -2614,9 +3042,20 @@
           "description": "Provide target labels for the `ServiceMonitor`."
         },
         "tlsConfig": {
-          "additionalProperties": {},
-          "description": "Configure the `ServiceMonitor` [TLS config](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig).",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Configure the `ServiceMonitor` [TLS config](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig)."
         }
       },
       "type": "object"
@@ -2635,7 +3074,12 @@
       "anyOf": [
         {
           "items": {
-            "type": "string"
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
           },
           "type": "array"
         },
@@ -2673,8 +3117,19 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -2700,7 +3155,16 @@
           "const": null
         },
         {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "number"
         },
         {
           "type": "string"
@@ -2714,7 +3178,16 @@
           "const": null
         },
         {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "number"
         },
         {
           "type": "string"

@@ -193,11 +193,18 @@
           "global": {
             "properties": {
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "global labels will be applied to all resources deployed by the chart",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "global labels will be applied to all resources deployed by the chart"
               }
             },
             "type": "object"
@@ -278,12 +285,19 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
     "automountServiceAccountToken": {},
     "autoscaling": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -328,7 +342,7 @@
       "type": "object"
     },
     "config": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "accounts": {
           "description": "Enable monitoring account metrics.",
@@ -342,10 +356,15 @@
           "additionalProperties": {},
           "properties": {
             "secret": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "key": {
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "name": {}
               },
@@ -355,14 +374,27 @@
           "type": "object"
         },
         "expectedServers": {
-          "description": "Expected number of servers",
-          "type": [
-            "integer",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Expected number of servers"
         },
         "jetstream": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -411,7 +443,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -427,10 +468,15 @@
           "additionalProperties": {},
           "properties": {
             "secret": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "key": {
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "name": {}
               },
@@ -443,7 +489,7 @@
           "additionalProperties": {},
           "properties": {
             "secret": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "key": {},
                 "name": {}
@@ -454,39 +500,93 @@
           "type": "object"
         },
         "servers": {
-          "description": "Required.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Required."
         },
         "timeout": {
-          "description": "Polling timeout",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Polling timeout"
         },
         "tls": {
           "additionalProperties": {},
           "properties": {
             "ca": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "cert": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "key": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "secret": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "name": {
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
@@ -501,10 +601,20 @@
             "enabled": {},
             "expirationSeconds": {},
             "filename": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "mountPath": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "volumeName": {}
           },
@@ -515,17 +625,52 @@
       "type": "object"
     },
     "extraVolumeMounts": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "extraVolumes": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "global": {
@@ -534,16 +679,13 @@
         "labels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "global labels will be applied to all resources deployed by the chart"
@@ -552,7 +694,7 @@
       "type": "object"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "description": "registry: docker.io",
@@ -579,7 +721,7 @@
       ]
     },
     "ingress": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -596,15 +738,23 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "hosts": {
                 "anyOf": [
                   {
                     "items": {
+                      "additionalProperties": {},
                       "properties": {},
                       "type": "object"
                     },
@@ -641,8 +791,15 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "enabled": {
           "type": "boolean"
@@ -668,43 +825,80 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ]
     },
     "podSecurityContext": {
-      "additionalProperties": {},
-      "description": "fsGroup: 2000",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "fsGroup: 2000"
     },
     "replicaCount": {},
     "resources": {
-      "additionalProperties": {},
-      "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
     "securityContext": {
-      "additionalProperties": {},
-      "description": "capabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nrunAsNonRoot: true\nrunAsUser: 1000",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "capabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nrunAsNonRoot: true\nrunAsUser: 1000"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "port": {
           "type": "integer"
@@ -716,7 +910,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -748,11 +942,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to add to the service account",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to add to the service account"
               },
               "name": {
                 "anyOf": [
@@ -818,9 +1019,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add to the service account",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to add to the service account"
         },
         "create": {
           "description": "Specifies whether a service account should be created",
@@ -833,7 +1041,7 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -850,16 +1058,30 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "metricRelabelings": {
                 "anyOf": [
@@ -870,6 +1092,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -882,6 +1107,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "interval:\nscrapeTimeout:"
@@ -893,16 +1121,30 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "enabled": {
           "type": "boolean"
         },
         "interval": {},
         "labels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "metricRelabelings": {
           "anyOf": [

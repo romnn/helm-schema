@@ -38,6 +38,110 @@
   "allOf": [
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "commonAnnotations": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonAnnotations": {
+            "anyOf": [
+              {
+                "not": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "commonLabels": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "commonLabels"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "commonLabels": {
+            "anyOf": [
+              {
+                "not": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -87,6 +191,90 @@
                 "type": "null"
               }
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -270,6 +458,7 @@
       ]
     },
     "service": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -320,6 +509,39 @@
         {
           "if": {
             "properties": {
+              "extraPorts": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "extraPorts"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "extraPorts": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
               "type": {
                 "enum": [
                   "LoadBalancer"
@@ -345,7 +567,19 @@
                 ]
               },
               "loadBalancerSourceRanges": {
-                "$ref": "#/$defs/providerSource_k8s_23d6e04ff28d"
+                "anyOf": [
+                  {
+                    "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -454,6 +688,39 @@
             },
             "type": "object"
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "sessionAffinityConfig": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "sessionAffinityConfig"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "sessionAffinityConfig": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
         }
       ],
       "properties": {
@@ -467,7 +734,7 @@
         "loadBalancerIP": {},
         "loadBalancerSourceRanges": {},
         "nodePorts": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "client": {},
             "tls": {}
@@ -475,7 +742,7 @@
           "type": "object"
         },
         "ports": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "client": {},
             "election": {
@@ -525,8 +792,10 @@
       "type": "object"
     },
     "tls": {
+      "additionalProperties": {},
       "properties": {
         "client": {
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"

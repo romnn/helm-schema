@@ -234,6 +234,9 @@ impl Interpreter<'_> {
                 }
                 | Guard::TypeIs {
                     path: guard_path, ..
+                }
+                | Guard::NotTypeIs {
+                    path: guard_path, ..
                 } => !guard_path.trim().is_empty() && foreign(guard_path),
                 Guard::Or { paths } => paths
                     .iter()

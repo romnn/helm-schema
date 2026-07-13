@@ -308,6 +308,659 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "directConnection": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "directConnection"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "agent": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "agent"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "jenkinsTunnel": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "jenkinsTunnel"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "JCasC": {
+                              "properties": {
+                                "defaultConfig": {}
+                              },
+                              "required": [
+                                "defaultConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "JCasC"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "JCasC": {
+                            "properties": {
+                              "defaultConfig": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "defaultConfig"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "JCasC"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "disableDefaultAgent": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableDefaultAgent"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "jenkinsTunnel": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "jenkinsTunnel"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "JCasC": {
+                              "properties": {
+                                "defaultConfig": {}
+                              },
+                              "required": [
+                                "defaultConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "JCasC"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "JCasC": {
+                            "properties": {
+                              "defaultConfig": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "defaultConfig"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "JCasC"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "directConnection": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "directConnection"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "websocket": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "websocket"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "jenkinsTunnel": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Overrides the Kubernetes Jenkins tunnel"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "jenkinsUrl": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "jenkinsUrl"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "directConnection": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "directConnection"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "jenkinsUrl": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Overrides the Kubernetes Jenkins URL"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "JCasC": {
+                              "properties": {
+                                "defaultConfig": {}
+                              },
+                              "required": [
+                                "defaultConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "JCasC"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "JCasC": {
+                            "properties": {
+                              "defaultConfig": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "defaultConfig"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "JCasC"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbac": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "serviceAccountAgent": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccountAgent"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Namespace in which the Kubernetes agents should be launched"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "not": {
               "properties": {
                 "rbac": {
@@ -3187,6 +3840,7 @@
                         "type": "object"
                       },
                       {
+                        "items": {},
                         "type": "array"
                       },
                       {
@@ -3194,6 +3848,9 @@
                       },
                       {
                         "type": "null"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "A map of labels (keys/values) that agents namespaces must have to be able to connect to controller"
@@ -3206,6 +3863,7 @@
                         "type": "object"
                       },
                       {
+                        "items": {},
                         "type": "array"
                       },
                       {
@@ -3213,6 +3871,9 @@
                       },
                       {
                         "type": "null"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "A map of labels (keys/values) that agent pods must have to be able to connect to controller"
@@ -5479,101 +6140,7 @@
       "type": "object"
     },
     "agent": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "properties": {
-              "enabled": {
-                "type": "boolean"
-              },
-              "limits": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "cpu": {
-                    "type": "string"
-                  },
-                  "memory": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "namespaces": {
-                "type": "string"
-              },
-              "registry": {
-                "type": "string"
-              },
-              "repository": {
-                "type": "string"
-              },
-              "requests": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "cpu": {
-                    "type": "string"
-                  },
-                  "memory": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "tag": {
-                "type": "string"
-              },
-              "timeout": {
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "items": {},
-            "type": "array"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "type": "string"
-          }
-        ]
-      },
+      "additionalProperties": {},
       "properties": {
         "TTYEnabled": {
           "description": "Allocate pseudo tty to the side container",
@@ -5593,14 +6160,14 @@
         "additionalContainers": {
           "description": "Add additional containers to the agents\n- sideContainerName: dind\nimage:\nrepository: docker\ntag: dind\ncommand: dockerd-entrypoint.sh\nargs: \"\"\nprivileged: true\nresources:\nrequests:\ncpu: 500m\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 2Gi",
           "items": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "TTYEnabled": {},
               "alwaysPullImage": {},
               "args": {},
               "command": {},
               "image": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "repository": {},
                   "tag": {}
@@ -5609,7 +6176,7 @@
               },
               "jenkinsUrl": {},
               "livenessProbe": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "execArgs": {},
                   "failureThreshold": {},
@@ -5622,10 +6189,10 @@
               },
               "privileged": {},
               "resources": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "limits": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "properties": {
                       "cpu": {},
                       "memory": {}
@@ -5633,7 +6200,7 @@
                     "type": "object"
                   },
                   "requests": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "properties": {
                       "cpu": {},
                       "memory": {}
@@ -5708,19 +6275,7 @@
           "description": "Environment variables for the agent Pod\n- name: PATH\nvalue: /usr/local/bin"
         },
         "garbageCollection": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "additionalProperties": {},
           "description": "Enables garbage collection of orphan pods for this Kubernetes cloud. (beta)",
           "properties": {
             "enabled": {
@@ -5754,9 +6309,7 @@
           "type": "integer"
         },
         "image": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "registry": {
               "anyOf": [
@@ -5857,26 +6410,11 @@
           "type": "boolean"
         },
         "resources": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "cpu": {
-                "type": "string"
-              },
-              "memory": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "Resources allocation (Requests and Limits)",
           "properties": {
             "limits": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "description": "ephemeralStorage:",
               "properties": {
                 "cpu": {
@@ -5890,9 +6428,7 @@
               "type": "object"
             },
             "requests": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "properties": {
                 "cpu": {
                   "type": "string"
@@ -5975,52 +6511,63 @@
           "anyOf": [
             {
               "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "type": {
-                    "anyOf": [
-                      {
-                        "enum": [
-                          "ConfigMap"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "ConfigMap"
+                            ]
+                          },
+                          {
+                            "enum": [
+                              "EmptyDir"
+                            ]
+                          },
+                          {
+                            "enum": [
+                              "EphemeralVolume"
+                            ]
+                          },
+                          {
+                            "enum": [
+                              "HostPath"
+                            ]
+                          },
+                          {
+                            "enum": [
+                              "Nfs"
+                            ]
+                          },
+                          {
+                            "enum": [
+                              "PVC"
+                            ]
+                          },
+                          {
+                            "enum": [
+                              "Secret"
+                            ]
+                          },
+                          {
+                            "type": "string"
+                          }
                         ]
-                      },
-                      {
-                        "enum": [
-                          "EmptyDir"
-                        ]
-                      },
-                      {
-                        "enum": [
-                          "EphemeralVolume"
-                        ]
-                      },
-                      {
-                        "enum": [
-                          "HostPath"
-                        ]
-                      },
-                      {
-                        "enum": [
-                          "Nfs"
-                        ]
-                      },
-                      {
-                        "enum": [
-                          "PVC"
-                        ]
-                      },
-                      {
-                        "enum": [
-                          "Secret"
-                        ]
-                      },
-                      {
-                        "type": "string"
                       }
-                    ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               },
               "type": "array"
             },
@@ -6048,48 +6595,59 @@
           "type": "string"
         },
         "workspaceVolume": {
-          "additionalProperties": {},
-          "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
-          "properties": {
-            "type": {
-              "anyOf": [
-                {
-                  "enum": [
-                    "DynamicPVC"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "type": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "DynamicPVC"
+                      ]
+                    },
+                    {
+                      "enum": [
+                        "EmptyDir"
+                      ]
+                    },
+                    {
+                      "enum": [
+                        "EphemeralVolume"
+                      ]
+                    },
+                    {
+                      "enum": [
+                        "HostPath"
+                      ]
+                    },
+                    {
+                      "enum": [
+                        "Nfs"
+                      ]
+                    },
+                    {
+                      "enum": [
+                        "PVC"
+                      ]
+                    },
+                    {
+                      "type": "string"
+                    }
                   ]
-                },
-                {
-                  "enum": [
-                    "EmptyDir"
-                  ]
-                },
-                {
-                  "enum": [
-                    "EphemeralVolume"
-                  ]
-                },
-                {
-                  "enum": [
-                    "HostPath"
-                  ]
-                },
-                {
-                  "enum": [
-                    "Nfs"
-                  ]
-                },
-                {
-                  "enum": [
-                    "PVC"
-                  ]
-                },
-                {
-                  "type": "string"
                 }
-              ]
+              },
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
-          },
-          "type": "object"
+          ],
+          "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false"
         },
         "yamlMergeStrategy": {
           "description": "Defines how the raw yaml field gets merged with yaml definitions from inherited pod templates. Possible values: \"merge\" or \"override\"",
@@ -6110,7 +6668,7 @@
       "type": "object"
     },
     "awsSecurityGroupPolicies": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -6130,6 +6688,7 @@
                 "anyOf": [
                   {
                     "items": {
+                      "additionalProperties": {},
                       "properties": {},
                       "type": "object"
                     },
@@ -6166,8 +6725,104 @@
       "type": "string"
     },
     "controller": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecars": {
+                        "properties": {
+                          "configAutoReload": {
+                            "properties": {
+                              "enabled": {}
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "configAutoReload"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecars"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecars": {
+                      "properties": {
+                        "configAutoReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configAutoReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecars"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "JCasC": {
+                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
+                "properties": {
+                  "configScripts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
         {
           "if": {
             "anyOf": [
@@ -6259,100 +6914,21 @@
                 "type": "string"
               },
               "jenkinsUriPrefix": {
-                "description": "Root URI Jenkins will be served on",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "sidecars": {
-                        "properties": {
-                          "configAutoReload": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configAutoReload"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecars"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "sidecars": {
-                      "properties": {
-                        "configAutoReload": {
-                          "properties": {
-                            "enabled": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "configAutoReload"
-                      ],
-                      "type": "object"
-                    }
+                "anyOf": [
+                  {
+                    "type": "boolean"
                   },
-                  "required": [
-                    "sidecars"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": {
-            "properties": {
-              "JCasC": {
-                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
-                "properties": {
-                  "configScripts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "properties": {},
-                        "type": "object"
-                      },
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ],
+                "description": "Root URI Jenkins will be served on"
               }
             },
             "type": "object"
@@ -6512,8 +7088,21 @@
                 "description": "List of plugins to install in addition to those listed in controller.installPlugins"
               },
               "jenkinsRef": {
-                "description": "Custom Jenkins reference path",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Custom Jenkins reference path"
               }
             },
             "type": "object"
@@ -6736,10 +7325,11 @@
                     "type": "object"
                   },
                   {
-                    "items": {
-                      "type": "string"
-                    },
+                    "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Allowed inbound IP for the agentListener service"
@@ -6782,11 +7372,18 @@
                 "type": "integer"
               },
               "agentListenerServiceAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the agentListener service",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the agentListener service"
               },
               "agentListenerServiceType": {
                 "description": "Defines how to expose the agentListener service",
@@ -6843,18 +7440,32 @@
                 "description": "Optionally configure other ports to expose in the controller container\n- name: BuildInfoProxy\nport: 9000\ntargetPort: 9010 (Optional: Use to explicitly set targetPort if different from port)"
               },
               "serviceAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Jenkins controller service annotations",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Jenkins controller service annotations"
               },
               "serviceLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels for the Jenkins controller-service\nservice.beta.kubernetes.io/aws-load-balancer-backend-protocol: https",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels for the Jenkins controller-service\nservice.beta.kubernetes.io/aws-load-balancer-backend-protocol: https"
               },
               "serviceType": {
                 "description": "k8s service type",
@@ -6922,6 +7533,19 @@
                     "type": "object"
                   }
                 ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podSecurityContextOverride": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podSecurityContextOverride"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -7015,6 +7639,19 @@
                     "type": "object"
                   }
                 ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podSecurityContextOverride": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podSecurityContextOverride"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -7025,9 +7662,20 @@
                 "type": "string"
               },
               "securityContextCapabilities": {
-                "additionalProperties": {},
-                "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW"
               }
             },
             "type": "object"
@@ -7122,13 +7770,120 @@
                   "httpPort": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
                       }
                     ],
                     "description": "HTTP Port that Jenkins should listen to along with HTTPS, it also serves as the liveness and readiness probes port."
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "hostName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "hostName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "jenkinsUrl": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "jenkinsUrl"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "hostName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Ingress hostname"
                   }
                 },
                 "type": "object"
@@ -7276,8 +8031,21 @@
           "then": {
             "properties": {
               "jenkinsHome": {
-                "description": "Custom Jenkins home path",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Custom Jenkins home path"
               }
             },
             "type": "object"
@@ -7389,10 +8157,11 @@
                     "type": "object"
                   },
                   {
-                    "items": {
-                      "type": "string"
-                    },
+                    "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Allowed inbound IP addresses"
@@ -7418,9 +8187,20 @@
           "then": {
             "properties": {
               "resources": {
-                "additionalProperties": {},
-                "description": "Resource allocation (Requests and Limits)",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Resource allocation (Requests and Limits)"
               }
             },
             "type": "object"
@@ -7428,28 +8208,45 @@
         },
         {
           "if": {
-            "anyOf": [
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "usePodSecurityContext": {}
+                      },
+                      "required": [
+                        "usePodSecurityContext"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "usePodSecurityContext": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "usePodSecurityContext"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
               {
                 "not": {
                   "properties": {
-                    "usePodSecurityContext": {}
+                    "podSecurityContextOverride": {
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "usePodSecurityContext"
+                    "podSecurityContextOverride"
                   ],
                   "type": "object"
                 }
-              },
-              {
-                "properties": {
-                  "usePodSecurityContext": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "usePodSecurityContext"
-                ],
-                "type": "object"
               }
             ]
           },
@@ -7559,7 +8356,13 @@
               "targetPort": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
                     "type": "integer"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -7606,7 +8409,7 @@
       ],
       "properties": {
         "JCasC": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
           "properties": {
             "authorizationStrategy": {
@@ -7623,16 +8426,13 @@
             "configMapAnnotations": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Annotations for the JCasC ConfigMap"
@@ -7653,29 +8453,11 @@
             },
             "pluginVersion": {},
             "security": {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "properties": {
-                  "creationOfLegacyTokenEnabled": {
-                    "type": "boolean"
-                  },
-                  "tokenGenerationOnCreationEnabled": {
-                    "type": "boolean"
-                  },
-                  "usageStatisticsEnabled": {
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
-              },
+              "additionalProperties": {},
               "description": "Jenkins Config as Code security-section",
               "properties": {
                 "apiToken": {
-                  "additionalProperties": {
-                    "type": "boolean"
-                  },
+                  "additionalProperties": {},
                   "properties": {
                     "creationOfLegacyTokenEnabled": {
                       "type": "boolean"
@@ -7716,11 +8498,16 @@
           "anyOf": [
             {
               "items": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "name": {},
                   "value": {
-                    "type": "string"
+                    "type": [
+                      "boolean",
+                      "integer",
+                      "number",
+                      "string"
+                    ]
                   }
                 },
                 "type": "object"
@@ -7737,7 +8524,7 @@
           "description": "List of additional secrets to create and mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalSecrets:\n- name: nameOfSecret\nvalue: secretText"
         },
         "admin": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -7998,6 +8785,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Affinity settings"
@@ -8038,15 +8832,22 @@
           "type": "integer"
         },
         "agentListenerServiceAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the agentListener service",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the agentListener service"
         },
         "agentListenerServiceType": {
           "description": "Defines how to expose the agentListener service"
         },
         "backendconfig": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -8063,31 +8864,56 @@
               "then": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "backendconfig annotations",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "backendconfig annotations"
                   },
                   "apiVersion": {
                     "description": "backendconfig API version",
                     "type": "string"
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "backendconfig labels",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "backendconfig labels"
                   },
                   "name": {
                     "description": "backendconfig name",
                     "type": "string"
                   },
                   "spec": {
-                    "additionalProperties": {},
-                    "description": "backendconfig spec",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "backendconfig spec"
                   }
                 },
                 "type": "object"
@@ -8097,9 +8923,16 @@
           "description": "If you're running on GKE and need to configure a backendconfig\nto finish ingress setup, use the following values.\nDocs: https://cloud.google.com/kubernetes-engine/docs/concepts/backendconfig",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "backendconfig annotations",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "backendconfig annotations"
             },
             "apiVersion": {
               "description": "backendconfig API version"
@@ -8109,17 +8942,35 @@
               "type": "boolean"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "backendconfig labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "backendconfig labels"
             },
             "name": {
               "description": "backendconfig name"
             },
             "spec": {
-              "additionalProperties": {},
-              "description": "backendconfig spec",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "backendconfig spec"
             }
           },
           "type": "object"
@@ -8133,8 +8984,21 @@
           "description": "k8s service clusterIP. Only used if serviceType is ClusterIP"
         },
         "componentName": {
-          "description": "Used for label app.kubernetes.io/component",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Used for label app.kubernetes.io/component"
         },
         "containerEnv": {
           "description": "Environment variables for Jenkins Container\n- name: http_proxy\nvalue: \"http://192.168.64.1:3128\""
@@ -8143,29 +9007,36 @@
           "description": "Environment variable sources for Jenkins Container"
         },
         "containerSecurityContext": {
-          "additionalProperties": false,
-          "description": "Allow controlling the securityContext for the jenkins container",
-          "properties": {
-            "allowPrivilegeEscalation": {
-              "type": "boolean"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "allowPrivilegeEscalation": {
+                  "type": "boolean"
+                },
+                "readOnlyRootFilesystem": {
+                  "type": "boolean"
+                },
+                "runAsGroup": {
+                  "type": "integer"
+                },
+                "runAsUser": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
             },
-            "readOnlyRootFilesystem": {
-              "type": "boolean"
-            },
-            "runAsGroup": {
-              "type": "integer"
-            },
-            "runAsUser": {
-              "type": "integer"
+            {
+              "type": "null"
             }
-          },
-          "type": "object"
+          ],
+          "description": "Allow controlling the securityContext for the jenkins container"
         },
         "csrf": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "defaultCrumbIssuer": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "description": "Enable the default CSRF Crumb issuer",
@@ -8211,6 +9082,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "DNS config for the pod"
@@ -8240,7 +9118,7 @@
           "description": "Deprecated in favor of `controller.podSecurityContextOverride`. fsGroupChangePolicy for the pod security context"
         },
         "googlePodMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -8257,8 +9135,21 @@
               "then": {
                 "properties": {
                   "scrapeEndpoint": {
-                    "description": "This is the default endpoint used by the prometheus plugin",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "This is the default endpoint used by the prometheus plugin"
                   },
                   "scrapeInterval": {
                     "description": "Set a custom namespace where to deploy PodMonitoring resource\nserviceMonitorNamespace: \"\"",
@@ -8313,7 +9204,7 @@
           "type": "boolean"
         },
         "httpRoute": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -8341,6 +9232,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra HTTPRoute rules that will be appended before the default backend"
@@ -8357,6 +9251,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "specify the Gateway instance to bind the HTTPRoute to."
@@ -8420,7 +9317,7 @@
           "type": "object"
         },
         "httpsKeyStore": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -8464,7 +9361,16 @@
                   "jenkinsHttpsJksPasswordSecretName": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
                         "type": "null"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -8479,7 +9385,16 @@
                   "jenkinsHttpsJksSecretName": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
                         "type": "null"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -8564,7 +9479,11 @@
                         "type": "object"
                       },
                       {
-                        "type": "null"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Base64 encoded Keystore content. Keystore must be converted to base64 then being pasted here\nConvert keystore.jks files content to base64 > $ cat keystore.jks | base64\n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"
@@ -8733,7 +9652,14 @@
                   "type": "object"
                 },
                 {
+                  "items": {},
+                  "type": "array"
+                },
+                {
                   "type": "null"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "Base64 encoded Keystore content. Keystore must be converted to base64 then being pasted here\nConvert keystore.jks files content to base64 > $ cat keystore.jks | base64\n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"
@@ -8748,7 +9674,7 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "pullPolicy": {
               "description": "Controller image pull policy",
@@ -8756,11 +9682,21 @@
             },
             "registry": {
               "description": "Controller image registry",
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "repository": {
               "description": "Controller image repository",
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
               "anyOf": [
@@ -8768,7 +9704,16 @@
                   "const": null
                 },
                 {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
                   "type": "null"
+                },
+                {
+                  "type": "number"
                 },
                 {
                   "type": "string"
@@ -8787,8 +9732,52 @@
         },
         "imageTag": {},
         "ingress": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "hostName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "hostName"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "hostName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Ingress hostname"
+                  }
+                },
+                "type": "object"
+              }
+            },
             {
               "if": {
                 "properties": {
@@ -8803,12 +9792,33 @@
               },
               "then": {
                 "properties": {
+                  "hostName": {
+                    "description": "Primary Ingress hostname",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "ingressClassName": {
+                    "description": "Primary Ingress ingressClassName",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Primary Ingress labels",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Ingress labels"
                   },
                   "pathType": {
                     "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix",
@@ -8828,6 +9838,94 @@
                       }
                     ],
                     "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "ingressClassName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingressClassName"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "ingressClassName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Ingress ingressClassName"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "resourceRootUrl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "resourceRootUrl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "resourceRootUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Hostname to serve assets from"
                   }
                 },
                 "type": "object"
@@ -8853,9 +9951,16 @@
               "description": "Primary Ingress ingressClassName"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "Primary Ingress labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primary Ingress labels"
             },
             "path": {
               "description": "Primary Ingress path"
@@ -8895,6 +10000,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Resources allocation (Requests and Limits) for Init Container\ninitContainerResources:\nrequests:\ncpu: \"50m\"\nmemory: \"256Mi\"\nlimits:\ncpu: \"2000m\"\nmemory: \"4096Mi\""
@@ -8913,6 +10025,10 @@
               "type": "object"
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "array"
             },
             {
@@ -8920,6 +10036,9 @@
             },
             {
               "type": "object"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Map of groovy init scripts to be executed during Jenkins controller start\ntest: |-\nprint 'adding global pipeline libraries, register properties, bootstrap jobs...'"
@@ -8971,7 +10090,12 @@
         },
         "jenkinsHome": {
           "description": "Custom Jenkins home path",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "jenkinsOpts": {
           "description": "Append to `JENKINS_OPTS` env var",
@@ -9018,6 +10142,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Lifecycle specification for controller-container\npostStart:\nexec:\ncommand:\n- \"uname\"\n- \"-a\""
@@ -9065,6 +10196,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Node labels for pod assignment"
@@ -9101,7 +10239,7 @@
           "description": "Annotations for controller pod"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -9118,16 +10256,30 @@
               "then": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "maxUnavailable": {
                     "description": "Number of pods that can be unavailable. Either an absolute number or a percentage",
@@ -9141,8 +10293,15 @@
           "description": "PodDisruptionBudget config\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "apiVersion": {
               "description": "Policy API version",
@@ -9153,8 +10312,15 @@
               "type": "boolean"
             },
             "labels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "maxUnavailable": {
               "description": "Number of pods that can be unavailable. Either an absolute number or a percentage"
@@ -9164,12 +10330,6 @@
         },
         "podLabels": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
@@ -9195,7 +10355,7 @@
           "description": "The name of a `priorityClass` to apply to the controller pod"
         },
         "probes": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "livenessProbe": {},
             "readinessProbe": {},
@@ -9207,7 +10367,7 @@
           "description": "Configures the restrictions for naming projects. Set this key to null or empty to skip it in the default config."
         },
         "prometheus": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -9296,6 +10456,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Array of prometheus alerting rules"
@@ -9309,6 +10472,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "MetricRelabelConfigs to apply to samples before ingestion."
@@ -9322,13 +10488,29 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
                   },
                   "scrapeEndpoint": {
-                    "description": "The endpoint prometheus should get metrics from",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The endpoint prometheus should get metrics from"
                   },
                   "scrapeInterval": {
                     "description": "How often prometheus should scrape metrics",
@@ -9472,26 +10654,11 @@
           "type": "integer"
         },
         "resources": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "cpu": {
-                "type": "string"
-              },
-              "memory": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "Resource allocation (Requests and Limits)",
           "properties": {
             "limits": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "properties": {
                 "cpu": {
                   "type": "string"
@@ -9503,9 +10670,7 @@
               "type": "object"
             },
             "requests": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "properties": {
                 "cpu": {
                   "type": "string"
@@ -9521,7 +10686,7 @@
         },
         "rollingUpdate": {},
         "route": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -9538,18 +10703,32 @@
               "then": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Route annotations",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Route annotations"
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Route labels",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Route labels"
                   }
                 },
                 "type": "object"
@@ -9559,18 +10738,32 @@
           "description": "Openshift route",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Route annotations",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Route annotations"
             },
             "enabled": {
               "description": "Enables openshift route",
               "type": "boolean"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "Route labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Route labels"
             },
             "path": {
               "description": "Route path"
@@ -9601,8 +10794,52 @@
           "description": "List of groovy functions to approve\n- \"method groovy.json.JsonSlurperClassic parseText java.lang.String\"\n- \"new groovy.json.JsonSlurperClassic\""
         },
         "secondaryingress": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "hostName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "hostName"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "hostName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secondary Ingress hostname"
+                  }
+                },
+                "type": "object"
+              }
+            },
             {
               "if": {
                 "properties": {
@@ -9617,12 +10854,30 @@
               },
               "then": {
                 "properties": {
+                  "hostName": {
+                    "description": "Secondary Ingress hostname",
+                    "type": "string"
+                  },
+                  "ingressClassName": {
+                    "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Secondary Ingress labels",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secondary Ingress labels"
                   },
                   "paths": {
                     "anyOf": [
@@ -9659,6 +10914,50 @@
                 },
                 "type": "object"
               }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "ingressClassName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingressClassName"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "ingressClassName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
+                  }
+                },
+                "type": "object"
+              }
             }
           ],
           "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
@@ -9681,9 +10980,16 @@
               "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "Secondary Ingress labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secondary Ingress labels"
             },
             "paths": {
               "description": "Secondary Ingress paths\nFor Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'\nFor Kubernetes v1.19+, use 'networking.k8s.io/v1'"
@@ -9698,14 +11004,32 @@
           "description": "List of `SecretClaim` resources to create\n- name: secretName        # required\npath: testPath          # required\ntype: kubernetes.io/tls # optional\nrenew: 60               # optional"
         },
         "securityContextCapabilities": {
-          "additionalProperties": {},
-          "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW"
         },
         "serviceAnnotations": {
-          "additionalProperties": {},
-          "description": "Jenkins controller service annotations",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Jenkins controller service annotations"
         },
         "serviceEnabled": {
           "description": "enable or disable the controller k8s service",
@@ -9715,9 +11039,16 @@
           "description": "Use Local to preserve the client source IP and avoids a second hop for LoadBalancer and NodePort type services,\nbut risks potentially imbalanced traffic spreading."
         },
         "serviceLabels": {
-          "additionalProperties": {},
-          "description": "Labels for the Jenkins controller-service\nservice.beta.kubernetes.io/aws-load-balancer-backend-protocol: https",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels for the Jenkins controller-service\nservice.beta.kubernetes.io/aws-load-balancer-backend-protocol: https"
         },
         "servicePort": {
           "description": "k8s service port",
@@ -9731,13 +11062,13 @@
           "type": "boolean"
         },
         "sidecars": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "additionalSidecarContainers": {
               "description": "Configures additional sidecar container(s) for the Jenkins controller\nThe example below runs the client for https://smee.io as sidecar container next to Jenkins,\nthat allows triggering build behind a secure firewall.\nhttps://jenkins.io/blog/2019/01/07/webhook-firewalls/#triggering-builds-with-webhooks-behind-a-secure-firewall\nNote: To use it you should go to https://smee.io/new and update the url to the generated one.\n- name: smee\nimage: docker.io/twalter/smee-client:1.0.2\nargs: [\"--port\", \"{{ .Values.controller.servicePort }}\", \"--path\", \"/github-webhook/\", \"--url\", \"https://smee.io/new\"]\nresources:\nlimits:\ncpu: 50m\nmemory: 128Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
             },
             "configAutoReload": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {
@@ -9769,9 +11100,20 @@
                   "then": {
                     "properties": {
                       "containerSecurityContext": {
-                        "additionalProperties": {},
-                        "description": "Enable container security context",
-                        "type": "object"
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "type": "object"
+                          },
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Enable container security context"
                       },
                       "healthPort": {
                         "description": "Port for sidecar health probes",
@@ -9780,16 +11122,55 @@
                       "image": {
                         "properties": {
                           "registry": {
-                            "description": "Registry for the image that triggers the reload",
-                            "type": "string"
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "description": "Registry for the image that triggers the reload"
                           },
                           "repository": {
-                            "description": "Repository of the image that triggers the reload",
-                            "type": "string"
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "description": "Repository of the image that triggers the reload"
                           },
                           "tag": {
-                            "description": "Tag for the image that triggers the reload",
-                            "type": "string"
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "description": "Tag for the image that triggers the reload"
                           }
                         },
                         "type": "object"
@@ -9802,8 +11183,19 @@
                         "type": "integer"
                       },
                       "resources": {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "type": "object"
+                          },
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       },
                       "scheme": {
                         "anyOf": [
@@ -9827,17 +11219,16 @@
                   "description": "Enables additional volume mounts for the config auto-reload container"
                 },
                 "containerSecurityContext": {
-                  "additionalProperties": {},
-                  "description": "Enable container security context",
-                  "properties": {
-                    "allowPrivilegeEscalation": {
-                      "type": "boolean"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
                     },
-                    "readOnlyRootFilesystem": {
-                      "type": "boolean"
+                    {
+                      "type": "null"
                     }
-                  },
-                  "type": "object"
+                  ],
+                  "description": "Enable container security context"
                 },
                 "enabled": {
                   "description": "Enable Jenkins Config as Code auto-reload",
@@ -9860,7 +11251,7 @@
                   "description": "Port for sidecar health probes"
                 },
                 "image": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "registry": {
                       "description": "Registry for the image that triggers the reload"
@@ -9876,11 +11267,11 @@
                 },
                 "imagePullPolicy": {},
                 "logging": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "Config auto-reload logging settings",
                   "properties": {
                     "configuration": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "description": "See default settings https://github.com/kiwigrid/k8s-sidecar/blob/master/src/logger.py",
                       "properties": {
                         "backupCount": {
@@ -9915,8 +11306,19 @@
                   "description": "How many connection-related errors to retry on"
                 },
                 "resources": {
-                  "additionalProperties": {},
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
                 },
                 "scheme": {
                   "description": "The scheme to use when connecting to the Jenkins configuration as code endpoint"
@@ -9954,28 +11356,19 @@
         "statefulSetAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Annotations for controller StatefulSet"
         },
         "statefulSetLabels": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
@@ -10053,6 +11446,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Update strategy for StatefulSet"
@@ -10071,16 +11471,13 @@
     "extraLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Configures extra labels for the agent all objects"
@@ -10109,15 +11506,15 @@
       "description": "Override the full resource names"
     },
     "helmtest": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Here you can configure unit tests values when executing the helm unittest in the CONTRIBUTING.md",
       "properties": {
         "bats": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "A testing framework for bash",
           "properties": {
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Bash Automated Testing System (BATS)",
               "properties": {
                 "registry": {
@@ -10177,7 +11574,7 @@
       "description": "Override the deployment namespace"
     },
     "networkPolicy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -10211,7 +11608,7 @@
           "type": "boolean"
         },
         "externalAgents": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "project: myproject",
           "properties": {
             "except": {
@@ -10224,7 +11621,7 @@
           "type": "object"
         },
         "internalAgents": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "You can allow agents to connect from both within the cluster (from within specific/all namespaces) AND/OR from a given external IP range",
           "properties": {
             "allowed": {
@@ -10243,6 +11640,9 @@
                 },
                 {
                   "type": "null"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "A map of labels (keys/values) that agents namespaces must have to be able to connect to controller"
@@ -10259,6 +11659,9 @@
                 },
                 {
                   "type": "null"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "A map of labels (keys/values) that agent pods must have to be able to connect to controller"
@@ -10270,7 +11673,7 @@
       "type": "object"
     },
     "persistence": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -10332,23 +11735,148 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the PVC",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the PVC"
               },
               "dataSource": {
-                "additionalProperties": {},
-                "description": "Existing data source to clone PVC from\nname: PVC-NAME\nkind: PersistentVolumeClaim",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Existing data source to clone PVC from\nname: PVC-NAME\nkind: PersistentVolumeClaim"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels for the PVC"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                "description": "Labels for the PVC",
+                "required": [
+                  "storageClass"
+                ],
                 "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "volumes": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "volumes"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "storageClass": {
+                      "enum": [
+                        "-"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "storageClass"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "storageClass": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Storage class for the PVC"
               }
             },
             "type": "object"
@@ -10360,14 +11888,32 @@
           "description": "The PVC access mode"
         },
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the PVC",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the PVC"
         },
         "dataSource": {
-          "additionalProperties": {},
-          "description": "Existing data source to clone PVC from\nname: PVC-NAME\nkind: PersistentVolumeClaim",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Existing data source to clone PVC from\nname: PVC-NAME\nkind: PersistentVolumeClaim"
         },
         "enabled": {
           "description": "Enable the use of a Jenkins PVC",
@@ -10377,9 +11923,16 @@
           "description": "Provide the name of a PVC"
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Labels for the PVC",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels for the PVC"
         },
         "mounts": {
           "anyOf": [
@@ -10428,7 +11981,7 @@
       "type": "object"
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Install Default RBAC roles and bindings",
       "properties": {
         "create": {
@@ -10457,7 +12010,7 @@
       "type": "boolean"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -10571,7 +12124,7 @@
       "type": "object"
     },
     "serviceAccountAgent": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {

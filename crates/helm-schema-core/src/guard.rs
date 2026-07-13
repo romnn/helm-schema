@@ -133,6 +133,14 @@ pub enum Guard {
     /// `typeIs "string" .value`, so callers may supply that values path as a
     /// string even when another branch renders it as a YAML object fragment.
     TypeIs { path: String, schema_type: String },
+    /// The complement of [`Guard::TypeIs`]: the `else` arm of a type
+    /// dispatch (`if typeIs "string" x … else …`).
+    ///
+    /// Rows need this as a first-class variant because dropping the
+    /// complement collapses a type-switch partition: member reads and
+    /// structural placements under the `else` would otherwise apply to
+    /// EVERY type of the dispatched path.
+    NotTypeIs { path: String, schema_type: String },
 }
 
 impl Guard {
@@ -165,7 +173,8 @@ impl Guard {
             | Self::Range { .. }
             | Self::With { .. }
             | Self::Default { .. }
-            | Self::TypeIs { .. } => {}
+            | Self::TypeIs { .. }
+            | Self::NotTypeIs { .. } => {}
         }
     }
 
@@ -181,7 +190,8 @@ impl Guard {
             | Guard::Range { path }
             | Guard::With { path }
             | Guard::Default { path }
-            | Guard::TypeIs { path, .. } => {
+            | Guard::TypeIs { path, .. }
+            | Guard::NotTypeIs { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
@@ -228,6 +238,10 @@ impl Guard {
             Guard::With { path } => Guard::With { path: map(&path) },
             Guard::Default { path } => Guard::Default { path: map(&path) },
             Guard::TypeIs { path, schema_type } => Guard::TypeIs {
+                path: map(&path),
+                schema_type,
+            },
+            Guard::NotTypeIs { path, schema_type } => Guard::NotTypeIs {
                 path: map(&path),
                 schema_type,
             },

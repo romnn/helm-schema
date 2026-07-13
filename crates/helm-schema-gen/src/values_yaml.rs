@@ -337,7 +337,12 @@ pub(crate) fn schema_node_from_yaml_value_with_skips(
             if mapping.is_empty() {
                 return Some(SchemaNode::unknown_object());
             }
-            let mut schema = SchemaNode::closed_object();
+            // Declared defaults DOCUMENT keys, they do not bound them: a
+            // chart's config mappings are routinely extended by users and
+            // serialized wholesale, so the declared shape must stay open.
+            // Closure is only ever justified by exhaustive structural
+            // evidence (provider schemas, exact-empty off-states).
+            let mut schema = SchemaNode::unknown_object();
             let mut inserted = false;
             for (key, value) in mapping {
                 let Some(key) = key.as_str() else {

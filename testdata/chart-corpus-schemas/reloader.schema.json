@@ -84,13 +84,39 @@
           "image": {
             "properties": {
               "digest": {
-                "type": [
-                  "string",
-                  "null"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
                 ]
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -124,10 +150,36 @@
           "image": {
             "properties": {
               "name": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -435,9 +487,22 @@
   ],
   "properties": {
     "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "global": {
@@ -450,17 +515,30 @@
           "type": "array"
         },
         "imageRegistry": {
-          "description": "Reference to one or more secrets to be used when pulling images\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Reference to one or more secrets to be used when pulling images\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/"
         }
       },
       "type": "object"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "digest": {},
         "name": {},
@@ -474,7 +552,7 @@
       "type": "object"
     },
     "kubernetes": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "host": {
           "type": "string"
@@ -490,7 +568,7 @@
       ]
     },
     "reloader": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -534,14 +612,15 @@
                   "affinity": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "An affinity stanza to be applied to the Deployment.\nExample:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: \"node-role.kubernetes.io/infra-worker\"\noperator: \"Exists\""
@@ -603,6 +682,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   }
@@ -663,6 +745,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   }
@@ -878,7 +963,16 @@
               "ignoreNamespaces": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -1095,7 +1189,16 @@
               "logFormat": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -1297,7 +1400,16 @@
               "logLevel": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -1551,7 +1663,16 @@
               "namespaceSelector": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -1790,7 +1911,16 @@
               "pprofAddr": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -2007,7 +2137,16 @@
               "resourceLabelSelector": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -2343,12 +2482,23 @@
           "description": "Optional flags to pass to the Reloader entrypoint\nExample:\ncustom_annotations:\nconfigmap: \"my.company.com/configmap\"\nsecret: \"my.company.com/secret\"\nignore: \"my.company.com/reloader-ignore\""
         },
         "deployment": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "affinity": {
-              "additionalProperties": {},
-              "description": "An affinity stanza to be applied to the Deployment.\nExample:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: \"node-role.kubernetes.io/infra-worker\"\noperator: \"Exists\"",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "An affinity stanza to be applied to the Deployment.\nExample:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: \"node-role.kubernetes.io/infra-worker\"\noperator: \"Exists\""
             },
             "annotations": {},
             "automountServiceAccountToken": {},
@@ -2363,6 +2513,13 @@
                 {
                   "additionalProperties": {},
                   "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
                 }
               ]
             },
@@ -2377,12 +2534,19 @@
                 {
                   "additionalProperties": {},
                   "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "Specifies the deployment DNS configuration.\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\""
             },
             "env": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "allOf": [
                 {
                   "if": {},
@@ -2513,7 +2677,7 @@
                 "secret": {
                   "anyOf": [
                     {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "allOf": [
                         {
                           "if": {
@@ -2767,13 +2931,20 @@
                   "const": null
                 },
                 {
+                  "items": {},
+                  "type": "array"
+                },
+                {
                   "type": "null"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "cloud.google.com/gke-nodepool: default-pool"
             },
             "pod": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "annotations": {}
               },
@@ -2837,6 +3008,13 @@
                 {
                   "additionalProperties": {},
                   "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "Specify resource requests/limits for the deployment.\nExample:\nresources:\nlimits:\ncpu: \"100m\"\nmemory: \"512Mi\"\nrequests:\ncpu: \"10m\"\nmemory: \"128Mi\""
@@ -2845,47 +3023,32 @@
               "type": "integer"
             },
             "securityContext": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  }
-                ]
-              },
-              "properties": {
-                "runAsNonRoot": {
-                  "type": "boolean"
-                },
-                "runAsUser": {
-                  "type": "integer"
-                },
-                "seccompProfile": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+              "anyOf": [
+                {
+                  "additionalProperties": {},
                   "properties": {
-                    "type": {
-                      "type": "string"
+                    "runAsNonRoot": {
+                      "type": "boolean"
+                    },
+                    "runAsUser": {
+                      "type": "integer"
+                    },
+                    "seccompProfile": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
-              },
-              "type": "object"
+              ]
             },
             "tolerations": {
               "anyOf": [
@@ -2991,7 +3154,16 @@
               "type": "boolean"
             },
             {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -2999,7 +3171,7 @@
           "type": "boolean"
         },
         "legacy": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "rbac": {
               "type": "boolean"
@@ -3018,7 +3190,7 @@
           "description": "Comma separated list of k8s label selectors for namespaces selection"
         },
         "netpol": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -3043,6 +3215,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -3055,6 +3230,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "- podSelector:\nmatchLabels:\napp.kubernetes.io/name: prometheus"
@@ -3101,7 +3279,7 @@
           "type": "object"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "Set the minimum available replicas\nminAvailable: 1\nOR Set the maximum unavailable replicas\nmaxUnavailable: 1\nIf both defined only maxUnavailable will be used",
@@ -3113,7 +3291,7 @@
           "type": "object"
         },
         "podMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -3148,6 +3326,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -3160,13 +3341,70 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
                   },
                   "tlsConfig": {
-                    "additionalProperties": {},
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
                     "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -3225,8 +3463,19 @@
             "scheme": {},
             "timeout": {},
             "tlsConfig": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
@@ -3235,7 +3484,7 @@
           "description": "Address to start pprof server on. Default is \":6060\""
         },
         "rbac": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -3268,7 +3517,16 @@
               "type": "boolean"
             },
             {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -3283,16 +3541,38 @@
               "type": "boolean"
             },
             {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
           ]
         },
         "reloadStrategy": {
-          "description": "Set to default, env-vars or annotations",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Set to default, env-vars or annotations"
         },
         "resourceLabelSelector": {
           "description": "Comma separated list of k8s label selectors for configmap/secret selection"
@@ -3317,7 +3597,7 @@
           ]
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {},
@@ -3351,7 +3631,7 @@
           "type": "object"
         },
         "serviceMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -3386,6 +3666,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
@@ -3399,12 +3682,69 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
                   "tlsConfig": {
-                    "additionalProperties": {},
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
                     "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -3463,8 +3803,19 @@
             },
             "timeout": {},
             "tlsConfig": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
@@ -3480,12 +3831,21 @@
               "type": "boolean"
             },
             {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
           ]
         },
         "verticalPodAutoscaler": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -3510,6 +3870,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
@@ -3517,14 +3880,15 @@
                   "maxAllowed": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Define the max allowed resources for the pod"
@@ -3532,31 +3896,48 @@
                   "minAllowed": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
                   },
                   "recommenders": {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  "updatePolicy": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "updateMode": {
-                        "description": "Specifies minimal number of replicas which need to be alive for VPA Updater to attempt pod eviction\nminReplicas: 1\nSpecifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
                         "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ]
+                  },
+                  "updatePolicy": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -3585,28 +3966,62 @@
               "type": "boolean"
             },
             "maxAllowed": {
-              "additionalProperties": {},
-              "description": "Define the max allowed resources for the pod",
-              "type": "object"
-            },
-            "minAllowed": {
-              "additionalProperties": {},
-              "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-              "type": "object"
-            },
-            "recommenders": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "updatePolicy": {
-              "additionalProperties": {},
-              "properties": {
-                "updateMode": {
-                  "description": "Specifies minimal number of replicas which need to be alive for VPA Updater to attempt pod eviction\nminReplicas: 1\nSpecifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
                   "type": "string"
                 }
-              },
-              "type": "object"
+              ],
+              "description": "Define the max allowed resources for the pod"
+            },
+            "minAllowed": {
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+            },
+            "recommenders": {
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "updatePolicy": {
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "type": "object"

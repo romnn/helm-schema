@@ -112,7 +112,7 @@
       "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard"
     },
     "cluster": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -144,9 +144,16 @@
           "then": {
             "properties": {
               "annotations": {
-                "description": "Optional custom annotations to add to Pods in the cluster",
-                "type": "object",
-                "x-kubernetes-preserve-unknown-fields": true
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "x-kubernetes-preserve-unknown-fields": true
+                  }
+                ],
+                "description": "Optional custom annotations to add to Pods in the cluster"
               },
               "configReload": {
                 "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
@@ -161,9 +168,16 @@
                     "type": "string"
                   },
                   "resources": {
-                    "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi",
-                    "type": "object",
-                    "x-kubernetes-preserve-unknown-fields": true
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "x-kubernetes-preserve-unknown-fields": true
+                      }
+                    ],
+                    "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
                   },
                   "tag": {
                     "type": "string"
@@ -193,9 +207,16 @@
                 "type": "string"
               },
               "resources": {
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi",
-                "type": "object",
-                "x-kubernetes-preserve-unknown-fields": true
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "x-kubernetes-preserve-unknown-fields": true
+                  }
+                ],
+                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
               },
               "size": {
                 "description": "Cluster Size",
@@ -474,10 +495,7 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "type": "null"
             },
             {
               "type": "object",
@@ -487,7 +505,7 @@
           "description": "Optional custom annotations to add to Pods in the cluster"
         },
         "auth": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
           "properties": {
             "defaultPermissions": {
@@ -517,7 +535,7 @@
           "type": "object"
         },
         "configReload": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
           "properties": {
             "enabled": {},
@@ -529,10 +547,7 @@
             "resources": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
+                  "type": "null"
                 },
                 {
                   "type": "object",
@@ -550,7 +565,7 @@
           "type": "boolean"
         },
         "metrics": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Prometheus Metrics Exporter",
           "properties": {
             "enabled": {},
@@ -560,7 +575,7 @@
             },
             "repository": {},
             "servicemonitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Prometheus Operator ServiceMonitor config",
               "properties": {
                 "enabled": {
@@ -581,10 +596,7 @@
         "resources": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "type": "null"
             },
             {
               "type": "object",
@@ -597,7 +609,7 @@
           "description": "Cluster Size"
         },
         "tls": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "serverSecret:\nroutesSecret:",
@@ -619,7 +631,7 @@
       "type": "boolean"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "description": "Specify an imagePullPolicy\nDefaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images\nOptionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistrKeySecretName",
@@ -628,19 +640,34 @@
         "pullSecrets": {},
         "registry": {
           "description": "natsio/nats-operator:0.8.3",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         }
       },
       "type": "object"
     },
     "livenessProbe": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -706,22 +733,30 @@
     },
     "nameOverride": {},
     "nodeSelector": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "podAnnotations": {
       "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
         {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Pod annotations\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
@@ -729,16 +764,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
@@ -748,7 +780,7 @@
       "type": "boolean"
     },
     "readinessProbe": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -816,15 +848,26 @@
       "type": "integer"
     },
     "resources": {
-      "additionalProperties": {},
-      "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 64Mi",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 64Mi"
     },
     "rollingUpdateMaxSurge": {},
     "rollingUpdateMaxUnavailable": {},
     "schedulerName": {},
     "securityContext": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -877,8 +920,19 @@
       "type": "object"
     },
     "tolerations": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "updateStrategy": {
       "anyOf": [

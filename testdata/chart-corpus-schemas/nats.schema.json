@@ -59,7 +59,13 @@
                   "port": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -313,6 +319,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "must contain at least 1 host otherwise ingress will not be created"
@@ -578,11 +587,18 @@
             "description": "Global options",
             "properties": {
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "global labels will be applied to all resources deployed by the chart",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "global labels will be applied to all resources deployed by the chart"
               }
             },
             "type": "object"
@@ -797,11 +813,18 @@
             "description": "Global options",
             "properties": {
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "global labels will be applied to all resources deployed by the chart",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "global labels will be applied to all resources deployed by the chart"
               }
             },
             "type": "object"
@@ -821,11 +844,11 @@
       "type": "array"
     },
     "config": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "NATS config",
       "properties": {
         "cluster": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -874,7 +897,7 @@
               "description": "must be 2 or higher when jetstream is enabled"
             },
             "routeURLs": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "apply to generated route URLs that connect to other pods in the StatefulSet",
               "properties": {
                 "k8sClusterDomain": {
@@ -892,7 +915,7 @@
               "type": "object"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -925,7 +948,7 @@
           "type": "object"
         },
         "gateway": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -943,7 +966,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -976,7 +999,7 @@
           "type": "object"
         },
         "jetstream": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -1124,7 +1147,7 @@
               "type": "boolean"
             },
             "fileStore": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "dir": {
                   "type": "string"
@@ -1136,7 +1159,7 @@
                   "description": "defaults to the PVC size"
                 },
                 "pvc": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "stateful set -> volume claim templates -> jetstream pvc",
                   "properties": {
                     "enabled": {
@@ -1163,7 +1186,7 @@
               "type": "object"
             },
             "memoryStore": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -1188,7 +1211,7 @@
           "type": "object"
         },
         "leafnodes": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -1206,7 +1229,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -1244,14 +1267,14 @@
           "type": "object"
         },
         "monitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
             },
             "port": {},
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "description": "config.nats.tls must be enabled also\nwhen enabled, monitoring port will use HTTPS with the options from config.nats.tls\nif promExporter is also enabled, consider setting promExporter.monitorDomain",
@@ -1264,7 +1287,7 @@
           "type": "object"
         },
         "mqtt": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -1282,7 +1305,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -1315,13 +1338,13 @@
           "type": "object"
         },
         "nats": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "port": {
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -1358,7 +1381,7 @@
           "type": "array"
         },
         "profiling": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -1367,7 +1390,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {}
               },
@@ -1377,7 +1400,7 @@
           "type": "object"
         },
         "resolver": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -1474,7 +1497,7 @@
               "type": "array"
             },
             "pvc": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "stateful set -> volume claim templates -> resolver pvc",
               "properties": {
                 "enabled": {
@@ -1505,13 +1528,13 @@
           "type": "string"
         },
         "websocket": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
             },
             "ingress": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "ingress\nservice must be enabled also",
               "properties": {
                 "className": {
@@ -1568,7 +1591,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -1604,7 +1627,7 @@
       "type": "object"
     },
     "configMap": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "config map",
       "properties": {
         "merge": {
@@ -1634,7 +1657,7 @@
       "type": "object"
     },
     "container": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "stateful set -> pod template -> nats container",
       "properties": {
         "env": {
@@ -1643,7 +1666,7 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {
               "description": "if digest is provided, it overrides tag (example: \"sha256:abcdef1234567890\")"
@@ -1672,7 +1695,7 @@
           "type": "array"
         },
         "ports": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "container port options\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#containerport-v1-core",
           "properties": {
             "cluster": {
@@ -1722,8 +1745,19 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -1747,15 +1781,22 @@
       "description": "Global options",
       "properties": {
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "pullPolicy": {
               "description": "global image pull policy to use for all container images in the chart\ncan be overridden by individual image pullPolicy"
             },
             "pullSecretNames": {
-              "description": "global list of secret names to use as image pull secrets for all pod specs in the chart\nsecrets must exist in the same namespace\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/",
-              "items": {},
-              "type": "array"
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "global list of secret names to use as image pull secrets for all pod specs in the chart\nsecrets must exist in the same namespace\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/"
             },
             "registry": {
               "description": "global registry to use for all container images in the chart\ncan be overridden by individual image registry"
@@ -1766,16 +1807,13 @@
         "labels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "global labels will be applied to all resources deployed by the chart"
@@ -1784,7 +1822,7 @@
       "type": "object"
     },
     "headlessService": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "headless service",
       "properties": {
         "merge": {
@@ -1831,7 +1869,7 @@
       "description": "override the namespace that resources are installed into"
     },
     "natsBox": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1866,8 +1904,19 @@
                 "description": "deployment -> pod template -> nats-box container",
                 "properties": {
                   "resources": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -1886,10 +1935,21 @@
                 "type": "object"
               },
               "contexts": {
-                "additionalProperties": {},
-                "description": "NATS contexts",
-                "properties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "NATS contexts"
               },
               "contextsSecret": {
                 "description": "contexts secret",
@@ -1994,7 +2054,7 @@
       "description": "natsBox\nNATS Box Deployment and associated resources",
       "properties": {
         "container": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "deployment -> pod template -> nats-box container",
           "properties": {
             "env": {
@@ -2003,15 +2063,15 @@
               "type": "object"
             },
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "digest": {},
                 "fullImageName": {},
                 "global": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "image": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "pullPolicy": {},
                         "registry": {}
@@ -2042,14 +2102,25 @@
               "type": "array"
             },
             "resources": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
         },
         "contentsSecret": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "contents secret",
           "properties": {
             "merge": {
@@ -2068,12 +2139,19 @@
           "type": "object"
         },
         "contexts": {
-          "additionalProperties": {},
-          "description": "NATS contexts",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "NATS contexts"
         },
         "contextsSecret": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "contexts secret",
           "properties": {
             "merge": {
@@ -2095,7 +2173,7 @@
           "description": "name of context to select by default"
         },
         "deployment": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "deployment",
           "properties": {
             "merge": {
@@ -2117,7 +2195,7 @@
           "type": "boolean"
         },
         "podTemplate": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "deployment -> pod template",
           "properties": {
             "merge": {
@@ -2133,7 +2211,7 @@
           "type": "object"
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "service account",
           "properties": {
             "enabled": {
@@ -2158,7 +2236,7 @@
       "type": "object"
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2222,7 +2300,7 @@
       "type": "object"
     },
     "podTemplate": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "stateful set -> pod template",
       "properties": {
         "configChecksumAnnotation": {
@@ -2241,10 +2319,7 @@
         "topologySpreadConstraints": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "type": "null"
             },
             {
               "type": "object"
@@ -2256,7 +2331,7 @@
       "type": "object"
     },
     "promExporter": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2273,13 +2348,32 @@
           "then": {
             "properties": {
               "monitorDomain": {
-                "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate"
               },
               "port": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
                     "type": "integer"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -2356,15 +2450,15 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "fullImageName": {},
             "global": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "image": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "pullPolicy": {},
                     "registry": {}
@@ -2394,7 +2488,7 @@
           "type": "array"
         },
         "podMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "prometheus pod monitor",
           "properties": {
             "enabled": {
@@ -2420,7 +2514,7 @@
       "type": "object"
     },
     "reloader": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "stateful set -> pod template -> reloader container",
       "properties": {
         "enabled": {
@@ -2432,15 +2526,15 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "fullImageName": {},
             "global": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "image": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "pullPolicy": {},
                     "registry": {}
@@ -2477,7 +2571,7 @@
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "service",
       "properties": {
         "enabled": {
@@ -2507,11 +2601,11 @@
           "type": "array"
         },
         "ports": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "service port options\nadditional boolean field enable to control whether port is exposed in the service\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceport-v1-core",
           "properties": {
             "cluster": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2520,7 +2614,7 @@
               "type": "object"
             },
             "gateway": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2529,7 +2623,7 @@
               "type": "object"
             },
             "leafnodes": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2538,7 +2632,7 @@
               "type": "object"
             },
             "monitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2547,7 +2641,7 @@
               "type": "object"
             },
             "mqtt": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2556,7 +2650,7 @@
               "type": "object"
             },
             "nats": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2565,7 +2659,7 @@
               "type": "object"
             },
             "profiling": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2574,7 +2668,7 @@
               "type": "object"
             },
             "websocket": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -2589,7 +2683,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2638,7 +2732,7 @@
       "type": "object"
     },
     "statefulSet": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "stateful set",
       "properties": {
         "merge": {
@@ -2668,7 +2762,7 @@
       "type": "object"
     },
     "tlsCA": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "reference a common CA Certificate or Bundle in all nats config `tls` blocks and nats-box contexts\nnote: `tls.verify` still must be set in the appropriate nats config `tls` blocks to require mTLS",
       "properties": {
         "configMapName": {

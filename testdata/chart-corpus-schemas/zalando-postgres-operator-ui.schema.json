@@ -149,12 +149,23 @@
   ],
   "properties": {
     "affinity": {
-      "additionalProperties": {},
-      "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "envs": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "configure UI ENVs",
       "properties": {
         "appUrl": {
@@ -198,30 +209,56 @@
       ]
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "configure ui image",
       "properties": {
         "pullPolicy": {
           "type": "string"
         },
         "registry": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         }
       },
       "type": "object"
     },
     "imagePullSecrets": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "ingress": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -238,15 +275,23 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "hosts": {
                 "anyOf": [
                   {
                     "items": {
+                      "additionalProperties": {},
                       "properties": {},
                       "type": "object"
                     },
@@ -287,8 +332,15 @@
       "description": "configure UI ingress. If needed: \"enabled: true\"",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "enabled": {
           "type": "boolean"
@@ -305,23 +357,31 @@
     },
     "nameOverride": {},
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "podAnnotations": {
       "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
         {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Extra pod annotations"
@@ -334,7 +394,7 @@
       ]
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "description": "Specifies whether RBAC resources should be created",
@@ -347,26 +407,11 @@
       "type": "integer"
     },
     "resources": {
-      "additionalProperties": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "properties": {
-          "cpu": {
-            "type": "string"
-          },
-          "memory": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "additionalProperties": {},
       "description": "configure UI pod resources",
       "properties": {
         "limits": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "cpu": {
               "type": "string"
@@ -378,9 +423,7 @@
           "type": "object"
         },
         "requests": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "cpu": {
               "type": "string"
@@ -395,22 +438,19 @@
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "configure UI service",
       "properties": {
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521"
@@ -435,7 +475,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {

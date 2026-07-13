@@ -52,18 +52,32 @@
       "then": {
         "properties": {
           "additionalAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional annotations to add into metadata.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional annotations to add into metadata."
           },
           "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels to add into metadata.\napp: karpenter",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels to add into metadata.\napp: karpenter"
           },
           "fullnameOverride": {
             "anyOf": [
@@ -129,20 +143,34 @@
       "then": {
         "properties": {
           "additionalAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional annotations to add into metadata.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional annotations to add into metadata."
           },
           "service": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional annotations for the Service.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional annotations for the Service."
               }
             },
             "type": "object"
@@ -235,20 +263,34 @@
       "then": {
         "properties": {
           "additionalAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional annotations to add into metadata.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional annotations to add into metadata."
           },
           "serviceAccount": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional annotations for the ServiceAccount.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional annotations for the ServiceAccount."
               }
             },
             "type": "object"
@@ -303,11 +345,18 @@
       "then": {
         "properties": {
           "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels to add into metadata.\napp: karpenter",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels to add into metadata.\napp: karpenter"
           },
           "fullnameOverride": {
             "anyOf": [
@@ -1005,16 +1054,13 @@
     "additionalAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional annotations to add into metadata."
@@ -1037,413 +1083,116 @@
     "additionalLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional labels to add into metadata.\napp: karpenter"
     },
     "affinity": {
-      "additionalProperties": {
-        "additionalProperties": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "items": {
-                  "additionalProperties": {
-                    "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "properties": {
-                        "key": {
-                          "type": "string"
-                        },
-                        "operator": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "properties": {
-                    "matchExpressions": {
-                      "items": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "operator": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "nodeAffinity": {
+              "additionalProperties": {},
               "properties": {
-                "nodeSelectorTerms": {
-                  "items": {
-                    "additionalProperties": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "nodeSelectorTerms": {
                       "items": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
+                        "additionalProperties": {},
                         "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "operator": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "matchExpressions": {
-                        "items": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "key": {
-                              "type": "string"
-                            },
-                            "operator": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                }
-              },
-              "type": "object"
-            },
-            {
-              "items": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "topologyKey": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            }
-          ]
-        },
-        "properties": {
-          "requiredDuringSchedulingIgnoredDuringExecution": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "items": {
-                    "additionalProperties": {
-                      "items": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "operator": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "matchExpressions": {
-                        "items": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "key": {
-                              "type": "string"
-                            },
-                            "operator": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "properties": {
-                  "nodeSelectorTerms": {
-                    "items": {
-                      "additionalProperties": {
-                        "items": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "key": {
-                              "type": "string"
-                            },
-                            "operator": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "properties": {
-                        "matchExpressions": {
-                          "items": {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "properties": {
-                              "key": {
-                                "type": "string"
+                          "matchExpressions": {
+                            "items": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "type": "string"
+                                }
                               },
-                              "operator": {
-                                "type": "string"
-                              }
+                              "type": "object"
                             },
-                            "type": "object"
-                          },
-                          "type": "array"
-                        }
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
                       },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "items": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "topologyKey": {
-                      "type": "string"
+                      "type": "array"
                     }
                   },
                   "type": "object"
-                },
-                "type": "array"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-      "properties": {
-        "nodeAffinity": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "items": {
-                "additionalProperties": {
+                }
+              },
+              "type": "object"
+            },
+            "podAffinity": {
+              "additionalProperties": {},
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
                   "items": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
+                    "additionalProperties": {},
                     "properties": {
-                      "key": {
-                        "type": "string"
-                      },
-                      "operator": {
-                        "type": "string"
+                      "podAffinityTerm": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "labelSelector": {}
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
                   },
                   "type": "array"
                 },
-                "properties": {
-                  "matchExpressions": {
-                    "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "properties": {
-                        "key": {
-                          "type": "string"
-                        },
-                        "operator": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "properties": {
-              "nodeSelectorTerms": {
-                "items": {
-                  "additionalProperties": {
-                    "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "properties": {
-                        "key": {
-                          "type": "string"
-                        },
-                        "operator": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "properties": {
-                    "matchExpressions": {
-                      "items": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "operator": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          "properties": {
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-              "additionalProperties": {
-                "items": {
-                  "additionalProperties": {
-                    "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "properties": {
-                        "key": {
-                          "type": "string"
-                        },
-                        "operator": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "properties": {
-                    "matchExpressions": {
-                      "items": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "operator": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "properties": {
-                "nodeSelectorTerms": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
                   "items": {
-                    "additionalProperties": {
-                      "items": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
+                    "additionalProperties": {},
+                    "properties": {
+                      "labelSelector": {}
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "podAntiAffinity": {
+              "additionalProperties": {},
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "items": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "podAffinityTerm": {
+                        "additionalProperties": {},
                         "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "operator": {
-                            "type": "string"
-                          }
+                          "labelSelector": {}
                         },
                         "type": "object"
-                      },
-                      "type": "array"
+                      }
                     },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "items": {
+                    "additionalProperties": {},
                     "properties": {
-                      "matchExpressions": {
-                        "items": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "key": {
-                              "type": "string"
-                            },
-                            "operator": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
+                      "labelSelector": {},
+                      "topologyKey": {
+                        "type": "string"
                       }
                     },
                     "type": "object"
@@ -1456,93 +1205,14 @@
           },
           "type": "object"
         },
-        "podAffinity": {
-          "additionalProperties": false,
-          "properties": {
-            "preferredDuringSchedulingIgnoredDuringExecution": {
-              "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "podAffinityTerm": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "labelSelector": {}
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-              "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "labelSelector": {}
-                },
-                "type": "object"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
-        },
-        "podAntiAffinity": {
-          "additionalProperties": {
-            "items": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "properties": {
-                "topologyKey": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "properties": {
-            "preferredDuringSchedulingIgnoredDuringExecution": {
-              "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "podAffinityTerm": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "labelSelector": {}
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-              "items": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "labelSelector": {},
-                  "topologyKey": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
     },
     "controller": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1651,7 +1321,7 @@
           "description": "Additional volumeMounts for the controller container.\n- name: aws-iam-token\nmountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount\nreadOnly: true"
         },
         "healthProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "port": {
               "description": "The container port to use for http health probe.",
@@ -1661,7 +1331,7 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {
               "description": "SHA256 digest of the controller image."
@@ -1676,7 +1346,7 @@
           "type": "object"
         },
         "metrics": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "port": {
               "description": "The container port to use for metrics.",
@@ -1696,12 +1366,19 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Resources for the controller container.\nWe usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nrequests:\ncpu: 1\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 1Gi"
         },
         "securityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "appArmorProfile": {
               "anyOf": [
@@ -1714,6 +1391,13 @@
                 {
                   "additionalProperties": {},
                   "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "AppArmor profile for the controller container."
@@ -1729,6 +1413,13 @@
                 {
                   "additionalProperties": {},
                   "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "SELinux options for the controller container."
@@ -1744,6 +1435,13 @@
                 {
                   "additionalProperties": {},
                   "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
                 }
               ],
               "description": "Seccomp profile for the controller container."
@@ -1783,6 +1481,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Configure DNS Config for the pod\noptions:\n- name: ndots\nvalue: \"1\""
@@ -1810,11 +1515,24 @@
       "description": "Additional volumes for the pod."
     },
     "fullnameOverride": {
-      "description": "Overrides the chart's computed fullname.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Overrides the chart's computed fullname."
     },
     "hostNetwork": {
       "description": "Bind the pod to the host network.\nThis is required when using a custom CNI.",
@@ -1850,6 +1568,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "add additional initContainers to run before karpenter container starts\n- name: list-ec2-instances\nimage: amazon/aws-cli:latest\ncommand: [ 'aws', 'ec2', 'describe-instance-types']"
@@ -1875,34 +1600,38 @@
       ]
     },
     "nodeSelector": {
-      "additionalProperties": false,
-      "description": "Node selectors to schedule the pod to nodes with labels.",
-      "properties": {
-        "kubernetes.io/os": {
-          "type": "string"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "kubernetes.io/os": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "Node selectors to schedule the pod to nodes with labels."
     },
     "podAnnotations": {
       "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
         {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional annotations for the pod."
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "maxUnavailable": {
           "type": "integer"
@@ -1916,57 +1645,42 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional labels for the pod."
     },
     "podSecurityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "type": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
-      "description": "SecurityContext for the pod.",
-      "properties": {
-        "fsGroup": {
-          "type": "integer"
-        },
-        "seccompProfile": {
-          "additionalProperties": {
-            "type": "string"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "type": {
-              "type": "string"
+            "fsGroup": {
+              "type": "integer"
+            },
+            "seccompProfile": {
+              "additionalProperties": {},
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "SecurityContext for the pod."
     },
     "priorityClassName": {
       "description": "PriorityClass name for the pod."
@@ -1983,18 +1697,25 @@
       "description": "Specify which Kubernetes scheduler should dispatch the pod."
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Additional annotations for the Service.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional annotations for the Service."
         }
       },
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {},
@@ -2018,9 +1739,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Additional annotations for the ServiceAccount.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional annotations for the ServiceAccount."
         },
         "create": {
           "description": "Specifies if a ServiceAccount should be created.",
@@ -2033,7 +1761,7 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2050,23 +1778,31 @@
           "then": {
             "properties": {
               "additionalLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional labels for the ServiceMonitor.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional labels for the ServiceMonitor."
               },
               "endpointConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
@@ -2080,6 +1816,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs"
@@ -2093,6 +1832,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
@@ -2104,18 +1846,36 @@
       ],
       "properties": {
         "additionalLabels": {
-          "additionalProperties": {},
-          "description": "Additional labels for the ServiceMonitor.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional labels for the ServiceMonitor."
         },
         "enabled": {
           "description": "Specifies whether a ServiceMonitor should be created.",
           "type": "boolean"
         },
         "endpointConfig": {
-          "additionalProperties": {},
-          "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
         },
         "metricRelabelings": {
           "anyOf": [
@@ -2154,7 +1914,7 @@
       "type": "object"
     },
     "settings": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2246,28 +2006,53 @@
           "description": "Marking this true means that your cluster is running with an EKS control plane and Karpenter should attempt to discover cluster details from the DescribeCluster API."
         },
         "featureGates": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
           "properties": {
             "nodeOverlay": {
               "description": "nodeOverlay is ALPHA and is disabled by default.\nSetting this will allow the use of node overlay to impact scheduling decisions",
-              "type": "boolean"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "nodeRepair": {
               "description": "nodeRepair is ALPHA and is disabled by default.\nSetting this to true will enable node repair.",
-              "type": "boolean"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "reservedCapacity": {
               "description": "reservedCapacity is BETA and is enabled by default.\nSetting this will enable native on-demand capacity reservation support.",
-              "type": "boolean"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "spotToSpotConsolidation": {
               "description": "spotToSpotConsolidation is ALPHA and is disabled by default.\nSetting this to true will enable spot replacement consolidation for both single and multi-node consolidation.",
-              "type": "boolean"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "staticCapacity": {
               "description": "staticCapacity is ALPHA and is disabled by default.\nSetting this to true will enable static capacity provisioning.",
-              "type": "boolean"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -2305,32 +2090,27 @@
       "type": "object"
     },
     "strategy": {
-      "additionalProperties": {
-        "additionalProperties": {
-          "type": "integer"
-        },
-        "properties": {
-          "maxUnavailable": {
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "description": "Strategy for updating the pod.",
-      "properties": {
-        "rollingUpdate": {
-          "additionalProperties": {
-            "type": "integer"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "maxUnavailable": {
-              "type": "integer"
+            "rollingUpdate": {
+              "additionalProperties": {},
+              "properties": {
+                "maxUnavailable": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "Strategy for updating the pod."
     },
     "terminationGracePeriodSeconds": {
       "description": "Override the default termination grace period for the pod."
@@ -2339,9 +2119,7 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": {},
             "properties": {
               "key": {
                 "type": "string"
@@ -2367,16 +2145,7 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "additionalProperties": {},
             "properties": {
               "labelSelector": {},
               "maxSkew": {

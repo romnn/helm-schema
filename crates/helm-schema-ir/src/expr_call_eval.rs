@@ -848,6 +848,11 @@ fn eval_tpl(
         effects.add_shape_erased_paths(paths.clone());
         AbstractValue::widened(paths)
     } else {
+        // `tpl` type-asserts its template to a Go string: a raw values
+        // subject (`tpl .Values.extraEnv $`, also through a `with`-bound
+        // dot) carries the same runtime string contract as any other
+        // string-only consumer.
+        record_string_consumer_effects(&identity_value_paths(&template.value), &mut effects);
         template.value
     }
     .and_then(rendered_content_value);

@@ -46,80 +46,223 @@
       "then": {
         "properties": {
           "configAwsOrGcp": {
-            "additionalProperties": {},
-            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\"",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
           },
           "configConnectionPooler": {
-            "additionalProperties": {},
-            "description": "configure connection pooler deployment created by the operator",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure connection pooler deployment created by the operator"
           },
           "configDebug": {
-            "additionalProperties": {},
-            "description": "options to aid debugging of the operator itself",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "options to aid debugging of the operator itself"
           },
           "configGeneral": {
-            "additionalProperties": {},
-            "description": "general configuration parameters",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "general configuration parameters"
           },
           "configKubernetes": {
-            "additionalProperties": {},
-            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
           },
           "configLoadBalancer": {
-            "additionalProperties": {},
-            "description": "configure behavior of load balancers",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure behavior of load balancers"
           },
           "configLoggingRestApi": {
-            "additionalProperties": {},
-            "description": "parameters affecting logging and REST API listener",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "parameters affecting logging and REST API listener"
           },
           "configLogicalBackup": {
-            "additionalProperties": {},
-            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
           },
           "configMajorVersionUpgrade": {
-            "additionalProperties": {},
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "configPatroni": {
-            "additionalProperties": {},
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "configTeamsApi": {
-            "additionalProperties": {},
-            "description": "automate creation of human users with teams API service",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "automate creation of human users with teams API service"
           },
           "configTimeouts": {
-            "additionalProperties": {},
-            "description": "timeouts related to some operator actions",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "timeouts related to some operator actions"
           },
           "configUsers": {
-            "additionalProperties": {},
-            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin",
-            "properties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
           },
           "fullnameOverride": {
             "type": [
@@ -737,9 +880,20 @@
   ],
   "properties": {
     "affinity": {
-      "additionalProperties": {},
-      "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "configAwsOrGcp": {
       "additionalProperties": {},
@@ -812,7 +966,7 @@
       "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
     },
     "controllerID": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "description": "Specifies whether a controller ID should be defined for the operator\nNote, all postgres manifest must then contain the following annotation to be found by this operator\n\"acid.zalan.do/controller\": <controller-ID-of-the-operator>",
@@ -854,67 +1008,98 @@
       ]
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "type": "string"
         },
         "registry": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         }
       },
       "type": "object"
     },
     "imagePullSecrets": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "nameOverride": {},
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "podAnnotations": {
       "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
         {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ]
     },
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ]
     },
     "podPriorityClassName": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -978,7 +1163,7 @@
       "type": "object"
     },
     "podServiceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "name": {
           "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
@@ -994,7 +1179,7 @@
       ]
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "description": "Specifies whether RBAC resources should be created",
@@ -1008,7 +1193,7 @@
       "type": "object"
     },
     "readinessProbe": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1042,25 +1227,10 @@
       "type": "object"
     },
     "resources": {
-      "additionalProperties": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "properties": {
-          "cpu": {
-            "type": "string"
-          },
-          "memory": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "additionalProperties": {},
       "properties": {
         "limits": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "cpu": {
               "type": "string"
@@ -1072,9 +1242,7 @@
           "type": "object"
         },
         "requests": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "cpu": {
               "type": "string"
@@ -1089,7 +1257,7 @@
       "type": "object"
     },
     "securityContext": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "allowPrivilegeEscalation": {
           "type": "boolean"
@@ -1107,7 +1275,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {

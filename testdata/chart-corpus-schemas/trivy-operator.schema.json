@@ -552,6 +552,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"\n- ip: \"10.1.2.3\"\nhostnames:\n- \"foo.remote\"\n- \"bar.remote\""
@@ -559,14 +562,15 @@
           "nodeSelector": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "nodeSelector set the operator nodeSelector"
@@ -596,6 +600,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "tolerations set the operator tolerations"
@@ -605,33 +612,86 @@
               "image": {
                 "properties": {
                   "registry": {
-                    "description": "registry of the Trivy image",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "registry of the Trivy image"
                   },
                   "repository": {
-                    "description": "repository of the Trivy image",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "repository of the Trivy image"
                   },
                   "tag": {
-                    "description": "tag version of the Trivy image",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "tag version of the Trivy image"
                   }
                 },
                 "type": "object"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "labels is the extra labels to be used for trivy server statefulset",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "labels is the extra labels to be used for trivy server statefulset"
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "podLabels is the extra pod labels to be used for trivy server",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "podLabels is the extra pod labels to be used for trivy server"
               },
               "priorityClassName": {
                 "description": "priorityClassName is the name of the priority class used for trivy server",
@@ -651,6 +711,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Statefulset volumeMounts"
@@ -664,6 +727,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "- name: trusted-ca\nmountPath: /etc/ssl/trusted-ca\nsubPath: trusted-ca.crt\nreadOnly: true\nStatefulset volumes\n- name: trusted-ca\nsecret:\nsecretName: trusted-ca"
@@ -672,108 +738,56 @@
                     "type": "object"
                   },
                   "podSecurityContext": {
-                    "additionalProperties": false,
-                    "description": "podSecurityContext set trivy-server podSecurityContext",
-                    "properties": {
-                      "fsGroup": {
-                        "type": "integer"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
                       },
-                      "runAsNonRoot": {
-                        "type": "boolean"
+                      {
+                        "items": {},
+                        "type": "array"
                       },
-                      "runAsUser": {
-                        "type": "integer"
+                      {
+                        "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ],
+                    "description": "podSecurityContext set trivy-server podSecurityContext"
                   },
                   "replicas": {
                     "description": "the number of replicas of the trivy-server",
                     "type": "integer"
                   },
                   "resources": {
-                    "additionalProperties": {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "cpu": {
-                          "anyOf": [
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "memory": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "description": "resources set trivy-server resource",
-                    "properties": {
-                      "limits": {
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "description": "ephemeral-storage: \"2Gi\"",
-                        "properties": {
-                          "cpu": {
-                            "type": "integer"
-                          },
-                          "memory": {
-                            "description": "ephemeral-storage: \"2Gi\"",
-                            "type": "string"
-                          }
-                        },
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
                         "type": "object"
                       },
-                      "requests": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "cpu": {
-                            "type": "string"
-                          },
-                          "memory": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ],
+                    "description": "resources set trivy-server resource"
                   },
                   "securityContext": {
-                    "additionalProperties": false,
-                    "description": "securityContext set trivy-server securityContext",
-                    "properties": {
-                      "privileged": {
-                        "type": "boolean"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
                       },
-                      "readOnlyRootFilesystem": {
-                        "type": "boolean"
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ],
+                    "description": "securityContext set trivy-server securityContext"
                   }
                 },
                 "type": "object"
@@ -830,7 +844,20 @@
           "image": {
             "properties": {
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -838,12 +865,38 @@
           "nodeCollector": {
             "properties": {
               "repository": {
-                "description": "repository of the node-collector image",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "repository of the node-collector image"
               },
               "tag": {
-                "description": "tag version of the node-collector image",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "tag version of the node-collector image"
               }
             },
             "type": "object"
@@ -977,6 +1030,7 @@
                 "type": "object"
               },
               {
+                "items": {},
                 "type": "array"
               },
               {
@@ -984,6 +1038,9 @@
               },
               {
                 "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           }
@@ -1040,11 +1097,20 @@
           "trivyOperator": {
             "properties": {
               "policiesConfig": {
-                "description": "policiesConfig Custom Rego Policies to be used by the config audit scanner\nSee https://github.com/aquasecurity/trivy-operator/blob/main/docs/tutorials/writing-custom-configuration-audit-policies.md for more details.",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "policiesConfig Custom Rego Policies to be used by the config audit scanner\nSee https://github.com/aquasecurity/trivy-operator/blob/main/docs/tutorials/writing-custom-configuration-audit-policies.md for more details."
               }
             },
             "type": "object"
@@ -1424,14 +1490,15 @@
           "podSecurityContext": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "fsGroup: 2000"
@@ -1592,7 +1659,14 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "configFile can be used to tell Trivy to use specific options available only in the config file (e.g. Mirror registries).\nconfigFile:\nregistry:\nmirrors:\nindex.docker.io:\n- mirror.with.bad.auth\n- mirror.without.image"
@@ -1700,7 +1774,20 @@
           "trivy": {
             "properties": {
               "dbRegistry": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1805,7 +1892,20 @@
           "trivy": {
             "properties": {
               "dbRepository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2021,7 +2121,14 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "ignoreFile can be used to tell Trivy to ignore vulnerabilities by ID (one per line)\nignoreFile:\n- CVE-1970-0001\n- CVE-1970-0002"
@@ -2131,8 +2238,21 @@
               "image": {
                 "properties": {
                   "registry": {
-                    "description": "registry of the Trivy image",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "registry of the Trivy image"
                   }
                 },
                 "type": "object"
@@ -2242,8 +2362,21 @@
               "image": {
                 "properties": {
                   "repository": {
-                    "description": "repository of the Trivy image",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "repository of the Trivy image"
                   }
                 },
                 "type": "object"
@@ -2358,6 +2491,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -2365,6 +2499,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "The registry to which insecure connections are allowed. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
@@ -2472,8 +2609,21 @@
           "trivy": {
             "properties": {
               "javaDbRegistry": {
-                "description": "javaDbRegistry is the registry for the Java vulnerability database.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "javaDbRegistry is the registry for the Java vulnerability database."
               }
             },
             "type": "object"
@@ -2578,7 +2728,20 @@
           "trivy": {
             "properties": {
               "javaDbRepository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2690,6 +2853,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -2697,6 +2861,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Registries without SSL. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
@@ -2814,6 +2981,7 @@
                         "type": "object"
                       },
                       {
+                        "items": {},
                         "type": "array"
                       },
                       {
@@ -2821,6 +2989,9 @@
                       },
                       {
                         "type": "null"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "\"docker.io\": docker-mirror.example.com"
@@ -5062,12 +5233,19 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "affinity set the operator affinity"
     },
     "alternateReportStorage": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5105,7 +5283,7 @@
         },
         "mountPath": {},
         "podSecurityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "fsGroup": {},
             "runAsUser": {}
@@ -5125,7 +5303,7 @@
       "type": "boolean"
     },
     "compliance": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "cron": {
           "description": "cron this flag control the cron interval for compliance report generation"
@@ -5165,23 +5343,49 @@
       "description": "extraEnv is a list of extra environment variables for the trivy-operator."
     },
     "fullnameOverride": {
-      "description": "fullnameOverride override operator full name",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "fullnameOverride override operator full name"
     },
     "global": {
       "additionalProperties": {},
       "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values",
       "properties": {
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "registry": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           },
@@ -5206,7 +5410,7 @@
       "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"\n- ip: \"10.1.2.3\"\nhostnames:\n- \"foo.remote\"\n- \"bar.remote\""
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "description": "pullPolicy set the operator pullPolicy",
@@ -5231,17 +5435,40 @@
           "description": "pullSecrets set the operator pullSecrets"
         },
         "registry": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "description": "tag is an override of the image tag, which is by default set by the\nappVersion field in Chart.yaml.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "tag is an override of the image tag, which is by default set by the\nappVersion field in Chart.yaml."
         }
       },
       "type": "object"
@@ -5263,7 +5490,7 @@
       "description": "nameOverride override operator name"
     },
     "nodeCollector": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "excludeNodes": {
           "description": "excludeNodes comma-separated node labels that the node-collector job should exclude from scanning (example kubernetes.io/arch=arm64,team=dev)"
@@ -5273,64 +5500,100 @@
         },
         "registry": {
           "description": "registry of the node-collector image",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "repository": {
           "description": "repository of the node-collector image",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
           "description": "tag version of the node-collector image",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tolerations": {
-          "description": "tolerations to be applied to the node-collector so that they can run on nodes with matching taints",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "tolerations to be applied to the node-collector so that they can run on nodes with matching taints"
         },
         "useNodeSelector": {
           "description": "useNodeSelector determine if to use nodeSelector (by auto detecting node name) with node-collector scan job"
         },
         "volumeMounts": {
-          "description": "node-collector pod volume mounts definition for collecting config files information",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "mountPath": {
-                "type": "string"
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountPath": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "readOnly": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
               },
-              "name": {
-                "type": "string"
-              },
-              "readOnly": {
-                "type": "boolean"
-              }
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            }
+          ],
+          "description": "node-collector pod volume mounts definition for collecting config files information"
         },
         "volumes": {
-          "description": "node-collector pod volumes definition for collecting config files information",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "hostPath": {
-                "additionalProperties": false,
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
                 "properties": {
-                  "path": {
+                  "hostPath": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "name": {
                     "type": "string"
                   }
                 },
                 "type": "object"
               },
-              "name": {
-                "type": "string"
-              }
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            }
+          ],
+          "description": "node-collector pod volumes definition for collecting config files information"
         }
       },
       "type": "object"
@@ -5346,12 +5609,19 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "nodeSelector set the operator nodeSelector"
     },
     "operator": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5375,11 +5645,18 @@
                 ]
               },
               "serverAdditionalAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "serverAdditionalAnnotations the flag to set additional annotations for the trivy server pod",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "serverAdditionalAnnotations the flag to set additional annotations for the trivy server pod"
               }
             },
             "type": "object"
@@ -5393,16 +5670,13 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "additional annotations for the operator deployment"
@@ -5452,16 +5726,13 @@
         "labels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "additional labels for the operator deployment"
@@ -5508,16 +5779,13 @@
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "additional labels for the operator pod"
@@ -5565,9 +5833,16 @@
           "description": "scannerReportTTL the flag to set how long a report should exist. \"\" means that the ScannerReportTTL feature is disabled"
         },
         "serverAdditionalAnnotations": {
-          "additionalProperties": {},
-          "description": "serverAdditionalAnnotations the flag to set additional annotations for the trivy server pod",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "serverAdditionalAnnotations the flag to set additional annotations for the trivy server pod"
         },
         "trivyServerHealthCheckCacheExpiration": {
           "description": "trivyServerHealthCheckCacheExpiration The flag to set the interval for trivy server health cache before it invalidate"
@@ -5610,27 +5885,35 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "podAnnotations annotations added to the operator's pod"
     },
     "podSecurityContext": {
-      "additionalProperties": {},
-      "description": "fsGroup: 2000",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "fsGroup: 2000"
     },
     "policiesBundle": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5791,7 +6074,12 @@
         },
         "registry": {
           "description": "registry of the policies bundle",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "registryPassword": {
           "description": "registryPassword is the password for the registry"
@@ -5801,11 +6089,21 @@
         },
         "repository": {
           "description": "repository of the policies bundle",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
           "description": "tag version of the policies bundle",
-          "type": "integer"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -5818,7 +6116,7 @@
       ]
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "type": "boolean"
@@ -5837,82 +6135,65 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
     "securityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "properties": {
-              "drop": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "boolean"
-          }
-        ]
-      },
-      "description": "securityContext security context",
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
-        },
-        "capabilities": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "drop": {
-              "items": {
-                "type": "string"
+            "allowPrivilegeEscalation": {
+              "type": "boolean"
+            },
+            "capabilities": {
+              "additionalProperties": {},
+              "properties": {
+                "drop": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
               },
-              "type": "array"
+              "type": "object"
+            },
+            "privileged": {
+              "type": "boolean"
+            },
+            "readOnlyRootFilesystem": {
+              "type": "boolean"
             }
           },
           "type": "object"
         },
-        "privileged": {
-          "type": "boolean"
-        },
-        "readOnlyRootFilesystem": {
-          "type": "boolean"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "securityContext security context"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
       "properties": {
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "annotations added to the operator's service"
@@ -5949,7 +6230,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5981,10 +6262,17 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "name": {
                 "description": "name specifies the name of the k8s Service Account. If not set and create is\ntrue, a name is generated using the fullname template.",
@@ -6042,8 +6330,15 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "create": {
           "description": "Specifies whether a service account should be created.",
@@ -6060,7 +6355,7 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -6077,23 +6372,31 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional annotations for the serviceMonitor",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional annotations for the serviceMonitor"
               },
               "endpointAdditionalProperties": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc."
@@ -6103,11 +6406,18 @@
                 "type": "boolean"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional labels for the serviceMonitor",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional labels for the serviceMonitor"
               },
               "namespace": {
                 "description": "The namespace where Prometheus expects to find service monitors",
@@ -6124,18 +6434,36 @@
       "description": "Prometheus ServiceMonitor configuration -- to install the trivy operator with the ServiceMonitor\nyou must have Prometheus already installed and running. If you do not have Prometheus installed, enabling this will\nproduce an error.",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Additional annotations for the serviceMonitor",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional annotations for the serviceMonitor"
         },
         "enabled": {
           "description": "enabled determines whether a serviceMonitor should be deployed",
           "type": "boolean"
         },
         "endpointAdditionalProperties": {
-          "additionalProperties": {},
-          "description": "EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc."
         },
         "honorLabels": {
           "description": "HonorLabels chooses the metric’s labels on collisions with target labels"
@@ -6144,9 +6472,16 @@
           "description": "Interval at which metrics should be scraped. If not specified Prometheus’ global scrape interval is used."
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Additional labels for the serviceMonitor",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional labels for the serviceMonitor"
         },
         "namespace": {
           "description": "The namespace where Prometheus expects to find service monitors"
@@ -6158,7 +6493,8 @@
       "description": "targetNamespace defines where you want trivy-operator to operate. By\ndefault, it's a blank string to select all namespaces, but you can specify\nanother namespace, or a comma separated list of namespaces."
     },
     "targetWorkloads": {
-      "description": "targetWorkloads is a comma seperated list of Kubernetes workload resources\nto be included in the vulnerability and config-audit scans\nif left blank, all workload resources will be scanned"
+      "description": "targetWorkloads is a comma seperated list of Kubernetes workload resources\nto be included in the vulnerability and config-audit scans\nif left blank, all workload resources will be scanned",
+      "type": "string"
     },
     "tolerations": {
       "anyOf": [
@@ -6405,7 +6741,7 @@
       ]
     },
     "trivyOperator": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "additionalReportLabels": {
           "description": "additionalReportLabels comma-separated representation of the labels which the user wants the scanner pods to be\nlabeled with. Example: `foo=bar,env=stage` will labeled the reports with the labels `foo: bar` and `env: stage`"
@@ -6431,14 +6767,11 @@
         "scanJobAffinity": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
+              "additionalProperties": {},
               "type": "object"
             },
             {
-              "additionalProperties": {},
-              "type": "object"
+              "type": "null"
             }
           ],
           "description": "scanJobAffinity affinity to be applied to the scanner pods and node-collector"
@@ -6457,26 +6790,37 @@
           ]
         },
         "scanJobCustomVolumes": {
-          "description": "scanJobCustomVolumes add custom volumes to the scan job\n- name: var-lib-etcd\nhostPath:\npath: /var/lib/etcd",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "scanJobCustomVolumes add custom volumes to the scan job\n- name: var-lib-etcd\nhostPath:\npath: /var/lib/etcd"
         },
         "scanJobCustomVolumesMount": {
-          "description": "scanJobCustomVolumesMount add custom volumes mount to the scan job\n- name: var-lib-etcd\nmountPath: /var/lib/etcd\nreadOnly: true",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "scanJobCustomVolumesMount add custom volumes mount to the scan job\n- name: var-lib-etcd\nmountPath: /var/lib/etcd\nreadOnly: true"
         },
         "scanJobNodeSelector": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
+              "additionalProperties": {},
               "type": "object"
             },
             {
-              "additionalProperties": {},
-              "type": "object"
+              "type": "null"
             }
           ],
           "description": "scanJobNodeSelector nodeSelector to be applied to the scanner pods so that they can run on nodes with matching labels"
@@ -6485,32 +6829,39 @@
           "description": "scanJobPodPriorityClassName Priority class name to be set on the pods created by trivy operator jobs. This accepts a string value"
         },
         "scanJobPodTemplateContainerSecurityContext": {
-          "additionalProperties": false,
-          "description": "scanJobPodTemplateContainerSecurityContext SecurityContext the user wants the scanner and node collector containers (and their\ninitContainers) to be amended with.",
-          "properties": {
-            "allowPrivilegeEscalation": {
-              "type": "boolean"
-            },
-            "capabilities": {
-              "additionalProperties": false,
+          "anyOf": [
+            {
+              "additionalProperties": {},
               "properties": {
-                "drop": {
-                  "items": {
-                    "type": "string"
+                "allowPrivilegeEscalation": {
+                  "type": "boolean"
+                },
+                "capabilities": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "drop": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
                   },
-                  "type": "array"
+                  "type": "object"
+                },
+                "privileged": {
+                  "type": "boolean"
+                },
+                "readOnlyRootFilesystem": {
+                  "type": "boolean"
                 }
               },
               "type": "object"
             },
-            "privileged": {
-              "type": "boolean"
-            },
-            "readOnlyRootFilesystem": {
-              "type": "boolean"
+            {
+              "type": "null"
             }
-          },
-          "type": "object"
+          ],
+          "description": "scanJobPodTemplateContainerSecurityContext SecurityContext the user wants the scanner and node collector containers (and their\ninitContainers) to be amended with."
         },
         "scanJobPodTemplateLabels": {
           "description": "scanJobPodTemplateLabels comma-separated representation of the labels which the user wants the scanner pods to be\nlabeled with. Example: `foo=bar,env=stage` will labeled the scanner pods with the labels `foo: bar` and `env: stage`"
@@ -6518,22 +6869,26 @@
         "scanJobPodTemplatePodSecurityContext": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
+              "additionalProperties": {},
               "type": "object"
             },
             {
-              "additionalProperties": {},
-              "type": "object"
+              "type": "null"
             }
           ],
           "description": "scanJobPodTemplatePodSecurityContext podSecurityContext the user wants the scanner and node collector pods to be amended with.\nExample:\nRunAsUser: 10000\nRunAsGroup: 10000\nRunAsNonRoot: true"
         },
         "scanJobTolerations": {
-          "description": "scanJobTolerations tolerations to be applied to the scanner pods so that they can run on nodes with matching taints",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "scanJobTolerations tolerations to be applied to the scanner pods so that they can run on nodes with matching taints"
         },
         "scanJobsInSameNamespace": {
           "description": "scanJobsInSameNamespace control whether to run vulnerability scan jobs in same namespace of workload"
@@ -6557,16 +6912,7 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "additionalProperties": {},
             "properties": {
               "mountPath": {
                 "type": "string"
@@ -6594,17 +6940,7 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "additionalProperties": {},
             "properties": {
               "emptyDir": {
                 "additionalProperties": {},

@@ -75,18 +75,32 @@
       "then": {
         "properties": {
           "commonAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to add to all resources",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to add to all resources"
           },
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Labels to add to all deployed resources",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels to add to all deployed resources"
           }
         },
         "type": "object"
@@ -1050,11 +1064,18 @@
       "then": {
         "properties": {
           "commonAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to add to all resources",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to add to all resources"
           }
         },
         "type": "object"
@@ -1125,11 +1146,18 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Labels to add to all deployed resources",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels to add to all deployed resources"
           },
           "storage": {
             "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
@@ -1174,11 +1202,18 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Labels to add to all deployed resources",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels to add to all deployed resources"
           },
           "storage": {
             "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
@@ -1694,11 +1729,18 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Labels to add to all deployed resources",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels to add to all deployed resources"
           }
         },
         "type": "object"
@@ -1744,10 +1786,17 @@
           "esIndexCleaner": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1856,10 +1905,17 @@
               "serviceAccount": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -1911,10 +1967,17 @@
           "esLookback": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2024,10 +2087,17 @@
                 "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -2079,20 +2149,34 @@
           "esRollover": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "initHook": {
                 "description": "ttlSecondsAfterFinished: 120",
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "- name: SHARDS\nvalue: \"3\"",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "- name: SHARDS\nvalue: \"3\""
                   }
                 },
                 "type": "object"
@@ -2205,10 +2289,17 @@
                 "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -2470,10 +2561,17 @@
               "httproute": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -2579,11 +2677,18 @@
                 "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx"
                   }
                 },
                 "type": "object"
@@ -2615,10 +2720,17 @@
               "service": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -2696,10 +2808,17 @@
               "serviceAccount": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -2780,10 +2899,17 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2894,10 +3020,17 @@
                 "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -2963,9 +3096,22 @@
                 "description": "Cassandra connection settings (for external Cassandra or customizing provisioned)",
                 "properties": {
                   "existingSecret": {
-                    "type": [
-                      "string",
-                      "null"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
                     ]
                   },
                   "extraEnv": {
@@ -2977,6 +3123,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Use existing secret (ignores previous password)\nexistingSecret:\nCassandra related env vars to be configured on the concerned components"
@@ -3541,14 +3690,14 @@
   ],
   "properties": {
     "common": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "exampleValue": {
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
         "global": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "imageRegistry": {}
           },
@@ -3558,29 +3707,33 @@
       "type": "object"
     },
     "commonAnnotations": {
-      "additionalProperties": {},
-      "description": "Annotations to add to all resources",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Annotations to add to all resources"
     },
     "commonLabels": {
       "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
         {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Labels to add to all deployed resources"
     },
     "esIndexCleaner": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3599,19 +3752,27 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "cmdlineParams": {
-                "type": "object"
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "concurrencyPolicy": {
                 "type": "string"
@@ -3639,6 +3800,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "timeout: 30000"
@@ -3671,51 +3835,89 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
               },
               "podSecurityContext": {
-                "additionalProperties": false,
-                "properties": {
-                  "runAsUser": {
-                    "type": "integer"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "securityContext": {
-                "additionalProperties": false,
-                "properties": {
-                  "runAsUser": {
-                    "type": "integer"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
@@ -3729,6 +3931,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               }
@@ -3896,12 +4101,30 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
@@ -3927,7 +4150,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "pullPolicy": {},
@@ -3953,52 +4176,85 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "numberOfDays": {
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
         },
         "podSecurityContext": {
           "additionalProperties": {},
-          "properties": {
-            "runAsUser": {
-              "type": "integer"
-            }
-          },
           "type": "object"
         },
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "schedule": {
           "description": "- name: ROLLOVER\nvalue: 'true'"
         },
         "securityContext": {
           "additionalProperties": {},
-          "properties": {
-            "runAsUser": {
-              "type": "integer"
-            }
-          },
           "type": "object"
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "automountServiceAccountToken": {
               "description": "Explicitly mounts the API credentials for the Service Account"
@@ -4030,7 +4286,7 @@
       "type": "object"
     },
     "esLookback": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4049,19 +4305,27 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "cmdlineParams": {
-                "type": "object"
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "concurrencyPolicy": {
                 "type": "string"
@@ -4087,19 +4351,11 @@
                     "type": "object"
                   },
                   {
-                    "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "value": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
+                    "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -4131,46 +4387,89 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120\nEnd: Default values for the various components of Jaeger",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120\nEnd: Default values for the various components of Jaeger"
               },
               "podSecurityContext": {
-                "additionalProperties": false,
-                "properties": {
-                  "runAsUser": {
-                    "type": "integer"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "securityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
@@ -4184,6 +4483,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               }
@@ -4353,12 +4655,30 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
@@ -4383,7 +4703,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "pullPolicy": {},
@@ -4409,43 +4729,92 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120\nEnd: Default values for the various components of Jaeger",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120\nEnd: Default values for the various components of Jaeger"
         },
         "podSecurityContext": {
           "additionalProperties": {},
-          "properties": {
-            "runAsUser": {
-              "type": "integer"
-            }
-          },
           "type": "object"
         },
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "schedule": {},
         "securityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "automountServiceAccountToken": {
               "description": "Explicitly mounts the API credentials for the Service Account"
@@ -4477,7 +4846,7 @@
       "type": "object"
     },
     "esRollover": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4496,19 +4865,27 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "cmdlineParams": {
-                "type": "object"
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "concurrencyPolicy": {
                 "type": "string"
@@ -4534,19 +4911,11 @@
                     "type": "object"
                   },
                   {
-                    "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "value": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
+                    "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -4587,20 +4956,37 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
                   "podAnnotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "podLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "ttlSecondsAfterFinished": {
                     "type": "integer"
@@ -4611,46 +4997,89 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
               },
               "podSecurityContext": {
-                "additionalProperties": false,
-                "properties": {
-                  "runAsUser": {
-                    "type": "integer"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "securityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
@@ -4664,6 +5093,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               }
@@ -4833,12 +5265,30 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
@@ -4864,7 +5314,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "pullPolicy": {},
@@ -4890,14 +5340,21 @@
           "type": "object"
         },
         "initHook": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "ttlSecondsAfterFinished: 120",
           "properties": {
             "activeDeadlineSeconds": {},
             "annotations": {
-              "additionalProperties": {},
-              "description": "- name: SHARDS\nvalue: \"3\"",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "- name: SHARDS\nvalue: \"3\""
             },
             "extraEnv": {
               "anyOf": [
@@ -4914,55 +5371,118 @@
               ]
             },
             "podAnnotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "podLabels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "ttlSecondsAfterFinished": {}
           },
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
         },
         "podSecurityContext": {
           "additionalProperties": {},
-          "properties": {
-            "runAsUser": {
-              "type": "integer"
-            }
-          },
           "type": "object"
         },
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "schedule": {},
         "securityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "automountServiceAccountToken": {
               "description": "Explicitly mounts the API credentials for the Service Account"
@@ -5015,9 +5535,22 @@
       "description": "Array with extra yaml objects to install alongside the chart. Values are evaluated as a template."
     },
     "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "global": {
@@ -5041,7 +5574,7 @@
       "type": "object"
     },
     "jaeger": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5073,8 +5606,19 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "args": {
                 "anyOf": [
@@ -5103,6 +5647,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -5115,6 +5662,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "- name: badger-data\npersistentVolumeClaim:\nclaimName: jaeger-badger-data\n- name: badger-data\nmountPath: /badger"
@@ -5128,6 +5678,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -5140,30 +5693,81 @@
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "description": "resources:\nlimits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "resources:\nlimits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "podSecurityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "replicas": {
                 "type": "integer"
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "securityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "serviceAccount": {
                 "properties": {
@@ -5174,8 +5778,19 @@
                 "type": "object"
               },
               "strategy": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tolerations": {
                 "anyOf": [
@@ -5186,12 +5801,26 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "topologySpreadConstraints": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -5271,6 +5900,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "filters applied to requests that match this rule"
@@ -5282,25 +5914,11 @@
                         "type": "object"
                       },
                       {
-                        "items": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "path": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "type": {
-                                  "type": "string"
-                                },
-                                "value": {
-                                  "type": "string"
-                                }
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "type": "object"
-                        },
+                        "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "matches define conditions used to match incoming requests against the rule.\nDefaults to a PathPrefix \"/\" match (mirrors the Ingress behavior above)."
@@ -5314,6 +5932,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "parentRefs reference the Gateway(s) this HTTPRoute is attached to\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: http"
@@ -5381,8 +6002,19 @@
                 "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
                 "properties": {
                   "tls": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -5468,8 +6100,19 @@
       "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "args": {
           "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/"
@@ -5521,14 +6164,21 @@
           ]
         },
         "httproute": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "additionalRules": {
               "description": "additionalRules (templated) prepends custom HTTPRoute rules"
             },
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "apiVersion": {
               "description": "HTTPRoute apiVersion (defaults to \"gateway.networking.k8s.io/v1\" when empty)"
@@ -5589,7 +6239,7 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "pullPolicy": {},
@@ -5615,13 +6265,20 @@
           "type": "object"
         },
         "ingress": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx"
             },
             "enabled": {
               "type": "boolean"
@@ -5647,57 +6304,104 @@
               "description": "Used to create an Ingress record.\nhosts:\n- chart-example.local\nannotations:\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nlabels:\napp: jaeger\ntls:\nSecrets must be manually created in the namespace.\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
             },
             "tls": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "resources:\nlimits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "resources:\nlimits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
         },
         "podLabels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "podSecurityContext": {
           "additionalProperties": {},
-          "properties": {
-            "fsGroup": {
-              "type": "integer"
-            },
-            "runAsGroup": {
-              "type": "integer"
-            },
-            "runAsUser": {
-              "type": "integer"
-            }
-          },
           "type": "object"
         },
         "replicas": {},
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "securityContext": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "service": {
-          "additionalProperties": false,
-          "properties": {
-            "annotations": {
+          "anyOf": [
+            {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "securityContext": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "service": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "extraPorts": {
               "anyOf": [
                 {
                   "items": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "properties": {
                       "name": {},
                       "port": {},
@@ -5719,22 +6423,30 @@
             "labels": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ]
             },
             "loadBalancerSourceRanges": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "type": {
               "type": [
@@ -5746,19 +6458,37 @@
           "type": "object"
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "automountServiceAccountToken": {}
           },
           "type": "object"
         },
         "strategy": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "tolerations": {
           "anyOf": [
@@ -5775,8 +6505,19 @@
           ]
         },
         "topologySpreadConstraints": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "topologySpreadContraints": {
           "items": {},
@@ -5787,7 +6528,7 @@
     },
     "nameOverride": {},
     "networkPolicy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -5796,7 +6537,7 @@
       "type": "object"
     },
     "spark": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5815,19 +6556,27 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "cmdlineParams": {
-                "type": "object"
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "concurrencyPolicy": {
                 "type": "string"
@@ -5841,6 +6590,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "spark env var values at\nhttps://github.com/jaegertracing/spark-dependencies/blob/main/jaeger-spark-dependencies-elasticsearch/src/main/java/io/jaegertracing/spark/dependencies/elastic/ElasticsearchDependenciesJob.java\nES_NODES, ES_USERNAME, ES_PASSWORD are set via elasticsearch.env helper which uses storage.elasticsearch"
@@ -5859,41 +6611,89 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
               },
               "podSecurityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "securityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
@@ -5907,6 +6707,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               }
@@ -6153,12 +6956,30 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
@@ -6184,7 +7005,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "pullPolicy": {},
@@ -6208,40 +7029,105 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
         },
         "podSecurityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "schedule": {
           "description": "- name: ES_NODES_WAN_ONLY\nvalue: 'true'\n- name: ES_CLIENT_NODE_ONLY\nvalue: 'false'\n- name: ES_INDEX_PREFIX\nvalue: 'jaeger'\n- name: ES_INDEX_DATE_SEPARATOR\nvalue: '-'\n- name: ES_TIME_RANGE\nvalue: '24h'\n- name: ES_USE_ALIASES\nvalue: 'false'"
         },
         "securityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "automountServiceAccountToken": {
               "description": "Explicitly mounts the API credentials for the Service Account"
@@ -6273,11 +7159,11 @@
       "type": "object"
     },
     "storage": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
       "properties": {
         "cassandra": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Cassandra connection settings (for external Cassandra or customizing provisioned)",
           "properties": {
             "cmdlineParams": {
@@ -6312,7 +7198,7 @@
             },
             "port": {},
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -6329,12 +7215,12 @@
           "type": "object"
         },
         "elasticsearch": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Elasticsearch connection settings\nNOTE: In Jaeger v2, Elasticsearch is configured directly in config.extensions.jaeger_storage\n(see the 'config' section at the top of this file). The settings below are only used by\nthe ES maintenance jobs (esIndexCleaner, esRollover, esLookback) via the elasticsearch.env helper.",
           "properties": {
             "password": {},
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -6376,7 +7262,14 @@
           "const": null
         },
         {
+          "items": {},
+          "type": "array"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "User provided config to override the config completely\nThere are several examples at https://github.com/jaegertracing/jaeger/tree/main/cmd/jaeger\nservice:\nextensions: [jaeger_storage, jaeger_query, healthcheckv2]\npipelines:\ntraces:\nreceivers: [otlp]\nprocessors: [batch]\nexporters: [jaeger_storage_exporter]\ntelemetry:\nresource:\nservice.name: jaeger\nmetrics:\nlevel: detailed\nreaders:\n- pull:\nexporter:\nprometheus:\nhost: 0.0.0.0\nport: 8888\nextensions:\nhealthcheckv2:\nuse_v2: true\nhttp:\nendpoint: 0.0.0.0:13133"

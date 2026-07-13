@@ -76,12 +76,19 @@
           "global": {
             "properties": {
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-                "properties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -107,10 +114,10 @@
       "type": "array"
     },
     "config": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "cluster": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -133,7 +140,7 @@
               "type": "integer"
             },
             "routeURLs": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "k8sClusterDomain": {
                   "type": "string"
@@ -147,7 +154,7 @@
               "type": "object"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -177,7 +184,7 @@
           "type": "object"
         },
         "gateway": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -194,7 +201,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -224,13 +231,13 @@
           "type": "object"
         },
         "jetstream": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
             },
             "fileStore": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "dir": {
                   "type": "string"
@@ -240,7 +247,7 @@
                 },
                 "maxSize": {},
                 "pvc": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "enabled": {
                       "type": "boolean"
@@ -265,7 +272,7 @@
               "type": "object"
             },
             "memoryStore": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -288,7 +295,7 @@
           "type": "object"
         },
         "leafnodes": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -305,7 +312,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -339,7 +346,7 @@
           "type": "object"
         },
         "monitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -348,7 +355,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -360,7 +367,7 @@
           "type": "object"
         },
         "mqtt": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -377,7 +384,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -407,13 +414,13 @@
           "type": "object"
         },
         "nats": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "port": {
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -447,7 +454,7 @@
           "type": "array"
         },
         "profiling": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -456,7 +463,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {}
               },
@@ -466,7 +473,7 @@
           "type": "object"
         },
         "resolver": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "dir": {
               "type": "string"
@@ -483,7 +490,7 @@
               "type": "array"
             },
             "pvc": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -511,13 +518,13 @@
           "type": "string"
         },
         "websocket": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
             },
             "ingress": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "className": {},
                 "enabled": {
@@ -558,7 +565,7 @@
               "type": "integer"
             },
             "tls": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cert": {
                   "type": "string"
@@ -595,8 +602,15 @@
       "additionalProperties": {},
       "properties": {
         "labels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "type": "object"
@@ -604,13 +618,14 @@
     "nameOverride": {},
     "namespaceOverride": {},
     "natsBox": {
+      "additionalProperties": {},
       "properties": {
         "contexts": {
           "additionalProperties": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "creds": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "contents": {},
                   "dir": {},
@@ -626,7 +641,7 @@
                 "type": "object"
               },
               "nkey": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "contents": {},
                   "dir": {},
@@ -642,7 +657,7 @@
                 "type": "array"
               },
               "tls": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "cert": {
                     "type": "string"
@@ -660,10 +675,10 @@
           },
           "properties": {
             "default": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "creds": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "contents": {},
                     "dir": {},
@@ -679,7 +694,7 @@
                   "type": "object"
                 },
                 "nkey": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "contents": {},
                     "dir": {},
@@ -695,7 +710,7 @@
                   "type": "array"
                 },
                 "tls": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "cert": {
                       "type": "string"
@@ -718,7 +733,7 @@
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -775,10 +790,10 @@
           "type": "array"
         },
         "ports": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "cluster": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -787,7 +802,7 @@
               "type": "object"
             },
             "gateway": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -796,7 +811,7 @@
               "type": "object"
             },
             "leafnodes": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -805,7 +820,7 @@
               "type": "object"
             },
             "monitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -814,7 +829,7 @@
               "type": "object"
             },
             "mqtt": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -823,7 +838,7 @@
               "type": "object"
             },
             "nats": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -832,7 +847,7 @@
               "type": "object"
             },
             "profiling": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -841,7 +856,7 @@
               "type": "object"
             },
             "websocket": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"

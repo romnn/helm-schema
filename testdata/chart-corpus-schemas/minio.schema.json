@@ -31,188 +31,6 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "mode": {}
-              },
-              "required": [
-                "mode"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "distributed"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "additionalAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional annotations to include with deployment or statefulset",
-            "type": "object"
-          },
-          "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels to include with deployment or statefulset",
-            "type": "object"
-          },
-          "affinity": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "environment": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)\nwhen Chart is deployed\nPlease refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html\nMINIO_SUBNET_LICENSE: \"License key obtained from https://subnet.min.io\"\nMINIO_BROWSER: \"off\""
-          },
-          "existingSecret": {
-            "description": "Use existing Secret that store following variables:\n| Chart var             | .data.<key> in Secret    |\n|:----------------------|:-------------------------|\n| rootUser              | rootUser                 |\n| rootPassword          | rootPassword             |\nAll mentioned variables will be ignored in values file.\n.data.rootUser and .data.rootPassword are mandatory,\nothers depend on enabled status of corresponding sections.",
-            "type": "string"
-          },
-          "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              }
-            ],
-            "description": "Additional volumeMounts to minio container"
-          },
-          "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              }
-            ],
-            "description": "Additional volumes to minio container"
-          },
-          "image": {
-            "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
-            "properties": {
-              "pullPolicy": {
-                "type": "string"
-              },
-              "repository": {
-                "type": "string"
-              },
-              "tag": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "nodeSelector": {
-            "additionalProperties": {},
-            "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-            "type": "object"
-          },
-          "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additational pod annotations",
-            "type": "object"
-          },
-          "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional pod labels",
-            "type": "object"
-          },
-          "priorityClassName": {
-            "description": "Pod priority settings\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/",
-            "type": "string"
-          },
-          "resources": {
-            "additionalProperties": {},
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
-            "type": "object"
-          },
-          "runtimeClassName": {
-            "description": "Pod runtime class name\nref https://kubernetes.io/docs/concepts/containers/runtime-class/",
-            "type": "string"
-          },
-          "statefulSetUpdate": {
-            "description": "Update strategy for StatefulSets",
-            "properties": {
-              "updateStrategy": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              }
-            ]
-          },
-          "topologySpreadConstraints": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "properties": {
           "mode": {
             "enum": [
@@ -228,30 +46,45 @@
       "then": {
         "properties": {
           "additionalAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional annotations to include with deployment or statefulset",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional annotations to include with deployment or statefulset"
           },
           "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels to include with deployment or statefulset",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels to include with deployment or statefulset"
           },
           "affinity": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ]
           },
@@ -296,6 +129,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Additional volumeMounts to minio container"
@@ -309,6 +145,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Additional volumes to minio container"
@@ -320,10 +159,36 @@
                 "type": "string"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -331,63 +196,66 @@
           "nodeSelector": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
           },
           "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additational pod annotations",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additational pod annotations"
           },
           "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional pod labels",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional pod labels"
           },
           "priorityClassName": {
             "description": "Pod priority settings\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/",
             "type": "string"
           },
           "resources": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "properties": {
-                "memory": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
-            "properties": {
-              "requests": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "memory": {
-                    "type": "string"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/"
           },
           "runtimeClassName": {
             "description": "Pod runtime class name\nref https://kubernetes.io/docs/concepts/containers/runtime-class/",
@@ -402,6 +270,290 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "mode": {}
+              },
+              "required": [
+                "mode"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "distributed"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "additionalAnnotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional annotations to include with deployment or statefulset"
+          },
+          "additionalLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels to include with deployment or statefulset"
+          },
+          "affinity": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)\nwhen Chart is deployed\nPlease refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html\nMINIO_SUBNET_LICENSE: \"License key obtained from https://subnet.min.io\"\nMINIO_BROWSER: \"off\""
+          },
+          "existingSecret": {
+            "description": "Use existing Secret that store following variables:\n| Chart var             | .data.<key> in Secret    |\n|:----------------------|:-------------------------|\n| rootUser              | rootUser                 |\n| rootPassword          | rootPassword             |\nAll mentioned variables will be ignored in values file.\n.data.rootUser and .data.rootPassword are mandatory,\nothers depend on enabled status of corresponding sections.",
+            "type": "string"
+          },
+          "extraVolumeMounts": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Additional volumeMounts to minio container"
+          },
+          "extraVolumes": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Additional volumes to minio container"
+          },
+          "image": {
+            "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
+            "properties": {
+              "pullPolicy": {
+                "type": "string"
+              },
+              "repository": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "tag": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "nodeSelector": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+          },
+          "podAnnotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additational pod annotations"
+          },
+          "podLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional pod labels"
+          },
+          "priorityClassName": {
+            "description": "Pod priority settings\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/",
+            "type": "string"
+          },
+          "resources": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/"
+          },
+          "runtimeClassName": {
+            "description": "Pod runtime class name\nref https://kubernetes.io/docs/concepts/containers/runtime-class/",
+            "type": "string"
+          },
+          "statefulSetUpdate": {
+            "description": "Update strategy for StatefulSets",
+            "properties": {
+              "updateStrategy": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "tolerations": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "topologySpreadConstraints": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ]
           }
@@ -972,7 +1124,20 @@
       "then": {
         "properties": {
           "configPathmc": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "type": "object"
@@ -980,248 +1145,214 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "enabled": {}
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "enabled"
+                        "persistence"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "persistence"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
+                ]
+              },
               {
-                "not": {
-                  "properties": {
-                    "securityContext": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "enabled": {}
+                        "securityContext": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "enabled"
+                        "securityContext"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "securityContext"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "securityContext": {
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "securityContext": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "securityContext"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "mode": {}
+                      },
+                      "required": [
+                        "mode"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "mode": {
+                        "enum": [
+                          "distributed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ],
+                    "type": "object"
+                  }
                 ]
               }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "containerSecurityContext": {
-            "additionalProperties": false,
-            "properties": {
-              "readOnlyRootFilesystem": {
-                "type": "boolean"
-              }
-            },
-            "type": "object"
+            ]
           },
-          "securityContext": {
-            "additionalProperties": false,
-            "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true",
-            "properties": {
-              "enabled": {
-                "type": "boolean"
-              },
-              "fsGroup": {
-                "type": "integer"
-              },
-              "fsGroupChangePolicy": {
-                "type": "string"
-              },
-              "runAsGroup": {
-                "type": "integer"
-              },
-              "runAsUser": {
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "enabled": {}
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "enabled"
+                        "persistence"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "persistence"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
+                ]
+              },
               {
-                "not": {
-                  "properties": {
-                    "securityContext": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "enabled": {}
+                        "securityContext": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "enabled"
+                        "securityContext"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "securityContext"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "securityContext": {
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "securityContext": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "securityContext"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
+                ]
               },
               {
                 "properties": {
                   "mode": {
                     "enum": [
-                      "distributed"
+                      "standalone"
                     ]
                   }
                 },
@@ -1237,13 +1368,35 @@
       "then": {
         "properties": {
           "containerSecurityContext": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "securityContext": {
-            "additionalProperties": {},
-            "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true"
           }
         },
         "type": "object"
@@ -1372,8 +1525,19 @@
             "description": "Additional Annotations for the Kubernetes Job customCommandJob",
             "properties": {
               "containerSecurityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1480,7 +1644,16 @@
               "exitCommand": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -1497,36 +1670,27 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "- name: extra-policies\nconfigMap:\nname: my-extra-policies-cm\nAdditional volumeMounts to add to the custom commands container when\nrunning the post-job."
               },
               "resources": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "properties": {
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
                     "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               }
             },
             "type": "object"
@@ -1538,10 +1702,36 @@
                 "type": "string"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -1639,6 +1829,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Additional volumes to add to the post-job."
@@ -1651,30 +1844,62 @@
             "type": "string"
           },
           "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional pod labels",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional pod labels"
           },
           "postJob": {
             "description": "Merge jobs",
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "tolerations": {
                 "anyOf": [
@@ -1685,6 +1910,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               }
@@ -1825,6 +2053,126 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "extraContainers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraContainers"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "extraContainers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraContainers"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "mode": {}
+                      },
+                      "required": [
+                        "mode"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "mode": {
+                        "enum": [
+                          "distributed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "extraContainers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraContainers"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "extraContainers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraContainers"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "standalone"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "extraContainers": {
+            "anyOf": [
+              {
+                "not": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Additional sidecar containers"
           }
         },
         "type": "object"
@@ -1982,8 +2330,19 @@
             "description": "Additional Annotations for the Kubernetes Job makeBucketJob",
             "properties": {
               "containerSecurityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2090,7 +2449,16 @@
               "exitCommand": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -2099,31 +2467,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "properties": {
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
                     "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               }
             },
             "type": "object"
@@ -2135,10 +2491,36 @@
                 "type": "string"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2270,8 +2652,19 @@
             "description": "writeexamplepolicy policy grants creation or deletion of buckets with name\nstarting with example. In addition, grants objects write permissions on buckets starting with\nexample.\n- name: writeexamplepolicy\nstatements:\n- effect: Allow  # this is the default\nresources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:AbortMultipartUpload\"\n- \"s3:GetObject\"\n- \"s3:DeleteObject\"\n- \"s3:PutObject\"\n- \"s3:ListMultipartUploadParts\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:CreateBucket\"\n- \"s3:DeleteBucket\"\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nreadonlyexamplepolicy policy grants access to buckets with name starting with example.\nIn addition, grants objects read permissions on buckets starting with example.\n- name: readonlyexamplepolicy\nstatements:\n- resources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:GetObject\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nconditionsexample policy creates all access to example bucket with aws:username=\"johndoe\" and source ip range 10.0.0.0/8 and 192.168.0.0/24 only\n- name: conditionsexample\nstatements:\n- resources:\n- 'arn:aws:s3:::example/*'\nactions:\n- 's3:*'\nconditions:\n- StringEquals: '\"aws:username\": \"johndoe\"'\n- IpAddress: |\n\"aws:SourceIp\": [\n\"10.0.0.0/8\",\n\"192.168.0.0/24\"\n]\nAdditional Annotations for the Kubernetes Job makePolicyJob",
             "properties": {
               "containerSecurityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2378,7 +2771,16 @@
               "exitCommand": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -2387,31 +2789,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "properties": {
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
                     "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               }
             },
             "type": "object"
@@ -2423,10 +2813,36 @@
                 "type": "string"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2557,8 +2973,19 @@
           "makeServiceAccountJob": {
             "properties": {
               "containerSecurityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2664,7 +3091,16 @@
               "exitCommand": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -2673,31 +3109,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "properties": {
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
                     "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               }
             },
             "type": "object"
@@ -2709,10 +3133,36 @@
                 "type": "string"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2859,8 +3309,19 @@
             "description": "Additional Annotations for the Kubernetes Job makeUserJob",
             "properties": {
               "containerSecurityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -2982,7 +3443,16 @@
               "exitCommand": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -2991,8 +3461,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -3004,10 +3485,36 @@
                 "type": "string"
               },
               "repository": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tag": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -3864,8 +4371,19 @@
             "description": "Merge jobs",
             "properties": {
               "nodeSelector": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -3986,22 +4504,19 @@
             "description": "Merge jobs",
             "properties": {
               "securityContext": {
-                "additionalProperties": false,
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
                   },
-                  "fsGroup": {
-                    "type": "integer"
+                  {
+                    "items": {},
+                    "type": "array"
                   },
-                  "runAsGroup": {
-                    "type": "integer"
-                  },
-                  "runAsUser": {
-                    "type": "integer"
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               }
             },
             "type": "object"
@@ -4383,6 +4898,159 @@
               "name": {
                 "description": "The name of the service account to use. If 'create' is 'true', a service account with that name\nwill be created.",
                 "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "certSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "certSecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "mode": {}
+                      },
+                      "required": [
+                        "mode"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "mode": {
+                        "enum": [
+                          "distributed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "certSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "certSecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "standalone"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "tls": {
+            "description": "TLS Settings for MinIO",
+            "properties": {
+              "certSecret": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Create a secret with private.key and public.crt files and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret"
               }
             },
             "type": "object"
@@ -4823,18 +5491,43 @@
   ],
   "properties": {
     "additionalAnnotations": {
-      "additionalProperties": {},
-      "description": "Additional annotations to include with deployment or statefulset",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Additional annotations to include with deployment or statefulset"
     },
     "additionalLabels": {
-      "additionalProperties": {},
-      "description": "Additional labels to include with deployment or statefulset",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Additional labels to include with deployment or statefulset"
     },
     "affinity": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "bucketRoot": {
       "description": "Override the root directory which the minio server should serve from.\nIf left empty, it defaults to the value of {{ .Values.mountPath }}\nIf defined, it must be a sub-directory of the path specified in {{ .Values.mountPath }}",
@@ -4854,7 +5547,7 @@
     },
     "configPathmc": {},
     "consoleIngress": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4871,11 +5564,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "node-role.kubernetes.io/ingress: platform",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "node-role.kubernetes.io/ingress: platform"
               },
               "hosts": {
                 "anyOf": [
@@ -4895,10 +5595,17 @@
                 ]
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "tls": {
                 "anyOf": [
@@ -4922,9 +5629,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "node-role.kubernetes.io/ingress: platform",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "node-role.kubernetes.io/ingress: platform"
         },
         "enabled": {
           "type": "boolean"
@@ -4932,8 +5646,15 @@
         "hosts": {},
         "ingressClassName": {},
         "labels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "path": {
           "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nkubernetes.io/ingress.allow-http: \"false\"\nkubernetes.io/ingress.global-static-ip-name: \"\"\nnginx.ingress.kubernetes.io/secure-backends: \"true\"\nnginx.ingress.kubernetes.io/backend-protocol: \"HTTPS\"\nnginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0",
@@ -4946,7 +5667,7 @@
       "type": "object"
     },
     "consoleService": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5001,16 +5722,13 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
@@ -5069,21 +5787,34 @@
       "type": "object"
     },
     "containerSecurityContext": {
-      "additionalProperties": {},
-      "properties": {
-        "readOnlyRootFilesystem": {
-          "type": "boolean"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ]
     },
     "customCommandJob": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Additional Annotations for the Kubernetes Job customCommandJob",
       "properties": {
         "containerSecurityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "exitCommand": {
           "description": "- name: extra-policies\nmountPath: /mnt/extras/\nCommand to run after the main command on exit"
@@ -5123,7 +5854,7 @@
           "type": "object"
         },
         "securityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -5144,7 +5875,7 @@
       "description": "List of command to run after minio install\nNOTE: the mc command TARGET is always \"myminio\"\n- command: \"admin policy attach myminio consoleAdmin --group='cn=ops,cn=groups,dc=example,dc=com'\""
     },
     "deploymentUpdate": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Update strategy for Deployments",
       "properties": {
         "maxSurge": {},
@@ -5160,7 +5891,7 @@
       "description": "Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)\nwhen Chart is deployed\nPlease refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html\nMINIO_SUBNET_LICENSE: \"License key obtained from https://subnet.min.io\"\nMINIO_BROWSER: \"off\""
     },
     "etcd": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "ETCD settings: https://github.com/minio/minio/blob/master/docs/sts/etcd.md\nDefine endpoints to enable this section.",
       "properties": {
         "clientCert": {},
@@ -5177,7 +5908,12 @@
     "extraArgs": {
       "description": "Additional arguments to pass to minio binary\nexample for enabling FTP:\n- --ftp=\\\"address=:8021\\\"\n- --ftp=\\\"passive-port-range=10000-10010\\\"",
       "items": {
-        "type": "string"
+        "type": [
+          "boolean",
+          "integer",
+          "number",
+          "string"
+        ]
       },
       "type": "array"
     },
@@ -5218,11 +5954,24 @@
       "description": "Additional volumes to minio container"
     },
     "fullnameOverride": {
-      "description": "Provide a name to substitute for the full names of resources",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Provide a name to substitute for the full names of resources"
     },
     "global": {
       "additionalProperties": {},
@@ -5239,7 +5988,7 @@
       "type": "boolean"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
       "properties": {
         "pullPolicy": {},
@@ -5264,7 +6013,7 @@
       "description": "- name: \"image-pull-secret\""
     },
     "ingress": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5281,11 +6030,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "node-role.kubernetes.io/ingress: platform",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "node-role.kubernetes.io/ingress: platform"
               },
               "hosts": {
                 "anyOf": [
@@ -5305,10 +6061,17 @@
                 ]
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "tls": {
                 "anyOf": [
@@ -5332,9 +6095,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "node-role.kubernetes.io/ingress: platform",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "node-role.kubernetes.io/ingress: platform"
         },
         "enabled": {
           "type": "boolean"
@@ -5342,8 +6112,15 @@
         "hosts": {},
         "ingressClassName": {},
         "labels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "path": {
           "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nkubernetes.io/ingress.allow-http: \"false\"\nkubernetes.io/ingress.global-static-ip-name: \"\"\nnginx.ingress.kubernetes.io/secure-backends: \"true\"\nnginx.ingress.kubernetes.io/backend-protocol: \"HTTPS\"\nnginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0",
@@ -5356,12 +6133,23 @@
       "type": "object"
     },
     "makeBucketJob": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Additional Annotations for the Kubernetes Job makeBucketJob",
       "properties": {
         "containerSecurityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "exitCommand": {
           "description": "Command to run after the main command on exit"
@@ -5371,7 +6159,7 @@
           "type": "object"
         },
         "securityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -5389,12 +6177,23 @@
       "type": "object"
     },
     "makePolicyJob": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "writeexamplepolicy policy grants creation or deletion of buckets with name\nstarting with example. In addition, grants objects write permissions on buckets starting with\nexample.\n- name: writeexamplepolicy\nstatements:\n- effect: Allow  # this is the default\nresources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:AbortMultipartUpload\"\n- \"s3:GetObject\"\n- \"s3:DeleteObject\"\n- \"s3:PutObject\"\n- \"s3:ListMultipartUploadParts\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:CreateBucket\"\n- \"s3:DeleteBucket\"\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nreadonlyexamplepolicy policy grants access to buckets with name starting with example.\nIn addition, grants objects read permissions on buckets starting with example.\n- name: readonlyexamplepolicy\nstatements:\n- resources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:GetObject\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nconditionsexample policy creates all access to example bucket with aws:username=\"johndoe\" and source ip range 10.0.0.0/8 and 192.168.0.0/24 only\n- name: conditionsexample\nstatements:\n- resources:\n- 'arn:aws:s3:::example/*'\nactions:\n- 's3:*'\nconditions:\n- StringEquals: '\"aws:username\": \"johndoe\"'\n- IpAddress: |\n\"aws:SourceIp\": [\n\"10.0.0.0/8\",\n\"192.168.0.0/24\"\n]\nAdditional Annotations for the Kubernetes Job makePolicyJob",
       "properties": {
         "containerSecurityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "exitCommand": {
           "description": "Command to run after the main command on exit"
@@ -5404,7 +6203,7 @@
           "type": "object"
         },
         "securityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -5422,11 +6221,22 @@
       "type": "object"
     },
     "makeServiceAccountJob": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "containerSecurityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "exitCommand": {
           "description": "Command to run after the main command on exit"
@@ -5436,7 +6246,7 @@
           "type": "object"
         },
         "securityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -5454,12 +6264,23 @@
       "type": "object"
     },
     "makeUserJob": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Additional Annotations for the Kubernetes Job makeUserJob",
       "properties": {
         "containerSecurityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "exitCommand": {
           "description": "Command to run after the main command on exit"
@@ -5469,7 +6290,7 @@
           "type": "object"
         },
         "securityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -5487,7 +6308,7 @@
       "type": "object"
     },
     "mcImage": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Set default image, imageTag, and imagePullPolicy for the `mc` (the minio\nclient used to create a default bucket).",
       "properties": {
         "pullPolicy": {},
@@ -5497,10 +6318,10 @@
       "type": "object"
     },
     "metrics": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "serviceMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -5532,16 +6353,30 @@
               "then": {
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "namespace": {
                     "description": "metricRelabelings:\n- regex: (server|pod)\naction: labeldrop",
@@ -5553,14 +6388,15 @@
                   "relabelConfigs": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "for node metrics"
@@ -5584,10 +6420,17 @@
               "then": {
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "namespace": {
                     "description": "metricRelabelings:\n- regex: (server|pod)\naction: labeldrop",
@@ -5599,14 +6442,15 @@
                   "relabelConfigsCluster": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "for cluster metrics"
@@ -5618,12 +6462,26 @@
           ],
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "enabled": {
               "type": "boolean"
@@ -5642,14 +6500,36 @@
               "type": "boolean"
             },
             "relabelConfigs": {
-              "additionalProperties": {},
-              "description": "for node metrics",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "for node metrics"
             },
             "relabelConfigsCluster": {
-              "additionalProperties": {},
-              "description": "for cluster metrics",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "for cluster metrics"
             },
             "scrapeTimeout": {
               "description": "Scrape timeout, for example `scrapeTimeout: 10s`"
@@ -5662,11 +6542,21 @@
     },
     "minioAPIPort": {
       "description": "Internal port number for MinIO S3 API container\nChange service.port to change external port number",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "minioConsolePort": {
       "description": "Internal port number for MinIO Browser Console container\nChange consoleService.port to change external port number",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "mode": {
       "anyOf": [
@@ -5688,13 +6578,18 @@
     },
     "mountPath": {
       "description": "Path where PV would be mounted on the MinIO Pod",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "nameOverride": {
       "description": "Provide a name in place of minio for `app:` labels"
     },
     "networkPolicy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "allowExternal": {
           "type": "boolean"
@@ -5731,12 +6626,23 @@
       "type": "object"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "oidc": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "OpenID Identity Management\nThe following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.\nSee https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html for a tutorial on using these variables.",
       "properties": {
         "claimName": {},
@@ -5762,23 +6668,20 @@
       "type": "object"
     },
     "persistence": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Enable persistence using Persistent Volume Claims\nref: http://kubernetes.io/docs/user-guide/persistent-volumes/",
       "properties": {
         "accessMode": {},
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
@@ -5817,12 +6720,19 @@
       "type": "object"
     },
     "podAnnotations": {
-      "additionalProperties": {},
-      "description": "Additational pod annotations",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Additational pod annotations"
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5856,9 +6766,16 @@
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": {},
-      "description": "Additional pod labels",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Additional pod labels"
     },
     "policies": {
       "anyOf": [
@@ -5885,41 +6802,63 @@
       "description": "Number of expanded MinIO clusters"
     },
     "postJob": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Merge jobs",
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "securityContext": {
           "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "fsGroup": {
-              "type": "integer"
-            },
-            "runAsGroup": {
-              "type": "integer"
-            },
-            "runAsUser": {
-              "type": "integer"
-            }
-          },
           "type": "object"
         },
         "tolerations": {
@@ -5960,27 +6899,10 @@
     "securityContext": {
       "additionalProperties": {},
       "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "fsGroup": {
-          "type": "integer"
-        },
-        "fsGroupChangePolicy": {
-          "type": "string"
-        },
-        "runAsGroup": {
-          "type": "integer"
-        },
-        "runAsUser": {
-          "type": "integer"
-        }
-      },
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -6042,16 +6964,13 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
@@ -6108,7 +7027,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Specify the service account to use for the MinIO pods. If 'create' is set to 'false'\nand 'name' is left unspecified, the account 'default' will be used.",
       "properties": {
         "create": {
@@ -6121,7 +7040,7 @@
       "type": "object"
     },
     "statefulSetUpdate": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Update strategy for StatefulSets",
       "properties": {
         "updateStrategy": {}
@@ -6132,7 +7051,7 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "policy": {}
             },
@@ -6153,7 +7072,7 @@
       "description": "List of service accounts to be created after minio install\naccessKey, secretKey and parent user to be assigned to the service accounts\nAdd new service accounts as explained here https://min.io/docs/minio/kubernetes/upstream/administration/identity-access-management/minio-user-management.html#service-accounts\n- accessKey: console-svcacct\nsecretKey: console123\nuser: console\nOr you can refer to specific secret\n- accessKey: externalSecret\nexistingSecret: my-secret\nexistingSecretKey: password\nuser: console\nYou also can pass custom policy\n- accessKey: console-svcacct\nsecretKey: console123\nuser: console\npolicy:\nstatements:\n- resources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:AbortMultipartUpload\"\n- \"s3:GetObject\"\n- \"s3:DeleteObject\"\n- \"s3:PutObject\"\n- \"s3:ListMultipartUploadParts\""
     },
     "tls": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "TLS Settings for MinIO",
       "properties": {
         "certSecret": {
@@ -6203,7 +7122,7 @@
     "users": {
       "description": "List of users to be created after minio install",
       "items": {
-        "additionalProperties": false,
+        "additionalProperties": {},
         "properties": {
           "accessKey": {
             "type": "string"

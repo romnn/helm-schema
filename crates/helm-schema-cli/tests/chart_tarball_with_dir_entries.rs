@@ -178,7 +178,7 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
         "additionalProperties": false,
         "properties": {
             "subchart": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                     "enabled": { "type": "boolean" },
                     "global": { "additionalProperties": {}, "type": "object" }

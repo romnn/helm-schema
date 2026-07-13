@@ -100,11 +100,18 @@
       "then": {
         "properties": {
           "commonAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to be added to all other resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to be added to all other resources."
           },
           "fullnameOverride": {
             "anyOf": [
@@ -218,11 +225,18 @@
       "then": {
         "properties": {
           "commonAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to be added to all other resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to be added to all other resources."
           },
           "fullnameOverride": {
             "anyOf": [
@@ -297,11 +311,18 @@
       "then": {
         "properties": {
           "commonAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to be added to all other resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to be added to all other resources."
           },
           "fullnameOverride": {
             "anyOf": [
@@ -401,11 +422,18 @@
       "then": {
         "properties": {
           "commonAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to be added to all other resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to be added to all other resources."
           },
           "nameOverride": {
             "type": "string"
@@ -475,11 +503,18 @@
       "then": {
         "properties": {
           "commonAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to be added to all other resources.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to be added to all other resources."
           },
           "nameOverride": {
             "type": "string"
@@ -719,10 +754,17 @@
           "rbac": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -918,6 +960,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Affinity for the operator to be installed."
@@ -925,22 +974,19 @@
     "commonAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Annotations to be added to all other resources."
     },
     "config": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -972,9 +1018,20 @@
           "then": {
             "properties": {
               "data": {
-                "additionalProperties": {},
-                "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b"
               }
             },
             "type": "object"
@@ -1038,17 +1095,46 @@
           "type": "boolean"
         },
         "data": {
-          "additionalProperties": {},
-          "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b"
         },
         "maxConcurrentReconciles": {
           "description": "The maximum number of concurrent reconciles. Defaults to 10.",
-          "type": "integer"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "name": {
-          "description": "The name of the configmap/secret to use.",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The name of the configmap/secret to use."
         },
         "secret": {
           "description": "Specifies whether it should be stored in a secret, instead of a configmap.",
@@ -1058,55 +1144,14 @@
       "type": "object"
     },
     "containerSecurityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "properties": {
-              "drop": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "type": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
+      "additionalProperties": {},
       "description": "Container Security Context.",
       "properties": {
         "allowPrivilegeEscalation": {
           "type": "boolean"
         },
         "capabilities": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
+          "additionalProperties": {},
           "properties": {
             "drop": {
               "items": {
@@ -1127,9 +1172,7 @@
           "type": "integer"
         },
         "seccompProfile": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "type": {
               "type": "string"
@@ -1141,7 +1184,7 @@
       "type": "object"
     },
     "crds": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "description": "Specifies whether the CRDs should be created when installing the chart.",
@@ -1157,9 +1200,22 @@
       ]
     },
     "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "hostNetwork": {
@@ -1169,20 +1225,38 @@
       ]
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "type": "string"
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "description": "Overrides the image tag whose default is the chart appVersion.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Overrides the image tag whose default is the chart appVersion."
         }
       },
       "type": "object"
@@ -1219,11 +1293,18 @@
           "then": {
             "properties": {
               "podMonitorAdditionalLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional labels for the podMonitor",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional labels for the podMonitor"
               },
               "podMonitorMetricRelabelings": {
                 "anyOf": [
@@ -1234,6 +1315,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Metrics relabel configurations to apply to samples before ingestion."
@@ -1247,6 +1331,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Relabel configurations to apply to samples before scraping."
@@ -1265,7 +1352,7 @@
           "type": "object"
         },
         "grafanaDashboard": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -1299,11 +1386,18 @@
               "then": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Annotations that ConfigMaps can have to get configured in Grafana.",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations that ConfigMaps can have to get configured in Grafana."
                   },
                   "configMapName": {
                     "description": "The name of the ConfigMap containing the dashboard.",
@@ -1446,11 +1540,18 @@
               "then": {
                 "properties": {
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Labels that ConfigMaps should have to get configured in Grafana.",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Labels that ConfigMaps should have to get configured in Grafana."
                   }
                 },
                 "type": "object"
@@ -1459,9 +1560,16 @@
           ],
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations that ConfigMaps can have to get configured in Grafana.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Annotations that ConfigMaps can have to get configured in Grafana."
             },
             "configMapName": {
               "description": "The name of the ConfigMap containing the dashboard."
@@ -1470,9 +1578,16 @@
               "type": "boolean"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "Labels that ConfigMaps should have to get configured in Grafana.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Labels that ConfigMaps should have to get configured in Grafana."
             },
             "namespace": {
               "description": "Allows overriding the namespace where the ConfigMap will be created, defaulting to the same one as the Release."
@@ -1491,9 +1606,16 @@
           "type": "string"
         },
         "podMonitorAdditionalLabels": {
-          "additionalProperties": {},
-          "description": "Additional labels for the podMonitor",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional labels for the podMonitor"
         },
         "podMonitorEnabled": {
           "description": "Specifies whether the monitoring should be enabled. Requires Prometheus Operator CRDs.",
@@ -1533,7 +1655,7 @@
       "type": "object"
     },
     "monitoringQueriesConfigMap": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Default monitoring queries",
       "properties": {
         "name": {
@@ -1568,6 +1690,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Nodeselector for the operator to be installed."
@@ -1575,16 +1704,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Annotations to be added to the pod."
@@ -1592,48 +1718,26 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Labels to be added to the pod."
     },
     "podSecurityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "type": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "boolean"
-          }
-        ]
-      },
+      "additionalProperties": {},
       "description": "Security Context for the whole pod.",
       "properties": {
         "runAsNonRoot": {
           "type": "boolean"
         },
         "seccompProfile": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "type": {
               "description": "fsGroup: 2000",
@@ -1653,15 +1757,22 @@
       ]
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "aggregateClusterRoles": {
           "description": "Aggregate ClusterRoles to Kubernetes default user-facing roles.\nRef: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
           "type": "boolean"
         },
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "create": {
           "description": "Specifies whether ClusterRole and ClusterRoleBinding should be created.",
@@ -1674,12 +1785,23 @@
       "type": "integer"
     },
     "resources": {
-      "additionalProperties": {},
-      "description": "If you want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 200Mi\nrequests:\ncpu: 100m\nmemory: 100Mi",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "If you want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 200Mi\nrequests:\ncpu: 100m\nmemory: 100Mi"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "ipFamilies": {
           "anyOf": [
@@ -1717,7 +1839,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {},
@@ -1791,16 +1913,23 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Update strategy for the operator.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy\nFor example:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%"
     },
     "webhook": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "The webhook configuration.",
       "properties": {
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "initialDelaySeconds": {
               "type": [
@@ -1812,7 +1941,7 @@
           "type": "object"
         },
         "mutating": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -1860,10 +1989,15 @@
           "type": "object"
         },
         "port": {
-          "type": "integer"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "initialDelaySeconds": {
               "type": [
@@ -1875,7 +2009,7 @@
           "type": "object"
         },
         "startupProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "failureThreshold": {
               "type": [
@@ -1893,7 +2027,7 @@
           "type": "object"
         },
         "validating": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {

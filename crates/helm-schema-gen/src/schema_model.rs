@@ -26,6 +26,13 @@ pub(crate) fn schema_type(value: &Value) -> Option<&str> {
     value.as_object()?.get("type")?.as_str()
 }
 
+/// The domain of a scalar string slot: Go template printing renders every
+/// scalar into flag/annotation splices (`-v={{ x }}`), so a declared
+/// scalar's type widens to this union there.
+pub(crate) fn scalar_union_schema() -> Value {
+    serde_json::json!({ "type": ["boolean", "integer", "number", "string"] })
+}
+
 pub(crate) fn is_scalar_schema(value: &Value) -> bool {
     matches!(
         schema_type(value),
@@ -86,6 +93,29 @@ pub(crate) fn is_fixed_object_schema(value: &Value) -> bool {
         .and_then(Value::as_object)
         .is_some_and(|properties| !properties.is_empty())
         && object.get("additionalProperties") == Some(&Value::Bool(false))
+}
+
+/// An object schema carrying declared property structure, open or closed:
+/// the shape `values.yaml` mappings lower to. Declared defaults document
+/// keys without bounding them, so consumers keying decisions on "this is a
+/// declared map shape" must accept the open form.
+pub(crate) fn is_declared_object_schema(value: &Value) -> bool {
+    if schema_type(value) != Some("object") {
+        return false;
+    }
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+    let unconstrained_additional = match object.get("additionalProperties") {
+        None | Some(Value::Bool(false)) => true,
+        Some(Value::Object(map)) => map.is_empty(),
+        Some(_) => false,
+    };
+    object
+        .get("properties")
+        .and_then(Value::as_object)
+        .is_some_and(|properties| !properties.is_empty())
+        && unconstrained_additional
 }
 
 pub(crate) fn is_open_string_map_schema(value: &Value) -> bool {

@@ -109,23 +109,31 @@
       "then": {
         "properties": {
           "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "additionalLabels -- Labels to add to each object of the chart.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "additionalLabels -- Labels to add to each object of the chart."
           },
           "affinity": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\naffinity -- Affinity for pod assignment"
@@ -148,14 +156,15 @@
           "containerSecurityContext": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "containerSecurityContext -- [Security context for container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true"
@@ -190,14 +199,15 @@
               "selector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "deployment.selector -- Labels for Deployment `spec.selector.matchLabels`."
@@ -208,14 +218,15 @@
           "dnsConfig": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "dnsConfig -- [Pod's DNS Config](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config)\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
@@ -227,31 +238,7 @@
           "extraArgs": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "properties": {
-                  "logtostderr": {
-                    "type": "boolean"
-                  },
-                  "stderrthreshold": {
-                    "type": "string"
-                  },
-                  "v": {
-                    "description": "write-status-configmap: true\nstatus-config-map-name: cluster-autoscaler-status\nleader-elect: true\nleader-elect-resource-lock: endpoints\nskip-nodes-with-local-storage: true\nexpander: random\nscale-down-enabled: true\nbalance-similar-node-groups: true\nmin-replica-count: 0\nscale-down-utilization-threshold: 0.5\nscale-down-non-empty-candidates-count: 30\nmax-node-provision-time: 15m0s\nscan-interval: 10s\nscale-down-delay-after-add: 10m\nscale-down-delay-after-delete: 0s\nscale-down-delay-after-failure: 3m\nscale-down-unneeded-time: 10m\nnode-deletion-delay-timeout: 2m\nnode-deletion-batcher-interval: 0s\nskip-nodes-with-system-pods: true\nbalancing-ignore-label_1: first-label-to-ignore\nbalancing-ignore-label_2: second-label-to-ignore",
-                    "type": "integer"
-                  }
-                },
+                "properties": {},
                 "type": "object"
               },
               {
@@ -344,12 +331,38 @@
                 "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\nimage.pullSecrets -- Image pull secrets\n- myRegistrKeySecretName"
               },
               "repository": {
-                "description": "image.repository -- Image repository",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "image.repository -- Image repository"
               },
               "tag": {
-                "description": "image.tag -- Image tag",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "image.tag -- Image tag"
               }
             },
             "type": "object"
@@ -363,6 +376,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "initContainers -- Any additional init containers."
@@ -370,31 +386,46 @@
           "nodeSelector": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "nodeSelector -- Node labels for pod assignment. Ref: https://kubernetes.io/docs/user-guide/node-selection/."
           },
           "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "podAnnotations -- Annotations to add to each pod.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "podAnnotations -- Annotations to add to each pod."
           },
           "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "podLabels -- Labels to add to each pod.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "podLabels -- Labels to add to each pod."
           },
           "priorityClassName": {
             "description": "priorityClassName -- priorityClassName",
@@ -426,9 +457,20 @@
             "type": "integer"
           },
           "resources": {
-            "additionalProperties": {},
-            "description": "resources -- Pod resource requests and limits.\nlimits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "resources -- Pod resource requests and limits.\nlimits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi"
           },
           "revisionHistoryLimit": {
             "description": "revisionHistoryLimit -- The number of revisions to keep.",
@@ -437,14 +479,15 @@
           "securityContext": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "securityContext -- [Security context for pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nrunAsNonRoot: true\nrunAsUser: 65534\nrunAsGroup: 65534\nseccompProfile:\ntype: RuntimeDefault"
@@ -458,6 +501,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "tolerations -- List of node taints to tolerate (requires Kubernetes >= 1.6)."
@@ -471,6 +517,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "topologySpreadConstraints -- You can use topology spread constraints to control how Pods are spread across your cluster among failure-domains such as regions, zones, nodes, and other user-defined topology domains. (requires Kubernetes >= 1.19).\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cluster-autoscaler"
@@ -478,14 +527,15 @@
           "updateStrategy": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "updateStrategy -- [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy)\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 0\ntype: RollingUpdate"
@@ -517,11 +567,18 @@
       "then": {
         "properties": {
           "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "additionalLabels -- Labels to add to each object of the chart.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "additionalLabels -- Labels to add to each object of the chart."
           },
           "hostNetwork": {
             "description": "hostNetwork -- Whether to expose network interfaces of the host machine to pods.",
@@ -546,18 +603,32 @@
       "then": {
         "properties": {
           "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "additionalLabels -- Labels to add to each object of the chart.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "additionalLabels -- Labels to add to each object of the chart."
           },
           "priorityConfigMapAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "priorityConfigMapAnnotations -- Annotations to add to `cluster-autoscaler-priority-expander` ConfigMap.\nkey1: \"value1\"\nkey2: \"value2\"",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "priorityConfigMapAnnotations -- Annotations to add to `cluster-autoscaler-priority-expander` ConfigMap.\nkey1: \"value1\"\nkey2: \"value2\""
           }
         },
         "type": "object"
@@ -707,10 +778,389 @@
       "then": {
         "properties": {
           "additionalLabels": {
-            "additionalProperties": {
-              "type": "string"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "additionalLabels -- Labels to add to each object of the chart."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "cloudProvider": {
+                    "enum": [
+                      "azure"
+                    ]
+                  }
+                },
+                "required": [
+                  "cloudProvider"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "cloudProvider": {}
+                        },
+                        "required": [
+                          "cloudProvider"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "cloudProvider": {
+                          "enum": [
+                            "aws"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "cloudProvider"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "cloudProvider": {
+                      "enum": [
+                        "clusterapi"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "cloudProvider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "cloudProvider": {
+                      "enum": [
+                        "gce"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "cloudProvider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "cloudProvider": {
+                      "enum": [
+                        "magnum"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "cloudProvider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoscalingGroups": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "autoscalingGroups"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "clusterName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "clusterName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "labels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labels"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "namespace": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "namespace"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "cloudProvider": {
+                    "enum": [
+                      "magnum"
+                    ]
+                  }
+                },
+                "required": [
+                  "cloudProvider"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "cloudProvider": {}
+                        },
+                        "required": [
+                          "cloudProvider"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "cloudProvider": {
+                          "enum": [
+                            "aws"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "cloudProvider"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "cloudProvider": {
+                      "enum": [
+                        "gce"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "cloudProvider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoscalingGroups": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "autoscalingGroups"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "clusterName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "clusterName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "labels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labels"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "namespace": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "namespace"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "autoDiscovery": {
+            "description": "cloudProviders `aws`, `gce`, `azure`, `magnum`, `clusterapi` and `oci` are supported by auto-discovery at this time\nAWS: Set tags as described in https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#auto-discovery-setup",
+            "properties": {
+              "clusterName": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "autoDiscovery.clusterName -- Enable autodiscovery for `cloudProvider=aws`, for groups matching `autoDiscovery.tags`.\nautoDiscovery.clusterName -- Enable autodiscovery for `cloudProvider=azure`, using tags defined in https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/azure/README.md#auto-discovery-setup.\nEnable autodiscovery for `cloudProvider=clusterapi`, for groups matching `autoDiscovery.labels`.\nEnable autodiscovery for `cloudProvider=gce`, but no MIG tagging required.\nEnable autodiscovery for `cloudProvider=magnum`, for groups matching `autoDiscovery.roles`.\ncluster.local"
+              }
             },
-            "description": "additionalLabels -- Labels to add to each object of the chart.",
             "type": "object"
           }
         },
@@ -960,11 +1410,24 @@
                 ]
               },
               "namespace": {
-                "description": "autoDiscovery.namespace -- Enable autodiscovery via cluster namespace for for `cloudProvider=clusterapi`\ndefault",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "autoDiscovery.namespace -- Enable autodiscovery via cluster namespace for for `cloudProvider=clusterapi`\ndefault"
               }
             },
             "type": "object"
@@ -1882,7 +2345,16 @@
           "cloudConfigPath": {
             "anyOf": [
               {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
                 "type": "null"
+              },
+              {
+                "type": "number"
               },
               {
                 "type": "string"
@@ -2137,7 +2609,133 @@
           "cloudConfigPath": {
             "anyOf": [
               {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
                 "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "cloudConfigPath -- Configuration file for cloud provider."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "cloudProvider": {
+                "enum": [
+                  "magnum"
+                ]
+              }
+            },
+            "required": [
+              "cloudProvider"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "cloudConfigPath": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
               },
               {
                 "type": "string"
@@ -2469,110 +3067,6 @@
             "properties": {
               "cloudProvider": {
                 "enum": [
-                  "magnum"
-                ]
-              }
-            },
-            "required": [
-              "cloudProvider"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "autoscalingGroups": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "autoscalingGroups"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "clusterName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "clusterName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "labels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "cloudConfigPath": {
-            "description": "cloudConfigPath -- Configuration file for cloud provider.",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "cloudProvider": {
-                "enum": [
                   "clusterapi"
                 ]
               }
@@ -2811,12 +3305,38 @@
       "then": {
         "properties": {
           "clusterAPICloudConfigPath": {
-            "description": "clusterAPICloudConfigPath -- Path to kubeconfig for connecting to Cluster API Management Cluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or incluster-kubeconfig`",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "clusterAPICloudConfigPath -- Path to kubeconfig for connecting to Cluster API Management Cluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or incluster-kubeconfig`"
           },
           "clusterAPIWorkloadKubeconfigPath": {
-            "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`"
           }
         },
         "type": "object"
@@ -3007,8 +3527,21 @@
       "then": {
         "properties": {
           "clusterAPICloudConfigPath": {
-            "description": "clusterAPICloudConfigPath -- Path to kubeconfig for connecting to Cluster API Management Cluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or incluster-kubeconfig`",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "clusterAPICloudConfigPath -- Path to kubeconfig for connecting to Cluster API Management Cluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or incluster-kubeconfig`"
           }
         },
         "type": "object"
@@ -3282,12 +3815,6 @@
           "extraVolumeSecrets": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
-              {
                 "properties": {},
                 "type": "object"
               },
@@ -3309,6 +3836,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "extraVolumes -- Additional volumes.\n- name: ssl-certs\nhostPath:\npath: /etc/ssl/certs/ca-bundle.crt"
@@ -3319,341 +3849,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "clusterAPIKubeconfigSecret": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "clusterAPIKubeconfigSecret"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "clusterAPIWorkloadKubeconfigPath": {}
-                  },
-                  "required": [
-                    "clusterAPIWorkloadKubeconfigPath"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "clusterAPIWorkloadKubeconfigPath": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "clusterAPIWorkloadKubeconfigPath"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "autoscalingGroups": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "autoscalingGroups"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "clusterName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "clusterName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "labels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "cloudProvider": {
-                    "enum": [
-                      "magnum"
-                    ]
-                  }
-                },
-                "required": [
-                  "cloudProvider"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "clusterAPIKubeconfigSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "clusterAPIKubeconfigSecret"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "extraVolumeMounts": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraVolumeMounts"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "extraVolumeSecrets": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraVolumeSecrets"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "clusterAPIWorkloadKubeconfigPath": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "clusterAPIKubeconfigSecret": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "clusterAPIKubeconfigSecret"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "autoscalingGroups": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "autoscalingGroups"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "autoDiscovery": {
-                            "properties": {
-                              "clusterName": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "clusterName"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "autoDiscovery"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "autoDiscovery": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "autoDiscovery"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "autoDiscovery": {
-                            "properties": {
-                              "namespace": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "namespace"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "autoDiscovery"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "cloudProvider": {
-                        "enum": [
-                          "magnum"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "cloudProvider"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "clusterAPIKubeconfigSecret": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "clusterAPIKubeconfigSecret"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "extraVolumeMounts": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "extraVolumeMounts"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "extraVolumeSecrets": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "extraVolumeSecrets"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
           {
             "allOf": [
               {
@@ -4141,6 +4337,364 @@
       "then": {
         "properties": {
           "clusterAPIWorkloadKubeconfigPath": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "clusterAPIKubeconfigSecret": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "clusterAPIKubeconfigSecret"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "clusterAPIWorkloadKubeconfigPath": {}
+                  },
+                  "required": [
+                    "clusterAPIWorkloadKubeconfigPath"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "clusterAPIWorkloadKubeconfigPath": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "clusterAPIWorkloadKubeconfigPath"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "cloudProvider": {
+                    "enum": [
+                      "magnum"
+                    ]
+                  }
+                },
+                "required": [
+                  "cloudProvider"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clusterAPIKubeconfigSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterAPIKubeconfigSecret"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeMounts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeSecrets"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "clusterAPIWorkloadKubeconfigPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "clusterAPIKubeconfigSecret": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "clusterAPIKubeconfigSecret"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "cloudProvider": {
+                    "enum": [
+                      "magnum"
+                    ]
+                  }
+                },
+                "required": [
+                  "cloudProvider"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clusterAPIKubeconfigSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterAPIKubeconfigSecret"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeMounts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeSecrets"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "clusterAPIWorkloadKubeconfigPath": {
             "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`",
             "type": "string"
           }
@@ -4402,12 +4956,6 @@
           "extraEnvConfigMaps": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
-              {
                 "properties": {},
                 "type": "object"
               },
@@ -4508,12 +5056,6 @@
         "properties": {
           "extraEnvSecrets": {
             "anyOf": [
-              {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
               {
                 "properties": {},
                 "type": "object"
@@ -4680,6 +5222,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "extraVolumeMounts -- Additional volumes to mount.\n- name: ssl-certs\nmountPath: /etc/ssl/certs/ca-certificates.crt\nreadOnly: true"
@@ -4842,12 +5387,6 @@
         "properties": {
           "extraVolumeSecrets": {
             "anyOf": [
-              {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
               {
                 "properties": {},
                 "type": "object"
@@ -5531,6 +6070,194 @@
               }
             ],
             "description": "kwokConfigMapName -- configmap for configuring kwok provider"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "magnumClusterName": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "magnumClusterName"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "cloudProvider": {
+                "enum": [
+                  "magnum"
+                ]
+              }
+            },
+            "required": [
+              "cloudProvider"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "autoDiscovery": {
+                  "properties": {
+                    "clusterName": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "clusterName"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "autoDiscovery"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "cloudProvider": {}
+                    },
+                    "required": [
+                      "cloudProvider"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "cloudProvider": {
+                      "enum": [
+                        "aws"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "cloudProvider"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "cloudProvider": {
+                  "enum": [
+                    "gce"
+                  ]
+                }
+              },
+              "required": [
+                "cloudProvider"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "magnumClusterName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "magnumClusterName -- Cluster name or ID in Magnum.\nRequired if `cloudProvider=magnum` and not setting `autoDiscovery.clusterName`."
           }
         },
         "type": "object"
@@ -6262,16 +6989,15 @@
           "podLabels": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "podLabels -- Labels to add to each pod."
@@ -7008,17 +7734,35 @@
   ],
   "properties": {
     "additionalLabels": {
-      "additionalProperties": {},
-      "description": "additionalLabels -- Labels to add to each object of the chart.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "additionalLabels -- Labels to add to each object of the chart."
     },
     "affinity": {
-      "additionalProperties": {},
-      "description": "Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\naffinity -- Affinity for pod assignment",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\naffinity -- Affinity for pod assignment"
     },
     "autoDiscovery": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "cloudProviders `aws`, `gce`, `azure`, `magnum`, `clusterapi` and `oci` are supported by auto-discovery at this time\nAWS: Set tags as described in https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#auto-discovery-setup",
       "properties": {
         "clusterName": {
@@ -7157,15 +7901,26 @@
       "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`"
     },
     "containerSecurityContext": {
-      "additionalProperties": {},
-      "description": "containerSecurityContext -- [Security context for container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "containerSecurityContext -- [Security context for container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true"
     },
     "customArgs": {
       "description": "customArgs -- Additional custom container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nList of arguments as strings."
     },
     "deployment": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
           "additionalProperties": {},
@@ -7173,17 +7928,39 @@
           "type": "object"
         },
         "selector": {
-          "additionalProperties": {},
-          "description": "deployment.selector -- Labels for Deployment `spec.selector.matchLabels`.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "deployment.selector -- Labels for Deployment `spec.selector.matchLabels`."
         }
       },
       "type": "object"
     },
     "dnsConfig": {
-      "additionalProperties": {},
-      "description": "dnsConfig -- [Pod's DNS Config](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config)\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "dnsConfig -- [Pod's DNS Config](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config)\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
     },
     "dnsPolicy": {
       "description": "dnsPolicy -- Defaults to `ClusterFirst`. Valid values are:\n`ClusterFirstWithHostNet`, `ClusterFirst`, `Default` or `None`.\nIf autoscaler does not depend on cluster DNS, recommended to set this to `Default`."
@@ -7195,6 +7972,48 @@
       "description": "envFromSecret -- Secret name to use as envFrom."
     },
     "expanderPriorities": {
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "type": "string"
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "string"
+          },
+          "then": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      ],
       "anyOf": [
         {
           "additionalProperties": false,
@@ -7352,7 +8171,7 @@
       "description": "hostNetwork -- Whether to expose network interfaces of the host machine to pods."
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "description": "image.pullPolicy -- Image pull policy"
@@ -7401,17 +8220,35 @@
       "description": "nameOverride -- String to partially override `cluster-autoscaler.fullname` template (will maintain the release name)"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "nodeSelector -- Node labels for pod assignment. Ref: https://kubernetes.io/docs/user-guide/node-selection/.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "nodeSelector -- Node labels for pod assignment. Ref: https://kubernetes.io/docs/user-guide/node-selection/."
     },
     "podAnnotations": {
-      "additionalProperties": {},
-      "description": "podAnnotations -- Annotations to add to each pod.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "podAnnotations -- Annotations to add to each pod."
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7427,16 +8264,34 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "podDisruptionBudget.annotations -- Annotations to add to the PodDisruptionBudget.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "podDisruptionBudget.annotations -- Annotations to add to the PodDisruptionBudget."
               },
               "selector": {
-                "additionalProperties": {},
-                "description": "podDisruptionBudget.selector -- Override labels for PodDisruptionBudget `spec.selector.matchLabels`.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "podDisruptionBudget.selector -- Override labels for PodDisruptionBudget `spec.selector.matchLabels`."
               }
             },
             "type": "object"
@@ -7446,9 +8301,16 @@
       "description": "podDisruptionBudget -- Pod disruption budget.",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "podDisruptionBudget.annotations -- Annotations to add to the PodDisruptionBudget.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "podDisruptionBudget.annotations -- Annotations to add to the PodDisruptionBudget."
         },
         "maxUnavailable": {
           "description": "minAvailable: 2",
@@ -7459,28 +8321,53 @@
         },
         "minAvailable": {},
         "selector": {
-          "additionalProperties": {},
-          "description": "podDisruptionBudget.selector -- Override labels for PodDisruptionBudget `spec.selector.matchLabels`.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "podDisruptionBudget.selector -- Override labels for PodDisruptionBudget `spec.selector.matchLabels`."
         }
       },
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": {},
-      "description": "podLabels -- Labels to add to each pod.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "podLabels -- Labels to add to each pod."
     },
     "priorityClassName": {
       "description": "priorityClassName -- priorityClassName"
     },
     "priorityConfigMapAnnotations": {
-      "additionalProperties": {},
-      "description": "priorityConfigMapAnnotations -- Annotations to add to `cluster-autoscaler-priority-expander` ConfigMap.\nkey1: \"value1\"\nkey2: \"value2\"",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "priorityConfigMapAnnotations -- Annotations to add to `cluster-autoscaler-priority-expander` ConfigMap.\nkey1: \"value1\"\nkey2: \"value2\""
     },
     "prometheusRule": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7543,7 +8430,7 @@
       "type": "object"
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7583,6 +8470,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "rbac.additionalRules -- Additional rules for role/clusterrole\n- apiGroups:\n- infrastructure.cluster.x-k8s.io\nresources:\n- kubemarkmachinetemplates\nverbs:\n- get\n- list\n- watch"
@@ -7678,6 +8568,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "rbac.additionalRules -- Additional rules for role/clusterrole\n- apiGroups:\n- infrastructure.cluster.x-k8s.io\nresources:\n- kubemarkmachinetemplates\nverbs:\n- get\n- list\n- watch"
@@ -7950,7 +8843,7 @@
           "type": "boolean"
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
               "description": "rbac.serviceAccount.annotations -- Additional Service Account annotations."
@@ -7975,9 +8868,20 @@
       "description": "replicaCount -- Desired number of pods"
     },
     "resources": {
-      "additionalProperties": {},
-      "description": "resources -- Pod resource requests and limits.\nlimits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "resources -- Pod resource requests and limits.\nlimits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi"
     },
     "revisionHistoryLimit": {
       "description": "revisionHistoryLimit -- The number of revisions to keep."
@@ -7986,12 +8890,23 @@
       "description": "secretKeyRefNameOverride -- Overrides the name of the Secret to use when loading the secretKeyRef for AWS, Azure and Civo env variables"
     },
     "securityContext": {
-      "additionalProperties": {},
-      "description": "securityContext -- [Security context for pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nrunAsNonRoot: true\nrunAsUser: 65534\nrunAsGroup: 65534\nseccompProfile:\ntype: RuntimeDefault",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "securityContext -- [Security context for pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nrunAsNonRoot: true\nrunAsUser: 65534\nrunAsGroup: 65534\nseccompProfile:\ntype: RuntimeDefault"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -8023,11 +8938,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "service.annotations -- Annotations to add to service",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "service.annotations -- Annotations to add to service"
               },
               "clusterIP": {
                 "description": "service.clusterIP -- IP address to assign to service",
@@ -8042,16 +8964,26 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "service.externalIPs -- List of IP addresses at which the service is available. Ref: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips."
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "service.labels -- Labels to add to service",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "service.labels -- Labels to add to service"
               },
               "loadBalancerIP": {
                 "description": "service.loadBalancerIP -- IP address to assign to load balancer (if supported).",
@@ -8066,6 +8998,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "service.loadBalancerSourceRanges -- List of IP CIDRs allowed access to load balancer (if supported)."
@@ -8075,9 +9010,20 @@
                 "type": "string"
               },
               "selector": {
-                "additionalProperties": {},
-                "description": "service.selector -- Override labels for Service `spec.selector`.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "service.selector -- Override labels for Service `spec.selector`."
               },
               "servicePort": {
                 "description": "service.servicePort -- Service port to expose.",
@@ -8094,9 +9040,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "service.annotations -- Annotations to add to service",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "service.annotations -- Annotations to add to service"
         },
         "clusterIP": {
           "description": "service.clusterIP -- IP address to assign to service"
@@ -8121,9 +9074,16 @@
           "description": "service.externalIPs -- List of IP addresses at which the service is available. Ref: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips."
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "service.labels -- Labels to add to service",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "service.labels -- Labels to add to service"
         },
         "loadBalancerIP": {
           "description": "service.loadBalancerIP -- IP address to assign to load balancer (if supported)."
@@ -8147,9 +9107,20 @@
           "description": "service.portName -- Name for service port."
         },
         "selector": {
-          "additionalProperties": {},
-          "description": "service.selector -- Override labels for Service `spec.selector`.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "service.selector -- Override labels for Service `spec.selector`."
         },
         "servicePort": {
           "description": "service.servicePort -- Service port to expose."
@@ -8161,7 +9132,7 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -8178,11 +9149,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "serviceMonitor.annotations -- Annotations to add to service monitor",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "serviceMonitor.annotations -- Annotations to add to service monitor"
               },
               "interval": {
                 "description": "serviceMonitor.interval -- Interval that Prometheus scrapes Cluster Autoscaler metrics.",
@@ -8231,9 +9209,16 @@
       "description": "Are you using Prometheus Operator?",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "serviceMonitor.annotations -- Annotations to add to service monitor",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "serviceMonitor.annotations -- Annotations to add to service monitor"
         },
         "enabled": {
           "description": "serviceMonitor.enabled -- If true, creates a Prometheus Operator ServiceMonitor.",
@@ -8304,12 +9289,23 @@
       "description": "topologySpreadConstraints -- You can use topology spread constraints to control how Pods are spread across your cluster among failure-domains such as regions, zones, nodes, and other user-defined topology domains. (requires Kubernetes >= 1.19).\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cluster-autoscaler"
     },
     "updateStrategy": {
-      "additionalProperties": {},
-      "description": "updateStrategy -- [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy)\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 0\ntype: RollingUpdate",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "updateStrategy -- [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy)\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 0\ntype: RollingUpdate"
     },
     "vpa": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -8326,9 +9322,20 @@
           "then": {
             "properties": {
               "containerPolicy": {
-                "additionalProperties": {},
-                "description": "vpa.containerPolicy -- [ContainerResourcePolicy](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler/v0.13.0/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L159). The containerName is always set to the deployment's container name. This value is required if VPA is enabled.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "vpa.containerPolicy -- [ContainerResourcePolicy](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler/v0.13.0/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L159). The containerName is always set to the deployment's container name. This value is required if VPA is enabled."
               }
             },
             "type": "object"
@@ -8338,9 +9345,20 @@
       "description": "vpa -- Configure a VerticalPodAutoscaler for the cluster-autoscaler Deployment.",
       "properties": {
         "containerPolicy": {
-          "additionalProperties": {},
-          "description": "vpa.containerPolicy -- [ContainerResourcePolicy](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler/v0.13.0/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L159). The containerName is always set to the deployment's container name. This value is required if VPA is enabled.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "vpa.containerPolicy -- [ContainerResourcePolicy](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler/v0.13.0/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L159). The containerName is always set to the deployment's container name. This value is required if VPA is enabled."
         },
         "enabled": {
           "description": "vpa.enabled -- If true, creates a VerticalPodAutoscaler.",

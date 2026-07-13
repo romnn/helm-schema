@@ -539,8 +539,21 @@
               "certManager": {
                 "properties": {
                   "caSecretName": {
-                    "description": "Secret name where the CA is stored (generatedby cert-manager or user given)",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Secret name where the CA is stored (generatedby cert-manager or user given)"
                   }
                 },
                 "type": "object"
@@ -600,8 +613,21 @@
           "certificates": {
             "properties": {
               "mountPath": {
-                "description": "Path where KEDA TLS certificates are mounted",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Path where KEDA TLS certificates are mounted"
               },
               "secretName": {
                 "description": "Secret name to be mounted with KEDA TLS certificates",
@@ -611,8 +637,21 @@
             "type": "object"
           },
           "clusterDomain": {
-            "description": "Kubernetes cluster domain",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Kubernetes cluster domain"
           },
           "enableServiceLinks": {
             "description": "Enable service links in pods. Although enabled, mirroring k8s default, it is highly recommended to disable,\ndue to its legacy status [Legacy container links](https://docs.docker.com/engine/network/links/)",
@@ -624,7 +663,6 @@
               "metricsAdapter": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
@@ -658,13 +696,35 @@
               "metricsApiServer": {
                 "properties": {
                   "repository": {
-                    "description": "Image name of KEDA Metrics API Server",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Image name of KEDA Metrics API Server"
                   },
                   "tag": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
                         "type": "null"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -689,7 +749,13 @@
                   "level": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -698,20 +764,72 @@
                     "description": "Logging level for Metrics Server (Deprecated).\nallowed values: `0` for info, `4` for debug, or an integer value greater than 0, specified as string"
                   },
                   "stderrthreshold": {
-                    "description": "Logging stderrthreshold for Metrics Server (Deprecated)\nallowed values: 'DEBUG','INFO','WARN','ERROR','ALERT','EMERG'",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Logging stderrthreshold for Metrics Server (Deprecated)\nallowed values: 'DEBUG','INFO','WARN','ERROR','ALERT','EMERG'"
                   },
                   "zapEncoder": {
-                    "description": "Zap Logging encoder for Metrics Server.\nallowed values: `json` or `console`",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Zap Logging encoder for Metrics Server.\nallowed values: `json` or `console`"
                   },
                   "zapLevel": {
-                    "description": "Zap Logging level for Metrics Server.\nallowed values: `debug`, `info`, `error`, or an integer value greater than 0, specified as string",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Zap Logging level for Metrics Server.\nallowed values: `debug`, `info`, `error`, or an integer value greater than 0, specified as string"
                   },
                   "zapTimeEncoding": {
-                    "description": "Zap logging time encoding for Metrics Server.\nallowed values are `epoch`, `millis`, `nano`, `iso8601`, `rfc3339` or `rfc3339nano`",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Zap logging time encoding for Metrics Server.\nallowed values are `epoch`, `millis`, `nano`, `iso8601`, `rfc3339` or `rfc3339nano`"
                   }
                 },
                 "type": "object"
@@ -722,11 +840,18 @@
           "podLabels": {
             "properties": {
               "metricsAdapter": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Pod labels for KEDA Metrics Adapter",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pod labels for KEDA Metrics Adapter"
               }
             },
             "type": "object"
@@ -735,9 +860,20 @@
             "description": "[Pod security context] for all pods",
             "properties": {
               "metricServer": {
-                "additionalProperties": {},
-                "description": "[Pod security context] of the KEDA metrics apiserver pod",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "[Pod security context] of the KEDA metrics apiserver pod"
               }
             },
             "type": "object"
@@ -749,7 +885,13 @@
                   "port": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -771,9 +913,20 @@
             "description": "We provides the default values that we describe in our docs:\nhttps://keda.sh/docs/latest/operate/cluster/\nIf you want to specify the resources (or totally remove the defaults), change or comment the following\nlines, adjust them as necessary, or simply add the curly braces after 'operator' and/or 'metricServer'\nand remove/comment the default values",
             "properties": {
               "metricServer": {
-                "additionalProperties": {},
-                "description": "Manage [resource request & limits] of KEDA metrics apiserver pod",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Manage [resource request & limits] of KEDA metrics apiserver pod"
               }
             },
             "type": "object"
@@ -782,9 +935,20 @@
             "description": "[Security context] for all containers",
             "properties": {
               "metricServer": {
-                "additionalProperties": {},
-                "description": "[Security context] of the metricServer container",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "[Security context] of the metricServer container"
               }
             },
             "type": "object"
@@ -802,7 +966,13 @@
               "portHttpsTarget": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
                     "type": "integer"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -846,6 +1016,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "[Pod Topology Constraints] of KEDA metrics apiserver pod"
@@ -856,9 +1029,20 @@
           "upgradeStrategy": {
             "properties": {
               "metricsApiServer": {
-                "additionalProperties": {},
-                "description": "Capability to configure [Deployment upgrade strategy] for Metrics Api Server\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Capability to configure [Deployment upgrade strategy] for Metrics Api Server\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1"
               }
             },
             "type": "object"
@@ -877,6 +1061,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra volume mounts for metric server deployment"
@@ -890,6 +1077,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra volumes for metric server deployment"
@@ -952,8 +1142,21 @@
           "certificates": {
             "properties": {
               "mountPath": {
-                "description": "Path where KEDA TLS certificates are mounted",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Path where KEDA TLS certificates are mounted"
               },
               "secretName": {
                 "description": "Secret name to be mounted with KEDA TLS certificates",
@@ -972,7 +1175,6 @@
               "webhooks": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
@@ -999,13 +1201,35 @@
               "webhooks": {
                 "properties": {
                   "repository": {
-                    "description": "Image name of KEDA admission-webhooks",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Image name of KEDA admission-webhooks"
                   },
                   "tag": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
                         "type": "null"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -1024,16 +1248,55 @@
               "webhooks": {
                 "properties": {
                   "format": {
-                    "description": "Logging format for KEDA Admission webhooks.\nallowed values: `json` or `console`",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Logging format for KEDA Admission webhooks.\nallowed values: `json` or `console`"
                   },
                   "level": {
-                    "description": "Logging level for KEDA Operator.\nallowed values: `debug`, `info`, `error`, or an integer value greater than 0, specified as string",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Logging level for KEDA Operator.\nallowed values: `debug`, `info`, `error`, or an integer value greater than 0, specified as string"
                   },
                   "timeEncoding": {
-                    "description": "Logging time encoding for KEDA Operator.\nallowed values are `epoch`, `millis`, `nano`, `iso8601`, `rfc3339` or `rfc3339nano`",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Logging time encoding for KEDA Operator.\nallowed values are `epoch`, `millis`, `nano`, `iso8601`, `rfc3339` or `rfc3339nano`"
                   }
                 },
                 "type": "object"
@@ -1044,11 +1307,18 @@
           "podLabels": {
             "properties": {
               "webhooks": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Pod labels for KEDA Admission webhooks",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pod labels for KEDA Admission webhooks"
               }
             },
             "type": "object"
@@ -1057,9 +1327,20 @@
             "description": "[Pod security context] for all pods",
             "properties": {
               "webhooks": {
-                "additionalProperties": {},
-                "description": "[Pod security context] of the KEDA admission webhooks",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "[Pod security context] of the KEDA admission webhooks"
               }
             },
             "type": "object"
@@ -1072,7 +1353,13 @@
                   "port": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -1090,9 +1377,20 @@
             "description": "We provides the default values that we describe in our docs:\nhttps://keda.sh/docs/latest/operate/cluster/\nIf you want to specify the resources (or totally remove the defaults), change or comment the following\nlines, adjust them as necessary, or simply add the curly braces after 'operator' and/or 'metricServer'\nand remove/comment the default values",
             "properties": {
               "webhooks": {
-                "additionalProperties": {},
-                "description": "Manage [resource request & limits] of KEDA admission webhooks pod",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Manage [resource request & limits] of KEDA admission webhooks pod"
               }
             },
             "type": "object"
@@ -1101,9 +1399,20 @@
             "description": "[Security context] for all containers",
             "properties": {
               "webhooks": {
-                "additionalProperties": {},
-                "description": "[Security context] of the admission webhooks container",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "[Security context] of the admission webhooks container"
               }
             },
             "type": "object"
@@ -1137,6 +1446,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "[Pod Topology Constraints] of KEDA admission webhooks pod"
@@ -1147,9 +1459,20 @@
           "upgradeStrategy": {
             "properties": {
               "webhooks": {
-                "additionalProperties": {},
-                "description": "Capability to configure [Deployment upgrade strategy] for Admission webhooks\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Capability to configure [Deployment upgrade strategy] for Admission webhooks\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1"
               }
             },
             "type": "object"
@@ -1168,6 +1491,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra volume mounts for admission webhooks deployment"
@@ -1181,6 +1507,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra volumes for admission webhooks deployment"
@@ -1226,14 +1555,40 @@
       "then": {
         "properties": {
           "clusterDomain": {
-            "description": "Kubernetes cluster domain",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Kubernetes cluster domain"
           },
           "webhooks": {
             "properties": {
               "name": {
-                "description": "Name of the KEDA admission webhooks",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Name of the KEDA admission webhooks"
               }
             },
             "type": "object"
@@ -1502,14 +1857,15 @@
               "dnsConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "DNS config for KEDA components\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\""
@@ -1967,8 +2323,21 @@
               "keda": {
                 "properties": {
                   "repository": {
-                    "description": "Image name of KEDA operator",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Image name of KEDA operator"
                   }
                 },
                 "type": "object"
@@ -2255,14 +2624,15 @@
               "dnsConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "DNS config for KEDA metrics server pod"
@@ -2379,6 +2749,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ]
                       }
@@ -2509,6 +2882,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ]
                       }
@@ -2575,14 +2951,15 @@
               "dnsConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "DNS config for KEDA operator pod\nuse ClusterFirstWithHostNet if `useHostNetwork: true` https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy"
@@ -2695,6 +3072,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Array of strings denoting what secrets the KEDA operator will be able to read, this takes into account\nalso the configured `watchNamespace`.\nthe default is an empty array -> no restriction on the secret name"
@@ -2848,11 +3228,18 @@
           "podAnnotations": {
             "properties": {
               "keda": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Pod annotations for KEDA operator",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pod annotations for KEDA operator"
               }
             },
             "type": "object"
@@ -3056,11 +3443,18 @@
           "podAnnotations": {
             "properties": {
               "metricsAdapter": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Pod annotations for KEDA Metrics Adapter",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pod annotations for KEDA Metrics Adapter"
               }
             },
             "type": "object"
@@ -3155,11 +3549,18 @@
           "podAnnotations": {
             "properties": {
               "webhooks": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Pod annotations for KEDA Admission webhooks",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pod annotations for KEDA Admission webhooks"
               }
             },
             "type": "object"
@@ -3370,60 +3771,20 @@
       "then": {
         "properties": {
           "podSecurityContext": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "properties": {
-                "runAsNonRoot": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "description": "[Pod security context] for all pods",
-            "properties": {
-              "metricServer": {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "description": "[Pod security context] of the KEDA metrics apiserver pod",
-                "properties": {
-                  "runAsNonRoot": {
-                    "description": "runAsUser: 1000\nrunAsGroup: 1000\nfsGroup: 1000",
-                    "type": "boolean"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "operator": {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "description": "[Pod security context] of the KEDA operator pod",
-                "properties": {
-                  "runAsNonRoot": {
-                    "description": "runAsUser: 1000\nrunAsGroup: 1000\nfsGroup: 1000",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
+              {
+                "items": {},
+                "type": "array"
               },
-              "webhooks": {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "description": "[Pod security context] of the KEDA admission webhooks",
-                "properties": {
-                  "runAsNonRoot": {
-                    "description": "runAsUser: 1000\nrunAsGroup: 1000\nfsGroup: 1000",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "[Pod security context] for all pods"
           }
         },
         "type": "object"
@@ -3513,7 +3874,13 @@
                   "port": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -3843,7 +4210,13 @@
                   "port": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -4122,6 +4495,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -4129,6 +4503,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional labels to add for metric server using podMonitor crd (prometheus operator)"
@@ -4146,6 +4523,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom  metric relabeling rules for metric server PodMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec]"
@@ -4170,6 +4550,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom relabeling rules for metric server podMonitor crd (prometheus operator)"
@@ -4459,6 +4842,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -4466,6 +4850,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
@@ -4487,6 +4874,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom  metric relabeling rules for metric server ServiceMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec]"
@@ -4506,6 +4896,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "PodTargetLabels transfers labels on the Kubernetes `Pod` onto the created metrics"
@@ -4519,6 +4912,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
@@ -4540,6 +4936,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics"
@@ -4551,14 +4950,15 @@
                       "tlsConfig": {
                         "anyOf": [
                           {
-                            "additionalProperties": false,
-                            "maxProperties": 0,
-                            "properties": {},
+                            "additionalProperties": {},
                             "type": "object"
                           },
                           {
-                            "additionalProperties": {},
-                            "type": "object"
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "TLS configuration for scraping metrics"
@@ -4740,6 +5140,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "DEPRECATED. List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
@@ -5216,6 +5619,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -5223,6 +5627,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional labels to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
@@ -5236,6 +5643,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional alerts to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
@@ -5400,6 +5810,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -5407,6 +5818,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
@@ -5428,6 +5842,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom  metric relabeling rules for metric server ServiceMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec]"
@@ -5447,6 +5864,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "PodTargetLabels transfers labels on the Kubernetes `Pod` onto the created metrics"
@@ -5464,6 +5884,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
@@ -5485,6 +5908,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics"
@@ -5496,14 +5922,15 @@
                       "tlsConfig": {
                         "anyOf": [
                           {
-                            "additionalProperties": false,
-                            "maxProperties": 0,
-                            "properties": {},
+                            "additionalProperties": {},
                             "type": "object"
                           },
                           {
-                            "additionalProperties": {},
-                            "type": "object"
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "TLS configuration for scraping metrics"
@@ -5695,6 +6122,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "DEPRECATED. List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
@@ -6032,285 +6462,20 @@
       "then": {
         "properties": {
           "resources": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "properties": {
-                  "cpu": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "memory": {
-                    "type": "string"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "properties": {
-                "limits": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "type": "integer"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "requests": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
+              {
+                "items": {},
+                "type": "array"
               },
-              "type": "object"
-            },
-            "description": "We provides the default values that we describe in our docs:\nhttps://keda.sh/docs/latest/operate/cluster/\nIf you want to specify the resources (or totally remove the defaults), change or comment the following\nlines, adjust them as necessary, or simply add the curly braces after 'operator' and/or 'metricServer'\nand remove/comment the default values",
-            "properties": {
-              "metricServer": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "description": "Manage [resource request & limits] of KEDA metrics apiserver pod",
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "integer"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "operator": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "description": "Manage [resource request & limits] of KEDA operator pod",
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "integer"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "webhooks": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "description": "Manage [resource request & limits] of KEDA admission webhooks pod",
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "integer"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "We provides the default values that we describe in our docs:\nhttps://keda.sh/docs/latest/operate/cluster/\nIf you want to specify the resources (or totally remove the defaults), change or comment the following\nlines, adjust them as necessary, or simply add the curly braces after 'operator' and/or 'metricServer'\nand remove/comment the default values"
           }
         },
         "type": "object"
@@ -6518,305 +6683,20 @@
       "then": {
         "properties": {
           "securityContext": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ]
-              },
-              "properties": {
-                "allowPrivilegeEscalation": {
-                  "type": "boolean"
-                },
-                "capabilities": {
-                  "additionalProperties": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "properties": {
-                    "drop": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                },
-                "readOnlyRootFilesystem": {
-                  "type": "boolean"
-                },
-                "seccompProfile": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "description": "[Security context] for all containers",
-            "properties": {
-              "metricServer": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "drop": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "description": "[Security context] of the metricServer container",
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "operator": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "drop": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "description": "[Security context] of the operator container",
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+              {
+                "items": {},
+                "type": "array"
               },
-              "webhooks": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "drop": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "description": "[Security context] of the admission webhooks container",
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "[Security context] for all containers"
           }
         },
         "type": "object"
@@ -7490,14 +7370,15 @@
               "dnsConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "DNS config for KEDA admission webhooks pod"
@@ -7659,16 +7540,13 @@
     "additionalLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Custom labels to add into metadata"
@@ -7684,6 +7562,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "[Affinity] for pod scheduling for KEDA operator, Metrics API Server and KEDA admission webhooks.\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-operator\n- keda-operator-metrics-apiserver\n- keda-admission-webhooks\ntopologyKey: \"kubernetes.io/hostname\""
@@ -7693,7 +7578,7 @@
       "type": "boolean"
     },
     "certificates": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7729,10 +7614,15 @@
       "properties": {
         "autoGenerated": {
           "description": "Enables the self generation for KEDA TLS certificates inside KEDA operator",
-          "type": "boolean"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "certManager": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -7825,9 +7715,20 @@
                     "type": "string"
                   },
                   "secretTemplate": {
-                    "additionalProperties": {},
-                    "description": "Add labels/annotations to secrets created by Certificate resources\n[docs](https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources)\nannotations:\nmy-secret-annotation-1: \"foo\"\nmy-secret-annotation-2: \"bar\"\nlabels:\nmy-secret-label: foo",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Add labels/annotations to secrets created by Certificate resources\n[docs](https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources)\nannotations:\nmy-secret-annotation-1: \"foo\"\nmy-secret-annotation-2: \"bar\"\nlabels:\nmy-secret-label: foo"
                   }
                 },
                 "type": "object"
@@ -7927,14 +7828,19 @@
             },
             "enabled": {
               "description": "Enables Cert-manager for certificate management",
-              "type": "boolean"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "generateCA": {
               "description": "Generates a self-signed CA with Cert-manager.\nIf generateCA is false, the secret with the CA\nhas to be annotated with `cert-manager.io/allow-direct-injection: \"true\"`",
               "type": "boolean"
             },
             "issuer": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Reference to custom Issuer. If issuer.generate is false, then issuer.group, issuer.kind and issuer.name are required",
               "properties": {
                 "generate": {
@@ -7957,16 +7863,32 @@
               "description": "Certificate renewal time before expiration\n8 months"
             },
             "secretTemplate": {
-              "additionalProperties": {},
-              "description": "Add labels/annotations to secrets created by Certificate resources\n[docs](https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources)\nannotations:\nmy-secret-annotation-1: \"foo\"\nmy-secret-annotation-2: \"bar\"\nlabels:\nmy-secret-label: foo",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Add labels/annotations to secrets created by Certificate resources\n[docs](https://cert-manager.io/docs/usage/certificate/#creating-certificate-resources)\nannotations:\nmy-secret-annotation-1: \"foo\"\nmy-secret-annotation-2: \"bar\"\nlabels:\nmy-secret-label: foo"
             }
           },
           "type": "object"
         },
         "mountPath": {
           "description": "Path where KEDA TLS certificates are mounted",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "operator": {
           "anyOf": [
@@ -7977,7 +7899,12 @@
                   "additionalProperties": {},
                   "properties": {
                     "enabled": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "integer",
+                        "number",
+                        "string"
+                      ]
                     }
                   },
                   "type": "object"
@@ -7986,7 +7913,12 @@
                   "anyOf": [
                     {
                       "items": {
-                        "type": "string"
+                        "type": [
+                          "boolean",
+                          "integer",
+                          "number",
+                          "string"
+                        ]
                       },
                       "type": "array"
                     },
@@ -8017,14 +7949,32 @@
     },
     "clusterDomain": {
       "description": "Kubernetes cluster domain",
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "clusterName": {
-      "description": "Kubernetes cluster name. Used in features such as emitting CloudEvents",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Kubernetes cluster name. Used in features such as emitting CloudEvents"
     },
     "crds": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "additionalAnnotations": {
           "additionalProperties": {},
@@ -8065,17 +8015,11 @@
       "description": "Additional environment variables that will be passed onto all KEDA components\n- name: ENV_NAME\nvalue: 'ENV-VALUE'"
     },
     "extraArgs": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Extra KEDA Operator and Metrics Adapter container arguments",
       "properties": {
         "keda": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "type": "array"
             },
@@ -8120,12 +8064,23 @@
       "additionalProperties": {},
       "properties": {
         "dnsConfig": {
-          "additionalProperties": {},
-          "description": "DNS config for KEDA components\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "DNS config for KEDA components\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\""
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "registry": {
               "description": "Global image registry of KEDA components"
@@ -8166,11 +8121,11 @@
       "description": "HostAliases for pod networking ([docs](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/))"
     },
     "http": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "The default HTTP timeout in milliseconds that KEDA should use\nwhen making requests to external services. Removing this defaults to a\nreasonable default",
       "properties": {
         "keepAlive": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "Enable HTTP connection keep alive",
@@ -8193,30 +8148,48 @@
       "type": "object"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "keda": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "registry": {
               "description": "Image registry of KEDA operator"
             },
             "repository": {
               "description": "Image name of KEDA operator",
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "description": "Image tag of KEDA operator. Optional, given app version of Helm chart is used by default",
-              "type": [
-                "string",
-                "null"
-              ]
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Image tag of KEDA operator. Optional, given app version of Helm chart is used by default"
             }
           },
           "type": "object"
         },
         "metricsApiServer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "registry": {
               "description": "Image registry of KEDA Metrics API Server"
@@ -8235,7 +8208,7 @@
           "type": "string"
         },
         "webhooks": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "registry": {
               "description": "Image registry of KEDA admission-webhooks"
@@ -8268,10 +8241,10 @@
       "description": "Name of secret to use to pull images to use to pull Docker images"
     },
     "logging": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "metricServer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "level": {
               "description": "Logging level for Metrics Server (Deprecated).\nallowed values: `0` for info, `4` for debug, or an integer value greater than 0, specified as string"
@@ -8292,15 +8265,25 @@
           "type": "object"
         },
         "operator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "format": {
               "description": "Logging format for KEDA Operator.\nallowed values: `json` or `console`",
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "level": {
               "description": "Logging level for KEDA Operator.\nallowed values: `debug`, `info`, `error`, or an integer value greater than 0, specified as string",
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "stackTracesEnabled": {
               "description": "If enabled, the stack traces will be also printed",
@@ -8308,13 +8291,18 @@
             },
             "timeEncoding": {
               "description": "Logging time encoding for KEDA Operator.\nallowed values are `epoch`, `millis`, `nano`, `iso8601`, `rfc3339` or `rfc3339nano`",
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
         },
         "webhooks": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "format": {
               "description": "Logging format for KEDA Admission webhooks.\nallowed values: `json` or `console`"
@@ -8332,7 +8320,7 @@
       "type": "object"
     },
     "metricsServer": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -8364,14 +8352,31 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "description": "[Affinity] for pod scheduling for Metrics API Server. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-operator-metrics-apiserver\ntopologyKey: \"kubernetes.io/hostname\"",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "[Affinity] for pod scheduling for Metrics API Server. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-operator-metrics-apiserver\ntopologyKey: \"kubernetes.io/hostname\""
               },
               "disableCompression": {
                 "anyOf": [
                   {
                     "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -8405,9 +8410,20 @@
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))"
               },
               "readinessProbe": {
                 "description": "Readiness probes for Metrics API Server ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes))",
@@ -8447,6 +8463,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Tolerations for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/))"
@@ -8462,17 +8481,39 @@
       ],
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "description": "[Affinity] for pod scheduling for Metrics API Server. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-operator-metrics-apiserver\ntopologyKey: \"kubernetes.io/hostname\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "[Affinity] for pod scheduling for Metrics API Server. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-operator-metrics-apiserver\ntopologyKey: \"kubernetes.io/hostname\""
         },
         "disableCompression": {
           "description": "--Disable response compression for k8s restAPI in client-go.\nDisabling compression simply means that turns off the process of making data smaller for K8s restAPI in client-go for faster transmission.\nuse ClusterFirstWithHostNet if `useHostNetwork: true` https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy"
         },
         "dnsConfig": {
-          "additionalProperties": {},
-          "description": "DNS config for KEDA metrics server pod",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "DNS config for KEDA metrics server pod"
         },
         "dnsPolicy": {
           "description": "Defined the DNS policy for the metric server"
@@ -8482,7 +8523,7 @@
           "type": "boolean"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Liveness probes for Metrics API Server ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/))",
           "properties": {
             "failureThreshold": {},
@@ -8494,12 +8535,23 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))"
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probes for Metrics API Server ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes))",
           "properties": {
             "failureThreshold": {},
@@ -8538,7 +8590,7 @@
       "type": "object"
     },
     "networkPolicy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -8600,6 +8652,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ]
                       }
@@ -8658,6 +8713,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ]
                       }
@@ -8674,11 +8732,11 @@
       ],
       "properties": {
         "cilium": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Allow use of extra egress rules for cilium network policies",
           "properties": {
             "operator": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "extraEgressRules": {
                   "anyOf": [
@@ -8723,11 +8781,11 @@
           "description": "Flavor of the network policies (cilium, kubernetes)"
         },
         "kubernetes": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Allow use of extra egress rules for kubernetes network policies",
           "properties": {
             "metricsServer": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "extraEgressRules": {
                   "anyOf": [
@@ -8747,7 +8805,7 @@
               "type": "object"
             },
             "operator": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "extraEgressRules": {
                   "anyOf": [
@@ -8767,7 +8825,7 @@
               "type": "object"
             },
             "webhooks": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "extraEgressRules": {
                   "anyOf": [
@@ -8803,15 +8861,22 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))"
     },
     "opentelemetry": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "collector": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "uri": {
               "description": "Uri of OpenTelemetry Collector to push telemetry to"
@@ -8820,14 +8885,27 @@
           "type": "object"
         },
         "operator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
-              "description": "Enable pushing metrics to an OpenTelemetry Collector for operator",
-              "type": [
-                "boolean",
-                "null"
-              ]
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Enable pushing metrics to an OpenTelemetry Collector for operator"
             }
           },
           "type": "object"
@@ -8836,7 +8914,7 @@
       "type": "object"
     },
     "operator": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "affinity": {
           "anyOf": [
@@ -8849,18 +8927,41 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "[Affinity] for pod scheduling for KEDA operator. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-operator\ntopologyKey: \"kubernetes.io/hostname\""
         },
         "disableCompression": {
           "description": "--Disable response compression for k8s restAPI in client-go.\nDisabling compression simply means that turns off the process of making data smaller for K8s restAPI in client-go for faster transmission.",
-          "type": "boolean"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "dnsConfig": {
-          "additionalProperties": {},
-          "description": "DNS config for KEDA operator pod\nuse ClusterFirstWithHostNet if `useHostNetwork: true` https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "DNS config for KEDA operator pod\nuse ClusterFirstWithHostNet if `useHostNetwork: true` https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy"
         },
         "dnsPolicy": {
           "description": "Defined the DNS policy for the operator",
@@ -8897,13 +8998,26 @@
           "description": "Additional init containers to run as part of the operator deployment\n- name: hello-once\nargs:\n- -c\n- \"echo 'Hello World!'\"\ncommand:\n- /bin/sh\nimage: 'busybox:glibc'"
         },
         "leaderElectionID": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
           ]
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Liveness probes for operator ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/))",
           "properties": {
             "failureThreshold": {
@@ -8925,8 +9039,21 @@
           "type": "object"
         },
         "name": {
-          "description": "Name of the KEDA operator",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Name of the KEDA operator"
         },
         "nodeSelector": {
           "anyOf": [
@@ -8939,12 +9066,19 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))"
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probes for operator ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes))",
           "properties": {
             "failureThreshold": {
@@ -8996,13 +9130,13 @@
       "type": "object"
     },
     "permissions": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "metricServer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "restrict": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "secret": {
                   "description": "Restrict Secret Access for Metrics Server"
@@ -9014,10 +9148,10 @@
           "type": "object"
         },
         "operator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "restrict": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "allowAllServiceAccountTokenCreation": {
                   "anyOf": [
@@ -9063,28 +9197,49 @@
       "type": "object"
     },
     "podAnnotations": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "keda": {
-          "additionalProperties": {},
-          "description": "Pod annotations for KEDA operator",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Pod annotations for KEDA operator"
         },
         "metricsAdapter": {
-          "additionalProperties": {},
-          "description": "Pod annotations for KEDA Metrics Adapter",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Pod annotations for KEDA Metrics Adapter"
         },
         "webhooks": {
-          "additionalProperties": {},
-          "description": "Pod annotations for KEDA Admission webhooks",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Pod annotations for KEDA Admission webhooks"
         }
       },
       "type": "object"
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "maxUnavailable": {},
         "metricServer": {
@@ -9149,13 +9304,13 @@
       "type": "object"
     },
     "podIdentity": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "aws": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "irsa": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "audience": {
                   "description": "Sets the token audience for IRSA.\nThis will be set as an annotation on the KEDA service account."
@@ -9180,7 +9335,7 @@
           "type": "object"
         },
         "azureWorkload": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "clientId": {
               "description": "Id of Azure Active Directory Client to use for authentication with Azure Workload Identity. ([docs](https://keda.sh/docs/concepts/authentication/#azure-workload-identity))"
@@ -9199,7 +9354,7 @@
           "type": "object"
         },
         "gcp": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "Set to true to enable GCP Workload Identity.\nSee https://keda.sh/docs/2.10/authentication-providers/gcp-workload-identity/\nThis will be set as a annotation on the KEDA service account.",
@@ -9219,34 +9374,45 @@
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "keda": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Pod labels for KEDA operator"
         },
         "metricsAdapter": {
-          "additionalProperties": {},
-          "description": "Pod labels for KEDA Metrics Adapter",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Pod labels for KEDA Metrics Adapter"
         },
         "webhooks": {
-          "additionalProperties": {},
-          "description": "Pod labels for KEDA Admission webhooks",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Pod labels for KEDA Admission webhooks"
         }
       },
       "type": "object"
@@ -9291,59 +9457,19 @@
             }
           },
           "then": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "properties": {
-                "runAsNonRoot": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "properties": {
-              "metricServer": {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "description": "[Pod security context] of the KEDA metrics apiserver pod",
-                "properties": {
-                  "runAsNonRoot": {
-                    "description": "runAsUser: 1000\nrunAsGroup: 1000\nfsGroup: 1000",
-                    "type": "boolean"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "operator": {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "description": "[Pod security context] of the KEDA operator pod",
-                "properties": {
-                  "runAsNonRoot": {
-                    "description": "runAsUser: 1000\nrunAsGroup: 1000\nfsGroup: 1000",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
+              {
+                "items": {},
+                "type": "array"
               },
-              "webhooks": {
-                "additionalProperties": {
-                  "type": "boolean"
-                },
-                "description": "[Pod security context] of the KEDA admission webhooks",
-                "properties": {
-                  "runAsNonRoot": {
-                    "description": "runAsUser: 1000\nrunAsGroup: 1000\nfsGroup: 1000",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ]
           }
         }
       ],
@@ -9354,11 +9480,11 @@
       "description": "priorityClassName for all KEDA components"
     },
     "profiling": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "This setting lets you enable profiling for all of the components of KEDA and in the specific port you choose\nThis can be useful when trying to investigate errors like memory leaks or CPU or even look at goroutines to understand better\nThis setting is disabled by default",
       "properties": {
         "metricsServer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "Enable profiling for KEDA metrics server",
@@ -9371,7 +9497,7 @@
           "type": "object"
         },
         "operator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -9390,7 +9516,13 @@
                   "port": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -9415,7 +9547,7 @@
           "type": "object"
         },
         "webhooks": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "Enable profiling for KEDA admission webhook",
@@ -9431,10 +9563,10 @@
       "type": "object"
     },
     "prometheus": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "metricServer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "appProtocol": {},
             "enabled": {
@@ -9442,7 +9574,7 @@
               "type": "boolean"
             },
             "podMonitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
                 "additionalLabels": {
@@ -9457,6 +9589,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Additional labels to add for metric server using podMonitor crd (prometheus operator)"
@@ -9514,7 +9649,7 @@
               "description": "HTTP port name for exposing metrics server prometheus metrics"
             },
             "serviceMonitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
               "properties": {
                 "additionalLabels": {
@@ -9529,6 +9664,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
@@ -9633,9 +9771,20 @@
                   "description": "Name or number of the target port of the Pod behind the Service, the port must be specified with container port property. Mutually exclusive with port"
                 },
                 "tlsConfig": {
-                  "additionalProperties": {},
-                  "description": "TLS configuration for scraping metrics",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "TLS configuration for scraping metrics"
                 }
               },
               "type": "object"
@@ -9644,7 +9793,7 @@
           "type": "object"
         },
         "operator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -9694,6 +9843,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -9701,6 +9851,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional labels to add for KEDA Operator using podMonitor crd (prometheus operator)"
@@ -9718,6 +9871,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom  metric relabeling rules for metric server PodMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec]"
@@ -9742,6 +9898,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom relabeling rules for KEDA Operator podMonitor crd (prometheus operator)"
@@ -9774,7 +9933,13 @@
                   "port": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -9833,6 +9998,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -9840,6 +10006,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional labels to add for KEDA Operator using prometheusRules crd (prometheus operator)"
@@ -9853,6 +10022,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional alerts to add for KEDA Operator using prometheusRules crd (prometheus operator)"
@@ -9923,6 +10095,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -9930,6 +10103,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
@@ -9951,6 +10127,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom  metric relabeling rules for metric server ServiceMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec]"
@@ -9970,6 +10149,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "PodTargetLabels transfers labels on the Kubernetes `Pod` onto the created metrics"
@@ -9987,6 +10169,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
@@ -10008,6 +10193,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics"
@@ -10019,14 +10207,15 @@
                       "tlsConfig": {
                         "anyOf": [
                           {
-                            "additionalProperties": false,
-                            "maxProperties": 0,
-                            "properties": {},
+                            "additionalProperties": {},
                             "type": "object"
                           },
                           {
-                            "additionalProperties": {},
-                            "type": "object"
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "TLS configuration for scraping metrics"
@@ -10108,6 +10297,9 @@
                           {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "DEPRECATED. List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
@@ -10124,10 +10316,15 @@
             "appProtocol": {},
             "enabled": {
               "description": "Enable KEDA Operator prometheus metrics expose",
-              "type": "boolean"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "podMonitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
                 "additionalLabels": {
@@ -10142,6 +10339,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Additional labels to add for KEDA Operator using podMonitor crd (prometheus operator)"
@@ -10196,7 +10396,7 @@
               "description": "Port used for exposing KEDA Operator prometheus metrics"
             },
             "prometheusRules": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "additionalLabels": {
                   "anyOf": [
@@ -10210,6 +10410,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Additional labels to add for KEDA Operator using prometheusRules crd (prometheus operator)"
@@ -10240,7 +10443,7 @@
               "type": "object"
             },
             "serviceMonitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
               "properties": {
                 "additionalLabels": {
@@ -10255,6 +10458,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
@@ -10358,9 +10564,20 @@
                   "description": "Name or number of the target port of the Pod behind the Service,\nthe port must be specified with container port property. Mutually exclusive with port"
                 },
                 "tlsConfig": {
-                  "additionalProperties": {},
-                  "description": "TLS configuration for scraping metrics",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "TLS configuration for scraping metrics"
                 }
               },
               "type": "object"
@@ -10369,7 +10586,7 @@
           "type": "object"
         },
         "webhooks": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "- alert: KedaScalerErrors\nannotations:\ndescription: Keda scaledObject {{ $labels.scaledObject }} is experiencing errors with {{ $labels.scaler }} scaler\nsummary: Keda Scaler {{ $labels.scaler }} Errors\nexpr: sum by ( scaledObject , scaler) (rate(keda_metrics_adapter_scaler_errors[2m]))  > 0\nfor: 2m\nlabels:",
           "properties": {
             "appProtocol": {},
@@ -10381,7 +10598,7 @@
               "description": "Port used for exposing KEDA admission webhooks prometheus metrics"
             },
             "prometheusRules": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
                 "additionalLabels": {
@@ -10396,6 +10613,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Additional labels to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
@@ -10426,7 +10646,7 @@
               "type": "object"
             },
             "serviceMonitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
               "properties": {
                 "additionalLabels": {
@@ -10441,6 +10661,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
@@ -10544,9 +10767,20 @@
                   "description": "Name or number of the target port of the Pod behind the Service, the port must be specified with container port property. Mutually exclusive with port"
                 },
                 "tlsConfig": {
-                  "additionalProperties": {},
-                  "description": "TLS configuration for scraping metrics",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "TLS configuration for scraping metrics"
                 }
               },
               "type": "object"
@@ -10558,7 +10792,7 @@
       "type": "object"
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -10623,6 +10857,7 @@
                 "anyOf": [
                   {
                     "items": {
+                      "additionalProperties": {},
                       "properties": {},
                       "type": "object"
                     },
@@ -10704,284 +10939,19 @@
             }
           },
           "then": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "properties": {
-                  "cpu": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "memory": {
-                    "type": "string"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "properties": {
-                "limits": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "type": "integer"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "requests": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
+              {
+                "items": {},
+                "type": "array"
               },
-              "type": "object"
-            },
-            "properties": {
-              "metricServer": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "description": "Manage [resource request & limits] of KEDA metrics apiserver pod",
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "integer"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "operator": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "description": "Manage [resource request & limits] of KEDA operator pod",
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "integer"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "webhooks": {
-                "additionalProperties": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "cpu": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "description": "Manage [resource request & limits] of KEDA admission webhooks pod",
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "integer"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ]
           }
         }
       ],
@@ -11028,304 +10998,19 @@
             }
           },
           "then": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ]
-              },
-              "properties": {
-                "allowPrivilegeEscalation": {
-                  "type": "boolean"
-                },
-                "capabilities": {
-                  "additionalProperties": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "properties": {
-                    "drop": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                },
-                "readOnlyRootFilesystem": {
-                  "type": "boolean"
-                },
-                "seccompProfile": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "properties": {
-              "metricServer": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "drop": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "description": "[Security context] of the metricServer container",
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "operator": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "drop": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "description": "[Security context] of the operator container",
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+              {
+                "items": {},
+                "type": "array"
               },
-              "webhooks": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "drop": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "description": "[Security context] of the admission webhooks container",
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ]
           }
         }
       ],
@@ -11333,7 +11018,7 @@
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
           "anyOf": [
@@ -11371,32 +11056,36 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "automountServiceAccountToken": {},
         "create": {},
         "metricServer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
               "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
                 {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Annotations to add to the service account"
@@ -11418,21 +11107,18 @@
           "type": "string"
         },
         "operator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
               "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
                 {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Annotations to add to the service account"
@@ -11456,21 +11142,18 @@
           "type": "object"
         },
         "webhooks": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
               "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
                 {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Annotations to add to the service account"
@@ -11507,7 +11190,7 @@
       "description": "Tolerations for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/))"
     },
     "topologySpreadConstraints": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "metricsServer": {
           "anyOf": [
@@ -11558,12 +11241,23 @@
       "type": "object"
     },
     "upgradeStrategy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "metricsApiServer": {
-          "additionalProperties": {},
-          "description": "Capability to configure [Deployment upgrade strategy] for Metrics Api Server\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Capability to configure [Deployment upgrade strategy] for Metrics Api Server\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1"
         },
         "operator": {
           "anyOf": [
@@ -11576,24 +11270,42 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Capability to configure [Deployment upgrade strategy] for operator\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1"
         },
         "webhooks": {
-          "additionalProperties": {},
-          "description": "Capability to configure [Deployment upgrade strategy] for Admission webhooks\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Capability to configure [Deployment upgrade strategy] for Admission webhooks\ntype: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1\nmaxSurge: 1"
         }
       },
       "type": "object"
     },
     "volumes": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Extra volumes and volume mounts for the deployment. Optional.",
       "properties": {
         "keda": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "extraVolumeMounts": {
               "anyOf": [
@@ -11629,7 +11341,7 @@
           "type": "object"
         },
         "metricsApiServer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "extraVolumeMounts": {
               "anyOf": [
@@ -11665,7 +11377,7 @@
           "type": "object"
         },
         "webhooks": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "extraVolumeMounts": {
               "anyOf": [
@@ -11707,7 +11419,7 @@
       "description": "Defines Kubernetes namespaces to watch to scale their workloads. Default watches all namespaces"
     },
     "webhooks": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -11739,9 +11451,20 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "description": "[Affinity] for pod scheduling for KEDA admission webhooks. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-admission-webhooks\ntopologyKey: \"kubernetes.io/hostname\"",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "[Affinity] for pod scheduling for KEDA admission webhooks. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-admission-webhooks\ntopologyKey: \"kubernetes.io/hostname\""
               },
               "failurePolicy": {
                 "description": "[Failure policy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) to use with KEDA admission webhooks",
@@ -11750,7 +11473,13 @@
               "healthProbePort": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
                     "type": "integer"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -11784,9 +11513,20 @@
                 "type": "string"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))"
               },
               "port": {
                 "anyOf": [
@@ -11851,6 +11591,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Tolerations for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/))"
@@ -11866,18 +11609,45 @@
       ],
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "description": "[Affinity] for pod scheduling for KEDA admission webhooks. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-admission-webhooks\ntopologyKey: \"kubernetes.io/hostname\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "[Affinity] for pod scheduling for KEDA admission webhooks. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-admission-webhooks\ntopologyKey: \"kubernetes.io/hostname\""
         },
         "dnsConfig": {
-          "additionalProperties": {},
-          "description": "DNS config for KEDA admission webhooks pod",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "DNS config for KEDA admission webhooks pod"
         },
         "enabled": {
           "description": "It also used to enable or disable webhook patching in the operator",
-          "type": "boolean"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "failurePolicy": {
           "description": "[Failure policy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) to use with KEDA admission webhooks"
@@ -11886,7 +11656,7 @@
           "description": "Port number to use for KEDA admission webhooks health probe"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Liveness probes for admission webhooks ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/))",
           "properties": {
             "failureThreshold": {},
@@ -11898,19 +11668,43 @@
           "type": "object"
         },
         "name": {
-          "description": "Name of the KEDA admission webhooks",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Name of the KEDA admission webhooks"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))"
         },
         "port": {
           "description": "Port number to use for KEDA admission webhooks. Default is 9443."
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probes for admission webhooks ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes))",
           "properties": {
             "failureThreshold": {},

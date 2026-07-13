@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "accountserver": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Copyright 2020 The NATS Authors\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\nhttp://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.",
       "properties": {
         "image": {
@@ -13,8 +13,19 @@
           "type": "string"
         },
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       },
       "type": "object"
@@ -23,10 +34,10 @@
       "additionalProperties": {},
       "properties": {
         "credentials": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "secret": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "name": {}
               },
@@ -45,7 +56,7 @@
           "additionalProperties": {},
           "properties": {
             "configMap": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "name": {}
               },
@@ -58,7 +69,7 @@
           "additionalProperties": {},
           "properties": {
             "configMap": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "name": {}
               },
@@ -71,7 +82,7 @@
       "type": "object"
     },
     "store": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -119,7 +130,7 @@
       ],
       "properties": {
         "file": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "storageSize": {}
           },

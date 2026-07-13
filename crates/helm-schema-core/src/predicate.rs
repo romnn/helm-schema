@@ -23,6 +23,9 @@ impl From<Guard> for Predicate {
                     .map(|alternative| Self::all(alternative.into_iter().map(Self::from).collect()))
                     .collect(),
             ),
+            Guard::NotTypeIs { path, schema_type } => {
+                Self::Not(Box::new(Self::Guard(Guard::TypeIs { path, schema_type })))
+            }
             guard => Self::Guard(guard),
         }
     }
@@ -108,6 +111,7 @@ impl Predicate {
                 | Guard::With { .. }
                 | Guard::Default { .. }
                 | Guard::TypeIs { .. }
+                | Guard::NotTypeIs { .. }
                 | Guard::Not { .. }
                 | Guard::Or { .. }
                 | Guard::AnyOf { .. },
@@ -178,6 +182,7 @@ impl Predicate {
                 | Guard::With { .. }
                 | Guard::Default { .. }
                 | Guard::TypeIs { .. }
+                | Guard::NotTypeIs { .. }
                 | Guard::Not { .. }
                 | Guard::Or { .. }
                 | Guard::AnyOf { .. },
@@ -233,6 +238,14 @@ fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
         Predicate::Guard(Guard::NotEq { path, value }) => vec![Guard::Eq {
             path: path.clone(),
             value: value.clone(),
+        }],
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) => vec![Guard::NotTypeIs {
+            path: path.clone(),
+            schema_type: schema_type.clone(),
+        }],
+        Predicate::Guard(Guard::NotTypeIs { path, schema_type }) => vec![Guard::TypeIs {
+            path: path.clone(),
+            schema_type: schema_type.clone(),
         }],
         Predicate::Not(inner) => inner.contract_guards(),
         _ => Vec::new(),

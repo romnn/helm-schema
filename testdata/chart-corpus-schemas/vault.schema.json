@@ -532,15 +532,25 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Filters define the filters that are applied to requests that match this rule."
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "matches": {
                     "anyOf": [
@@ -549,25 +559,11 @@
                         "type": "object"
                       },
                       {
-                        "items": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "path": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "type": {
-                                  "type": "string"
-                                },
-                                "value": {
-                                  "type": "string"
-                                }
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "type": "object"
-                        },
+                        "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -580,6 +576,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Keep in mind parentRefs field is required\n- name: vault-gateway-example\nnamespace: example-ns"
@@ -674,6 +673,7 @@
                     "anyOf": [
                       {
                         "items": {
+                          "additionalProperties": {},
                           "properties": {},
                           "type": "object"
                         },
@@ -692,10 +692,17 @@
                     "type": "string"
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "tls": {
                     "anyOf": [
@@ -800,20 +807,33 @@
                     "type": "string"
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "tls": {
-                    "additionalProperties": false,
-                    "description": "tls will be passed directly to the route's TLS config, which\ncan be used to configure other termination methods that terminate\nTLS at the router",
-                    "properties": {
-                      "termination": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
                         "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ],
+                    "description": "tls will be passed directly to the route's TLS config, which\ncan be used to configure other termination methods that terminate\nTLS at the router"
                   }
                 },
                 "type": "object"
@@ -1581,14 +1601,15 @@
                   "authorization": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "authorization used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.SafeAuthorization\nexample:\nauthorization:\ncredentials:\nname: vault-metrics-client\nkey: token"
@@ -1600,14 +1621,15 @@
                   "matchLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "matchLabels configures the service selector labels for the ServiceMonitor.\nBy default, the ServiceMonitor targets services with:\n- HA mode: vault-active: \"true\" (scrapes the raft leader only)\n- Standalone mode: vault-internal: \"true\"\nTo scrape metrics from all Vault pods including standbys (Enterprise only):\n1. Enable unauthenticated_metrics_access in your Vault listener telemetry config\n2. Set matchLabels to target the vault-internal headless service\nSee: https://developer.hashicorp.com/vault/docs/configuration/telemetry#prometheus\nExample:\nmatchLabels:\nvault-internal: \"true\""
@@ -1621,6 +1643,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "metricRelabelings configures the relabeling rules to apply to the samples before ingestion.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.RelabelConfig\nexample:\nmetricRelabelings:\n- sourceLabels: [cluster]\ntargetLabel: vault_cluster"
@@ -1630,23 +1655,31 @@
                     "type": "string"
                   },
                   "selectors": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Selector labels to add to the ServiceMonitor.\nWhen empty, defaults to:\nrelease: prometheus",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Selector labels to add to the ServiceMonitor.\nWhen empty, defaults to:\nrelease: prometheus"
                   },
                   "tlsConfig": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "tlsConfig used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.TLSConfig\nexample:\ntlsConfig:\nca:\nsecret:\nname: vault-metrics-client\nkey: ca.crt"
@@ -2388,6 +2421,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Some example rules.\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 500ms on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 500\nfor: 5m\nlabels:\nseverity: warning\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 1s on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 1000\nfor: 5m\nlabels:\nseverity: critical"
@@ -2501,11 +2537,18 @@
                 "description": "The Prometheus operator *must* be installed before enabling this feature,\nif not the chart will fail to install due to missing CustomResourceDefinitions\nprovided by the operator.",
                 "properties": {
                   "selectors": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Selector labels to add to the PrometheusRules.\nWhen empty, defaults to:\nrelease: prometheus",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Selector labels to add to the PrometheusRules.\nWhen empty, defaults to:\nrelease: prometheus"
                   }
                 },
                 "type": "object"
@@ -2520,7 +2563,7 @@
   ],
   "properties": {
     "csi": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2539,8 +2582,21 @@
           "then": {
             "properties": {
               "logLevel": {
-                "description": "Configures the log level for the Vault CSI provider.\nSupported log levels include: trace, debug, info, warn, error, and off",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Configures the log level for the Vault CSI provider.\nSupported log levels include: trace, debug, info, warn, error, and off"
               }
             },
             "type": "object"
@@ -2550,7 +2606,7 @@
       "description": "secrets-store-csi-driver-provider-vault",
       "properties": {
         "agent": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -2590,6 +2646,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -2599,10 +2658,36 @@
                         "type": "string"
                       },
                       "repository": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       },
                       "tag": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
                     },
                     "type": "object"
@@ -2614,9 +2699,20 @@
                     "type": "string"
                   },
                   "resources": {
-                    "additionalProperties": {},
-                    "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
                   }
                 },
                 "type": "object"
@@ -2640,7 +2736,7 @@
               ]
             },
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "pullPolicy": {},
                 "repository": {},
@@ -2651,12 +2747,23 @@
             "logFormat": {},
             "logLevel": {},
             "resources": {
-              "additionalProperties": {},
-              "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
             },
             "securityContext": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Security context for the vault agent sidecar container",
               "properties": {
                 "container": {}
@@ -2667,7 +2774,7 @@
           "type": "object"
         },
         "daemonSet": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Settings for the daemonSet used to run the provider.",
           "properties": {
             "annotations": {
@@ -2676,16 +2783,13 @@
             "extraLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Extra labels to attach to the vault-csi-provider daemonSet\nThis should be a YAML map of the labels to apply to the csi provider daemonSet"
@@ -2699,7 +2803,7 @@
               "type": "string"
             },
             "securityContext": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
               "properties": {
                 "container": {},
@@ -2708,7 +2812,7 @@
               "type": "object"
             },
             "updateStrategy": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "maxUnavailable": {
                   "type": [
@@ -2748,33 +2852,56 @@
           "description": "Pass arbitrary additional arguments to vault-csi-provider.\nSee https://developer.hashicorp.com/vault/docs/platform/k8s/csi/configurations#command-line-arguments\nfor the available command line flags."
         },
         "hmacSecretName": {
-          "description": "Override the default secret name for the CSI Provider's HMAC key used for\ngenerating secret versions.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Override the default secret name for the CSI Provider's HMAC key used for\ngenerating secret versions."
         },
         "hostNetwork": {
           "description": "Allow modification of the hostNetwork parameter to avoid the need of a\ndedicated pod ip",
           "type": "boolean"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "pullPolicy": {
               "type": "string"
             },
             "repository": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Used to configure livenessProbe for the pods.",
           "properties": {
             "failureThreshold": {
@@ -2804,7 +2931,7 @@
           "description": "Configures the log level for the Vault CSI provider.\nSupported log levels include: trace, debug, info, warn, error, and off"
         },
         "pod": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "affinity": {
               "description": "Affinity Settings\nThis should be either a multi-line string or YAML matching the PodSpec's affinity field."
@@ -2815,16 +2942,13 @@
             "extraLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Extra labels to attach to the vault-csi-provider pod\nThis should be a YAML map of the labels to apply to the csi provider pod"
@@ -2846,7 +2970,7 @@
           ]
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Used to configure readinessProbe for the pods.",
           "properties": {
             "failureThreshold": {
@@ -2883,12 +3007,19 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "resources:\nrequests:\ncpu: 50m\nmemory: 128Mi\nlimits:\ncpu: 50m\nmemory: 128Mi"
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
               "description": "Extra annotations for the serviceAccount definition. This can either be\nYAML or a YAML-formatted multi-line templated string map of the\nannotations to apply to the serviceAccount."
@@ -2896,16 +3027,13 @@
             "extraLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Extra labels to attach to the vault-csi-provider serviceAccount\nThis should be a YAML map of the labels to apply to the csi provider serviceAccount"
@@ -2923,7 +3051,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "volumeMounts is a list of volumeMounts for the main server container. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- name: tls\nmountPath: \"/vault/tls\"\nreadOnly: true"
@@ -2938,7 +3073,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "volumes is a list of volumes made available to all containers. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- name: tls\nsecret:\nsecretName: vault-tls"
@@ -3007,17 +3149,30 @@
           "type": "array"
         },
         "namespace": {
-          "description": "The namespace to deploy to. Defaults to the `helm` installation namespace.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The namespace to deploy to. Defaults to the `helm` installation namespace."
         },
         "openshift": {
           "description": "If deploying to OpenShift"
         },
         "psp": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Create PodSecurityPolicy for pods",
           "properties": {
             "annotations": {
@@ -3028,7 +3183,7 @@
           "type": "object"
         },
         "serverTelemetry": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "prometheusOperator": {
               "description": "Enable integration with the Prometheus Operator\nSee the top level serverTelemetry section below before enabling this feature.",
@@ -3045,7 +3200,7 @@
       "type": "object"
     },
     "injector": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3085,23 +3240,35 @@
           "then": {
             "properties": {
               "namespaceSelector": {
-                "additionalProperties": {},
-                "description": "Deprecated: please use 'webhook.namespaceSelector' instead\nnamespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Deprecated: please use 'webhook.namespaceSelector' instead\nnamespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
               },
               "webhook": {
                 "properties": {
                   "namespaceSelector": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "namespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
@@ -3155,14 +3322,15 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra annotations to attach to the webhook"
@@ -3171,9 +3339,20 @@
                 "type": "object"
               },
               "webhookAnnotations": {
-                "additionalProperties": {},
-                "description": "Deprecated: please use 'webhook.annotations' instead\nExtra annotations to attach to the webhook",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Deprecated: please use 'webhook.annotations' instead\nExtra annotations to attach to the webhook"
               }
             },
             "type": "object"
@@ -3185,7 +3364,7 @@
           "description": "Affinity Settings for injector pods\nThis can either be a multi-line string or YAML matching the PodSpec's affinity field.\nCommenting out or setting as empty the affinity variable, will allow\ndeployment of multiple replicas to single node services such as Minikube."
         },
         "agentDefaults": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "The default values for the injected Vault Agent containers.",
           "properties": {
             "cpuLimit": {
@@ -3209,7 +3388,7 @@
               "type": "string"
             },
             "templateConfig": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Default values within Agent's template_config stanza.",
               "properties": {
                 "exitOnRetryFailure": {
@@ -3228,14 +3407,24 @@
           "type": "object"
         },
         "agentImage": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "agentImage sets the repo and tag of the Vault image to use for the Vault Agent\ncontainers.  This should be set to the official Vault image.  Vault 1.3.1+ is\nrequired.",
           "properties": {
             "repository": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -3248,7 +3437,7 @@
           "type": "string"
         },
         "certs": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -3265,11 +3454,37 @@
               "then": {
                 "properties": {
                   "certName": {
-                    "description": "certName and keyName are the names of the files within the secret for\nthe TLS cert and private key, respectively. These have reasonable\ndefaults but can be customized if necessary.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "certName and keyName are the names of the files within the secret for\nthe TLS cert and private key, respectively. These have reasonable\ndefaults but can be customized if necessary."
                   },
                   "keyName": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -3304,16 +3519,13 @@
         "extraLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Extra labels to attach to the agent-injector\nThis should be a YAML map of the labels to apply to the injector"
@@ -3327,23 +3539,33 @@
           "description": "Should the injector pods run on the host network (useful when using\nan alternate CNI in EKS)"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "image sets the repo and tag of the vault-k8s image to use for the injector.",
           "properties": {
             "pullPolicy": {
               "type": "string"
             },
             "repository": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
         },
         "leaderElector": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "If multiple replicas are specified, by default a leader will be determined\nso that only one injector attempts to create TLS certificates.",
           "properties": {
             "enabled": {}
@@ -3351,7 +3573,7 @@
           "type": "object"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Used to define custom livenessProbe settings",
           "properties": {
             "failureThreshold": {
@@ -3392,7 +3614,7 @@
           ]
         },
         "metrics": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "If true, will enable a node exporter metrics endpoint at /metrics.",
           "properties": {
             "enabled": {
@@ -3402,9 +3624,20 @@
           "type": "object"
         },
         "namespaceSelector": {
-          "additionalProperties": {},
-          "description": "Deprecated: please use 'webhook.namespaceSelector' instead\nnamespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Deprecated: please use 'webhook.namespaceSelector' instead\nnamespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
         },
         "nodeSelector": {
           "description": "nodeSelector labels for server pod assignment, formatted as a multi-line string or YAML map.\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector\nExample:\nnodeSelector:\nbeta.kubernetes.io/arch: amd64"
@@ -3425,6 +3658,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "A disruption budget limits the number of pods of a replicated application\nthat are down simultaneously from voluntary disruptions\npodDisruptionBudget:\nmaxUnavailable: 1"
@@ -3440,7 +3680,7 @@
           ]
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Used to define custom readinessProbe settings",
           "properties": {
             "failureThreshold": {
@@ -3478,6 +3718,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
@@ -3490,7 +3737,7 @@
           ]
         },
         "securityContext": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
           "properties": {
             "container": {},
@@ -3499,7 +3746,7 @@
           "type": "object"
         },
         "service": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Injector service specific config",
           "properties": {
             "annotations": {
@@ -3509,7 +3756,7 @@
           "type": "object"
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Injector serviceAccount specific config",
           "properties": {
             "annotations": {
@@ -3519,7 +3766,7 @@
           "type": "object"
         },
         "startupProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Used to define custom startupProbe settings",
           "properties": {
             "failureThreshold": {
@@ -3556,12 +3803,23 @@
         },
         "uid": {},
         "webhook": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Extra annotations to attach to the webhook",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Extra annotations to attach to the webhook"
             },
             "failurePolicy": {
               "description": "Configures failurePolicy of the webhook. The \"unspecified\" default behaviour depends on the\nAPI Version of the WebHook.\nTo block pod creation while the webhook is unavailable, set the policy to `Fail` below.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy",
@@ -3578,9 +3836,20 @@
               ]
             },
             "namespaceSelector": {
-              "additionalProperties": {},
-              "description": "namespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "namespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
             },
             "objectSelector": {
               "description": "objectSelector is the selector for restricting the webhook to only\nspecific labels.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-objectselector\nfor more details.\nExample:\nobjectSelector:\nmatchLabels:\nvault-sidecar-injector: enabled",
@@ -3604,16 +3873,27 @@
           "type": "object"
         },
         "webhookAnnotations": {
-          "additionalProperties": {},
-          "description": "Deprecated: please use 'webhook.annotations' instead\nExtra annotations to attach to the webhook",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Deprecated: please use 'webhook.annotations' instead\nExtra annotations to attach to the webhook"
         }
       },
       "type": "object"
     },
     "nameOverride": {},
     "server": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4006,7 +4286,13 @@
               "preStopSleepSeconds": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
                     "type": "integer"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -4027,7 +4313,7 @@
           "description": "Extra annotations to attach to the server pods\nThis can either be YAML or a YAML-formatted multi-line templated string map\nof the annotations to apply to the server pods"
         },
         "auditStorage": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -4077,7 +4363,7 @@
           "type": "object"
         },
         "authDelegator": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "authDelegator enables a cluster role binding to be attached to the service\naccount.  This cluster role binding can be used to setup Kubernetes auth\nmethod. See https://developer.hashicorp.com/vault/docs/auth/kubernetes",
           "properties": {
             "enabled": {}
@@ -4085,7 +4371,7 @@
           "type": "object"
         },
         "dataStorage": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "This configures the Vault Statefulset to create a PVC for data\nstorage when using the file or raft backend storage engines.\nSee https://developer.hashicorp.com/vault/docs/configuration/storage to know more",
           "properties": {
             "accessMode": {
@@ -4111,7 +4397,7 @@
           "type": "object"
         },
         "dev": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Run Vault in \"dev\" mode. This requires no further setup, no state management,\nand no initialization. This is useful for experimenting with Vault without\nneeding to unseal, store keys, et. al. All data is lost on restart - do not\nuse dev mode for anything other than experimenting.\nSee https://developer.hashicorp.com/vault/docs/concepts/dev-server to know more",
           "properties": {
             "devRootToken": {
@@ -4126,7 +4412,7 @@
           "description": "If true, or \"-\" with global.enabled true, Vault server will be installed.\nSee vault.mode in _helpers.tpl for implementation details."
         },
         "enterpriseLicense": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -4145,7 +4431,16 @@
                   "secretKey": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
                         "type": "null"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -4220,7 +4515,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "extraContainers is a list of sidecar containers. Specified as a YAML list."
@@ -4240,7 +4542,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "extraInitContainers is a list of init containers. Specified as a YAML list.\nThis is useful if you need to run a script to provision TLS certificates or\nwrite out configuration files in a dynamic way.\nThis example installs a plugin pulled from github into the /usr/local/libexec/vault/oauthapp folder,\nwhich is defined in the volumes value.\n- name: oauthapp\nimage: \"alpine\"\ncommand: [sh, -c]\nargs:\n- cd /tmp &&\nwget https://github.com/puppetlabs/vault-plugin-secrets-oauthapp/releases/download/v1.2.0/vault-plugin-secrets-oauthapp-v1.2.0-linux-amd64.tar.xz -O oauthapp.xz &&\ntar -xf oauthapp.xz &&\nmv vault-plugin-secrets-oauthapp-v1.2.0-linux-amd64 /usr/local/libexec/vault/oauthapp &&\nchmod +x /usr/local/libexec/vault/oauthapp\nvolumeMounts:\n- name: plugins\nmountPath: /usr/local/libexec/vault"
@@ -4248,16 +4557,13 @@
         "extraLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Extra labels to attach to the server pods\nThis should be a YAML map of the labels to apply to the server pods"
@@ -4272,7 +4578,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "extraPorts is a list of extra ports. Specified as a YAML list.\nThis is useful if you need to add additional ports to the statefulset in dynamic way.\n- containerPort: 8300\nname: http-monitoring"
@@ -4280,7 +4593,7 @@
         "extraSecretEnvironmentVars": {
           "description": "extraSecretEnvironmentVars is a list of extra environment variables to set with the stateful set.\nThese variables take value from existing Secret objects.\n- envName: AWS_SECRET_ACCESS_KEY\nsecretName: vault\nsecretKey: AWS_SECRET_ACCESS_KEY",
           "items": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "envName": {},
               "secretKey": {},
@@ -4293,7 +4606,7 @@
         "extraVolumes": {
           "description": "Deprecated: please use 'volumes' instead.\nextraVolumes is a list of extra volumes to mount. These will be exposed\nto Vault in the path `/vault/userconfig/<name>/`. The value below is\nan array of objects, examples are shown below.\n- type: secret (or \"configMap\")\nname: my-secret\npath: null # default is `/vault/userconfig`",
           "items": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "defaultMode": {
                 "type": [
@@ -4302,7 +4615,12 @@
                 ]
               },
               "name": {
-                "type": "string"
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
               },
               "path": {
                 "type": [
@@ -4334,7 +4652,7 @@
         },
         "gid": {},
         "ha": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Run Vault in \"HA\" mode. There are no storage requirements unless the audit log\npersistence is required.  In HA mode Vault will configure itself to use Consul\nfor its storage backend.  The default configuration provided will work the Consul\nHelm project by default.  It is possible to manually configure Vault to use a\ndifferent HA backend.",
           "properties": {
             "apiAddr": {
@@ -4348,7 +4666,7 @@
               "type": "string"
             },
             "disruptionBudget": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "A disruption budget limits the number of pods of a replicated application\nthat are down simultaneously from voluntary disruptions",
               "properties": {
                 "enabled": {},
@@ -4360,7 +4678,7 @@
             },
             "enabled": {},
             "raft": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Enables Vault's integrated Raft storage.  Unlike the typical HA modes where\nVault's persistence is external (such as Consul), enabling Raft mode will create\npersistent volumes for Vault to store data according to the configuration under server.dataStorage.\nThe Vault cluster will coordinate leader elections and failovers internally.",
               "properties": {
                 "config": {
@@ -4371,7 +4689,7 @@
                   "description": "Enables Raft integrated storage"
                 },
                 "redundancyZones": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "Vault Enterprise Redundancy Zones\nEnables automatic zone detection for Vault Enterprise autopilot redundancy zones.\nRequires:\n- Kubernetes 1.35+ (PodTopologyLabelsAdmission enabled by default)\n- Vault Enterprise\n- server.ha.enabled=true and server.ha.raft.enabled=true\n- Nodes labeled with topology.kubernetes.io/zone\n- VAULT_REDUNDANCY_ZONE placeholder in server.ha.raft.config\n- server.topologySpreadConstraints with topology.kubernetes.io/zone (optional but recommended for proper zone separation)\nWhen enabled:\n- The zone label from the node is exposed as VAULT_REDUNDANCY_ZONE\nenvironment variable and substituted into the raft config.\n- The PDB maxUnavailable defaults to 1 (instead of ⌊(n-1)/2⌋) because\nthe PDB cannot distinguish voting from non-voting pods. Override with\nserver.ha.disruptionBudget.maxUnavailable if needed.\nSee: https://developer.hashicorp.com/vault/docs/enterprise/redundancy-zones",
                   "properties": {
                     "enabled": {}
@@ -4407,7 +4725,7 @@
           "description": "Should the server pods run on the host network"
         },
         "httproute": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "activeService": {},
             "additionalRules": {
@@ -4436,8 +4754,15 @@
               "description": "- host-example"
             },
             "labels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "matches": {
               "anyOf": [
@@ -4472,19 +4797,37 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "pullPolicy": {
               "description": "Overrides the default Image Pull Policy",
               "type": "string"
             },
             "repository": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           },
@@ -4495,7 +4838,7 @@
           "type": "boolean"
         },
         "ingress": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Ingress allows ingress services to be created to allow external access\nfrom Kubernetes to access Vault pods.\nIf deployment is on OpenShift, the following block is ignored.\nIn order to expose the service, use the route section below",
           "properties": {
             "activeService": {
@@ -4527,8 +4870,15 @@
               "description": "Optionally use ingressClassName instead of deprecated annotation.\nSee: https://kubernetes.io/docs/concepts/services-networking/ingress/#deprecated-annotation"
             },
             "labels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "pathType": {
               "description": "As of Kubernetes 1.19, all Ingress Paths must have a pathType configured. The default value below should be sufficient in most cases.\nSee: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types for other possible values.",
@@ -4541,7 +4891,7 @@
           "type": "object"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -4686,7 +5036,7 @@
           ]
         },
         "networkPolicy": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -4711,6 +5061,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
@@ -4721,41 +5074,11 @@
                         "type": "object"
                       },
                       {
-                        "items": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "from": {
-                              "items": {
-                                "additionalProperties": false,
-                                "properties": {
-                                  "namespaceSelector": {
-                                    "additionalProperties": {},
-                                    "type": "object"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "ports": {
-                              "items": {
-                                "additionalProperties": false,
-                                "properties": {
-                                  "port": {
-                                    "type": "integer"
-                                  },
-                                  "protocol": {
-                                    "type": "string"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "type": "object"
-                        },
+                        "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "egress:\n- to:\n- ipBlock:\ncidr: 10.0.0.0/24\nports:\n- protocol: TCP\nport: 443"
@@ -4814,6 +5137,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Persistent Volume Claim (PVC) retention policy\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention\nExample:\npersistentVolumeClaimRetentionPolicy:\nwhenDeleted: Retain\nwhenScaled: Retain"
@@ -4871,7 +5201,7 @@
           ]
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -4967,12 +5297,19 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Resource requests, limits, etc. for the server cluster placement. This\nshould map directly to the value of the resources field for a PodSpec.\nBy default no direct resource request is made.\nresources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
         },
         "route": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "OpenShift only - create a route to expose the service\nBy default the created route will be of type passthrough",
           "properties": {
             "activeService": {
@@ -4984,24 +5321,26 @@
             },
             "host": {},
             "labels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "tls": {
               "additionalProperties": {},
               "description": "tls will be passed directly to the route's TLS config, which\ncan be used to configure other termination methods that terminate\nTLS at the router",
-              "properties": {
-                "termination": {
-                  "type": "string"
-                }
-              },
               "type": "object"
             }
           },
           "type": "object"
         },
         "service": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -5114,7 +5453,7 @@
           "description": "Enables a headless service to be used by the Vault Statefulset",
           "properties": {
             "active": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Enable or disable the vault-active service, which selects Vault pods that\nhave labeled themselves as the cluster leader with `vault-active: \"true\"`.",
               "properties": {
                 "annotations": {
@@ -5135,7 +5474,7 @@
               "type": "string"
             },
             "instanceSelector": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "If enabled, the service selectors will include `app.kubernetes.io/instance: {{ .Release.Name }}`\nWhen disabled, services may select Vault pods not deployed from the chart.\nDoes not affect the headless vault-internal service with `ClusterIP: None`",
               "properties": {
                 "enabled": {
@@ -5169,7 +5508,12 @@
             "nodePort": {},
             "port": {
               "description": "Port on which Vault server is listening",
-              "type": "integer"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "publishNotReadyAddresses": {
               "description": "Do not wait for pods to be ready before including them in the services'\ntargets. Does not apply to the headless service, which is used for\ncluster-internal communication.",
@@ -5177,7 +5521,7 @@
             },
             "serviceType": {},
             "standby": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Enable or disable the vault-standby service, which selects Vault pods that\nhave labeled themselves as a cluster follower with `vault-active: \"false\"`.",
               "properties": {
                 "annotations": {
@@ -5197,7 +5541,7 @@
           "type": "object"
         },
         "serviceAccount": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -5274,29 +5618,39 @@
             "extraLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
                   "additionalProperties": {
                     "type": "string"
                   },
                   "type": "object"
+                },
+                {
+                  "type": "null"
                 }
               ],
               "description": "Extra labels to attach to the serviceAccount\nThis should be a YAML map of the labels to apply to the serviceAccount"
             },
             "name": {
-              "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
-              "type": [
-                "string",
-                "null"
-              ]
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
             },
             "serviceDiscovery": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Enable or disable a service account role binding with the permissions required for\nVault's Kubernetes service_registration config option.\nSee https://developer.hashicorp.com/vault/docs/configuration/service-registration/kubernetes",
               "properties": {
                 "enabled": {}
@@ -5307,7 +5661,7 @@
           "type": "object"
         },
         "serviceCA": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "OpenShift service-ca operator integration\nAutomates TLS certificate generation via the service-ca operator",
           "properties": {
             "configMapName": {
@@ -5328,7 +5682,7 @@
           "type": "boolean"
         },
         "standalone": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Run Vault in \"standalone\" mode. This is the default mode that will deploy if\nno arguments are given to helm. This requires a PVC for data storage to use\nthe \"file\" backend.  This mode is not highly available and should not be scaled\npast a single replica.",
           "properties": {
             "config": {
@@ -5340,14 +5694,14 @@
           "type": "object"
         },
         "statefulSet": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Settings for the statefulSet used to run Vault.",
           "properties": {
             "annotations": {
               "description": "Extra annotations for the statefulSet. This can either be YAML or a\nYAML-formatted multi-line templated string map of the annotations to apply\nto the statefulSet."
             },
             "securityContext": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Set the pod and container security contexts.\nIf not set, these will default to, and for *not* OpenShift:\npod:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.server.gid | default 1000 }}\nrunAsUser: {{ .Values.server.uid | default 100 }}\nfsGroup: {{ .Values.server.gid | default 1000 }}\ncontainer:\nallowPrivilegeEscalation: false\nIf not set, these will default to, and for OpenShift:\npod: {}\ncontainer: {}",
               "properties": {
                 "container": {},
@@ -5383,7 +5737,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "volumeMounts is a list of volumeMounts for the main server container. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- mountPath: /usr/local/libexec/vault\nname: plugins\nreadOnly: true"
@@ -5398,7 +5759,14 @@
               "const": null
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "volumes is a list of volumes made available to all containers. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- name: plugins\nemptyDir: {}"
@@ -5407,11 +5775,11 @@
       "type": "object"
     },
     "serverTelemetry": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Vault is able to collect and publish various runtime metrics.\nEnabling this feature requires setting adding `telemetry{}` stanza to\nthe Vault configuration. There are a few examples included in the `config` sections above.\nFor more information see:\nhttps://developer.hashicorp.com/vault/docs/configuration/telemetry\nhttps://developer.hashicorp.com/vault/docs/internals/telemetry",
       "properties": {
         "prometheusRules": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "The Prometheus operator *must* be installed before enabling this feature,\nif not the chart will fail to install due to missing CustomResourceDefinitions\nprovided by the operator.",
           "properties": {
             "enabled": {
@@ -5434,21 +5802,39 @@
               "description": "Some example rules.\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 500ms on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 500\nfor: 5m\nlabels:\nseverity: warning\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 1s on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 1000\nfor: 5m\nlabels:\nseverity: critical"
             },
             "selectors": {
-              "additionalProperties": {},
-              "description": "Selector labels to add to the PrometheusRules.\nWhen empty, defaults to:\nrelease: prometheus",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Selector labels to add to the PrometheusRules.\nWhen empty, defaults to:\nrelease: prometheus"
             }
           },
           "type": "object"
         },
         "serviceMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Enable support for the Prometheus Operator. If authorization is not set for authenticating\nto Vault's metrics endpoint, the following Vault server `telemetry{}` config must be included\nin the `listener \"tcp\"{}` stanza\ntelemetry {\nunauthenticated_metrics_access = \"true\"\n}\nSee the `standalone.config` for a more complete example of this.\nIn addition, a top level `telemetry{}` stanza must also be included in the Vault configuration:\nexample:\ntelemetry {\nprometheus_retention_time = \"30s\"\ndisable_hostname = true\n}\nConfiguration for monitoring the Vault server.\nThe Prometheus operator *must* be installed before enabling this feature,\nif not the chart will fail to install due to missing CustomResourceDefinitions\nprovided by the operator.\nInstructions on how to install the Helm chart can be found here:\nhttps://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack\nMore information can be found here:\nhttps://github.com/prometheus-operator/prometheus-operator\nhttps://github.com/prometheus-operator/kube-prometheus",
           "properties": {
             "authorization": {
-              "additionalProperties": {},
-              "description": "authorization used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.SafeAuthorization\nexample:\nauthorization:\ncredentials:\nname: vault-metrics-client\nkey: token",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "authorization used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.SafeAuthorization\nexample:\nauthorization:\ncredentials:\nname: vault-metrics-client\nkey: token"
             },
             "enabled": {
               "description": "Enable deployment of the Vault Server ServiceMonitor CustomResource.",
@@ -5458,9 +5844,20 @@
               "description": "Interval at which Prometheus scrapes metrics"
             },
             "matchLabels": {
-              "additionalProperties": {},
-              "description": "matchLabels configures the service selector labels for the ServiceMonitor.\nBy default, the ServiceMonitor targets services with:\n- HA mode: vault-active: \"true\" (scrapes the raft leader only)\n- Standalone mode: vault-internal: \"true\"\nTo scrape metrics from all Vault pods including standbys (Enterprise only):\n1. Enable unauthenticated_metrics_access in your Vault listener telemetry config\n2. Set matchLabels to target the vault-internal headless service\nSee: https://developer.hashicorp.com/vault/docs/configuration/telemetry#prometheus\nExample:\nmatchLabels:\nvault-internal: \"true\"",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "matchLabels configures the service selector labels for the ServiceMonitor.\nBy default, the ServiceMonitor targets services with:\n- HA mode: vault-active: \"true\" (scrapes the raft leader only)\n- Standalone mode: vault-internal: \"true\"\nTo scrape metrics from all Vault pods including standbys (Enterprise only):\n1. Enable unauthenticated_metrics_access in your Vault listener telemetry config\n2. Set matchLabels to target the vault-internal headless service\nSee: https://developer.hashicorp.com/vault/docs/configuration/telemetry#prometheus\nExample:\nmatchLabels:\nvault-internal: \"true\""
             },
             "metricRelabelings": {
               "anyOf": [
@@ -5481,14 +5878,32 @@
               "description": "Timeout for Prometheus scrapes"
             },
             "selectors": {
-              "additionalProperties": {},
-              "description": "Selector labels to add to the ServiceMonitor.\nWhen empty, defaults to:\nrelease: prometheus",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Selector labels to add to the ServiceMonitor.\nWhen empty, defaults to:\nrelease: prometheus"
             },
             "tlsConfig": {
-              "additionalProperties": {},
-              "description": "tlsConfig used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.TLSConfig\nexample:\ntlsConfig:\nca:\nsecret:\nname: vault-metrics-client\nkey: ca.crt",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "tlsConfig used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.TLSConfig\nexample:\ntlsConfig:\nca:\nsecret:\nname: vault-metrics-client\nkey: ca.crt"
             }
           },
           "type": "object"
@@ -5497,7 +5912,7 @@
       "type": "object"
     },
     "ui": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Vault UI",
       "properties": {
         "activeVaultPodOnly": {

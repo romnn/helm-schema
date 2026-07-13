@@ -113,105 +113,71 @@
       "then": {
         "properties": {
           "containerSecurityContext": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "drop": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience",
-            "properties": {
-              "allowPrivilegeEscalation": {
-                "type": "boolean"
-              },
-              "capabilities": {
-                "additionalProperties": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                "properties": {
-                  "drop": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "privileged": {
-                "type": "boolean"
+              {
+                "items": {},
+                "type": "array"
               },
-              "runAsNonRoot": {
-                "type": "boolean"
-              },
-              "seccompProfile": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "type": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience"
           },
           "core": {
             "properties": {
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "image": {
                 "properties": {
                   "repository": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "tag": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -219,14 +185,15 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -243,6 +210,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               }
@@ -280,7 +250,14 @@
                 "type": "object"
               },
               {
+                "items": {},
+                "type": "array"
+              },
+              {
                 "type": "null"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Use this set to assign a list of default pullSecrets\n- name: docker-registry-secret\n- name: internal-registry-secret"
@@ -335,9 +312,20 @@
       "then": {
         "properties": {
           "containerSecurityContext": {
-            "additionalProperties": {},
-            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience"
           },
           "fullnameOverride": {
             "type": [
@@ -355,7 +343,14 @@
                 "type": "object"
               },
               {
+                "items": {},
+                "type": "array"
+              },
+              {
                 "type": "null"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Use this set to assign a list of default pullSecrets\n- name: docker-registry-secret\n- name: internal-registry-secret"
@@ -441,9 +436,20 @@
       "then": {
         "properties": {
           "containerSecurityContext": {
-            "additionalProperties": {},
-            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience"
           },
           "fullnameOverride": {
             "type": [
@@ -461,7 +467,14 @@
                 "type": "object"
               },
               {
+                "items": {},
+                "type": "array"
+              },
+              {
                 "type": "null"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Use this set to assign a list of default pullSecrets\n- name: docker-registry-secret\n- name: internal-registry-secret"
@@ -538,9 +551,20 @@
       "then": {
         "properties": {
           "containerSecurityContext": {
-            "additionalProperties": {},
-            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience"
           },
           "fullnameOverride": {
             "type": [
@@ -558,7 +582,14 @@
                 "type": "object"
               },
               {
+                "items": {},
+                "type": "array"
+              },
+              {
                 "type": "null"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Use this set to assign a list of default pullSecrets\n- name: docker-registry-secret\n- name: internal-registry-secret"
@@ -707,14 +738,15 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -745,16 +777,45 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "image": {
                 "properties": {
                   "repository": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "tag": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -783,29 +844,44 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional deployment labels",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional deployment labels"
               },
               "readinessProbe": {
                 "description": "Readiness probe values",
@@ -832,8 +908,19 @@
                 "type": "integer"
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "revisionHistoryLimit": {
                 "description": "maxUnavailable: 1",
@@ -851,6 +938,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -885,8 +975,21 @@
             "type": "string"
           },
           "logLevel": {
-            "description": "debug, info, warning, error or fatal",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "debug, info, warning, error or fatal"
           }
         },
         "type": "object"
@@ -1262,14 +1365,15 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -1293,6 +1397,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m"
@@ -1300,10 +1407,36 @@
               "image": {
                 "properties": {
                   "repository": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "tag": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -1332,30 +1465,45 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional deployment labels",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional deployment labels"
               },
               "readinessProbe": {
                 "description": "Readiness probe values",
@@ -1382,8 +1530,19 @@
                 "type": "integer"
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "revisionHistoryLimit": {
                 "description": "maxUnavailable: 1",
@@ -1402,6 +1561,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -5811,7 +5973,7 @@
       "description": "The name of the secret which contains key named \"ca.crt\". Setting this enables the\ndownload link on portal to download the CA certificate when the certificate isn't\ngenerated automatically"
     },
     "cache": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5849,84 +6011,51 @@
       "type": "object"
     },
     "containerSecurityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "anyOf": [
-                {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "type": "boolean"
+            },
+            "capabilities": {
+              "additionalProperties": {},
+              "properties": {
+                "drop": {
                   "items": {
                     "type": "string"
                   },
                   "type": "array"
-                },
-                {
+                }
+              },
+              "type": "object"
+            },
+            "privileged": {
+              "type": "boolean"
+            },
+            "runAsNonRoot": {
+              "type": "boolean"
+            },
+            "seccompProfile": {
+              "additionalProperties": {},
+              "properties": {
+                "type": {
                   "type": "string"
                 }
-              ]
-            },
-            "properties": {
-              "drop": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
               },
-              "type": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "boolean"
-          }
-        ]
-      },
-      "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience",
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
-        },
-        "capabilities": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "properties": {
-            "drop": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
+              "type": "object"
             }
           },
           "type": "object"
         },
-        "privileged": {
-          "type": "boolean"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "seccompProfile": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "properties": {
-            "type": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "set Container Security Context to comply with PSP restricted policy if necessary\neach of the conatiner will apply the same security context\ncontainerSecurityContext:{} is initially an empty yaml that you could edit it on demand, we just filled with a common template for convenience"
     },
     "core": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -6240,6 +6369,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -6259,7 +6395,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -6301,7 +6446,7 @@
         },
         "gcTimeWindowHours": {},
         "gdpr": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "auditLogsCompliant": {
               "type": "boolean"
@@ -6313,13 +6458,23 @@
           "type": "object"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "repository": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -6340,7 +6495,7 @@
           "description": "containers to be run before the controller's container starts."
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Liveness probe values",
           "properties": {
             "failureThreshold": {
@@ -6372,28 +6527,32 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
         "podAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -6406,16 +6565,13 @@
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Additional deployment labels"
@@ -6431,7 +6587,7 @@
           ]
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probe values",
           "properties": {
             "failureThreshold": {
@@ -6454,8 +6610,19 @@
         },
         "replicas": {},
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "revisionHistoryLimit": {
           "description": "maxUnavailable: 1",
@@ -6481,22 +6648,19 @@
         "serviceAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Additional service annotations"
         },
         "startupProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -6584,8 +6748,19 @@
           "anyOf": [
             {
               "items": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -6608,7 +6783,7 @@
       "type": "object"
     },
     "database": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -6688,8 +6863,19 @@
               "internal": {
                 "properties": {
                   "affinity": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "automountServiceAccountToken": {
                     "anyOf": [
@@ -6711,6 +6897,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "containers to be run before the controller's container starts."
@@ -6724,16 +6913,45 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
                   "image": {
                     "properties": {
                       "repository": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       },
                       "tag": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
                     },
                     "type": "object"
@@ -6744,8 +6962,19 @@
                         "description": "resources:\nrequests:\nmemory: 128Mi\ncpu: 100m",
                         "properties": {
                           "resources": {
-                            "additionalProperties": {},
-                            "type": "object"
+                            "anyOf": [
+                              {
+                                "additionalProperties": {},
+                                "type": "object"
+                              },
+                              {
+                                "items": {},
+                                "type": "array"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
                           }
                         },
                         "type": "object"
@@ -6775,8 +7004,19 @@
                     "type": "object"
                   },
                   "nodeSelector": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "readinessProbe": {
                     "description": "Readiness probe values",
@@ -6800,8 +7040,19 @@
                     "type": "object"
                   },
                   "resources": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "serviceAccountName": {
                     "description": "set the service account to be used, default if left empty",
@@ -6820,6 +7071,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   }
@@ -6827,18 +7081,32 @@
                 "type": "object"
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional deployment annotations",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional deployment annotations"
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional deployment labels",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional deployment labels"
               }
             },
             "type": "object"
@@ -6847,7 +7115,7 @@
       ],
       "properties": {
         "external": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "resources:\nrequests:\nmemory: 128Mi\ncpu: 100m",
           "properties": {
             "coreDatabase": {},
@@ -6869,11 +7137,22 @@
           "type": "object"
         },
         "internal": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "affinity": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "automountServiceAccountToken": {
               "description": "mount the service account token"
@@ -6908,7 +7187,7 @@
               ]
             },
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "repository": {},
                 "tag": {}
@@ -6916,7 +7195,7 @@
               "type": "object"
             },
             "initContainer": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "migrator": {
                   "additionalProperties": {},
@@ -6927,8 +7206,19 @@
                   "description": "resources:\nrequests:\nmemory: 128Mi\ncpu: 100m",
                   "properties": {
                     "resources": {
-                      "additionalProperties": {},
-                      "type": "object"
+                      "anyOf": [
+                        {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        {
+                          "items": {},
+                          "type": "array"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
                     }
                   },
                   "type": "object"
@@ -6937,7 +7227,7 @@
               "type": "object"
             },
             "livenessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m\nLiveness probe values",
               "properties": {
                 "failureThreshold": {},
@@ -6949,8 +7239,19 @@
               "type": "object"
             },
             "nodeSelector": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "password": {
               "description": "Example:\n- name: wait\nimage: busybox\ncommand: [ 'sh', '-c', \"sleep 20\" ]\nThe initial superuser password for internal database"
@@ -6959,7 +7260,7 @@
               "description": "The priority class to run the pod as"
             },
             "readinessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Readiness probe values",
               "properties": {
                 "failureThreshold": {},
@@ -6971,8 +7272,19 @@
               "type": "object"
             },
             "resources": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "serviceAccountName": {
               "description": "set the service account to be used, default if left empty"
@@ -7006,14 +7318,28 @@
           "type": "integer"
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Additional deployment annotations",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional deployment annotations"
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional deployment labels",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional deployment labels"
         },
         "type": {
           "anyOf": [
@@ -7051,7 +7377,7 @@
       ]
     },
     "exporter": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7120,8 +7446,19 @@
       ],
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "automountServiceAccountToken": {
           "description": "mount the service account token"
@@ -7145,7 +7482,7 @@
           ]
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "repository": {},
             "tag": {}
@@ -7153,7 +7490,7 @@
           "type": "object"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m\nLiveness probe values",
           "properties": {
             "failureThreshold": {},
@@ -7165,15 +7502,33 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -7184,15 +7539,22 @@
           "type": "object"
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional deployment labels",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional deployment labels"
         },
         "priorityClassName": {
           "description": "The priority class to run the pod as"
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probe values",
           "properties": {
             "failureThreshold": {},
@@ -7205,8 +7567,19 @@
         },
         "replicas": {},
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "revisionHistoryLimit": {
           "description": "maxUnavailable: 1"
@@ -7233,7 +7606,7 @@
       "type": "object"
     },
     "expose": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -7304,14 +7677,15 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Annotations on the ClusterIP service"
@@ -7319,14 +7693,15 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "ClusterIP-specific labels"
@@ -7530,11 +7905,18 @@
                     "type": "object"
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "ingress-specific labels",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "ingress-specific labels"
                   }
                 },
                 "type": "object"
@@ -7769,14 +8151,15 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Annotations on the loadBalancer service"
@@ -7784,14 +8167,15 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "loadBalancer-specific labels"
@@ -7818,6 +8202,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   }
@@ -8109,14 +8496,15 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Annotations on the nodePort service"
@@ -8124,14 +8512,15 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "nodePort-specific labels"
@@ -8346,10 +8735,17 @@
               "route": {
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "hosts": {
                     "anyOf": [
@@ -8360,15 +8756,25 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "- name: envoy-internal\nnamespace: networking\nsectionName: https\ngroup: gateway.networking.k8s.io\nkind: Gateway\nThe hostnames for the HTTPRoute"
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "parentRefs": {
                     "anyOf": [
@@ -8379,6 +8785,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "References to the parent gateways"
@@ -8671,24 +9080,46 @@
       ],
       "properties": {
         "clusterIP": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "- \"harbor.example.com\"",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations on the ClusterIP service",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Annotations on the ClusterIP service"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "ClusterIP-specific labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "ClusterIP-specific labels"
             },
             "name": {
               "description": "The name of ClusterIP service"
             },
             "ports": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "httpPort": {
                   "description": "The service port Harbor listens on when serving HTTP"
@@ -8706,7 +9137,7 @@
           "type": "object"
         },
         "ingress": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
               "additionalProperties": {},
@@ -8732,7 +9163,7 @@
               "description": "set to the type of ingress controller if it has specific requirements.\nleave as `default` for most ingress controllers.\nset to `gce` if using the GCE ingress controller\nset to `ncp` if using the NCP (NSX-T Container Plugin) ingress controller\nset to `alb` if using the ALB ingress controller\nset to `f5-bigip` if using the F5 BIG-IP ingress controller"
             },
             "hosts": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "core": {}
               },
@@ -8743,34 +9174,63 @@
               "type": "string"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "ingress-specific labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ingress-specific labels"
             }
           },
           "type": "object"
         },
         "loadBalancer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "IP": {
               "description": "Set the IP if the LoadBalancer supports assigning IP"
             },
             "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations on the loadBalancer service",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Annotations on the loadBalancer service"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "loadBalancer-specific labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "loadBalancer-specific labels"
             },
             "name": {
               "description": "The name of LoadBalancer service"
             },
             "ports": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "httpPort": {
                   "description": "The service port Harbor listens on when serving HTTP"
@@ -8799,26 +9259,48 @@
           "type": "object"
         },
         "nodePort": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations on the nodePort service",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Annotations on the nodePort service"
             },
             "labels": {
-              "additionalProperties": {},
-              "description": "nodePort-specific labels",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "nodePort-specific labels"
             },
             "name": {
               "description": "The name of NodePort service"
             },
             "ports": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "http": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "nodePort": {
                       "description": "The node port Harbor listens on when serving HTTP"
@@ -8830,7 +9312,7 @@
                   "type": "object"
                 },
                 "https": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "nodePort": {
                       "description": "The node port Harbor listens on when serving HTTPS"
@@ -8848,11 +9330,18 @@
           "type": "object"
         },
         "route": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "hosts": {
               "anyOf": [
@@ -8870,8 +9359,15 @@
               "description": "- name: envoy-internal\nnamespace: networking\nsectionName: https\ngroup: gateway.networking.k8s.io\nkind: Gateway\nThe hostnames for the HTTPRoute"
             },
             "labels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "parentRefs": {
               "anyOf": [
@@ -8892,10 +9388,10 @@
           "type": "object"
         },
         "tls": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "auto": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "commonName": {
                   "description": "The common name used to generate the certificate, it's necessary\nwhen the type isn't \"ingress\"",
@@ -8932,7 +9428,7 @@
               "type": "boolean"
             },
             "secret": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "secretName": {
                   "description": "The name of secret which contains keys named:\n\"tls.crt\" - the certificate\n\"tls.key\" - the private key"
@@ -9003,13 +9499,20 @@
           "const": null
         },
         {
+          "items": {},
+          "type": "array"
+        },
+        {
           "type": "null"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Use this set to assign a list of default pullSecrets\n- name: docker-registry-secret\n- name: internal-registry-secret"
     },
     "internalTLS": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -10890,7 +11393,7 @@
           "description": "There are three ways to provide tls\n1) \"auto\" will generate cert automatically\n2) \"manual\" need provide cert file manually in following value\n3) \"secret\" internal certificates from secret"
         },
         "core": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "core related cert configuration",
           "properties": {
             "crt": {
@@ -10910,7 +11413,7 @@
           "type": "boolean"
         },
         "jobservice": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "jobservice related cert configuration",
           "properties": {
             "crt": {
@@ -10926,7 +11429,7 @@
           "type": "object"
         },
         "portal": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "portal related cert configuration",
           "properties": {
             "crt": {
@@ -10942,7 +11445,7 @@
           "type": "object"
         },
         "registry": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "registry related cert configuration",
           "properties": {
             "crt": {
@@ -10962,7 +11465,7 @@
           "type": "boolean"
         },
         "trivy": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "trivy related cert configuration",
           "properties": {
             "crt": {
@@ -10984,7 +11487,7 @@
       "type": "object"
     },
     "ipFamily": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "families": {
           "anyOf": [
@@ -11002,7 +11505,7 @@
           "description": "A list of IP families for services that should be supported, in the order in which they should be applied to ClusterIP. Can be \"IPv4\" and/or \"IPv6\"."
         },
         "ipv4": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "ipv4Enabled set to true if ipv4 is enabled in cluster, currently it affected the nginx related component",
           "properties": {
             "enabled": {
@@ -11012,7 +11515,7 @@
           "type": "object"
         },
         "ipv6": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "ipv6Enabled set to true if ipv6 is enabled in cluster, currently it affected the nginx related component",
           "properties": {
             "enabled": {
@@ -11032,7 +11535,7 @@
       "type": "object"
     },
     "jobservice": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -11179,6 +11682,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -11214,13 +11724,23 @@
           ]
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "repository": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -11248,7 +11768,7 @@
           "type": "array"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m\nLiveness probe values",
           "properties": {
             "failureThreshold": {
@@ -11288,11 +11808,18 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
         "notification": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "webhook_job_http_client_timeout": {
               "description": "in seconds",
@@ -11307,22 +11834,19 @@
         "podAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -11335,16 +11859,13 @@
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Additional deployment labels"
@@ -11353,7 +11874,7 @@
           "description": "The priority class to run the pod as"
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probe values",
           "properties": {
             "failureThreshold": {
@@ -11375,7 +11896,7 @@
           "type": "object"
         },
         "reaper": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "max_dangling_hours": {
               "description": "the max time for execution in running state without new task created",
@@ -11394,8 +11915,19 @@
         },
         "replicas": {},
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "revisionHistoryLimit": {
           "description": "maxUnavailable: 1",
@@ -11429,8 +11961,19 @@
           "anyOf": [
             {
               "items": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -11453,7 +11996,7 @@
       "description": "debug, info, warning, error or fatal"
     },
     "metrics": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -11552,10 +12095,17 @@
                 "description": "Create prometheus serviceMonitor to scrape harbor metrics.\nThis requires the monitoring.coreos.com/v1 CRD. Please see\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/getting-started.md",
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "interval": {
                     "description": "Scrape interval. If not set, the Prometheus default scrape interval is used.",
@@ -11570,6 +12120,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]\nRelabel configs to apply to samples before ingestion."
@@ -11584,7 +12137,7 @@
       ],
       "properties": {
         "core": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "path": {},
             "port": {}
@@ -11595,7 +12148,7 @@
           "type": "boolean"
         },
         "exporter": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "path": {},
             "port": {}
@@ -11603,7 +12156,7 @@
           "type": "object"
         },
         "jobservice": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "path": {
               "type": "string"
@@ -11613,7 +12166,7 @@
           "type": "object"
         },
         "registry": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "path": {
               "type": "string"
@@ -11625,12 +12178,19 @@
           "type": "object"
         },
         "serviceMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Create prometheus serviceMonitor to scrape harbor metrics.\nThis requires the monitoring.coreos.com/v1 CRD. Please see\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/getting-started.md",
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "enabled": {
               "type": "boolean"
@@ -11669,7 +12229,7 @@
       ]
     },
     "nginx": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -11739,8 +12299,19 @@
       "description": "If service exposed via \"ingress\", the Nginx will not be used",
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "automountServiceAccountToken": {
           "description": "mount the service account token"
@@ -11761,7 +12332,7 @@
           "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "repository": {},
             "tag": {}
@@ -11769,7 +12340,7 @@
           "type": "object"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Liveness probe values",
           "properties": {
             "failureThreshold": {},
@@ -11781,16 +12352,34 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -11801,15 +12390,22 @@
           "type": "object"
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional deployment labels",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional deployment labels"
         },
         "priorityClassName": {
           "description": "The priority class to run the pod as"
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probe values",
           "properties": {
             "failureThreshold": {},
@@ -11822,8 +12418,19 @@
         },
         "replicas": {},
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "revisionHistoryLimit": {
           "description": "maxUnavailable: 1"
@@ -11852,7 +12459,7 @@
       "type": "object"
     },
     "persistence": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -12203,7 +12810,7 @@
           "type": "boolean"
         },
         "imageChartStorage": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -13800,7 +14407,7 @@
           "description": "Define which storage backend is used for registry to store\nimages and charts. Refer to\nhttps://github.com/distribution/distribution/blob/release/2.8/docs/configuration.md#storage\nfor the detail.",
           "properties": {
             "azure": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "maxthreads: 100",
               "properties": {
                 "accountkey": {},
@@ -13827,7 +14434,7 @@
               "type": "boolean"
             },
             "filesystem": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "maxthreads": {},
                 "rootdirectory": {
@@ -13837,7 +14444,7 @@
               "type": "object"
             },
             "gcs": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "bucket": {
                   "type": "string"
@@ -13857,7 +14464,7 @@
               "type": "object"
             },
             "oss": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "region: fr\ntenant: tenantname\ntenantid: tenantid\ndomain: domainname\ndomainid: domainid\ntrustid: trustid\ninsecureskipverify: false\nchunksize: 5M\nprefix:\nsecretkey: secretkey\naccesskey: accesskey\nauthversion: 3\nendpointtype: public\ntempurlcontainerkey: false\ntempurlmethods:",
               "properties": {
                 "accesskeyid": {
@@ -13887,12 +14494,25 @@
               "type": "object"
             },
             "s3": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "accesskey": {
-                  "type": [
-                    "string",
-                    "null"
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
                   ]
                 },
                 "bucket": {
@@ -13912,9 +14532,22 @@
                 "regionendpoint": {},
                 "rootdirectory": {},
                 "secretkey": {
-                  "type": [
-                    "string",
-                    "null"
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
                   ]
                 },
                 "secure": {},
@@ -13925,7 +14558,7 @@
               "type": "object"
             },
             "swift": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "accesskey: awsaccesskey\nsecretkey: awssecretkey\nregionendpoint: http://myobjects.local\nencrypt: false\nkeyid: mykeyid\nsecure: true\nskipverify: false\nv4auth: true\nchunksize: \"5242880\"\nrootdirectory: /s3/object/name/prefix\nstorageclass: STANDARD\nmultipartcopychunksize: \"33554432\"\nmultipartcopymaxconcurrency: 100\nmultipartcopythresholdsize: \"33554432\"",
               "properties": {
                 "accesskey": {},
@@ -14005,10 +14638,10 @@
           "type": "object"
         },
         "persistentVolumeClaim": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "database": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "If external database is used, the following settings for database will\nbe ignored",
               "properties": {
                 "accessMode": {},
@@ -14049,10 +14682,10 @@
               "type": "object"
             },
             "jobservice": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "jobLog": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "accessMode": {},
                     "annotations": {
@@ -14097,7 +14730,7 @@
               "type": "object"
             },
             "redis": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "If external Redis is used, the following settings for Redis will\nbe ignored",
               "properties": {
                 "accessMode": {},
@@ -14138,7 +14771,7 @@
               "type": "object"
             },
             "registry": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "accessMode": {},
                 "annotations": {
@@ -14183,7 +14816,7 @@
               "type": "object"
             },
             "trivy": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "accessMode": {},
                 "annotations": {
@@ -14247,7 +14880,7 @@
       "type": "object"
     },
     "portal": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -14326,6 +14959,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -14352,13 +14992,23 @@
           "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "repository": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             },
             "tag": {
-              "type": "string"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -14379,7 +15029,7 @@
           "description": "containers to be run before the controller's container starts.\nExample:\n- name: wait\nimage: busybox\ncommand: [ 'sh', '-c', \"sleep 20\" ]"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Liveness probe values",
           "properties": {
             "failureThreshold": {
@@ -14411,28 +15061,32 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
         "podAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -14445,16 +15099,13 @@
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Additional deployment labels"
@@ -14463,7 +15114,7 @@
           "description": "The priority class to run the pod as"
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probe values",
           "properties": {
             "failureThreshold": {
@@ -14486,8 +15137,19 @@
         },
         "replicas": {},
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "revisionHistoryLimit": {
           "description": "maxUnavailable: 1",
@@ -14503,16 +15165,13 @@
         "serviceAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Additional service annotations"
@@ -14535,8 +15194,19 @@
           "anyOf": [
             {
               "items": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -14556,7 +15226,7 @@
       "type": "object"
     },
     "proxy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "The proxy settings for updating trivy vulnerabilities from the Internet and replicating\nartifacts from/to the registries that cannot be reached directly",
       "properties": {
         "components": {
@@ -14572,7 +15242,7 @@
       "type": "object"
     },
     "redis": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -14638,8 +15308,19 @@
               "internal": {
                 "properties": {
                   "affinity": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "automountServiceAccountToken": {
                     "anyOf": [
@@ -14661,16 +15342,45 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   },
                   "image": {
                     "properties": {
                       "repository": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       },
                       "tag": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
                     },
                     "type": "object"
@@ -14684,6 +15394,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "containers to be run before the controller's container starts."
@@ -14710,8 +15423,19 @@
                     "type": "object"
                   },
                   "nodeSelector": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "readinessProbe": {
                     "description": "Readiness probe values",
@@ -14735,8 +15459,19 @@
                     "type": "object"
                   },
                   "resources": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "serviceAccountName": {
                     "description": "set the service account to be used, default if left empty",
@@ -14751,6 +15486,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ]
                   }
@@ -14758,18 +15496,32 @@
                 "type": "object"
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional deployment annotations",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional deployment annotations"
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional deployment labels",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional deployment labels"
               }
             },
             "type": "object"
@@ -14778,7 +15530,7 @@
       ],
       "properties": {
         "external": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "harborDatabaseIndex: \"6\"\ncacheLayerDatabaseIndex: \"7\"",
           "properties": {
             "addr": {
@@ -14802,7 +15554,7 @@
               "description": "The name of the set of Redis instances to monitor, it must be set to support redis+sentinel"
             },
             "tlsOptions": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "TLS configuration for redis connection\nonly server-authentication is supported, mTLS for redis connection is not supported\ntls connection will be disable by default\nOnce `tlsOptions.enable` set as true, tls/ssl connection will be used for redis\nPlease set the `caBundleSecretName` in this configuration file which conatins redis server rootCA if it is self-signed.\nThe secret must contain keys named \"ca.crt\" which will be injected into the trust store",
               "properties": {
                 "enable": {}
@@ -14818,11 +15570,22 @@
           "type": "object"
         },
         "internal": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "affinity": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "automountServiceAccountToken": {
               "description": "mount the service account token"
@@ -14844,7 +15607,7 @@
             },
             "harborDatabaseIndex": {},
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "repository": {},
                 "tag": {}
@@ -14870,7 +15633,7 @@
               "description": "Example:\n- name: wait\nimage: busybox\ncommand: [ 'sh', '-c', \"sleep 20\" ]\njobserviceDatabaseIndex defaults to \"1\"\nregistryDatabaseIndex defaults to \"2\"\ntrivyAdapterIndex defaults to \"5\"\nharborDatabaseIndex defaults to \"0\", but it can be configured to \"6\", this config is optional\ncacheLayerDatabaseIndex defaults to \"0\", but it can be configured to \"7\", this config is optional"
             },
             "livenessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m\nLiveness probe values",
               "properties": {
                 "failureThreshold": {},
@@ -14882,14 +15645,25 @@
               "type": "object"
             },
             "nodeSelector": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "priorityClassName": {
               "description": "The priority class to run the pod as"
             },
             "readinessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Readiness probe values",
               "properties": {
                 "failureThreshold": {},
@@ -14902,8 +15676,19 @@
             },
             "registryDatabaseIndex": {},
             "resources": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "serviceAccountName": {
               "description": "set the service account to be used, default if left empty"
@@ -14927,14 +15712,28 @@
           "type": "object"
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Additional deployment annotations",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional deployment annotations"
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional deployment labels",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional deployment labels"
         },
         "type": {
           "description": "if external Redis is used, set \"type\" to \"external\"\nand fill the connection information in \"external\" section"
@@ -14943,7 +15742,7 @@
       "type": "object"
     },
     "registry": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -15090,6 +15889,13 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
@@ -15101,7 +15907,7 @@
           ]
         },
         "controller": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "extraEnvVars": {
               "anyOf": [
@@ -15119,19 +15925,29 @@
               "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m"
             },
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "repository": {
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "livenessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Liveness probe values",
               "properties": {
                 "failureThreshold": {
@@ -15153,7 +15969,7 @@
               "type": "object"
             },
             "readinessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Readiness probe values",
               "properties": {
                 "failureThreshold": {
@@ -15175,14 +15991,25 @@
               "type": "object"
             },
             "resources": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
         },
         "credentials": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -15412,7 +16239,7 @@
           "description": "containers to be run before the controller's container starts."
         },
         "middleware": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -15476,7 +16303,7 @@
           ],
           "properties": {
             "cloudFront": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "baseurl": {
                   "type": "string"
@@ -15525,28 +16352,32 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
             }
           ]
         },
         "podAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -15559,16 +16390,13 @@
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Additional deployment labels"
@@ -15577,7 +16405,7 @@
           "description": "The priority class to run the pod as"
         },
         "registry": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "extraEnvVars": {
               "anyOf": [
@@ -15595,19 +16423,29 @@
               "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 100m"
             },
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "repository": {
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 },
                 "tag": {
-                  "type": "string"
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
                 }
               },
               "type": "object"
             },
             "livenessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Liveness probe values",
               "properties": {
                 "failureThreshold": {
@@ -15629,7 +16467,7 @@
               "type": "object"
             },
             "readinessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Readiness probe values",
               "properties": {
                 "failureThreshold": {
@@ -15651,8 +16489,19 @@
               "type": "object"
             },
             "resources": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
@@ -15694,8 +16543,19 @@
           "anyOf": [
             {
               "items": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -15712,7 +16572,7 @@
           "description": "Spread Pods across failure-domains like regions, availability zones or nodes"
         },
         "upload_purging": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "enable purge _upload directories",
           "properties": {
             "age": {
@@ -15739,7 +16599,7 @@
       "description": "The secret key used for encryption. Must be a string of 16 chars."
     },
     "trace": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -15983,7 +16843,7 @@
           ]
         },
         "jaeger": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "namespace used to differentiate different harbor services\nnamespace:\nattributes is a key value dict contains user defined attributes used to initialize trace provider\nattributes:\napplication: harbor",
           "properties": {
             "agent_host": {},
@@ -15998,7 +16858,7 @@
         },
         "namespace": {},
         "otel": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "username:\npassword:\nagent_host: hostname\nexport trace data by jaeger.thrift in compact mode\nagent_port: 6831",
           "properties": {
             "compression": {},
@@ -16031,7 +16891,7 @@
       "type": "object"
     },
     "trivy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -16063,8 +16923,19 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "automountServiceAccountToken": {
                 "anyOf": [
@@ -16086,6 +16957,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -16106,12 +16980,38 @@
               "image": {
                 "properties": {
                   "repository": {
-                    "description": "repository the repository for Trivy adapter image",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "repository the repository for Trivy adapter image"
                   },
                   "tag": {
-                    "description": "tag the tag for Trivy adapter image",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "tag the tag for Trivy adapter image"
                   }
                 },
                 "type": "object"
@@ -16125,6 +17025,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "containers to be run before the controller's container starts."
@@ -16158,8 +17061,19 @@
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "offlineScan": {
                 "description": "The offlineScan option prevents Trivy from sending API requests to identify dependencies.\nScanning JAR files and pom.xml may require Internet access for better detection, but this option tries to avoid it.\nFor example, the offline mode will not try to resolve transitive dependencies in pom.xml when the dependency doesn't\nexist in the local repositories. It means a number of detected vulnerabilities might be fewer in offline mode.\nIt would work if all the dependencies are in local.\nThis option doesn’t affect DB download. You need to specify skipUpdate as well as offlineScan in an air-gapped environment.",
@@ -16169,18 +17083,32 @@
                 ]
               },
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional deployment labels",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional deployment labels"
               },
               "readinessProbe": {
                 "description": "Readiness probe values",
@@ -16208,8 +17136,19 @@
                 "type": "integer"
               },
               "resources": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "serviceAccountName": {
                 "description": "set the service account to be used, default if left empty",
@@ -16238,6 +17177,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -16390,8 +17332,19 @@
       ],
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "automountServiceAccountToken": {
           "description": "mount the service account token"
@@ -16426,7 +17379,7 @@
           "description": "ignoreUnfixed the flag to display only fixed vulnerabilities"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "repository": {
               "description": "repository the repository for Trivy adapter image"
@@ -16459,7 +17412,7 @@
           "description": "OCI repository(ies) to retrieve the Java trivy vulnerability database in order of priority"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Liveness probe values",
           "properties": {
             "failureThreshold": {},
@@ -16471,19 +17424,37 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "offlineScan": {
           "description": "The offlineScan option prevents Trivy from sending API requests to identify dependencies.\nScanning JAR files and pom.xml may require Internet access for better detection, but this option tries to avoid it.\nFor example, the offline mode will not try to resolve transitive dependencies in pom.xml when the dependency doesn't\nexist in the local repositories. It means a number of detected vulnerabilities might be fewer in offline mode.\nIt would work if all the dependencies are in local.\nThis option doesn’t affect DB download. You need to specify skipUpdate as well as offlineScan in an air-gapped environment."
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nnodeTaintsPolicy: Honor\nwhenUnsatisfiable: DoNotSchedule\nAdditional deployment annotations"
         },
         "podDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -16496,15 +17467,22 @@
           "type": "object"
         },
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional deployment labels",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional deployment labels"
         },
         "priorityClassName": {
           "description": "The priority class to run the pod as"
         },
         "readinessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Readiness probe values",
           "properties": {
             "failureThreshold": {},
@@ -16565,7 +17543,7 @@
     },
     "uaaSecretName": {},
     "updateStrategy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "The update strategy for deployments with persistent volumes(jobservice, registry): \"RollingUpdate\" or \"Recreate\"\nSet it as \"Recreate\" when \"RWM\" for volumes isn't supported",
       "properties": {
         "type": {

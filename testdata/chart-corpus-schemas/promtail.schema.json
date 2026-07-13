@@ -75,16 +75,34 @@
       "then": {
         "properties": {
           "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity configuration for pods",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Affinity configuration for pods"
           },
           "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations for the DaemonSet",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations for the DaemonSet"
           },
           "automountServiceAccountToken": {
             "description": "Automatically mount API credentials for a particular Pod",
@@ -101,9 +119,20 @@
             "type": "object"
           },
           "containerSecurityContext": {
-            "additionalProperties": {},
-            "description": "The security context for containers",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "The security context for containers"
           },
           "defaultVolumeMounts": {
             "anyOf": [
@@ -112,22 +141,11 @@
                 "type": "object"
               },
               {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "mountPath": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "readOnly": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                },
+                "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Default volume mounts. Corresponds to `volumes`."
@@ -139,25 +157,11 @@
                 "type": "object"
               },
               {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "hostPath": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "name": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
+                "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Default volumes that are mounted into pods. In most cases, these should not be changed.\nUse `extraVolumes`/`extraVolumeMounts` for additional custom volumes."
@@ -171,6 +175,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra args for the Promtail container."
@@ -184,6 +191,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra environment variables. Set up tracing enviroment variables here if .Values.config.enableTracing is true.\nTracing currently only support configure via environment variables. See:\nhttps://grafana.com/docs/loki/latest/clients/promtail/configuration/#tracing_config\nhttps://www.jaegertracing.io/docs/1.16/client-features/"
@@ -197,6 +207,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra environment variables from secrets or configmaps"
@@ -226,6 +239,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra volume mounts together. Corresponds to `extraVolumes`."
@@ -235,7 +251,16 @@
               "imageRegistry": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -255,6 +280,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "hostAliases to add\n- ip: 1.2.3.4\nhostnames:\n- domain.tld"
@@ -266,44 +294,117 @@
                 "type": "string"
               },
               "registry": {
-                "description": "The Docker registry",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The Docker registry"
               },
               "repository": {
-                "description": "Docker image repository",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Docker image repository"
               }
             },
             "type": "object"
           },
           "nodeSelector": {
-            "additionalProperties": {},
-            "description": "Node selector for pods",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Node selector for pods"
           },
           "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\"",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\""
           },
           "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Pod labels",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pod labels"
           },
           "podSecurityContext": {
-            "additionalProperties": {},
-            "description": "The security context for pods",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "The security context for pods"
           },
           "resources": {
-            "additionalProperties": {},
-            "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
           },
           "serviceAccount": {
             "properties": {
@@ -324,30 +425,30 @@
                 "type": "object"
               },
               {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "effect": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "operator": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
+                "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Tolerations for pods. By default, pods will be scheduled on master/control-plane nodes."
           },
           "updateStrategy": {
-            "additionalProperties": {},
-            "description": "The update strategy for the DaemonSet",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "The update strategy for the DaemonSet"
           }
         },
         "type": "object"
@@ -378,24 +479,32 @@
           "affinity": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Affinity configuration for pods"
           },
           "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations for the DaemonSet",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations for the DaemonSet"
           },
           "automountServiceAccountToken": {
             "description": "Automatically mount API credentials for a particular Pod",
@@ -412,57 +521,20 @@
             "type": "object"
           },
           "containerSecurityContext": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "additionalProperties": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "properties": {
-                    "drop": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "description": "The security context for containers",
-            "properties": {
-              "allowPrivilegeEscalation": {
-                "type": "boolean"
-              },
-              "capabilities": {
-                "additionalProperties": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                "properties": {
-                  "drop": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "readOnlyRootFilesystem": {
-                "type": "boolean"
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "The security context for containers"
           },
           "defaultVolumeMounts": {
             "anyOf": [
@@ -471,22 +543,11 @@
                 "type": "object"
               },
               {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "mountPath": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "readOnly": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                },
+                "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Default volume mounts. Corresponds to `volumes`."
@@ -498,25 +559,11 @@
                 "type": "object"
               },
               {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "hostPath": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "name": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
+                "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Default volumes that are mounted into pods. In most cases, these should not be changed.\nUse `extraVolumes`/`extraVolumeMounts` for additional custom volumes."
@@ -530,6 +577,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra args for the Promtail container."
@@ -543,6 +593,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra environment variables. Set up tracing enviroment variables here if .Values.config.enableTracing is true.\nTracing currently only support configure via environment variables. See:\nhttps://grafana.com/docs/loki/latest/clients/promtail/configuration/#tracing_config\nhttps://www.jaegertracing.io/docs/1.16/client-features/"
@@ -556,18 +609,15 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra environment variables from secrets or configmaps"
           },
           "extraPorts": {
             "anyOf": [
-              {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
               {
                 "properties": {},
                 "type": "object"
@@ -590,6 +640,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Extra volume mounts together. Corresponds to `extraVolumes`."
@@ -599,7 +652,16 @@
               "imageRegistry": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -619,6 +681,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "hostAliases to add\n- ip: 1.2.3.4\nhostnames:\n- domain.tld"
@@ -630,12 +695,38 @@
                 "type": "string"
               },
               "registry": {
-                "description": "The Docker registry",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The Docker registry"
               },
               "repository": {
-                "description": "Docker image repository",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Docker image repository"
               }
             },
             "type": "object"
@@ -643,56 +734,75 @@
           "nodeSelector": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Node selector for pods"
           },
           "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\"",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\""
           },
           "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Pod labels",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pod labels"
           },
           "podSecurityContext": {
-            "additionalProperties": false,
-            "description": "The security context for pods",
-            "properties": {
-              "runAsGroup": {
-                "type": "integer"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
               },
-              "runAsUser": {
-                "type": "integer"
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "The security context for pods"
           },
           "resources": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
@@ -716,25 +826,427 @@
                 "type": "object"
               },
               {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "effect": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "operator": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
+                "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Tolerations for pods. By default, pods will be scheduled on master/control-plane nodes."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "file": {}
+                          },
+                          "required": [
+                            "file"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "file": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "file"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "configmap": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "configmap"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "file": {}
+                          },
+                          "required": [
+                            "file"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "file": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "file"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "daemonset": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "daemonset"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "daemonset": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "daemonset"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "configReloader": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configReloader"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "file": {}
+                          },
+                          "required": [
+                            "file"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "file": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "file"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "configReloader": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configReloader"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "file": {}
+                          },
+                          "required": [
+                            "file"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "file": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "file"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "configmap": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "configmap"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
+            "properties": {
+              "file": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Config file contents for Promtail.\nMust be configured as string.\nIt is templated so it can be assembled from reusable snippets in order to avoid redundancy."
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -1024,7 +1536,13 @@
               "serverPort": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
                     "type": "integer"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -1045,7 +1563,13 @@
                       "serverPort": {
                         "anyOf": [
                           {
+                            "type": "boolean"
+                          },
+                          {
                             "type": "integer"
+                          },
+                          {
+                            "type": "number"
                           },
                           {
                             "type": "string"
@@ -1057,57 +1581,20 @@
                     "type": "object"
                   },
                   "containerSecurityContext": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "properties": {
-                            "drop": {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
-                    },
-                    "description": "The security context for containers for sidecar config-reloader",
-                    "properties": {
-                      "allowPrivilegeEscalation": {
-                        "type": "boolean"
-                      },
-                      "capabilities": {
-                        "additionalProperties": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "properties": {
-                          "drop": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
                         "type": "object"
                       },
-                      "readOnlyRootFilesystem": {
-                        "type": "boolean"
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
-                    },
-                    "type": "object"
+                    ],
+                    "description": "The security context for containers for sidecar config-reloader"
                   },
                   "extraArgs": {
                     "description": "Extra args for the config-reloader container.",
@@ -1123,6 +1610,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra environment variables for sidecar config-reloader"
@@ -1136,6 +1626,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Extra environment variables from secrets or configmaps for sidecar config-reloader"
@@ -1147,16 +1640,55 @@
                         "type": "string"
                       },
                       "registry": {
-                        "description": "The Docker registry for sidecar config-reloader",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "The Docker registry for sidecar config-reloader"
                       },
                       "repository": {
-                        "description": "Docker image repository for sidecar config-reloader",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Docker image repository for sidecar config-reloader"
                       },
                       "tag": {
-                        "description": "Docker image tag for sidecar config-reloader",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Docker image tag for sidecar config-reloader"
                       }
                     },
                     "type": "object"
@@ -1164,14 +1696,15 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Resource requests and limits for sidecar config-reloader"
@@ -1244,18 +1777,32 @@
           "service": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the service",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the service"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels for the service",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels for the service"
               }
             },
             "type": "object"
@@ -1331,12 +1878,6 @@
         "properties": {
           "extraPorts": {
             "anyOf": [
-              {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
               {
                 "properties": {},
                 "type": "object"
@@ -1987,6 +2528,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Allow parent charts to override registry credentials"
@@ -2121,6 +2665,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Image pull secrets for Docker images"
@@ -2756,108 +3303,20 @@
       "then": {
         "properties": {
           "podSecurityPolicy": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "rule": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "description": "PodSecurityPolicy configuration.",
-            "properties": {
-              "allowPrivilegeEscalation": {
-                "type": "boolean"
-              },
-              "fsGroup": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "rule": {
-                    "type": "string"
-                  }
-                },
+            "anyOf": [
+              {
+                "additionalProperties": {},
                 "type": "object"
               },
-              "hostIPC": {
-                "type": "boolean"
-              },
-              "hostNetwork": {
-                "type": "boolean"
-              },
-              "hostPID": {
-                "type": "boolean"
-              },
-              "privileged": {
-                "type": "boolean"
-              },
-              "readOnlyRootFilesystem": {
-                "type": "boolean"
-              },
-              "requiredDropCapabilities": {
-                "items": {
-                  "type": "string"
-                },
+              {
+                "items": {},
                 "type": "array"
               },
-              "runAsUser": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "rule": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "seLinux": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "rule": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "supplementalGroups": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "rule": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "volumes": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
+              {
+                "type": "string"
               }
-            },
-            "type": "object"
+            ],
+            "description": "PodSecurityPolicy configuration."
           },
           "serviceAccount": {
             "properties": {
@@ -2902,18 +3361,32 @@
           "secret": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the Secret",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the Secret"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels for the Secret",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels for the Secret"
               }
             },
             "type": "object"
@@ -2986,26 +3459,44 @@
   ],
   "properties": {
     "affinity": {
-      "additionalProperties": {},
-      "description": "Affinity configuration for pods",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Affinity configuration for pods"
     },
     "annotations": {
-      "additionalProperties": {},
-      "description": "Annotations for the DaemonSet",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Annotations for the DaemonSet"
     },
     "automountServiceAccountToken": {
       "description": "Automatically mount API credentials for a particular Pod"
     },
     "config": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
       "properties": {
         "clients": {
           "description": "The config of clients of the Promtail server\nMust be reference in `config.file` to configure `clients`",
           "items": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "url": {
                 "type": "string"
@@ -3035,7 +3526,7 @@
           "type": "string"
         },
         "positions": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Configures where Promtail will save it's positions file, to resume reading after restarts.\nMust be referenced in `config.file` to configure `positions`",
           "properties": {
             "filename": {
@@ -3048,7 +3539,7 @@
           "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`"
         },
         "snippets": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "A section of reusable snippets that can be reference in `config.file`.\nCustom snippets may be added in order to reduce redundancy.\nThis is especially helpful when multiple `kubernetes_sd_configs` are use which usually have large parts in common.",
           "properties": {
             "addScrapeJobLabel": {
@@ -3057,7 +3548,7 @@
             },
             "common": {
               "items": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "action": {
                     "type": "string"
@@ -3104,7 +3595,7 @@
             },
             "pipelineStages": {
               "items": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                   "cri": {
                     "additionalProperties": {},
@@ -3125,7 +3616,7 @@
       "type": "object"
     },
     "configmap": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {
           "description": "If enabled, promtail config will be created as a ConfigMap instead of a secret",
@@ -3140,7 +3631,7 @@
       "type": "object"
     },
     "daemonset": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3205,6 +3696,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory"
@@ -3212,14 +3706,15 @@
                   "maxAllowed": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Defines the max allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
@@ -3227,25 +3722,48 @@
                   "minAllowed": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Defines the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
                   },
                   "recommenders": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "updatePolicy": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -3257,7 +3775,7 @@
       ],
       "properties": {
         "autoscaling": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "controlledResources": {
               "anyOf": [
@@ -3280,22 +3798,66 @@
               "type": "boolean"
             },
             "maxAllowed": {
-              "additionalProperties": {},
-              "description": "Defines the max allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Defines the max allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
             },
             "minAllowed": {
-              "additionalProperties": {},
-              "description": "Defines the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Defines the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
             },
             "recommenders": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "updatePolicy": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
@@ -3338,7 +3900,7 @@
       "description": "Default volumes that are mounted into pods. In most cases, these should not be changed.\nUse `extraVolumes`/`extraVolumeMounts` for additional custom volumes."
     },
     "deployment": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3380,8 +3942,19 @@
               "autoscaling": {
                 "properties": {
                   "behavior": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "maxReplicas": {
                     "type": "integer"
@@ -3460,14 +4033,20 @@
           "then": {
             "properties": {
               "strategy": {
-                "additionalProperties": false,
-                "description": "Set deployment object update strategy",
-                "properties": {
-                  "type": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
                     "type": "string"
                   }
-                },
-                "type": "object"
+                ],
+                "description": "Set deployment object update strategy"
               }
             },
             "type": "object"
@@ -3476,11 +4055,22 @@
       ],
       "properties": {
         "autoscaling": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "behavior": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "enabled": {
               "description": "Creates a HorizontalPodAutoscaler for the deployment",
@@ -3501,14 +4091,16 @@
         },
         "replicaCount": {},
         "strategy": {
-          "additionalProperties": {},
-          "description": "Set deployment object update strategy",
-          "properties": {
-            "type": {
-              "type": "string"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
             }
-          },
-          "type": "object"
+          ],
+          "description": "Set deployment object update strategy"
         }
       },
       "type": "object"
@@ -3668,7 +4260,7 @@
       "description": "Base path to server all API routes fro"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "description": "Docker image pull policy"
@@ -3680,11 +4272,24 @@
           "description": "Docker image repository"
         },
         "tag": {
-          "description": "Overrides the image tag whose default is the chart's appVersion",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Overrides the image tag whose default is the chart's appVersion"
         }
       },
       "type": "object"
@@ -3726,7 +4331,7 @@
       "description": "The name of the Namespace to deploy\nIf not set, `.Release.Namespace` is used"
     },
     "networkPolicy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3797,14 +4402,15 @@
                   "namespaceSelector": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Specifies the namespaces which are allowed to access the metrics port"
@@ -3877,14 +4483,15 @@
                   "podSelector": {
                     "anyOf": [
                       {
-                        "additionalProperties": false,
-                        "maxProperties": 0,
-                        "properties": {},
+                        "additionalProperties": {},
                         "type": "object"
                       },
                       {
-                        "additionalProperties": {},
-                        "type": "object"
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "Specifies the Pods which are allowed to access the metrics port.\nAs this is cross-namespace communication, you also neeed the namespaceSelector."
@@ -3903,7 +4510,7 @@
           "type": "boolean"
         },
         "k8sApi": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "cidrs": {
               "description": "Specifies specific network CIDRs you want to limit access to",
@@ -3917,7 +4524,7 @@
           "type": "object"
         },
         "metrics": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "cidrs": {
               "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes.",
@@ -3925,14 +4532,36 @@
               "type": "array"
             },
             "namespaceSelector": {
-              "additionalProperties": {},
-              "description": "Specifies the namespaces which are allowed to access the metrics port",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Specifies the namespaces which are allowed to access the metrics port"
             },
             "podSelector": {
-              "additionalProperties": {},
-              "description": "Specifies the Pods which are allowed to access the metrics port.\nAs this is cross-namespace communication, you also neeed the namespaceSelector.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Specifies the Pods which are allowed to access the metrics port.\nAs this is cross-namespace communication, you also neeed the namespaceSelector."
             }
           },
           "type": "object"
@@ -3941,31 +4570,48 @@
       "type": "object"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Node selector for pods",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Node selector for pods"
     },
     "podAnnotations": {
-      "additionalProperties": {},
-      "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\"",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\""
     },
     "podLabels": {
-      "additionalProperties": {},
-      "description": "Pod labels",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Pod labels"
     },
     "podSecurityContext": {
       "additionalProperties": {},
       "description": "The security context for pods",
-      "properties": {
-        "runAsGroup": {
-          "type": "integer"
-        },
-        "runAsUser": {
-          "type": "integer"
-        }
-      },
       "type": "object"
     },
     "podSecurityPolicy": {
@@ -3977,7 +4623,7 @@
       "description": "The name of the PriorityClass"
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "description": "Specifies whether RBAC resources are to be created",
@@ -3994,48 +4640,87 @@
       "description": "Readiness probe"
     },
     "resources": {
-      "additionalProperties": {},
-      "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
     "revisionHistoryLimit": {},
     "secret": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the Secret",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the Secret"
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Labels for the Secret",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels for the Secret"
         }
       },
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the service",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the service"
         },
         "enabled": {
           "type": "boolean"
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Labels for the service",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels for the service"
         }
       },
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4067,11 +4752,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations for the service account",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the service account"
               },
               "automountServiceAccountToken": {
                 "description": "Automatically mount a ServiceAccount's API credentials",
@@ -4086,6 +4778,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Image pull secrets for the service account"
@@ -4104,9 +4799,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations for the service account",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations for the service account"
         },
         "automountServiceAccountToken": {
           "description": "Automatically mount a ServiceAccount's API credentials"
@@ -4137,7 +4839,7 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4154,18 +4856,32 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "ServiceMonitor annotations",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "ServiceMonitor annotations"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional ServiceMonitor labels",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional ServiceMonitor labels"
               },
               "metricRelabelings": {
                 "anyOf": [
@@ -4176,6 +4892,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "ServiceMonitor relabel configs to apply to samples as the last\nstep before ingestion\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `metric_relabel_configs`)"
@@ -4190,14 +4909,15 @@
               "namespaceSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Namespace selector for ServiceMonitor resources"
@@ -4211,6 +4931,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `relabel_configs`)"
@@ -4228,6 +4951,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "ServiceMonitor will add labels from the service to the Prometheus metric\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitorspec"
@@ -4239,7 +4965,14 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "ServiceMonitor will use these tlsConfig settings to make the health check requests"
@@ -4289,10 +5022,17 @@
                 "description": "Prometheus rules will be deployed for alerting purposes",
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "rules": {
                     "anyOf": [
@@ -4303,6 +5043,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "namespace:\n- alert: PromtailRequestErrors\nexpr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~\"5..|failed\"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10\nfor: 5m\nlabels:\nseverity: critical\nannotations:\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }} errors.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}\nsummary: Promtail request errors (instance {{ $labels.instance }})\n- alert: PromtailRequestLatency\nexpr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1\nfor: 5m\nlabels:\nseverity: critical\nannotations:\nsummary: Promtail request latency (instance {{ $labels.instance }})\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }}s 99th percentile latency.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}"
@@ -4318,9 +5061,16 @@
       "description": "ServiceMonitor configuration",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "ServiceMonitor annotations",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ServiceMonitor annotations"
         },
         "enabled": {
           "description": "If enabled, ServiceMonitor resources for Prometheus Operator are created",
@@ -4330,9 +5080,16 @@
           "description": "ServiceMonitor scrape interval"
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Additional ServiceMonitor labels",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional ServiceMonitor labels"
         },
         "metricRelabelings": {
           "anyOf": [
@@ -4353,17 +5110,35 @@
           "description": "Alternative namespace for ServiceMonitor resources"
         },
         "namespaceSelector": {
-          "additionalProperties": {},
-          "description": "Namespace selector for ServiceMonitor resources",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Namespace selector for ServiceMonitor resources"
         },
         "prometheusRule": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Prometheus rules will be deployed for alerting purposes",
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "enabled": {
               "type": "boolean"
@@ -4430,7 +5205,14 @@
               "type": "object"
             },
             {
+              "items": {},
+              "type": "array"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "ServiceMonitor will use these tlsConfig settings to make the health check requests"
@@ -4439,13 +5221,13 @@
       "type": "object"
     },
     "sidecar": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "configReloader": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "config": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "limits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
               "properties": {
                 "serverPort": {
@@ -4496,7 +5278,7 @@
               "description": "Extra environment variables from secrets or configmaps for sidecar config-reloader"
             },
             "image": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "pullPolicy": {
                   "description": "Docker image pull policy for sidecar config-reloader"
@@ -4520,12 +5302,23 @@
               "description": "Readiness probe for sidecar config-reloader"
             },
             "resources": {
-              "additionalProperties": {},
-              "description": "Resource requests and limits for sidecar config-reloader",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Resource requests and limits for sidecar config-reloader"
             },
             "serviceMonitor": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -4555,9 +5348,20 @@
       "description": "Tolerations for pods. By default, pods will be scheduled on master/control-plane nodes."
     },
     "updateStrategy": {
-      "additionalProperties": {},
-      "description": "The update strategy for the DaemonSet",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The update strategy for the DaemonSet"
     }
   },
   "type": "object"

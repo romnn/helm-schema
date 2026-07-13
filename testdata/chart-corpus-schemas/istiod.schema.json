@@ -101,8 +101,19 @@
       "then": {
         "properties": {
           "_original": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "gatewayClasses": {
             "additionalProperties": {
@@ -221,6 +232,7 @@
                 "type": "object"
               },
               {
+                "items": {},
                 "type": "array"
               },
               {
@@ -228,6 +240,9 @@
               },
               {
                 "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           }
@@ -1569,7 +1584,7 @@
   ],
   "properties": {
     "_internal_defaults_do_not_set": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
       "properties": {
         "affinity": {
@@ -1590,7 +1605,7 @@
           "type": "integer"
         },
         "base": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enableIstioConfigCRDs": {
               "description": "For istioctl usage to disable istio config crds in base\nOverride the failurePolicy for the validation webhook.\nBy default, the webhook starts with \"Ignore\" and istiod flips it to \"Fail\" once ready.\nSet to \"Fail\" to avoid the flip-flop, which is useful for server-side apply tools\nthat do not support .Release.IsUpgrade (e.g. helm template | kubectl apply --server-side).\nvalidationFailurePolicy: Fail",
@@ -1600,7 +1615,7 @@
           "type": "object"
         },
         "cni": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Whether to use an existing CNI installation",
           "properties": {
             "enabled": {
@@ -1617,7 +1632,7 @@
           "type": "boolean"
         },
         "cpu": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "targetAverageUtilization": {
               "type": "integer"
@@ -1644,7 +1659,7 @@
           "type": "array"
         },
         "experimental": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "stableValidationPolicy": {
               "type": "boolean"
@@ -1663,7 +1678,7 @@
           "type": "object"
         },
         "gateways": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Gateway Settings",
           "properties": {
             "seccompProfile": {
@@ -1680,7 +1695,7 @@
           "type": "object"
         },
         "global": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "caAddress": {
               "description": "The customized CA address to retrieve certificates for the pods in the cluster.\nCSR clients such as the Istio Agent and ingress gateways can use this to specify the CA endpoint.\nIf not set explicitly, default to the Istio discovery address.",
@@ -1704,7 +1719,7 @@
               "type": "boolean"
             },
             "defaultPodDisruptionBudget": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "enable pod disruption budget for the control plane, which is used to\nensure Istio control plane components are gradually upgraded or recovered.",
               "properties": {
                 "enabled": {
@@ -1715,11 +1730,11 @@
               "type": "object"
             },
             "defaultResources": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "A minimal set of requested resources to applied to all deployments so that\nHorizontal Pod Autoscaler will be able to function (if set).\nEach component can overwrite these default values by adding its own resources\nblock in the relevant section below and setting the desired resources values.",
               "properties": {
                 "requests": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "properties": {
                     "cpu": {
                       "description": "memory: 128Mi\nlimits:\ncpu: 100m\nmemory: 128Mi",
@@ -1753,7 +1768,7 @@
               "type": "string"
             },
             "istiod": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Enabled by default in master for maximising testing.",
               "properties": {
                 "enableAnalysis": {
@@ -1767,7 +1782,7 @@
               "type": "boolean"
             },
             "logging": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Comma-separated minimum per-scope logging level of messages to output, in the form of <scope>:<level>,<scope>:<level>\nThe control plane has different scopes depending on component, but can configure default log level across all components\nIf empty, default scope and level will be used as configured in code",
               "properties": {
                 "level": {
@@ -1790,7 +1805,7 @@
               "type": "boolean"
             },
             "multiCluster": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "clusterName": {
                   "description": "Should be set to the name of the cluster this installation will run in. This is required for sidecar injection\nto properly label proxies",
@@ -1808,7 +1823,7 @@
               "type": "string"
             },
             "networkPolicy": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "When enabled, default NetworkPolicy resources will be created",
               "properties": {
                 "enabled": {
@@ -1833,7 +1848,7 @@
               "type": "string"
             },
             "proxy": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "autoInject": {
                   "description": "This controls the 'policy' in the sidecar injector.",
@@ -1895,11 +1910,11 @@
                   "type": "integer"
                 },
                 "resources": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "Resources for the sidecar.",
                   "properties": {
                     "limits": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "cpu": {
                           "type": "string"
@@ -1911,7 +1926,7 @@
                       "type": "object"
                     },
                     "requests": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "cpu": {
                           "type": "string"
@@ -1930,7 +1945,7 @@
                   "type": "object"
                 },
                 "startupProbe": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "Enables or disables a startup probe.\nFor optimal startup times, changing this should be tied to the readiness probe values.\nIf the probe is enabled, it is recommended to have delay=0s,period=15s,failureThreshold=4.\nThis ensures the pod is marked ready immediately after the startup probe passes (which has a 1s poll interval),\nand doesn't spam the readiness endpoint too much\nIf the probe is disabled, it is recommended to have delay=1s,period=2s,failureThreshold=30.\nThis ensures the startup is reasonable fast (polling every 2s). 1s delay is used since the startup is not often ready instantly.",
                   "properties": {
                     "enabled": {
@@ -1955,7 +1970,7 @@
               "type": "object"
             },
             "proxy_init": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "forceApplyIptables": {
                   "description": "Bypasses iptables idempotency handling, and attempts to apply iptables rules regardless of table state, which may cause unrecoverable failures.\nDo not use unless you need to work around an issue of the idempotency handling. This flag will be removed in future releases.",
@@ -1977,10 +1992,10 @@
               "type": "string"
             },
             "sds": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "token": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "The JWT token for SDS and the aud field of such JWT. See RFC 7519, section 4.1.3.\nWhen a CSR is sent from Istio Agent to the CA (e.g. Istiod), this aud is to make sure the\nJWT is intended for the CA.",
                   "properties": {
                     "aud": {
@@ -1993,7 +2008,7 @@
               "type": "object"
             },
             "sts": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "servicePort": {
                   "description": "The service port used by Security Token Service (STS) server to handle token exchange requests.\nSetting this port to a non-zero value enables STS server.",
@@ -2011,7 +2026,7 @@
               "type": "string"
             },
             "waypoint": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "affinity": {
                   "additionalProperties": {},
@@ -2024,11 +2039,11 @@
                   "type": "object"
                 },
                 "resources": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "Resources for the waypoint proxy.",
                   "properties": {
                     "limits": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "cpu": {
                           "type": "string"
@@ -2040,7 +2055,7 @@
                       "type": "object"
                     },
                     "requests": {
-                      "additionalProperties": false,
+                      "additionalProperties": {},
                       "properties": {
                         "cpu": {
                           "type": "string"
@@ -2091,7 +2106,7 @@
           "type": "string"
         },
         "istiodRemote": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "description": "If `true`, indicates that this cluster/install should consume a \"remote istiod\" installation,\nand istiod itself will NOT be installed in this cluster - only the support resources necessary\nto utilize a remote instance.",
@@ -2129,7 +2144,7 @@
           "type": "object"
         },
         "meshConfig": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "meshConfig defines runtime configuration of components, including Istiod and istio-agent behavior\nSee https://istio.io/docs/reference/config/istio.mesh.v1alpha1/ for all available options",
           "properties": {
             "enablePrometheusMerge": {
@@ -2147,7 +2162,7 @@
           "type": "string"
         },
         "pdb": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "minAvailable": {
               "description": "Minimum available pods set in PodDisruptionBudget.\nDefine either 'minAvailable' or 'maxUnavailable', never both.",
@@ -2173,11 +2188,11 @@
           "type": "integer"
         },
         "resources": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Resources for a small pilot install",
           "properties": {
             "requests": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "cpu": {
                   "type": "string"
@@ -2220,7 +2235,7 @@
           "type": "object"
         },
         "sidecarInjectorWebhook": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "alwaysInjectSelector": {
               "items": {},
@@ -2268,7 +2283,7 @@
           "type": "string"
         },
         "taint": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Settings related to the untaint controller\nThis controller will remove `cni.istio.io/not-ready` from nodes when the istio-cni pod becomes ready\nIt should be noted that cluster operator/owner is responsible for having the taint set by their infrastructure provider when new nodes are added to the cluster; the untaint controller does not taint nodes",
           "properties": {
             "enabled": {
@@ -2283,20 +2298,20 @@
           "type": "object"
         },
         "telemetry": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {
               "type": "boolean"
             },
             "v2": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "description": "For Null VM case now.\nThis also enables metadata exchange.",
                   "type": "boolean"
                 },
                 "prometheus": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "Indicate if prometheus stats filter is enabled or not",
                   "properties": {
                     "enabled": {
@@ -2306,7 +2321,7 @@
                   "type": "object"
                 },
                 "stackdriver": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "description": "stackdriver filter settings.",
                   "properties": {
                     "enabled": {
@@ -2357,22 +2372,55 @@
       "type": "object"
     },
     "_original": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "affinity": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "autoscaleBehavior": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "autoscaleEnabled": {},
     "autoscaleMax": {},
     "autoscaleMin": {},
     "base": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "validationCABundle": {},
         "validationFailurePolicy": {},
@@ -2383,7 +2431,7 @@
     "compatibilityVersion": {},
     "configMap": {},
     "cpu": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "targetAverageUtilization": {}
       },
@@ -2392,10 +2440,17 @@
     "crlConfigMapName": {},
     "defaults": {},
     "deploymentAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "deploymentLabels": {
       "anyOf": [
@@ -2405,6 +2460,10 @@
           "type": "object"
         },
         {
+          "items": {},
+          "type": "array"
+        },
+        {
           "type": "array"
         },
         {
@@ -2412,6 +2471,9 @@
         },
         {
           "type": "object"
+        },
+        {
+          "type": "string"
         }
       ]
     },
@@ -2451,19 +2513,41 @@
       ]
     },
     "envVarFrom": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "experimental": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "stableValidationPolicy": {}
       },
       "type": "object"
     },
     "extraContainerArgs": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "gatewayClasses": {},
     "gateways": {},
@@ -2490,7 +2574,7 @@
         "configCluster": {},
         "configValidation": {},
         "defaultPodDisruptionBudget": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {}
           },
@@ -2499,7 +2583,12 @@
         "enableReaderRBAC": {},
         "externalIstiod": {},
         "hub": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "imagePullPolicy": {},
         "imagePullSecrets": {
@@ -2541,7 +2630,7 @@
           "type": "string"
         },
         "istiod": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enableAnalysis": {}
           },
@@ -2549,12 +2638,25 @@
         },
         "logAsJson": {},
         "logging": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "level": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           },
@@ -2562,18 +2664,29 @@
         },
         "meshID": {},
         "meshNetworks": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "multiCluster": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "clusterName": {}
           },
           "type": "object"
         },
         "networkPolicy": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {}
           },
@@ -2586,7 +2699,7 @@
         "priorityClassName": {},
         "profile": {},
         "proxy": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "autoInject": {},
             "clusterDomain": {},
@@ -2624,10 +2737,10 @@
         "remotePilotAddress": {},
         "resourceScope": {},
         "sds": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "token": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "aud": {}
               },
@@ -2637,20 +2750,25 @@
           "type": "object"
         },
         "tag": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tracer": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "datadog": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "address": {}
               },
               "type": "object"
             },
             "lightstep": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "accessToken": {},
                 "address": {}
@@ -2658,7 +2776,7 @@
               "type": "object"
             },
             "stackdriver": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "debug": {},
                 "maxNumberOfAnnotations": {},
@@ -2668,7 +2786,7 @@
               "type": "object"
             },
             "zipkin": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "address": {}
               },
@@ -2678,9 +2796,22 @@
           "type": "object"
         },
         "trustBundleName": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
           ]
         },
         "variant": {}
@@ -2688,15 +2819,41 @@
       "type": "object"
     },
     "hub": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "image": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "initContainers": {},
@@ -2719,7 +2876,7 @@
     },
     "ipFamilyPolicy": {},
     "istiodRemote": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {},
         "enabledLocalInjectorIstiod": {},
@@ -2732,7 +2889,7 @@
     "jwksResolverExtraRootCA": {},
     "keepaliveMaxServerConnectionAge": {},
     "memory": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "targetAverageUtilization": {}
       },
@@ -2747,8 +2904,19 @@
       "type": "object"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "ownerName": {
       "type": [
@@ -2757,7 +2925,7 @@
       ]
     },
     "pdb": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "maxUnavailable": {},
         "minAvailable": {},
@@ -2768,10 +2936,17 @@
     "pilot": {},
     "platform": {},
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "podLabels": {
       "anyOf": [
@@ -2781,6 +2956,10 @@
           "type": "object"
         },
         {
+          "items": {},
+          "type": "array"
+        },
+        {
           "type": "array"
         },
         {
@@ -2788,6 +2967,9 @@
         },
         {
           "type": "object"
+        },
+        {
+          "type": "string"
         }
       ]
     },
@@ -2810,27 +2992,63 @@
     "rollingMaxSurge": {},
     "rollingMaxUnavailable": {},
     "seccompProfile": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "serviceAccountAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "serviceAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "sidecarInjectorWebhook": {
-      "additionalProperties": false,
-      "properties": {
-        "alwaysInjectSelector": {
+      "anyOf": [
+        {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "serviceAccountAnnotations": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "serviceAnnotations": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sidecarInjectorWebhook": {
+      "additionalProperties": {},
+      "properties": {
+        "alwaysInjectSelector": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "defaultTemplates": {
           "anyOf": [
@@ -2851,68 +3069,123 @@
         "enableNamespacesByDefault": {},
         "injectedAnnotations": {},
         "neverInjectSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "reinvocationPolicy": {},
         "templates": {
-          "additionalProperties": {},
-          "properties": {
-            "agentgateway": {},
-            "gateway": {},
-            "grpc-agent": {},
-            "grpc-simple": {},
-            "kube-gateway": {},
-            "sidecar": {},
-            "waypoint": {}
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "agentgateway": {},
+                "gateway": {},
+                "grpc-agent": {},
+                "grpc-simple": {},
+                "kube-gateway": {},
+                "sidecar": {},
+                "waypoint": {}
+              },
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       },
       "type": "object"
     },
     "sidecarInjectorWebhookAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "tag": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "taint": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {},
         "namespace": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
           ]
         }
       },
       "type": "object"
     },
     "telemetry": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {},
         "v2": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "enabled": {},
             "prometheus": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {}
               },
               "type": "object"
             },
             "stackdriver": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {}
               },
@@ -2925,27 +3198,76 @@
       "type": "object"
     },
     "tolerations": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "topologySpreadConstraints": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "traceSampling": {},
     "trafficDistribution": {},
     "trustedZtunnelName": {},
     "trustedZtunnelNamespace": {},
     "variant": {
-      "type": "string"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "volumeMounts": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "volumes": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     }
   },
   "type": "object"

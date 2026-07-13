@@ -131,7 +131,7 @@ fn append_conditional_at_parts(
     let properties = ensure_object_properties(node);
     let child = properties
         .entry(path_segments[0].clone())
-        .or_insert_with(SchemaNode::closed_object);
+        .or_insert_with(SchemaNode::unknown_object);
     if path_segments.len() == 1 {
         push_conditional_entry(child, condition, then_schema, true);
     } else {
@@ -161,7 +161,7 @@ fn push_conditional_entry(
         node,
         SchemaNode::Object { .. } | SchemaNode::Foreign(Value::Object(_))
     ) {
-        *node = SchemaNode::closed_object();
+        *node = SchemaNode::unknown_object();
     }
     node.push_all_of(conditional);
 }
@@ -362,7 +362,10 @@ fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, Sche
                 .with_additional_properties(SchemaNode::empty());
         }
         _ => {
-            *node = SchemaNode::closed_object();
+            // Hosting a member under a non-object slot proves keys exist,
+            // not that the member set is bounded: the coerced host stays
+            // open (the strict root closure is created separately).
+            *node = SchemaNode::unknown_object();
         }
     }
     let SchemaNode::Object { properties, .. } = node else {
@@ -576,7 +579,11 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         if next_is_array {
             new_array_slot()
         } else {
-            SchemaNode::closed_object()
+            // An ancestor object materialized only because a DESCENDANT is
+            // referenced: member reads prove keys exist, they do not bound
+            // the member set, so the interior node stays open (the strict
+            // root closure is created separately).
+            SchemaNode::unknown_object()
         }
     });
     if !next_is_array {

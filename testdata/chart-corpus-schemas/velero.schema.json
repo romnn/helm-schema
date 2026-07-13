@@ -66,14 +66,36 @@
       "then": {
         "properties": {
           "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity to use for the Velero deployment. Optional.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Affinity to use for the Velero deployment. Optional."
           },
           "containerSecurityContext": {
-            "additionalProperties": {},
-            "description": "Container Level Security Context for the 'velero' container of the Velero deployment. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\nallowPrivilegeEscalation: false\ncapabilities:\ndrop: [\"ALL\"]\nadd: []\nreadOnlyRootFilesystem: true",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Container Level Security Context for the 'velero' container of the Velero deployment. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\nallowPrivilegeEscalation: false\ncapabilities:\ndrop: [\"ALL\"]\nadd: []\nreadOnlyRootFilesystem: true"
           },
           "image": {
             "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
@@ -106,35 +128,82 @@
           "kubectl": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to set for the upgrade/cleanup job. Optional.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to set for the upgrade/cleanup job. Optional."
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels to set for the upgrade/cleanup job. Optional.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels to set for the upgrade/cleanup job. Optional."
               }
             },
             "type": "object"
           },
           "nodeSelector": {
-            "additionalProperties": {},
-            "description": "Node selector to use for the Velero deployment. Optional.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Node selector to use for the Velero deployment. Optional."
           },
           "podSecurityContext": {
-            "additionalProperties": {},
-            "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337"
           },
           "securityContext": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "serviceAccount": {
             "description": "Information about the Kubernetes service account Velero uses.",
@@ -205,6 +274,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Tolerations to use for the Velero deployment. Optional."
@@ -225,6 +297,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Additional values to be used as environment variables. Optional.\nSimple value\n- name: SIMPLE_VAR\nvalue: \"simple-value\""
@@ -238,6 +313,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Extra volumeMounts for the Upgrade CRDs Job. Optional."
@@ -251,6 +329,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Extra volumes for the Upgrade CRDs Job. Optional."
@@ -259,9 +340,20 @@
             "type": "object"
           },
           "upgradeJobResources": {
-            "additionalProperties": {},
-            "description": "Resource requests/limits to specify for the upgradeCRDs job pod. Need to be adjusted by user accordingly.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Resource requests/limits to specify for the upgradeCRDs job pod. Need to be adjusted by user accordingly."
           }
         },
         "type": "object"
@@ -284,14 +376,15 @@
           "affinity": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Affinity to use for the Velero deployment. Optional."
@@ -327,23 +420,31 @@
           "kubectl": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to set for the upgrade/cleanup job. Optional.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to set for the upgrade/cleanup job. Optional."
               },
               "containerSecurityContext": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Digest value example: sha256:c7bf8cf6e79f474fda2623a7b98572a1b909c4d912b05062b444ffe79883fdbe.\nIf used, it will take precedence over the kubectl.image.tag.\ndigest:\nkubectl image tag. If used, it will take precedence over the cluster Kubernetes version.\ntag: v1.34.5\nContainer Level Security Context for the 'kubectl' container of the crd jobs. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
@@ -351,35 +452,69 @@
               "image": {
                 "properties": {
                   "digest": {
-                    "type": [
-                      "string",
-                      "null"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
                     ]
                   },
                   "repository": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels to set for the upgrade/cleanup job. Optional.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels to set for the upgrade/cleanup job. Optional."
               },
               "resources": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Resource requests/limits to specify for the upgrade/cleanup job. Optional"
@@ -390,14 +525,15 @@
           "nodeSelector": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Node selector to use for the Velero deployment. Optional."
@@ -405,21 +541,33 @@
           "podSecurityContext": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "additionalProperties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "type": "object"
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337"
           },
           "securityContext": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "serviceAccount": {
             "description": "Information about the Kubernetes service account Velero uses.",
@@ -447,6 +595,9 @@
               {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "string"
               }
             ],
             "description": "Tolerations to use for the Velero deployment. Optional."
@@ -503,12 +654,6 @@
         "properties": {
           "configMaps": {
             "anyOf": [
-              {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
-                "type": "object"
-              },
               {
                 "properties": {},
                 "type": "object"
@@ -608,6 +753,7 @@
                 "anyOf": [
                   {
                     "items": {
+                      "additionalProperties": {},
                       "properties": {},
                       "type": "object"
                     },
@@ -647,11 +793,24 @@
             "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
             "properties": {
               "dataMoverPrepareTimeout": {
-                "description": "Configures the timeout for provisioning the volume created from the CSI snapshot. Default: 30m",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Configures the timeout for provisioning the volume created from the CSI snapshot. Default: 30m"
               },
               "extraEnvVars": {
                 "anyOf": [
@@ -662,6 +821,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Additional values to be used as environment variables. Optional.\nSimple value\n- name: SIMPLE_VAR\nvalue: \"simple-value\""
@@ -686,6 +848,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -693,6 +856,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret."
@@ -737,36 +903,45 @@
               "affinity": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Affinity to use with node-agent daemonset. Optional."
               },
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to set for the node-agent daemonset. Optional.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to set for the node-agent daemonset. Optional."
               },
               "containerSecurityContext": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Container Level Security Context for the 'node-agent' container of the node-agent daemonset. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
@@ -774,14 +949,15 @@
               "dnsConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "DNS configuration to use for the node-agent daemonset. Optional."
@@ -799,6 +975,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Additional command-line arguments that will be passed to the node-agent. Optional.\ne.g.: extraArgs: [\"--foo=bar\"]"
@@ -812,6 +991,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Additional values to be used as environment variables for node-agent daemonset. Optional.\nSimple key/value\n- name: SIMPLE_VAR\nvalue: \"simple-value\""
@@ -825,6 +1007,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Extra volumeMounts for the node-agent daemonset. Optional."
@@ -838,6 +1023,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Extra volumes for the node-agent daemonset. Optional."
@@ -851,49 +1039,72 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Configure hostAliases for node-agent daemonset. Optional\nFor more information, check: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/\n- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\""
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "labels to set for the node-agent daemonset. Optional.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "labels to set for the node-agent daemonset. Optional."
               },
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Node selector to use for the node-agent daemonset. Optional."
               },
               "podLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Additional pod labels for the node-agent daemonset. Optional\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional pod labels for the node-agent daemonset. Optional\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
               },
               "podSecurityContext": {
-                "additionalProperties": false,
-                "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html",
-                "properties": {
-                  "runAsUser": {
-                    "description": "fsGroup: 1337",
-                    "type": "integer"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ],
+                "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
               },
               "priorityClassName": {
                 "description": "Pod priority class name to use for the node-agent daemonset. Optional.",
@@ -908,6 +1119,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "requests:\ncpu: 500m\nmemory: 512Mi\nlimits:\ncpu: 1000m\nmemory: 1024Mi\nContainer resize policy for the node-agent daemonset.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/\n- resourceName: cpu\nrestartPolicy: NotRequired\n- resourceName: memory\nrestartPolicy: RestartContainer"
@@ -915,14 +1129,15 @@
               "resources": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Resource requests/limits to specify for the node-agent daemonset deployment. Optional.\nhttps://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits"
@@ -932,8 +1147,19 @@
                 "type": "string"
               },
               "securityContext": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "tolerations": {
                 "anyOf": [
@@ -944,6 +1170,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Tolerations to use for the node-agent daemonset. Optional."
@@ -951,14 +1180,15 @@
               "updateStrategy": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Update strategy to use for the node-agent daemonset. Optional."
@@ -1077,6 +1307,7 @@
                 "anyOf": [
                   {
                     "items": {
+                      "additionalProperties": {},
                       "properties": {},
                       "type": "object"
                     },
@@ -1207,6 +1438,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -1214,6 +1446,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret."
@@ -2103,6 +2338,40 @@
     },
     {
       "if": {
+        "properties": {
+          "initContainers": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "initContainers"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "initContainers": {
+            "anyOf": [
+              {
+                "not": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.\nIf the value is a string then it is evaluated as a template.\n- name: velero-plugin-for-aws\nimage: velero/velero-plugin-for-aws:v1.13.1\nimagePullPolicy: IfNotPresent\nvolumeMounts:\n- mountPath: /target\nname: plugins"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -2171,6 +2440,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Extra volumeMounts for the upgrade/cleanup job. Optional."
@@ -2184,6 +2456,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Extra volumes for the upgrade/cleanup job. Optional."
@@ -2191,13 +2466,39 @@
               "image": {
                 "properties": {
                   "digest": {
-                    "type": [
-                      "string",
-                      "null"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
                     ]
                   },
                   "repository": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -2276,14 +2577,36 @@
       "then": {
         "properties": {
           "livenessProbe": {
-            "additionalProperties": {},
-            "description": "Liveness probe of the pod",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Liveness probe of the pod"
           },
           "readinessProbe": {
-            "additionalProperties": {},
-            "description": "Readiness probe of the pod",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Readiness probe of the pod"
           }
         },
         "type": "object"
@@ -2717,11 +3040,18 @@
             "description": "Settings for Velero's prometheus metrics. Enabled by default.",
             "properties": {
               "podAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Pod annotations for Prometheus",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pod annotations for Prometheus"
               }
             },
             "type": "object"
@@ -2790,9 +3120,20 @@
           "nodeAgent": {
             "properties": {
               "lifecycle": {
-                "additionalProperties": {},
-                "description": "Container Lifecycle Hooks to use for the node-agent daemonset. Optional.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Container Lifecycle Hooks to use for the node-agent daemonset. Optional."
               }
             },
             "type": "object"
@@ -2943,16 +3284,15 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Additional pod labels for the node-agent daemonset. Optional\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
@@ -3096,11 +3436,18 @@
       "then": {
         "properties": {
           "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to add to the Velero deployment's pod template. Optional.\nIf using kube2iam or kiam, use the following annotation with your AWS_ACCOUNT_ID\nand VELERO_ROLE_NAME filled in:\niam.amazonaws.com/role: \"arn:aws:iam::<AWS_ACCOUNT_ID>:role/<VELERO_ROLE_NAME>\"",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to add to the Velero deployment's pod template. Optional.\nIf using kube2iam or kiam, use the following annotation with your AWS_ACCOUNT_ID\nand VELERO_ROLE_NAME filled in:\niam.amazonaws.com/role: \"arn:aws:iam::<AWS_ACCOUNT_ID>:role/<VELERO_ROLE_NAME>\""
           }
         },
         "type": "object"
@@ -3289,11 +3636,18 @@
       "then": {
         "properties": {
           "secretAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations to add to secret",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to add to secret"
           }
         },
         "type": "object"
@@ -3378,6 +3732,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Affinity to use for the Velero deployment. Optional."
@@ -3385,16 +3746,13 @@
     "annotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Annotations to add to the Velero deployment's. Optional.\nIf you are using reloader use the following annotation with your VELERO_SECRET_NAME\nsecret.reloader.stakater.com/reload: \"<VELERO_SECRET_NAME>\""
@@ -3411,7 +3769,7 @@
       "description": "Velero ConfigMaps.\nEg:\nconfigMaps:\nSee: https://velero.io/docs/v1.11/file-system-backup/\nfs-restore-action-config:\nlabels:\nvelero.io/plugin-config: \"\"\nvelero.io/pod-volume-restore: RestoreItemAction\ndata:\nimage: velero/velero:v1.17.1\ncpuRequest: 200m\nmemRequest: 128Mi\ncpuLimit: 200m\nmemLimit: 128Mi\nsecCtx: |\ncapabilities:\ndrop:\n- ALL\nadd: []\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true\nrunAsUser: 1001\nrunAsGroup: 999"
     },
     "configuration": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -3633,6 +3991,7 @@
                             "type": "object"
                           },
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
@@ -3640,6 +3999,9 @@
                           },
                           {
                             "type": "null"
+                          },
+                          {
+                            "type": "string"
                           }
                         ],
                         "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2"
@@ -3667,7 +4029,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3681,7 +4052,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3695,7 +4075,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3709,7 +4098,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3726,7 +4124,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3740,7 +4147,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3754,7 +4170,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3768,7 +4193,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3782,7 +4216,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3796,7 +4239,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3813,7 +4265,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3822,11 +4283,24 @@
           "description": "`velero server` default: empty"
         },
         "disableInformerCache": {
-          "description": "`velero server` default: false",
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "`velero server` default: false"
         },
         "extraArgs": {
           "anyOf": [
@@ -3864,7 +4338,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3878,7 +4361,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3892,7 +4384,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3906,7 +4407,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3920,7 +4430,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3934,7 +4453,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3948,7 +4476,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3962,7 +4499,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3976,7 +4522,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3990,7 +4545,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -3999,29 +4563,49 @@
           "description": "The address to expose the pprof profiler. Default: localhost:6060"
         },
         "repositoryMaintenanceJob": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Resource requests/limits to specify for the repository-maintenance job. Optional.\nhttps://velero.io/docs/v1.14/repository-maintenance/#resource-limitation",
           "properties": {
             "repositoryConfigData": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Per-repository resource settings ConfigMap\nThis ConfigMap allows specifying different settings for different repositories\nSee: https://velero.io/docs/main/repository-maintenance/",
               "properties": {
                 "global": {
-                  "additionalProperties": false,
-                  "description": "Global configuration applied to all repositories\nThis configuration is used when no specific repository configuration is found\nglobal:\npodResources:\ncpuRequest: \"100m\"\ncpuLimit: \"200m\"\nmemoryRequest: \"100Mi\"\nmemoryLimit: \"200Mi\"\nkeepLatestMaintenanceJobs: 1\nloadAffinity:\n- nodeSelector:\nmatchExpressions:\n- key: \"cloud.google.com/machine-family\"\noperator: \"In\"\nvalues: [\"e2\"]\n- nodeSelector:\nmatchExpressions:\n- key: \"topology.kubernetes.io/zone\"\noperator: \"In\"\nvalues: [\"us-central1-a\", \"us-central1-b\", \"us-central1-c\"]\npriorityClassName: \"low-priority\"  # Note: priorityClassName is only supported in global configuration",
-                  "properties": {
-                    "keepLatestMaintenanceJobs": {
-                      "type": "integer"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "keepLatestMaintenanceJobs": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
                     }
-                  },
-                  "type": "object"
+                  ],
+                  "description": "Global configuration applied to all repositories\nThis configuration is used when no specific repository configuration is found\nglobal:\npodResources:\ncpuRequest: \"100m\"\ncpuLimit: \"200m\"\nmemoryRequest: \"100Mi\"\nmemoryLimit: \"200Mi\"\nkeepLatestMaintenanceJobs: 1\nloadAffinity:\n- nodeSelector:\nmatchExpressions:\n- key: \"cloud.google.com/machine-family\"\noperator: \"In\"\nvalues: [\"e2\"]\n- nodeSelector:\nmatchExpressions:\n- key: \"topology.kubernetes.io/zone\"\noperator: \"In\"\nvalues: [\"us-central1-a\", \"us-central1-b\", \"us-central1-c\"]\npriorityClassName: \"low-priority\"  # Note: priorityClassName is only supported in global configuration"
                 },
                 "name": {
-                  "description": "Name of the ConfigMap to create. If not provided, will use \"velero-repo-maintenance\"",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Name of the ConfigMap to create. If not provided, will use \"velero-repo-maintenance\""
                 },
                 "repositories": {
                   "anyOf": [
@@ -4035,6 +4619,9 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "type": "string"
                     }
                   ],
                   "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2"
@@ -4054,7 +4641,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -4068,7 +4664,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -4082,7 +4687,16 @@
               "const": null
             },
             {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "type": "null"
+            },
+            {
+              "type": "number"
             },
             {
               "type": "string"
@@ -4122,12 +4736,19 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Container Level Security Context for the 'velero' container of the Velero deployment. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\nallowPrivilegeEscalation: false\ncapabilities:\ndrop: [\"ALL\"]\nadd: []\nreadOnlyRootFilesystem: true"
     },
     "credentials": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4157,6 +4778,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -4164,6 +4786,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret."
@@ -4226,6 +4851,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -4233,6 +4859,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret."
@@ -4245,6 +4874,7 @@
                     "type": "object"
                   },
                   {
+                    "items": {},
                     "type": "array"
                   },
                   {
@@ -4252,6 +4882,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Data to be stored in the Velero secret, if `useSecret` is true and `existingSecret` is empty.\nAs of the current Velero release, Velero only uses one secret key/value at a time.\nThe key must be named `cloud`, and the value corresponds to the entire content of your IAM credentials file.\nNote that the format will be different for different providers, please check their documentation.\nHere is a list of documentation for plugins maintained by the Velero team:\n[AWS] https://github.com/vmware-tanzu/velero-plugin-for-aws/blob/main/README.md\n[GCP] https://github.com/vmware-tanzu/velero-plugin-for-gcp/blob/main/README.md\n[Azure] https://github.com/vmware-tanzu/velero-plugin-for-microsoft-azure/blob/main/README.md"
@@ -4315,6 +4948,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "DNS configuration to use for the Velero deployment. Optional."
@@ -4375,9 +5015,22 @@
       "description": "Extra volumes for the Velero deployment. Optional."
     },
     "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "hostAliases": {
@@ -4396,13 +5049,26 @@
       "description": "Configure hostAliases for Velero deployment. Optional\nFor more information, check: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/\n- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\""
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
       "properties": {
         "digest": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
           ]
         },
         "imagePullSecrets": {
@@ -4413,10 +5079,20 @@
           "type": "string"
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -4425,17 +5101,35 @@
       "description": "Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.\nIf the value is a string then it is evaluated as a template.\n- name: velero-plugin-for-aws\nimage: velero/velero-plugin-for-aws:v1.13.1\nimagePullPolicy: IfNotPresent\nvolumeMounts:\n- mountPath: /target\nname: plugins"
     },
     "kubectl": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to set for the upgrade/cleanup job. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to set for the upgrade/cleanup job. Optional."
         },
         "containerSecurityContext": {
-          "additionalProperties": {},
-          "description": "Digest value example: sha256:c7bf8cf6e79f474fda2623a7b98572a1b909c4d912b05062b444ffe79883fdbe.\nIf used, it will take precedence over the kubectl.image.tag.\ndigest:\nkubectl image tag. If used, it will take precedence over the cluster Kubernetes version.\ntag: v1.34.5\nContainer Level Security Context for the 'kubectl' container of the crd jobs. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Digest value example: sha256:c7bf8cf6e79f474fda2623a7b98572a1b909c4d912b05062b444ffe79883fdbe.\nIf used, it will take precedence over the kubectl.image.tag.\ndigest:\nkubectl image tag. If used, it will take precedence over the cluster Kubernetes version.\ntag: v1.34.5\nContainer Level Security Context for the 'kubectl' container of the crd jobs. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
         },
         "extraVolumeMounts": {
           "anyOf": [
@@ -4468,28 +5162,59 @@
           "description": "Extra volumes for the upgrade/cleanup job. Optional."
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "digest": {},
             "repository": {},
             "tag": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           },
           "type": "object"
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "Labels to set for the upgrade/cleanup job. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels to set for the upgrade/cleanup job. Optional."
         },
         "resources": {
-          "additionalProperties": {},
-          "description": "Resource requests/limits to specify for the upgrade/cleanup job. Optional",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Resource requests/limits to specify for the upgrade/cleanup job. Optional"
         }
       },
       "type": "object"
@@ -4497,16 +5222,13 @@
     "labels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Labels to add to the Velero deployment's. Optional."
@@ -4522,17 +5244,31 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Container Lifecycle Hooks to use for the Velero deployment. Optional."
     },
     "livenessProbe": {
-      "additionalProperties": {},
-      "description": "Liveness probe of the pod",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Liveness probe of the pod"
     },
     "metrics": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4590,21 +5326,46 @@
                 "description": "metrics.serviceMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.serviceMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nServiceMonitor namespace. Default to Velero namespace.\nnamespace:\nServiceMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nServiceMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}",
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "metrics.nodeAgentPodMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.nodeAgentPodMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nPodMonitor namespace. Default to Velero namespace.\nnamespace:\nPodMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nPodMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "metrics.nodeAgentPodMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.nodeAgentPodMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nPodMonitor namespace. Default to Velero namespace.\nnamespace:\nPodMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nPodMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}"
                   },
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "metricRelabelings": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "namespace": {
                     "type": [
@@ -4613,12 +5374,34 @@
                     ]
                   },
                   "relabelings": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "tlsConfig": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -4707,11 +5490,18 @@
               "prometheusRule": {
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Additional labels to add to deployed PrometheusRule",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Additional labels to add to deployed PrometheusRule"
                   },
                   "namespace": {
                     "type": [
@@ -4789,6 +5579,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "PrometheusRule namespace. Defaults to Velero namespace.\nnamespace: \"\"\nRules to be deployed\n- alert: VeleroBackupFailed\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has failed\nexpr: |-\nvelero_backup_last_status{schedule!=\"\"} != 1\nfor: 15m\nlabels:\nseverity: warning\n- alert: VeleroBackupFailing\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has been failing for the last 12h\nexpr: |-\nvelero_backup_last_status{schedule!=\"\"} != 1\nfor: 12h\nlabels:\nseverity: critical\n- alert: VeleroNoNewBackup\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has not run successfully in the last 25h\nexpr: |-\n(\n(time() - velero_backup_last_successful_timestamp{schedule!=\"\"}) >bool (25 * 3600)\nor\nabsent(velero_backup_last_successful_timestamp{schedule!=\"\"})\n) == 1\nfor: 1h\nlabels:\nseverity: critical\n- alert: VeleroBackupPartialFailures\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has {{ $value | humanizePercentage }} partialy failed backups\nexpr: |-\nrate(velero_backup_partial_failure_total{schedule!=\"\"}[25m])\n/ rate(velero_backup_attempt_total{schedule!=\"\"}[25m]) > 0.5\nfor: 15m\nlabels:\nseverity: warning"
@@ -4861,20 +5654,45 @@
               "serviceMonitor": {
                 "properties": {
                   "additionalLabels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "metricRelabelings": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "namespace": {
                     "type": [
@@ -4883,12 +5701,34 @@
                     ]
                   },
                   "relabelings": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "tlsConfig": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -4930,10 +5770,17 @@
                 "description": "service metdata if metrics are enabled",
                 "properties": {
                   "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "externalTrafficPolicy": {
                     "description": "External/Internal traffic policy setting (Cluster, Local)\nhttps://kubernetes.io/docs/reference/networking/virtual-ips/#traffic-policies",
@@ -4951,6 +5798,9 @@
                       {
                         "items": {},
                         "type": "array"
+                      },
+                      {
+                        "type": "string"
                       }
                     ],
                     "description": "a list of IP families for the metrics Service that should be supported, in the order in which they should be applied to ClusterIP. Can be \"IPv4\" and/or \"IPv6\"."
@@ -4960,10 +5810,17 @@
                     "type": "string"
                   },
                   "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "type": {
                     "type": "string"
@@ -4982,17 +5839,31 @@
           "type": "boolean"
         },
         "nodeAgentPodMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "metrics.serviceMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.serviceMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nServiceMonitor namespace. Default to Velero namespace.\nnamespace:\nServiceMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nServiceMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}",
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "description": "metrics.nodeAgentPodMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.nodeAgentPodMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nPodMonitor namespace. Default to Velero namespace.\nnamespace:\nPodMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nPodMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "metrics.nodeAgentPodMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.nodeAgentPodMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nPodMonitor namespace. Default to Velero namespace.\nnamespace:\nPodMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nPodMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}"
             },
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "autodetect": {
               "type": "boolean"
@@ -5001,34 +5872,81 @@
               "type": "boolean"
             },
             "metricRelabelings": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "namespace": {},
             "relabelings": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "scheme": {},
             "tlsConfig": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Pod annotations for Prometheus",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Pod annotations for Prometheus"
         },
         "prometheusRule": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "description": "Additional labels to add to deployed PrometheusRule",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Additional labels to add to deployed PrometheusRule"
             },
             "autodetect": {
               "type": "boolean"
@@ -5058,12 +5976,19 @@
         "scrapeInterval": {},
         "scrapeTimeout": {},
         "service": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "service metdata if metrics are enabled",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "externalTrafficPolicy": {
               "description": "External/Internal traffic policy setting (Cluster, Local)\nhttps://kubernetes.io/docs/reference/networking/virtual-ips/#traffic-policies"
@@ -5088,8 +6013,15 @@
               "description": "the IP family policy for the metrics Service to be able to configure dual-stack; see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)."
             },
             "labels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "nodePort": {},
             "type": {}
@@ -5097,15 +6029,29 @@
           "type": "object"
         },
         "serviceMonitor": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "autodetect": {
               "type": "boolean"
@@ -5114,18 +6060,51 @@
               "type": "boolean"
             },
             "metricRelabelings": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "namespace": {},
             "relabelings": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "scheme": {},
             "tlsConfig": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
@@ -5140,7 +6119,7 @@
       ]
     },
     "namespace": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5158,7 +6137,6 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
@@ -5188,31 +6166,71 @@
       "type": "object"
     },
     "nodeAgent": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "description": "Affinity to use with node-agent daemonset. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Affinity to use with node-agent daemonset. Optional."
         },
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to set for the node-agent daemonset. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to set for the node-agent daemonset. Optional."
         },
         "containerSecurityContext": {
-          "additionalProperties": {},
-          "description": "Container Level Security Context for the 'node-agent' container of the node-agent daemonset. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Container Level Security Context for the 'node-agent' container of the node-agent daemonset. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
         },
         "disableHostPath": {
           "description": "Disables Host Path volumes for node-agent.",
           "type": "boolean"
         },
         "dnsConfig": {
-          "additionalProperties": {},
-          "description": "DNS configuration to use for the node-agent daemonset. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "DNS configuration to use for the node-agent daemonset. Optional."
         },
         "dnsPolicy": {
           "description": "Configure the dnsPolicy of the node-agent daemonset\nSee: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy"
@@ -5293,36 +6311,73 @@
           "description": "Configure hostAliases for node-agent daemonset. Optional\nFor more information, check: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/\n- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\""
         },
         "labels": {
-          "additionalProperties": {},
-          "description": "labels to set for the node-agent daemonset. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "labels to set for the node-agent daemonset. Optional."
         },
         "lifecycle": {
-          "additionalProperties": {},
-          "description": "Container Lifecycle Hooks to use for the node-agent daemonset. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Container Lifecycle Hooks to use for the node-agent daemonset. Optional."
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector to use for the node-agent daemonset. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Node selector to use for the node-agent daemonset. Optional."
         },
         "pluginVolumePath": {},
         "podLabels": {
-          "additionalProperties": {},
-          "description": "Additional pod labels for the node-agent daemonset. Optional\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional pod labels for the node-agent daemonset. Optional\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
         },
         "podSecurityContext": {
-          "additionalProperties": {},
-          "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html",
-          "properties": {
-            "runAsUser": {
-              "description": "fsGroup: 1337",
-              "type": "integer"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
             }
-          },
-          "type": "object"
+          ],
+          "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
         },
         "podVolumePath": {},
         "priorityClassName": {
@@ -5344,16 +6399,38 @@
           "description": "requests:\ncpu: 500m\nmemory: 512Mi\nlimits:\ncpu: 1000m\nmemory: 1024Mi\nContainer resize policy for the node-agent daemonset.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/\n- resourceName: cpu\nrestartPolicy: NotRequired\n- resourceName: memory\nrestartPolicy: RestartContainer"
         },
         "resources": {
-          "additionalProperties": {},
-          "description": "Resource requests/limits to specify for the node-agent daemonset deployment. Optional.\nhttps://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Resource requests/limits to specify for the node-agent daemonset deployment. Optional.\nhttps://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits"
         },
         "runtimeClassName": {
           "description": "Pod runtime class name to use for the node-agent daemonset. Optional."
         },
         "securityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "tolerations": {
           "anyOf": [
@@ -5371,9 +6448,20 @@
           "description": "Tolerations to use for the node-agent daemonset. Optional."
         },
         "updateStrategy": {
-          "additionalProperties": {},
-          "description": "Update strategy to use for the node-agent daemonset. Optional.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Update strategy to use for the node-agent daemonset. Optional."
         },
         "useScratchEmptyDir": {
           "description": "will map /scratch to emptyDir. Set to false and specify your own volume\nvia extraVolumes and extraVolumeMounts that maps to /scratch\nif you don't want to use emptyDir.",
@@ -5393,17 +6481,31 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Node selector to use for the Velero deployment. Optional."
     },
     "podAnnotations": {
-      "additionalProperties": {},
-      "description": "Annotations to add to the Velero deployment's pod template. Optional.\nIf using kube2iam or kiam, use the following annotation with your AWS_ACCOUNT_ID\nand VELERO_ROLE_NAME filled in:\niam.amazonaws.com/role: \"arn:aws:iam::<AWS_ACCOUNT_ID>:role/<VELERO_ROLE_NAME>\"",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Annotations to add to the Velero deployment's pod template. Optional.\nIf using kube2iam or kiam, use the following annotation with your AWS_ACCOUNT_ID\nand VELERO_ROLE_NAME filled in:\niam.amazonaws.com/role: \"arn:aws:iam::<AWS_ACCOUNT_ID>:role/<VELERO_ROLE_NAME>\""
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5420,17 +6522,31 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "See https://kubernetes.io/docs/tasks/run-application/configure-pdb/\nunhealthyPodEvictionPolicy: IfHealthyBudget",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "See https://kubernetes.io/docs/tasks/run-application/configure-pdb/\nunhealthyPodEvictionPolicy: IfHealthyBudget"
               },
               "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "maxUnavailable": {
                 "type": "string"
@@ -5447,16 +6563,30 @@
       "description": "Pod Disruption Budget for the Velero deployment. Optional.\nVelero runs a single replica with a Recreate strategy by default, so this is\ndisabled by default. Enable it when running Velero with multiple replicas.",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "See https://kubernetes.io/docs/tasks/run-application/configure-pdb/\nunhealthyPodEvictionPolicy: IfHealthyBudget",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "See https://kubernetes.io/docs/tasks/run-application/configure-pdb/\nunhealthyPodEvictionPolicy: IfHealthyBudget"
         },
         "enabled": {
           "type": "boolean"
         },
         "labels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "maxUnavailable": {},
         "minAvailable": {
@@ -5469,16 +6599,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional pod labels for Velero deployment's template. Optional\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
@@ -5494,6 +6621,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337"
@@ -5506,7 +6640,7 @@
       ]
     },
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -5592,9 +6726,16 @@
       "type": "object"
     },
     "readinessProbe": {
-      "additionalProperties": {},
-      "description": "Readiness probe of the pod",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Readiness probe of the pod"
     },
     "resizePolicy": {
       "anyOf": [
@@ -5622,6 +6763,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Resource requests/limits to specify for the Velero deployment.\nhttps://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits\nrequests:\ncpu: 500m\nmemory: 128Mi\nlimits:\ncpu: 1000m\nmemory: 512Mi"
@@ -5637,14 +6785,8 @@
     "schedules": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "items": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "annotations": {},
               "disabled": {},
@@ -5652,473 +6794,480 @@
               "paused": {},
               "skipImmediately": {},
               "template": {
-                "description": "Template is the definition of the Backup to be run\non the provided schedule",
-                "properties": {
-                  "csiSnapshotTimeout": {
-                    "description": "CSISnapshotTimeout specifies the time used to wait for CSI VolumeSnapshot status turns to\nReadyToUse during creation, before returning error as timeout.\nThe default value is 10 minute.",
-                    "type": "string"
-                  },
-                  "datamover": {
-                    "description": "DataMover specifies the data mover to be used by the backup.\nIf DataMover is \"\" or \"velero\", the built-in data mover will be used.",
-                    "type": "string"
-                  },
-                  "defaultVolumesToFsBackup": {
-                    "description": "DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used\nfor all volumes by default.",
-                    "nullable": true,
-                    "type": "boolean"
-                  },
-                  "defaultVolumesToRestic": {
-                    "description": "DefaultVolumesToRestic specifies whether restic should be used to take a\nbackup of all pod volumes by default.\n\nDeprecated: this field is no longer used and will be removed entirely in future. Use DefaultVolumesToFsBackup instead.",
-                    "nullable": true,
-                    "type": "boolean"
-                  },
-                  "excludedClusterScopedResources": {
-                    "description": "ExcludedClusterScopedResources is a slice of cluster-scoped\nresource type names to exclude from the backup.\nIf set to \"*\", all cluster-scoped resource types are excluded.\nThe default value is empty.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "excludedNamespaceScopedResources": {
-                    "description": "ExcludedNamespaceScopedResources is a slice of namespace-scoped\nresource type names to exclude from the backup.\nIf set to \"*\", all namespace-scoped resource types are excluded.\nThe default value is empty.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "excludedNamespaces": {
-                    "description": "ExcludedNamespaces contains a list of namespaces that are not\nincluded in the backup.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "excludedResources": {
-                    "description": "ExcludedResources is a slice of resource names that are not\nincluded in the backup.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "hooks": {
-                    "description": "Hooks represent custom behaviors that should be executed at different phases of the backup.",
+                "anyOf": [
+                  {
+                    "description": "Template is the definition of the Backup to be run\non the provided schedule",
                     "properties": {
-                      "resources": {
-                        "description": "Resources are hooks that should be executed when backing up individual instances of a resource.",
+                      "csiSnapshotTimeout": {
+                        "description": "CSISnapshotTimeout specifies the time used to wait for CSI VolumeSnapshot status turns to\nReadyToUse during creation, before returning error as timeout.\nThe default value is 10 minute.",
+                        "type": "string"
+                      },
+                      "datamover": {
+                        "description": "DataMover specifies the data mover to be used by the backup.\nIf DataMover is \"\" or \"velero\", the built-in data mover will be used.",
+                        "type": "string"
+                      },
+                      "defaultVolumesToFsBackup": {
+                        "description": "DefaultVolumesToFsBackup specifies whether pod volume file system backup should be used\nfor all volumes by default.",
+                        "nullable": true,
+                        "type": "boolean"
+                      },
+                      "defaultVolumesToRestic": {
+                        "description": "DefaultVolumesToRestic specifies whether restic should be used to take a\nbackup of all pod volumes by default.\n\nDeprecated: this field is no longer used and will be removed entirely in future. Use DefaultVolumesToFsBackup instead.",
+                        "nullable": true,
+                        "type": "boolean"
+                      },
+                      "excludedClusterScopedResources": {
+                        "description": "ExcludedClusterScopedResources is a slice of cluster-scoped\nresource type names to exclude from the backup.\nIf set to \"*\", all cluster-scoped resource types are excluded.\nThe default value is empty.",
                         "items": {
-                          "description": "BackupResourceHookSpec defines one or more BackupResourceHooks that should be executed based on\nthe rules defined for namespaces, resources, and label selector.",
-                          "properties": {
-                            "excludedNamespaces": {
-                              "description": "ExcludedNamespaces specifies the namespaces to which this hook spec does not apply.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "nullable": true,
-                              "type": "array"
-                            },
-                            "excludedResources": {
-                              "description": "ExcludedResources specifies the resources to which this hook spec does not apply.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "nullable": true,
-                              "type": "array"
-                            },
-                            "includedNamespaces": {
-                              "description": "IncludedNamespaces specifies the namespaces to which this hook spec applies. If empty, it applies\nto all namespaces.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "nullable": true,
-                              "type": "array"
-                            },
-                            "includedResources": {
-                              "description": "IncludedResources specifies the resources to which this hook spec applies. If empty, it applies\nto all resources.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "nullable": true,
-                              "type": "array"
-                            },
-                            "labelSelector": {
-                              "description": "LabelSelector, if specified, filters the resources to which this hook spec applies.",
-                              "nullable": true,
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "excludedNamespaceScopedResources": {
+                        "description": "ExcludedNamespaceScopedResources is a slice of namespace-scoped\nresource type names to exclude from the backup.\nIf set to \"*\", all namespace-scoped resource types are excluded.\nThe default value is empty.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "excludedNamespaces": {
+                        "description": "ExcludedNamespaces contains a list of namespaces that are not\nincluded in the backup.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "excludedResources": {
+                        "description": "ExcludedResources is a slice of resource names that are not\nincluded in the backup.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "hooks": {
+                        "description": "Hooks represent custom behaviors that should be executed at different phases of the backup.",
+                        "properties": {
+                          "resources": {
+                            "description": "Resources are hooks that should be executed when backing up individual instances of a resource.",
+                            "items": {
+                              "description": "BackupResourceHookSpec defines one or more BackupResourceHooks that should be executed based on\nthe rules defined for namespaces, resources, and label selector.",
                               "properties": {
-                                "matchExpressions": {
-                                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                                "excludedNamespaces": {
+                                  "description": "ExcludedNamespaces specifies the namespaces to which this hook spec does not apply.",
                                   "items": {
-                                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
-                                    "properties": {
-                                      "key": {
-                                        "description": "key is the label key that the selector applies to.",
-                                        "type": "string"
-                                      },
-                                      "operator": {
-                                        "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
-                                        "type": "string"
-                                      },
-                                      "values": {
-                                        "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
-                                        "items": {
-                                          "type": "string"
+                                    "type": "string"
+                                  },
+                                  "nullable": true,
+                                  "type": "array"
+                                },
+                                "excludedResources": {
+                                  "description": "ExcludedResources specifies the resources to which this hook spec does not apply.",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "nullable": true,
+                                  "type": "array"
+                                },
+                                "includedNamespaces": {
+                                  "description": "IncludedNamespaces specifies the namespaces to which this hook spec applies. If empty, it applies\nto all namespaces.",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "nullable": true,
+                                  "type": "array"
+                                },
+                                "includedResources": {
+                                  "description": "IncludedResources specifies the resources to which this hook spec applies. If empty, it applies\nto all resources.",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "nullable": true,
+                                  "type": "array"
+                                },
+                                "labelSelector": {
+                                  "description": "LabelSelector, if specified, filters the resources to which this hook spec applies.",
+                                  "nullable": true,
+                                  "properties": {
+                                    "matchExpressions": {
+                                      "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                                      "items": {
+                                        "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                                        "properties": {
+                                          "key": {
+                                            "description": "key is the label key that the selector applies to.",
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                                            "items": {
+                                              "type": "string"
+                                            },
+                                            "type": "array",
+                                            "x-kubernetes-list-type": "atomic"
+                                          }
                                         },
-                                        "type": "array",
-                                        "x-kubernetes-list-type": "atomic"
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": "object"
+                                      },
+                                      "type": "array",
+                                      "x-kubernetes-list-type": "atomic"
+                                    },
+                                    "matchLabels": {
+                                      "additionalProperties": {
+                                        "type": "string"
+                                      },
+                                      "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                      "type": "object"
+                                    }
+                                  },
+                                  "type": "object",
+                                  "x-kubernetes-map-type": "atomic"
+                                },
+                                "name": {
+                                  "description": "Name is the name of this hook.",
+                                  "type": "string"
+                                },
+                                "post": {
+                                  "description": "PostHooks is a list of BackupResourceHooks to execute after storing the item in the backup.\nThese are executed after all \"additional items\" from item actions are processed.",
+                                  "items": {
+                                    "description": "BackupResourceHook defines a hook for a resource.",
+                                    "properties": {
+                                      "exec": {
+                                        "description": "Exec defines an exec hook.",
+                                        "properties": {
+                                          "command": {
+                                            "description": "Command is the command and arguments to execute.",
+                                            "items": {
+                                              "type": "string"
+                                            },
+                                            "minItems": 1,
+                                            "type": "array"
+                                          },
+                                          "container": {
+                                            "description": "Container is the container in the pod where the command should be executed. If not specified,\nthe pod's first container is used.",
+                                            "type": "string"
+                                          },
+                                          "onError": {
+                                            "description": "OnError specifies how Velero should behave if it encounters an error executing this hook.",
+                                            "enum": [
+                                              "Continue",
+                                              "Fail"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "timeout": {
+                                            "description": "Timeout defines the maximum amount of time Velero should wait for the hook to complete before\nconsidering the execution a failure.",
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "command"
+                                        ],
+                                        "type": "object"
                                       }
                                     },
                                     "required": [
-                                      "key",
-                                      "operator"
+                                      "exec"
                                     ],
                                     "type": "object"
+                                  },
+                                  "type": "array"
+                                },
+                                "pre": {
+                                  "description": "PreHooks is a list of BackupResourceHooks to execute prior to storing the item in the backup.\nThese are executed before any \"additional items\" from item actions are processed.",
+                                  "items": {
+                                    "description": "BackupResourceHook defines a hook for a resource.",
+                                    "properties": {
+                                      "exec": {
+                                        "description": "Exec defines an exec hook.",
+                                        "properties": {
+                                          "command": {
+                                            "description": "Command is the command and arguments to execute.",
+                                            "items": {
+                                              "type": "string"
+                                            },
+                                            "minItems": 1,
+                                            "type": "array"
+                                          },
+                                          "container": {
+                                            "description": "Container is the container in the pod where the command should be executed. If not specified,\nthe pod's first container is used.",
+                                            "type": "string"
+                                          },
+                                          "onError": {
+                                            "description": "OnError specifies how Velero should behave if it encounters an error executing this hook.",
+                                            "enum": [
+                                              "Continue",
+                                              "Fail"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "timeout": {
+                                            "description": "Timeout defines the maximum amount of time Velero should wait for the hook to complete before\nconsidering the execution a failure.",
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "command"
+                                        ],
+                                        "type": "object"
+                                      }
+                                    },
+                                    "required": [
+                                      "exec"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            },
+                            "nullable": true,
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "includeClusterResources": {
+                        "description": "IncludeClusterResources specifies whether cluster-scoped resources\nshould be included for consideration in the backup.",
+                        "nullable": true,
+                        "type": "boolean"
+                      },
+                      "includedClusterScopedResources": {
+                        "description": "IncludedClusterScopedResources is a slice of cluster-scoped\nresource type names to include in the backup.\nIf set to \"*\", all cluster-scoped resource types are included.\nThe default value is empty, which means only related\ncluster-scoped resources are included.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "includedNamespaceScopedResources": {
+                        "description": "IncludedNamespaceScopedResources is a slice of namespace-scoped\nresource type names to include in the backup.\nThe default value is \"*\".",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "includedNamespaces": {
+                        "description": "IncludedNamespaces is a slice of namespace names to include objects\nfrom. If empty, all namespaces are included.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "includedResources": {
+                        "description": "IncludedResources is a slice of resource names to include\nin the backup. If empty, all resources are included.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true,
+                        "type": "array"
+                      },
+                      "itemOperationTimeout": {
+                        "description": "ItemOperationTimeout specifies the time used to wait for asynchronous BackupItemAction operations\nThe default value is 4 hour.",
+                        "type": "string"
+                      },
+                      "labelSelector": {
+                        "description": "LabelSelector is a metav1.LabelSelector to filter with\nwhen adding individual objects to the backup. If empty\nor nil, all objects are included. Optional.",
+                        "nullable": true,
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                            "items": {
+                              "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                              "properties": {
+                                "key": {
+                                  "description": "key is the label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                                  "items": {
+                                    "type": "string"
                                   },
                                   "type": "array",
                                   "x-kubernetes-list-type": "atomic"
-                                },
-                                "matchLabels": {
-                                  "additionalProperties": {
-                                    "type": "string"
-                                  },
-                                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                                  "type": "object"
                                 }
                               },
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "type": "object"
                             },
-                            "name": {
-                              "description": "Name is the name of this hook.",
+                            "type": "array",
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchLabels": {
+                            "additionalProperties": {
                               "type": "string"
                             },
-                            "post": {
-                              "description": "PostHooks is a list of BackupResourceHooks to execute after storing the item in the backup.\nThese are executed after all \"additional items\" from item actions are processed.",
-                              "items": {
-                                "description": "BackupResourceHook defines a hook for a resource.",
-                                "properties": {
-                                  "exec": {
-                                    "description": "Exec defines an exec hook.",
-                                    "properties": {
-                                      "command": {
-                                        "description": "Command is the command and arguments to execute.",
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "minItems": 1,
-                                        "type": "array"
-                                      },
-                                      "container": {
-                                        "description": "Container is the container in the pod where the command should be executed. If not specified,\nthe pod's first container is used.",
-                                        "type": "string"
-                                      },
-                                      "onError": {
-                                        "description": "OnError specifies how Velero should behave if it encounters an error executing this hook.",
-                                        "enum": [
-                                          "Continue",
-                                          "Fail"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "timeout": {
-                                        "description": "Timeout defines the maximum amount of time Velero should wait for the hook to complete before\nconsidering the execution a failure.",
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "command"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "exec"
-                                ],
-                                "type": "object"
-                              },
-                              "type": "array"
+                            "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                            "type": "object"
+                          }
+                        },
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "metadata": {
+                        "properties": {
+                          "labels": {
+                            "additionalProperties": {
+                              "type": "string"
                             },
-                            "pre": {
-                              "description": "PreHooks is a list of BackupResourceHooks to execute prior to storing the item in the backup.\nThese are executed before any \"additional items\" from item actions are processed.",
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "orLabelSelectors": {
+                        "description": "OrLabelSelectors is list of metav1.LabelSelector to filter with\nwhen adding individual objects to the backup. If multiple provided\nthey will be joined by the OR operator. LabelSelector as well as\nOrLabelSelectors cannot co-exist in backup request, only one of them\ncan be used.",
+                        "items": {
+                          "description": "A label selector is a label query over a set of resources. The result of matchLabels and\nmatchExpressions are ANDed. An empty label selector matches all objects. A null\nlabel selector matches no objects.",
+                          "properties": {
+                            "matchExpressions": {
+                              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
                               "items": {
-                                "description": "BackupResourceHook defines a hook for a resource.",
+                                "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
                                 "properties": {
-                                  "exec": {
-                                    "description": "Exec defines an exec hook.",
-                                    "properties": {
-                                      "command": {
-                                        "description": "Command is the command and arguments to execute.",
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "minItems": 1,
-                                        "type": "array"
-                                      },
-                                      "container": {
-                                        "description": "Container is the container in the pod where the command should be executed. If not specified,\nthe pod's first container is used.",
-                                        "type": "string"
-                                      },
-                                      "onError": {
-                                        "description": "OnError specifies how Velero should behave if it encounters an error executing this hook.",
-                                        "enum": [
-                                          "Continue",
-                                          "Fail"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "timeout": {
-                                        "description": "Timeout defines the maximum amount of time Velero should wait for the hook to complete before\nconsidering the execution a failure.",
-                                        "type": "string"
-                                      }
+                                  "key": {
+                                    "description": "key is the label key that the selector applies to.",
+                                    "type": "string"
+                                  },
+                                  "operator": {
+                                    "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                                    "type": "string"
+                                  },
+                                  "values": {
+                                    "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                                    "items": {
+                                      "type": "string"
                                     },
-                                    "required": [
-                                      "command"
-                                    ],
-                                    "type": "object"
+                                    "type": "array",
+                                    "x-kubernetes-list-type": "atomic"
                                   }
                                 },
                                 "required": [
-                                  "exec"
+                                  "key",
+                                  "operator"
                                 ],
                                 "type": "object"
                               },
-                              "type": "array"
+                              "type": "array",
+                              "x-kubernetes-list-type": "atomic"
+                            },
+                            "matchLabels": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                              "type": "object"
                             }
                           },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
+                          "type": "object",
+                          "x-kubernetes-map-type": "atomic"
                         },
                         "nullable": true,
+                        "type": "array"
+                      },
+                      "orderedResources": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "OrderedResources specifies the backup order of resources of specific Kind.\nThe map key is the resource name and value is a list of object names separated by commas.\nEach resource name has format \"namespace/objectname\".  For cluster resources, simply use \"objectname\".",
+                        "nullable": true,
+                        "type": "object"
+                      },
+                      "resourcePolicy": {
+                        "description": "ResourcePolicy specifies the referenced resource policies that backup should follow",
+                        "properties": {
+                          "apiGroup": {
+                            "description": "APIGroup is the group for the resource being referenced.\nIf APIGroup is not specified, the specified Kind must be in the core API group.\nFor any other third-party types, APIGroup is required.",
+                            "type": "string"
+                          },
+                          "kind": {
+                            "description": "Kind is the type of resource being referenced",
+                            "type": "string"
+                          },
+                          "name": {
+                            "description": "Name is the name of resource being referenced",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "name"
+                        ],
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "snapshotMoveData": {
+                        "description": "SnapshotMoveData specifies whether snapshot data should be moved",
+                        "nullable": true,
+                        "type": "boolean"
+                      },
+                      "snapshotVolumes": {
+                        "description": "SnapshotVolumes specifies whether to take snapshots\nof any PV's referenced in the set of objects included\nin the Backup.",
+                        "nullable": true,
+                        "type": "boolean"
+                      },
+                      "storageLocation": {
+                        "description": "StorageLocation is a string containing the name of a BackupStorageLocation where the backup should be stored.",
+                        "type": "string"
+                      },
+                      "ttl": {
+                        "description": "TTL is a time.Duration-parseable string describing how long\nthe Backup should be retained for.",
+                        "type": "string"
+                      },
+                      "uploaderConfig": {
+                        "description": "UploaderConfig specifies the configuration for the uploader.",
+                        "nullable": true,
+                        "properties": {
+                          "parallelFilesUpload": {
+                            "description": "ParallelFilesUpload is the number of files parallel uploads to perform when using the uploader.",
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "volumeGroupSnapshotLabelKey": {
+                        "description": "VolumeGroupSnapshotLabelKey specifies the label key to group PVCs under a VGS.",
+                        "type": "string"
+                      },
+                      "volumeSnapshotLocations": {
+                        "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup.",
+                        "items": {
+                          "type": "string"
+                        },
                         "type": "array"
                       }
                     },
                     "type": "object"
                   },
-                  "includeClusterResources": {
-                    "description": "IncludeClusterResources specifies whether cluster-scoped resources\nshould be included for consideration in the backup.",
-                    "nullable": true,
-                    "type": "boolean"
-                  },
-                  "includedClusterScopedResources": {
-                    "description": "IncludedClusterScopedResources is a slice of cluster-scoped\nresource type names to include in the backup.\nIf set to \"*\", all cluster-scoped resource types are included.\nThe default value is empty, which means only related\ncluster-scoped resources are included.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "includedNamespaceScopedResources": {
-                    "description": "IncludedNamespaceScopedResources is a slice of namespace-scoped\nresource type names to include in the backup.\nThe default value is \"*\".",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "includedNamespaces": {
-                    "description": "IncludedNamespaces is a slice of namespace names to include objects\nfrom. If empty, all namespaces are included.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "includedResources": {
-                    "description": "IncludedResources is a slice of resource names to include\nin the backup. If empty, all resources are included.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "itemOperationTimeout": {
-                    "description": "ItemOperationTimeout specifies the time used to wait for asynchronous BackupItemAction operations\nThe default value is 4 hour.",
-                    "type": "string"
-                  },
-                  "labelSelector": {
-                    "description": "LabelSelector is a metav1.LabelSelector to filter with\nwhen adding individual objects to the backup. If empty\nor nil, all objects are included. Optional.",
-                    "nullable": true,
-                    "properties": {
-                      "matchExpressions": {
-                        "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                        "items": {
-                          "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
-                          "properties": {
-                            "key": {
-                              "description": "key is the label key that the selector applies to.",
-                              "type": "string"
-                            },
-                            "operator": {
-                              "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
-                              "type": "string"
-                            },
-                            "values": {
-                              "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array",
-                              "x-kubernetes-list-type": "atomic"
-                            }
-                          },
-                          "required": [
-                            "key",
-                            "operator"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array",
-                        "x-kubernetes-list-type": "atomic"
-                      },
-                      "matchLabels": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                        "type": "object"
-                      }
-                    },
-                    "type": "object",
-                    "x-kubernetes-map-type": "atomic"
-                  },
-                  "metadata": {
-                    "properties": {
-                      "labels": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "orLabelSelectors": {
-                    "description": "OrLabelSelectors is list of metav1.LabelSelector to filter with\nwhen adding individual objects to the backup. If multiple provided\nthey will be joined by the OR operator. LabelSelector as well as\nOrLabelSelectors cannot co-exist in backup request, only one of them\ncan be used.",
-                    "items": {
-                      "description": "A label selector is a label query over a set of resources. The result of matchLabels and\nmatchExpressions are ANDed. An empty label selector matches all objects. A null\nlabel selector matches no objects.",
-                      "properties": {
-                        "matchExpressions": {
-                          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                          "items": {
-                            "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
-                            "properties": {
-                              "key": {
-                                "description": "key is the label key that the selector applies to.",
-                                "type": "string"
-                              },
-                              "operator": {
-                                "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
-                                "type": "string"
-                              },
-                              "values": {
-                                "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "type": "array",
-                                "x-kubernetes-list-type": "atomic"
-                              }
-                            },
-                            "required": [
-                              "key",
-                              "operator"
-                            ],
-                            "type": "object"
-                          },
-                          "type": "array",
-                          "x-kubernetes-list-type": "atomic"
-                        },
-                        "matchLabels": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                          "type": "object"
-                        }
-                      },
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    },
-                    "nullable": true,
-                    "type": "array"
-                  },
-                  "orderedResources": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "OrderedResources specifies the backup order of resources of specific Kind.\nThe map key is the resource name and value is a list of object names separated by commas.\nEach resource name has format \"namespace/objectname\".  For cluster resources, simply use \"objectname\".",
-                    "nullable": true,
-                    "type": "object"
-                  },
-                  "resourcePolicy": {
-                    "description": "ResourcePolicy specifies the referenced resource policies that backup should follow",
-                    "properties": {
-                      "apiGroup": {
-                        "description": "APIGroup is the group for the resource being referenced.\nIf APIGroup is not specified, the specified Kind must be in the core API group.\nFor any other third-party types, APIGroup is required.",
-                        "type": "string"
-                      },
-                      "kind": {
-                        "description": "Kind is the type of resource being referenced",
-                        "type": "string"
-                      },
-                      "name": {
-                        "description": "Name is the name of resource being referenced",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "name"
-                    ],
-                    "type": "object",
-                    "x-kubernetes-map-type": "atomic"
-                  },
-                  "snapshotMoveData": {
-                    "description": "SnapshotMoveData specifies whether snapshot data should be moved",
-                    "nullable": true,
-                    "type": "boolean"
-                  },
-                  "snapshotVolumes": {
-                    "description": "SnapshotVolumes specifies whether to take snapshots\nof any PV's referenced in the set of objects included\nin the Backup.",
-                    "nullable": true,
-                    "type": "boolean"
-                  },
-                  "storageLocation": {
-                    "description": "StorageLocation is a string containing the name of a BackupStorageLocation where the backup should be stored.",
-                    "type": "string"
-                  },
-                  "ttl": {
-                    "description": "TTL is a time.Duration-parseable string describing how long\nthe Backup should be retained for.",
-                    "type": "string"
-                  },
-                  "uploaderConfig": {
-                    "description": "UploaderConfig specifies the configuration for the uploader.",
-                    "nullable": true,
-                    "properties": {
-                      "parallelFilesUpload": {
-                        "description": "ParallelFilesUpload is the number of files parallel uploads to perform when using the uploader.",
-                        "type": "integer"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "volumeGroupSnapshotLabelKey": {
-                    "description": "VolumeGroupSnapshotLabelKey specifies the label key to group PVCs under a VGS.",
-                    "type": "string"
-                  },
-                  "volumeSnapshotLocations": {
-                    "description": "VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
+                  {
+                    "type": "null"
                   }
-                },
-                "type": "object"
+                ]
               },
               "useOwnerReferencesInBackup": {}
             },
@@ -6136,20 +7285,38 @@
       "description": "Backup schedules to create.\nEg:\nschedules:\nmybackup:\ndisabled: false\nlabels:\nmyenv: foo\nannotations:\nmyenv: foo\nschedule: \"0 0 * * *\"\nuseOwnerReferencesInBackup: false\npaused: false\nskipImmediately: false\ntemplate:\nttl: \"240h\"\nstorageLocation: default\nincludedNamespaces:\n- foo\nSee: https://velero.io/docs/v1.14/resource-filtering/#excludes\nexcludedNamespaceScopedResources:\n- persistentVolumeClaims\nexcludedClusterScopedResources:\n- persistentVolumes"
     },
     "secretAnnotations": {
-      "additionalProperties": {},
-      "description": "Annotations to add to secret",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Annotations to add to secret"
     },
     "securityContext": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Information about the Kubernetes service account Velero uses.",
       "properties": {
         "server": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "allOf": [
             {
               "if": {
@@ -6345,7 +7512,7 @@
       "type": "boolean"
     },
     "upgradeCRDsJob": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "requests:\ncpu: 50m\nmemory: 128Mi\nlimits:\ncpu: 100m\nmemory: 256Mi",
       "properties": {
         "automountServiceAccountToken": {
@@ -6400,9 +7567,20 @@
       "type": "object"
     },
     "upgradeJobResources": {
-      "additionalProperties": {},
-      "description": "Resource requests/limits to specify for the upgradeCRDs job pod. Need to be adjusted by user accordingly.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Resource requests/limits to specify for the upgradeCRDs job pod. Need to be adjusted by user accordingly."
     }
   },
   "type": "object"

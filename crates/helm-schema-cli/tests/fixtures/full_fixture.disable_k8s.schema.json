@@ -30,8 +30,19 @@
   "additionalProperties": false,
   "properties": {
     "affinity": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "configChecksum": {},
     "containerPort": {
@@ -41,7 +52,7 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "properties": {
               "name": {
                 "type": "string"
@@ -61,22 +72,32 @@
       ]
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "type": "string"
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         }
       },
       "type": "object"
     },
     "ingress": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -117,6 +138,7 @@
                 "anyOf": [
                   {
                     "items": {
+                      "additionalProperties": {},
                       "properties": {},
                       "type": "object"
                     },
@@ -153,7 +175,7 @@
       "type": "object"
     },
     "podSecurityContext": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "runAsNonRoot": {
           "type": "boolean"
@@ -165,7 +187,7 @@
       "type": "integer"
     },
     "securityContext": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "allowPrivilegeEscalation": {
           "type": "boolean"
@@ -177,7 +199,7 @@
       "type": "object"
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "port": {
           "type": "integer"

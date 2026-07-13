@@ -13,10 +13,10 @@ use crate::path_schema::{
     open_fragment_values_schema,
 };
 use crate::schema_model::{
-    add_null_schema, empty_schema, empty_string_schema, guard_value_to_json, is_empty_schema,
-    is_fixed_object_schema, is_object_or_array_schema, is_open_string_map_schema,
-    is_scalar_like_schema, is_scalar_schema, schema_allows_type, schema_permits_empty_string,
-    schema_type, type_schema,
+    add_null_schema, empty_schema, empty_string_schema, guard_value_to_json,
+    is_declared_object_schema, is_empty_schema, is_object_or_array_schema,
+    is_open_string_map_schema, is_scalar_like_schema, is_scalar_schema, scalar_union_schema,
+    schema_allows_type, schema_permits_empty_string, schema_type, type_schema,
 };
 use crate::schema_node::SchemaNode;
 use crate::schema_node::is_placeholder_fragment_object_schema;
@@ -185,6 +185,14 @@ impl ResolvePolicy {
         // not erase an independent stricter consumer.
         let values_yaml_schema = if facts.contract.used_as_serialized {
             empty_schema()
+        } else if facts.contract.is_partial_scalar_value_path
+            && is_scalar_schema(&values_yaml_schema)
+        {
+            // A scalar spliced into a partial string slot (`-v={{ x }}`)
+            // prints ANY scalar; the declared default's type is intent,
+            // not a constraint, so it widens to the scalar union. Real
+            // contracts from other uses still apply below.
+            scalar_union_schema()
         } else {
             values_yaml_schema
         };
@@ -254,8 +262,17 @@ impl ResolvePolicy {
                 && facts.contract.used_as_fragment
                 && !is_empty_schema(&merged));
 
+        // A declared object/array whose every render use sits under its own
+        // truthy guard accepts explicit `null`: helm null-deletion removes
+        // the key and the falsy guard skips the branch, so null never
+        // reaches a consumer (datadog `datadog.securityContext`).
+        let self_guarded_structure_tolerates_null = facts.contract.is_nullable
+            && facts.contract.has_render_use
+            && facts.contract.all_render_uses_self_guarded
+            && is_object_or_array_schema(&merged);
         let resolved = if (preserve_explicit_null_default
-            || (is_scalar_like_schema(&merged) && facts.contract.is_nullable))
+            || (is_scalar_like_schema(&merged) && facts.contract.is_nullable)
+            || self_guarded_structure_tolerates_null)
             && !is_empty_schema(&merged)
         {
             add_null_schema(merged)
@@ -381,7 +398,7 @@ impl ResolvePolicy {
             && is_empty_schema(guard_predicate_schema)
             && facts.values_yaml.has_no_schema_evidence
         {
-            type_schema("string")
+            scalar_union_schema()
         } else {
             empty_schema()
         }
@@ -401,12 +418,12 @@ impl ResolvePolicy {
                 // In these cases the *input* type in values.yaml is the scalar, not the output
                 // object type, so prefer the values.yaml scalar schema.
                 if input.facts.contract.has_referenced_descendants
-                    && is_fixed_object_schema(&input.values_yaml_schema)
+                    && is_declared_object_schema(&input.values_yaml_schema)
                     && is_scalar_schema(&input.provider_schema)
                 {
                     input.values_yaml_schema
                 } else if input.facts.contract.used_as_fragment
-                    && is_fixed_object_schema(&input.values_yaml_schema)
+                    && is_declared_object_schema(&input.values_yaml_schema)
                     && is_open_string_map_schema(&input.provider_schema)
                 {
                     input.provider_schema
@@ -431,14 +448,24 @@ impl ResolvePolicy {
                     merge_two_schemas(input.provider_schema, input.values_yaml_schema)
                 }
             }
+        } else if input.facts.contract.used_as_fragment
+            && !input.facts.contract.used_as_serialized
+            && (is_empty_schema(&input.values_yaml_schema) || input.facts.values_yaml.is_empty_map)
+        {
+            // A fragment-only path with no shape evidence (undeclared, or a
+            // declared-`{}` placeholder) splices whatever the user supplies:
+            // `toYaml` renders sequences as readily as maps (coredns
+            // `service.clusterIPs`, nats-kafka `additionalVolumes`), and a
+            // `tpl`-composed fragment is a template STRING (airflow
+            // `extraEnv`), so the domain is the fragment union, not an
+            // object guess.
+            union_schema_list(vec![
+                SchemaNode::unknown_object().into_value(),
+                SchemaNode::array().items(SchemaNode::empty()).into_value(),
+                type_schema("string"),
+            ])
         } else if !is_empty_schema(&input.values_yaml_schema) {
             input.values_yaml_schema
-        } else if input.facts.contract.used_as_fragment && !input.facts.contract.used_as_serialized
-        {
-            // A fragment-only path with no other evidence is probably a
-            // map; a stringified sibling use proves non-object values
-            // render too, so the guess must not stand.
-            SchemaNode::unknown_object().into_value()
         } else {
             empty_schema()
         };

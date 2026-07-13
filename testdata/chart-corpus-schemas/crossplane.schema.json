@@ -75,11 +75,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Add custom `labels` to the Crossplane pod deployment.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add custom `labels` to the Crossplane pod deployment."
           },
           "deploymentStrategy": {
             "description": "The deployment strategy for the Crossplane and RBAC Manager pods.",
@@ -140,17 +147,50 @@
             ]
           },
           "podSecurityContextRBACManager": {
-            "additionalProperties": {},
-            "description": "Add a custom `securityContext` to the RBAC Manager pod.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Add a custom `securityContext` to the RBAC Manager pod."
           },
           "resourcesRBACManager": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "securityContextRBACManager": {
-            "additionalProperties": {},
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "type": "object"
@@ -202,11 +242,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Add custom `labels` to the Crossplane pod deployment.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add custom `labels` to the Crossplane pod deployment."
           },
           "imagePullSecrets": {
             "anyOf": [
@@ -284,11 +331,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Add custom `labels` to the Crossplane pod deployment.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add custom `labels` to the Crossplane pod deployment."
           },
           "nameOverride": {
             "type": [
@@ -396,11 +450,18 @@
       "then": {
         "properties": {
           "customLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Add custom `labels` to the Crossplane pod deployment.",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add custom `labels` to the Crossplane pod deployment."
           },
           "nameOverride": {
             "type": [
@@ -453,6 +514,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Add `affinities` to the Crossplane pod deployment."
@@ -479,7 +547,7 @@
       "description": "Add custom arguments to the Crossplane pod."
     },
     "configuration": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "packages": {
           "anyOf": [
@@ -508,16 +576,13 @@
     "customAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Add custom `annotations` to the Crossplane pod deployment."
@@ -525,16 +590,13 @@
     "customLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Add custom `labels` to the Crossplane pod deployment."
@@ -617,7 +679,7 @@
       "description": "Add custom `volumes` to the Crossplane pod. Supports template expressions."
     },
     "function": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "packages": {
           "anyOf": [
@@ -644,7 +706,7 @@
       "type": "object"
     },
     "functionCache": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -697,7 +759,7 @@
       "type": "boolean"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -716,13 +778,35 @@
           "then": {
             "properties": {
               "repository": {
-                "description": "Repository for the Crossplane pod image.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Repository for the Crossplane pod image."
               },
               "tag": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -783,7 +867,7 @@
       "type": "boolean"
     },
     "metrics": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -846,12 +930,19 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Add `nodeSelectors` to the Crossplane pod deployment."
     },
     "packageCache": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -954,20 +1045,38 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Add a custom `securityContext` to the Crossplane pod."
     },
     "podSecurityContextRBACManager": {
-      "additionalProperties": {},
-      "description": "Add a custom `securityContext` to the RBAC Manager pod.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Add a custom `securityContext` to the RBAC Manager pod."
     },
     "priorityClassName": {
       "description": "The PriorityClass name to apply to the Crossplane and RBAC Manager pods."
     },
     "provider": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "defaultActivations": {
           "anyOf": [
@@ -1017,7 +1126,7 @@
       "type": "object"
     },
     "rbacManager": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1049,9 +1158,20 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "description": "Add `affinities` to the RBAC Manager pod deployment.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Add `affinities` to the RBAC Manager pod deployment."
               },
               "args": {
                 "anyOf": [
@@ -1076,9 +1196,20 @@
                 "type": "boolean"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "description": "Add `nodeSelectors` to the RBAC Manager pod deployment.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Add `nodeSelectors` to the RBAC Manager pod deployment."
               },
               "replicas": {
                 "description": "The number of RBAC Manager pod `replicas` to deploy.",
@@ -1093,6 +1224,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Add `tolerations` to the RBAC Manager pod deployment."
@@ -1106,6 +1240,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
@@ -1117,9 +1254,20 @@
       ],
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "description": "Add `affinities` to the RBAC Manager pod deployment.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Add `affinities` to the RBAC Manager pod deployment."
         },
         "args": {
           "description": "Add custom arguments to the RBAC Manager pod."
@@ -1132,9 +1280,20 @@
           "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Add `nodeSelectors` to the RBAC Manager pod deployment.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Add `nodeSelectors` to the RBAC Manager pod deployment."
         },
         "replicas": {
           "description": "The number of RBAC Manager pod `replicas` to deploy."
@@ -1180,7 +1339,7 @@
       "type": "object"
     },
     "readiness": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "port": {
           "anyOf": [
@@ -1200,7 +1359,7 @@
       "type": "object"
     },
     "registryCaBundleConfig": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1228,7 +1387,12 @@
       "properties": {
         "key": {
           "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "name": {
           "description": "The ConfigMap name containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
@@ -1245,25 +1409,10 @@
       "type": "integer"
     },
     "resourcesCrossplane": {
-      "additionalProperties": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "properties": {
-          "cpu": {
-            "type": "string"
-          },
-          "memory": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
+      "additionalProperties": {},
       "properties": {
         "limits": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "cpu": {
               "description": "CPU resource limits for the Crossplane pod.",
@@ -1277,9 +1426,7 @@
           "type": "object"
         },
         "requests": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "properties": {
             "cpu": {
               "description": "CPU resource requests for the Crossplane pod.",
@@ -1306,21 +1453,18 @@
       "description": "The runtimeClassName name to apply to the Crossplane and RBAC Manager pods."
     },
     "secrets": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "customAnnotations": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Add custom annotations to Crossplane Secret resources."
@@ -1329,51 +1473,47 @@
       "type": "object"
     },
     "securityContextCrossplane": {
-      "additionalProperties": false,
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "description": "Enable `allowPrivilegeEscalation` for the Crossplane pod.",
-          "type": "boolean"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "description": "Enable `allowPrivilegeEscalation` for the Crossplane pod.",
+              "type": "boolean"
+            },
+            "readOnlyRootFilesystem": {
+              "description": "Set the Crossplane pod root file system as read-only.",
+              "type": "boolean"
+            },
+            "runAsGroup": {
+              "description": "The group ID used by the Crossplane pod.",
+              "type": "integer"
+            },
+            "runAsUser": {
+              "description": "The user ID used by the Crossplane pod.",
+              "type": "integer"
+            }
+          },
+          "type": "object"
         },
-        "readOnlyRootFilesystem": {
-          "description": "Set the Crossplane pod root file system as read-only.",
-          "type": "boolean"
-        },
-        "runAsGroup": {
-          "description": "The group ID used by the Crossplane pod.",
-          "type": "integer"
-        },
-        "runAsUser": {
-          "description": "The user ID used by the Crossplane pod.",
-          "type": "integer"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ]
     },
     "securityContextRBACManager": {
-      "additionalProperties": {},
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "description": "Enable `allowPrivilegeEscalation` for the RBAC Manager pod.",
-          "type": "boolean"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
         },
-        "readOnlyRootFilesystem": {
-          "description": "Set the RBAC Manager pod root file system as read-only.",
-          "type": "boolean"
-        },
-        "runAsGroup": {
-          "description": "The group ID used by the RBAC Manager pod.",
-          "type": "integer"
-        },
-        "runAsUser": {
-          "description": "The user ID used by the RBAC Manager pod.",
-          "type": "integer"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ]
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "customAnnotations": {
           "anyOf": [
@@ -1395,7 +1535,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1427,11 +1567,18 @@
           "then": {
             "properties": {
               "customAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Add custom `annotations` to the Crossplane ServiceAccount.",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add custom `annotations` to the Crossplane ServiceAccount."
               }
             },
             "type": "object"
@@ -1483,9 +1630,16 @@
           "type": "boolean"
         },
         "customAnnotations": {
-          "additionalProperties": {},
-          "description": "Add custom `annotations` to the Crossplane ServiceAccount.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom `annotations` to the Crossplane ServiceAccount."
         },
         "name": {
           "description": "Provide the name of an already created Crossplane ServiceAccount. Required when `serviceAccount.create` is `false`"
@@ -1527,7 +1681,7 @@
       "description": "Add `topologySpreadConstraints` to the Crossplane pod deployment."
     },
     "webhooks": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {

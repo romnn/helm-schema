@@ -282,6 +282,22 @@ fn record_contract_use_conjunction(
         && predicates
             .iter()
             .any(|predicate| predicate_tests_source_type(predicate, &contract_use.source_expr));
+    // The catch-all COMPLEMENT arm of a type dispatch (every self-type
+    // test negated: a plain `else`) executes for every unmatched type, so
+    // its structural placement types that whole domain — scoped to the
+    // branch key the partition rides. Arms with a positive self-type test
+    // stay suppressed: their sink typing joins the union through the
+    // dispatch guard predicates instead, and a `tpl`-style string arm's
+    // placement says nothing about the raw value.
+    let complement_dispatched = type_dispatched
+        && predicates.iter().all(|predicate| {
+            !predicate_tests_source_type(predicate, &contract_use.source_expr)
+                || matches!(
+                    predicate,
+                    Predicate::Not(inner)
+                        if predicate_tests_source_type(inner, &contract_use.source_expr)
+                )
+        });
 
     if has_source {
         let mut facts = ContractValuePathFacts {
@@ -327,7 +343,7 @@ fn record_contract_use_conjunction(
             facts,
             path_is_empty || has_matching_self_guard,
             lowerable_conditional_guard_set(contract_use, predicates),
-            (!type_dispatched)
+            (!type_dispatched || complement_dispatched)
                 .then(|| provider_schema_use(contract_use, self_range_guarded))
                 .flatten(),
             metadata_field_kind,
@@ -1140,10 +1156,14 @@ fn extend_lowerable_predicate(
                 Predicate::Guard(Guard::Truthy { path }) if path == target_value_path
             ) => {}
         // A type test on the row's own path (also negated or a disjunction
-        // of such tests) partitions its domain (a type-switch arm), not a
-        // condition over other paths; the overlay keys on the residual
-        // conjuncts.
-        other if predicate_is_self_type_partition(other, target_value_path) => {}
+        // of such tests) partitions its domain (a type-switch arm). The
+        // partition is load-bearing: the arm's sink typing holds only for
+        // its tested types, and an executing complement arm's requirements
+        // hold exactly for the untested ones — so it stays ON the overlay
+        // key rather than leaking the arm's shape over the whole domain.
+        other if predicate_is_self_type_partition(other, target_value_path) => {
+            out.push(predicate_to_guard(other, Some(target_value_path))?);
+        }
         other => {
             out.push(predicate_to_guard(other, Some(target_value_path))?);
         }
@@ -1203,6 +1223,22 @@ fn guard_to_conditional_guard(
                 path,
                 schema_type: schema_type.clone(),
             })
+        }
+        Guard::NotTypeIs {
+            path: value_path,
+            schema_type,
+        } => {
+            // The dispatch complement is load-bearing on the target for the
+            // same reason as the positive test above.
+            let path = if target_value_path == Some(value_path.as_str()) {
+                (!path_contains_wildcard(value_path)).then(|| value_path.clone())?
+            } else {
+                path(value_path)?
+            };
+            Some(ConditionalGuard::Not(Box::new(ConditionalGuard::TypeIs {
+                path,
+                schema_type: schema_type.clone(),
+            })))
         }
         Guard::Range { .. }
         | Guard::With { .. }

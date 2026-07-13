@@ -109,11 +109,18 @@
             ]
           },
           "labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels for any resource created",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels for any resource created"
           },
           "serviceAccount": {
             "properties": {
@@ -160,11 +167,18 @@
             ]
           },
           "labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels for any resource created",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels for any resource created"
           },
           "storageClass": {
             "description": "For creating the StorageClass automatically:",
@@ -274,11 +288,18 @@
             ]
           },
           "labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels for any resource created",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels for any resource created"
           }
         },
         "type": "object"
@@ -500,11 +521,18 @@
       "then": {
         "properties": {
           "labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Additional labels for any resource created",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels for any resource created"
           },
           "nfs": {
             "properties": {
@@ -572,6 +600,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
@@ -583,16 +618,26 @@
       ]
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "type": "string"
         },
         "repository": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         },
         "tag": {
-          "type": "string"
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -614,22 +659,19 @@
     "labels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional labels for any resource created"
     },
     "leaderElection": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {
           "anyOf": [
@@ -649,7 +691,7 @@
     },
     "nameOverride": {},
     "nfs": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -718,28 +760,32 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Deployment pod annotations"
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -779,11 +825,22 @@
       "type": "object"
     },
     "podSecurityContext": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "podSecurityPolicy": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "If true, create & use Pod Security Policy resources\nhttps://kubernetes.io/docs/concepts/policy/pod-security-policy/",
       "properties": {
         "enabled": {
@@ -794,7 +851,7 @@
     },
     "priorityClassName": {},
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "For RBAC support:",
       "properties": {
         "create": {
@@ -818,16 +875,34 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
     "securityContext": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -859,11 +934,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to add to the service account",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to add to the service account"
               },
               "name": {
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
@@ -921,9 +1003,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add to the service account",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to add to the service account"
         },
         "create": {
           "description": "Specifies whether a ServiceAccount should be created",
@@ -936,7 +1025,7 @@
       "type": "object"
     },
     "storageClass": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -972,11 +1061,18 @@
                 "type": "boolean"
               },
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Storage class annotations",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Storage class annotations"
               },
               "archiveOnDelete": {
                 "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.",
@@ -1014,9 +1110,16 @@
           "description": "Allow volume to be expanded dynamically"
         },
         "annotations": {
-          "additionalProperties": {},
-          "description": "Storage class annotations",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Storage class annotations"
         },
         "archiveOnDelete": {
           "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."

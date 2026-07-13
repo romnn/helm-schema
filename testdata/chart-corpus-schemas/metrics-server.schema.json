@@ -321,10 +321,17 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "fullnameOverride": {
             "anyOf": [
@@ -397,10 +404,17 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "fullnameOverride": {
             "anyOf": [
@@ -418,10 +432,17 @@
           "serviceMonitor": {
             "properties": {
               "additionalLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "interval": {
                 "type": "string"
@@ -435,6 +456,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -447,6 +471,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ]
               },
@@ -588,10 +615,17 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "fullnameOverride": {
             "anyOf": [
@@ -656,10 +690,17 @@
       "then": {
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "fullnameOverride": {
             "anyOf": [
@@ -1026,8 +1067,21 @@
           "tls": {
             "properties": {
               "clusterDomain": {
-                "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
               }
             },
             "type": "object"
@@ -1149,8 +1203,21 @@
           "tls": {
             "properties": {
               "clusterDomain": {
-                "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
               }
             },
             "type": "object"
@@ -1166,7 +1233,7 @@
       "type": "object"
     },
     "addonResizer": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1187,7 +1254,13 @@
                   "minClusterSize": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -1197,7 +1270,13 @@
                   "pollPeriod": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -1207,7 +1286,13 @@
                   "threshold": {
                     "anyOf": [
                       {
+                        "type": "boolean"
+                      },
+                      {
                         "type": "integer"
+                      },
+                      {
+                        "type": "number"
                       },
                       {
                         "type": "string"
@@ -1218,133 +1303,34 @@
                 "type": "object"
               },
               "resources": {
-                "additionalProperties": {
-                  "additionalProperties": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
                     "type": "string"
-                  },
-                  "properties": {
-                    "cpu": {
-                      "type": "string"
-                    },
-                    "memory": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "properties": {
-                  "limits": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "requests": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cpu": {
-                        "type": "string"
-                      },
-                      "memory": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
                   }
-                },
-                "type": "object"
+                ]
               },
               "securityContext": {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "properties": {
-                        "drop": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "integer"
-                    }
-                  ]
-                },
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
                     "type": "object"
                   },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
+                  {
+                    "items": {},
+                    "type": "array"
                   },
-                  "runAsNonRoot": {
-                    "type": "boolean"
-                  },
-                  "runAsUser": {
-                    "type": "integer"
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
+                  {
+                    "type": "string"
                   }
-                },
-                "type": "object"
+                ]
               }
             },
             "type": "object"
@@ -1356,7 +1342,7 @@
           "type": "boolean"
         },
         "image": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "repository": {},
             "tag": {}
@@ -1364,7 +1350,7 @@
           "type": "object"
         },
         "nanny": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "cpu": {
               "type": "string"
@@ -1385,12 +1371,26 @@
           "type": "object"
         },
         "resources": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "securityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "type": "object"
@@ -1406,11 +1406,18 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
     "apiService": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1442,11 +1449,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to add to the API service",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to add to the API service"
               },
               "insecureSkipTLSVerify": {
                 "description": "Specifies whether to skip TLS verification",
@@ -1459,9 +1473,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add to the API service",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to add to the API service"
         },
         "caBundle": {
           "description": "The PEM encoded CA bundle for TLS verification"
@@ -1499,16 +1520,13 @@
     "commonLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ]
     },
@@ -1535,16 +1553,13 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Annotations to add to the deployment"
@@ -1560,6 +1575,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
@@ -1593,7 +1615,7 @@
     },
     "fullnameOverride": {},
     "hostNetwork": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {
           "description": "Specifies if metrics-server should be started in hostNetwork mode.\nYou would require this enabled if you use alternate overlay networking for pods and\nAPI server unable to communicate with metrics-server. As an example, this is required\nif you use Weave network on EKS",
@@ -1603,7 +1625,7 @@
       "type": "object"
     },
     "image": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "pullPolicy": {
           "type": "string"
@@ -1631,62 +1653,44 @@
       "description": "- name: registrySecretName"
     },
     "livenessProbe": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "path": {
-                "type": "string"
-              },
-              "port": {
-                "type": "string"
-              },
-              "scheme": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
-      "properties": {
-        "failureThreshold": {
-          "type": "integer"
-        },
-        "httpGet": {
-          "additionalProperties": {
-            "type": "string"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "path": {
-              "type": "string"
+            "failureThreshold": {
+              "type": "integer"
             },
-            "port": {
-              "type": "string"
+            "httpGet": {
+              "additionalProperties": {},
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "scheme": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             },
-            "scheme": {
-              "type": "string"
+            "initialDelaySeconds": {
+              "type": "integer"
+            },
+            "periodSeconds": {
+              "type": "integer"
             }
           },
           "type": "object"
         },
-        "initialDelaySeconds": {
-          "type": "integer"
-        },
-        "periodSeconds": {
-          "type": "integer"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ]
     },
     "metrics": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -1706,27 +1710,31 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ]
     },
     "podDisruptionBudget": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "enabled": {
           "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
@@ -1741,16 +1749,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
       ]
     },
@@ -1765,12 +1770,19 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ]
     },
     "priorityClassName": {},
     "rbac": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "create": {
           "description": "Specifies whether RBAC resources should be created",
@@ -1784,97 +1796,71 @@
       "type": "object"
     },
     "readinessProbe": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "properties": {
-              "path": {
-                "type": "string"
-              },
-              "port": {
-                "type": "string"
-              },
-              "scheme": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
-      "properties": {
-        "failureThreshold": {
-          "type": "integer"
-        },
-        "httpGet": {
-          "additionalProperties": {
-            "type": "string"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "path": {
-              "type": "string"
+            "failureThreshold": {
+              "type": "integer"
             },
-            "port": {
-              "type": "string"
+            "httpGet": {
+              "additionalProperties": {},
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "scheme": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             },
-            "scheme": {
-              "type": "string"
+            "initialDelaySeconds": {
+              "type": "integer"
+            },
+            "periodSeconds": {
+              "type": "integer"
             }
           },
           "type": "object"
         },
-        "initialDelaySeconds": {
-          "type": "integer"
-        },
-        "periodSeconds": {
-          "type": "integer"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ]
     },
     "replicas": {
       "type": "integer"
     },
     "resources": {
-      "additionalProperties": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "properties": {
-          "cpu": {
-            "type": "string"
-          },
-          "memory": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "description": "See https://github.com/kubernetes-sigs/metrics-server#scaling",
-      "properties": {
-        "requests": {
-          "additionalProperties": {
-            "type": "string"
-          },
+      "anyOf": [
+        {
+          "additionalProperties": {},
           "properties": {
-            "cpu": {
-              "type": "string"
-            },
-            "memory": {
-              "description": "limits:\ncpu:\nmemory:",
-              "type": "string"
+            "requests": {
+              "additionalProperties": {},
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "description": "limits:\ncpu:\nmemory:",
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
+        },
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "See https://github.com/kubernetes-sigs/metrics-server#scaling"
     },
     "revisionHistoryLimit": {},
     "schedulerName": {
@@ -1884,119 +1870,77 @@
       ]
     },
     "securityContext": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "additionalProperties": {
-              "anyOf": [
-                {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "type": "boolean"
+            },
+            "capabilities": {
+              "additionalProperties": {},
+              "properties": {
+                "drop": {
                   "items": {
                     "type": "string"
                   },
                   "type": "array"
-                },
-                {
+                }
+              },
+              "type": "object"
+            },
+            "readOnlyRootFilesystem": {
+              "type": "boolean"
+            },
+            "runAsNonRoot": {
+              "type": "boolean"
+            },
+            "runAsUser": {
+              "type": "integer"
+            },
+            "seccompProfile": {
+              "additionalProperties": {},
+              "properties": {
+                "type": {
                   "type": "string"
                 }
-              ]
-            },
-            "properties": {
-              "drop": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
               },
-              "type": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "integer"
-          }
-        ]
-      },
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
-        },
-        "capabilities": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "properties": {
-            "drop": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
+              "type": "object"
             }
           },
           "type": "object"
         },
-        "readOnlyRootFilesystem": {
-          "type": "boolean"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "type": "integer"
-        },
-        "seccompProfile": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "properties": {
-            "type": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ]
     },
     "service": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "annotations": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ]
         },
         "labels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "Add these labels to have metrics-server show up in `kubectl cluster-info`\nkubernetes.io/cluster-service: \"true\"\nkubernetes.io/name: \"Metrics-server\""
@@ -2011,7 +1955,7 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2043,11 +1987,18 @@
           "then": {
             "properties": {
               "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to add to the service account",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations to add to the service account"
               },
               "name": {
                 "anyOf": [
@@ -2069,6 +2020,9 @@
                   {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
                 "description": "The list of secrets mountable by this service account.\nSee https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets"
@@ -2126,9 +2080,16 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add to the service account",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to add to the service account"
         },
         "create": {
           "description": "Specifies whether a service account should be created",
@@ -2156,11 +2117,18 @@
       "type": "object"
     },
     "serviceMonitor": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "additionalLabels": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "enabled": {
           "type": "boolean"
@@ -2199,7 +2167,7 @@
       "type": "object"
     },
     "tls": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -2354,7 +2322,7 @@
       ],
       "properties": {
         "certManager": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "addInjectorAnnotations": {
               "description": "Automatically add the cert-manager.io/inject-ca-from annotation to the APIService resource.\nSee https://cert-manager.io/docs/concepts/ca-injector",
@@ -2369,7 +2337,7 @@
               "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
             },
             "existingIssuer": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "description": "Use an existing cert-manager issuer",
@@ -2399,7 +2367,7 @@
           "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
         },
         "existingSecret": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "lookup": {
               "description": "Use helm lookup function to provision `apiService.caBundle`",
@@ -2412,7 +2380,7 @@
           "type": "object"
         },
         "helm": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "certDurationDays": {
               "description": "Cert validity duration in days"
@@ -2451,10 +2419,7 @@
       "type": "object"
     },
     "tmpVolume": {
-      "additionalProperties": {
-        "additionalProperties": {},
-        "type": "object"
-      },
+      "additionalProperties": {},
       "properties": {
         "emptyDir": {
           "additionalProperties": {},
@@ -2502,6 +2467,13 @@
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 0\nmaxUnavailable: 1"

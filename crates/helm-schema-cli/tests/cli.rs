@@ -671,7 +671,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
       "type": "object"
     });
     let child_global_defaults_schema = serde_json::json!({
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "bar": {
           "type": "boolean"
@@ -686,12 +686,12 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
       "properties": {
         "global": global_schema,
         "kid": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "properties": {
             "foo": {},
             "global": child_global_defaults_schema,
             "persistence": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -1372,7 +1372,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::e
         "additionalProperties": false,
         "properties": {
             "serviceAccount": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                     "labels": {
                         "additionalProperties": { "type": "string" },
@@ -1460,7 +1460,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
                 "type": ["string", "null"]
             },
             "serviceAccount": {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
                     // the name only renders through `quote`, which
                     // stringifies any input

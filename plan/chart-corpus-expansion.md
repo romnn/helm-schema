@@ -1,6 +1,9 @@
 # Popular-chart corpus expansion: inventory and findings
 
-Status: ROUND 2 IMPLEMENTED, ACCURACY RE-AUDIT CONTINUES (2026-07-13) —
+Status: ALL FINDINGS RESOLVED OR ADJUDICATED (2026-07-13) — F36-F50 fixed
+this round (see the F36-F50 fix summary); F31/F34/F44 residuals stay
+adjudicated-abstained; F12 remains a policy item awaiting a user decision.
+Previous status: ROUND 2 IMPLEMENTED, ACCURACY RE-AUDIT CONTINUES —
 F1–F29 are recorded as fixed. A fresh parallel audit of the committed fixtures
 against the actual chart templates and Helm runtime found sixteen more
 runtime-verified accuracy classes (F30–F45) below. They cover residual
@@ -1907,7 +1910,7 @@ than placing the input directly. Preserve all live alternatives and intersect
 them with caller guards; never let an empty/default YAML shape erase a
 structurally handled alternative.
 
-### F36. Executing catch-all branches lose their structural requirements (OPEN, ROOT CAUSE KNOWN 2026-07-13)
+### F36. Executing catch-all branches lose their structural requirements (FIXED 2026-07-13)
 
 F23 correctly permits unmatched types when unmatched control flow skips every
 strict use. That permissiveness is unsound when an `else` branch actually
@@ -1926,7 +1929,7 @@ accesses and structural placement, and union only the domains accepted by the
 executing branches. Apply unmatched-type permissiveness solely when the
 unmatched path truly performs no rejecting use.
 
-### F37. Nested type dispatch leaks provider typing across sibling branches (OPEN, ROOT CAUSE KNOWN 2026-07-13)
+### F37. Nested type dispatch leaks provider typing across sibling branches (FIXED 2026-07-13)
 
 A direct F23-style switch regresses when nested beneath outer enable guards.
 Cilium's SPIRE agent and server images are string-or-object: each inner branch
@@ -1992,7 +1995,7 @@ translate nested range effects back to the parent item or map-value identity.
 Compose the inner iterable domain and body contracts recursively rather than
 leaving outer items `{}`.
 
-### F41. `with`-rebound dot loses the originating value path during type dispatch (OPEN, ROOT CAUSE KNOWN 2026-07-13)
+### F41. `with`-rebound dot loses the originating value path during type dispatch (FIXED 2026-07-13)
 
 MinIO's Deployment and StatefulSet both `with .Values.extraContainers`, test
 `eq (typeOf .) "string"`, and select a `tpl` string branch or a structured
@@ -2243,7 +2246,7 @@ by a rate limit; the minimal repro files live under the session scratchpad
 `sweep1/`–`sweep4/`. These are the worst accuracy class (rejecting what Helm
 accepts) and are all currently OPEN.
 
-### F46. Empty-map / observed-subset defaults close passthrough config objects (OPEN, VERIFIED 2026-07-13)
+### F46. Empty-map / observed-subset defaults close passthrough config objects (FIXED 2026-07-13)
 
 Objects that the chart serializes wholesale (`toYaml`) or reads by a small
 observed key subset are emitted with `additionalProperties: false` keyed to
@@ -2278,7 +2281,7 @@ because a declared `{}` default or a structural sibling read (`if
 serialized fact propagates when a path has BOTH a truthy/`if` guard read and
 a `toYaml` render (coredns `service.clusterIPs` is exactly this shape).
 
-### F47. secretKeyRef / configMapKeyRef objects close to name-only (OPEN, VERIFIED 2026-07-13)
+### F47. secretKeyRef / configMapKeyRef objects close to name-only (FIXED 2026-07-13)
 
 Objects shaped like a Kubernetes key selector (`{name, key}`) are closed to
 just the key the analyzer resolved, rejecting the sibling.
@@ -2293,7 +2296,7 @@ closing an object). A selector object read field-by-field across templates
 must union its observed keys, not close to the first one; when the shape is
 genuinely a `{name, key}` reference the base should stay open.
 
-### F48. List-valued paths are typed or closed as objects (OPEN, VERIFIED 2026-07-13)
+### F48. List-valued paths are typed or closed as objects (FIXED 2026-07-13)
 
 Paths whose real value is a sequence are inferred as objects (from an empty
 default or a fixed-object sibling), rejecting the array Helm ranges/serializes.
@@ -2312,7 +2315,7 @@ an empty-map or fixed-object default must not pin the type to `object` when a
 serialized or ranged use proves list values render. Overlaps F46 for the
 serialized cases and the F38-F40 iterable-domain work for the ranged cases.
 
-### F49. Int-or-string scalar flag values over-narrowed (OPEN, VERIFIED 2026-07-13)
+### F49. Int-or-string scalar flag values over-narrowed (FIXED 2026-07-13)
 
 Scalar values spliced into CLI flags or `int-or-string` fields are narrowed
 to a single JSON type, rejecting the other form Helm accepts.
@@ -2333,7 +2336,7 @@ int-or-string field renders for any scalar; the declared default's type
 union (or int-or-string for the PDB/percentage case) rather than pinning the
 default's type.
 
-### F50. String-form alternatives and declared-null values are lost (OPEN, VERIFIED 2026-07-13)
+### F50. String-form alternatives and declared-null values are lost (FIXED 2026-07-13)
 
 - airflow `extraEnv`: accepts a `tpl`-rendered YAML STRING as well as a
   structured list; the schema's `anyOf` has no string arm and rejects the
@@ -2346,6 +2349,74 @@ default's type.
 must keep a string arm in its union. A values-declared object a user nulls
 out must accept `null` (Helm null-deletion) — extend the declared-null
 tolerance fix from the F42 round to declared (non-guard) object paths.
+
+## Round F36-F50 fix summary (2026-07-13)
+
+All eight remaining OPEN findings fixed; workspace suite green (941 tests),
+corpus/gen/IR fixtures regenerated and adjudicated; the three anomaly scans
+are clean and the CI-values residual dropped from 11 to 5 (aws-lb's genuine
+`required` rejection plus the pre-existing adjudicated root-strictness and
+values-template classes). Every fix landed with a minimal reproducer test
+that fails without it.
+
+- **F36/F37/F41**: `Guard::NotTypeIs` rides type-dispatch complements into
+  rows (`negated_contract_guards` no longer drops them); self-type
+  partitions stay ON overlay guard keys (`extend_lowerable_predicate`), so
+  an arm's sink typing holds only for its tested types and an executing
+  catch-all `else` closes the unmatched domain. The catch-all complement
+  arm (every self-type test negated) carries its provider placement
+  branch-scoped; positive arms keep the union route via dispatch guard
+  predicates. The `with`-rebound dot resolves through the dot binding, so
+  `typeOf .` dispatch binds the source path (minio). Chart-level pin:
+  `chart_cilium.rs` activates every outer guard. The cilium `authentication`
+  rejection that remains without `authentication.enabled=true` is the
+  chart's own `fail` validator, correctly encoded.
+- **F46/F47**: declared defaults document keys without bounding them —
+  `values.yaml` mappings lower OPEN (`schema_node_from_yaml_value_with_skips`),
+  interior ancestors materialized for referenced descendants stay open
+  (`insert_schema_at_parts`, `ensure_object_properties`, conditional
+  hosts), and fragment value schemas no longer type unknown members as the
+  merge of declared property schemas (`open_fragment_values_schema`). The
+  strict ROOT closure is unchanged. Decision predicates that keyed on the
+  closed declared shape use `is_declared_object_schema`.
+- **F48**: the fragment-only "probably a map" guess is gone — a fragment
+  path with no shape evidence (undeclared or declared-`{}`) accepts the
+  fragment union `object|array|string` (`toYaml` renders sequences,
+  `tpl`-composed fragments are template strings); the declared-`{}`
+  placeholder no longer outranks that union.
+- **F49**: a scalar spliced into a partial string slot (`-v={{ x }}`)
+  widens the declared scalar type to the scalar union
+  (boolean|integer|number|string), and the no-evidence partial-scalar
+  stamp emits the same union instead of `string`.
+- **F50**: `tpl` records a runtime string contract on raw subjects (call
+  sites and `with`-bound dots; helper summaries carry it as truthy⇒string
+  captures), and a self-guarded declared object/array accepts explicit
+  `null` (helm null-deletion plus the falsy guard skip) — this supersedes
+  the earlier "non-null default not widened" pin, updated accordingly.
+
+Regression tests added this round (each verified to fail without its fix):
+`executing_else_member_access_closes_unmatched_scalar_domain`,
+`nested_type_dispatch_keeps_string_arm_under_active_outer_guards`,
+`with_rebound_dot_type_dispatch_binds_source_path`,
+`partially_observed_selector_object_stays_open`,
+`serialized_declared_mapping_sections_stay_open`,
+`guard_read_beside_serialized_render_keeps_mapping_open`,
+`serialized_truthy_guarded_leaf_admits_arrays`,
+`declared_empty_map_guarded_fragment_admits_arrays`,
+`flag_splice_accepts_any_scalar_beyond_declared_string`,
+`declared_boolean_flag_splice_accepts_string_form`,
+`quoted_string_slot_widen_declared_boolean_to_scalars`,
+`with_dot_tpl_keeps_string_form_valid`,
+`self_guarded_declared_object_accepts_explicit_null`, and the cilium chart
+pin `cilium_spire_images_accept_strings_under_active_guards`.
+
+Coverage gaps for earlier FIXED findings closed with focused tests:
+`files_get_printf_condition_decodes_to_finite_name_disjunction` (F33),
+`literal_key_dig_binds_intermediate_object_contract` (F34),
+`include_condition_absorbs_helper_type_dispatch_alternatives` (F35),
+`nested_range_over_ranged_local_requires_iterable_items` (F40),
+`default_guarded_string_consumer_binds_conditional_contract` (F42), and
+`range_alternative_does_not_bypass_member_contract` (F43).
 
 ### Lower-priority: false ACCEPTANCES of chart-enforced constraints
 

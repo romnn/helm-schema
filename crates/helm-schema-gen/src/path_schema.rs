@@ -2,7 +2,7 @@ use serde_json::Value;
 
 use crate::merge::{merge_schema_list, union_schema_list};
 use crate::schema_model::{
-    add_null_schema, empty_schema, exact_empty_object_schema, is_fixed_object_schema,
+    add_null_schema, empty_schema, exact_empty_object_schema, is_declared_object_schema,
     schema_allows_type, type_schema,
 };
 use crate::schema_node::SchemaNode;
@@ -82,7 +82,7 @@ fn schema_accepts_empty_object(schema: &Value) -> bool {
 }
 
 pub(crate) fn generalize_fixed_object_schema_to_open_map(schema: Value) -> Value {
-    if !is_fixed_object_schema(&schema) {
+    if !is_declared_object_schema(&schema) {
         return schema;
     }
     let Some(object) = schema.as_object() else {
@@ -163,16 +163,16 @@ fn open_fragment_values_schema_inner(schema: Value, widen_self: bool) -> Value {
                 for value in properties.values_mut() {
                     *value = open_fragment_values_schema_inner(value.take(), false);
                 }
-                let additional_properties = if properties.is_empty() {
-                    empty_schema()
-                } else {
-                    merge_schema_list(properties.values().cloned().collect())
-                };
+                // A fragment splices the WHOLE subtree through: undeclared
+                // members are passthrough config the chart renders verbatim,
+                // so they stay unconstrained. Typing them as the merge of
+                // the declared property schemas rejected legitimate keys
+                // whose shape differs from the declared ones.
                 properties
                     .into_iter()
                     .fold(
                         SchemaNode::object()
-                            .with_additional_properties(SchemaNode::foreign(additional_properties)),
+                            .with_additional_properties(SchemaNode::foreign(empty_schema())),
                         |schema, (key, value)| schema.property(key, SchemaNode::foreign(value)),
                     )
                     .into_value()

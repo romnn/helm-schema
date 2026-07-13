@@ -163,5 +163,6 @@ fn fmt_guard(guard: &Guard) -> String {
         Guard::With { path } => format!("with({path})"),
         Guard::Default { path } => format!("default({path})"),
         Guard::TypeIs { path, schema_type } => format!("typeIs({path}: {schema_type})"),
+        Guard::NotTypeIs { path, schema_type } => format!("notTypeIs({path}: {schema_type})"),
     }
 }
