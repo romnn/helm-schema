@@ -1,32 +1,33 @@
-//! This crate provides go_template language support for the [tree-sitter][] parsing library.
+//! This crate provides Go-template language support for the [tree-sitter] parsing library.
 //!
-//! Typically, you will use the [language][language func] function to add this language to a
-//! tree-sitter [Parser][], and then use the parser to parse some code:
+//! Use [`LANGUAGE`] to configure a tree-sitter [`Parser`]:
 //!
 //! ```
-//! let code = "";
+//! let code = "{{ .Values.name }}";
 //! let mut parser = tree_sitter::Parser::new();
-//! parser.set_language(tree_sitter_go_template::language()).expect("Error loading go-template grammar");
-//! let tree = parser.parse(code, None).unwrap();
+//! let language = tree_sitter_go_template::LANGUAGE;
+//! parser.set_language(&language.into())?;
+//! let tree = parser
+//!     .parse(code, None)
+//!     .ok_or_else(|| std::io::Error::other("parser returned no tree"))?;
+//! assert!(!tree.root_node().has_error());
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! [Language]: https://docs.rs/tree-sitter/*/tree_sitter/struct.Language.html
-//! [language func]: fn.language.html
-//! [Parser]: https://docs.rs/tree-sitter/*/tree_sitter/struct.Parser.html
+//! [`Parser`]: https://docs.rs/tree-sitter/latest/tree_sitter/struct.Parser.html
 //! [tree-sitter]: https://tree-sitter.github.io/
 
-use tree_sitter::Language;
+use tree_sitter_language::LanguageFn;
 
-extern "C" {
-    fn tree_sitter_go_template() -> Language;
+unsafe extern "C" {
+    fn tree_sitter_gotmpl() -> *const ();
 }
 
-/// Get the tree-sitter [Language][] for this grammar.
-///
-/// [Language]: https://docs.rs/tree-sitter/*/tree_sitter/struct.Language.html
-pub fn language() -> Language {
-    unsafe { tree_sitter_go_template() }
-}
+/// The tree-sitter language function for this grammar.
+pub const LANGUAGE: LanguageFn = {
+    // SAFETY: `parser.c` exports this symbol with tree-sitter's language-function ABI.
+    unsafe { LanguageFn::from_raw(tree_sitter_gotmpl) }
+};
 
 /// The content of the [`node-types.json`][] file for this grammar.
 ///
@@ -46,7 +47,7 @@ mod tests {
     fn test_can_load_grammar() {
         let mut parser = tree_sitter::Parser::new();
         parser
-            .set_language(super::language())
+            .set_language(&super::LANGUAGE.into())
             .expect("Error loading go_template language");
     }
 }

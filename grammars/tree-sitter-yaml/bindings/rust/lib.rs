@@ -12,24 +12,28 @@
 //! "#;
 //! let mut parser = tree_sitter::Parser::new();
 //! let language = tree_sitter_yaml::LANGUAGE;
-//! parser
-//!     .set_language(&language.into())
-//!     .expect("Error loading YAML parser");
-//! let tree = parser.parse(code, None).unwrap();
+//! parser.set_language(&language.into())?;
+//! let tree = parser
+//!     .parse(code, None)
+//!     .ok_or_else(|| std::io::Error::other("parser returned no tree"))?;
 //! assert!(!tree.root_node().has_error());
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! [`Parser`]: https://docs.rs/tree-sitter/0.25.4/tree_sitter/struct.Parser.html
+//! [`Parser`]: https://docs.rs/tree-sitter/latest/tree_sitter/struct.Parser.html
 //! [tree-sitter]: https://tree-sitter.github.io/
 
 use tree_sitter_language::LanguageFn;
 
-extern "C" {
+unsafe extern "C" {
     fn tree_sitter_yaml() -> *const ();
 }
 
 /// The tree-sitter [`LanguageFn`] for this grammar.
-pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_yaml) };
+pub const LANGUAGE: LanguageFn = {
+    // SAFETY: `parser.c` exports this symbol with tree-sitter's language-function ABI.
+    unsafe { LanguageFn::from_raw(tree_sitter_yaml) }
+};
 
 /// The content of the [`node-types.json`] file for this grammar.
 ///

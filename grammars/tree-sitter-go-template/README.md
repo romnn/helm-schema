@@ -5,8 +5,6 @@ Some people have been found to keep the repo going, so if you have ideas for imp
 
 # tree-sitter-go-template
 
-[![Build/test](https://github.com/ngalaiko/tree-sitter-go-template/actions/workflows/ci.yaml/badge.svg)](https://github.com/ngalaiko/tree-sitter-go-template/actions/workflows/ci.yaml)
-
 [Golang templates][] grammar for [tree-sitter][].
 
 Also includes a [helm][] dialect. The concept of a dialect is that it uses the same parser, but can have different queries (e.g. for different injections).
