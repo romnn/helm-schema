@@ -110,14 +110,12 @@
           "imagePullSecrets": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "contents of pod imagePullSecret in form 'name=[secretName]'; applied to all controllers"
@@ -1243,14 +1241,12 @@
           "imagePullSecrets": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "contents of pod imagePullSecret in form 'name=[secretName]'; applied to all controllers"
@@ -1580,80 +1576,51 @@
   "properties": {
     "cli": {
       "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
-                  "tag": {
-                    "enum": [
-                      "sha256:"
-                    ]
-                  }
-                },
-                "required": [
-                  "tag"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "tag": {}
-                      },
-                      "required": [
-                        "tag"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "tag": {
-                        "not": {
-                          "enum": [
-                            "sha256:"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "affinity": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
         },
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
         },
         "image": {},
         "nodeSelector": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
         },
         "resources": {
           "additionalProperties": {},
@@ -1672,18 +1639,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {
@@ -1736,8 +1692,18 @@
               "then": {
                 "properties": {
                   "affinity": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ]
                   },
                   "annotations": {
                     "additionalProperties": {
@@ -1746,8 +1712,18 @@
                     "type": "object"
                   },
                   "nodeSelector": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ]
                   },
                   "resources": {
                     "additionalProperties": {
@@ -1797,14 +1773,12 @@
                   "tolerations": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ]
                   },
@@ -1886,10 +1860,7 @@
     },
     "extraObjects": {
       "description": "Array of extra K8s manifests to deploy\nExample usage from https://fluxcd.io/docs/components/source/buckets/#static-authentication\n- apiVersion: source.toolkit.fluxcd.io/v1beta2\nkind: Bucket\nmetadata:\nname: podinfo\nnamespace: default\nspec:\ninterval: 1m\nprovider: generic\nbucketName: podinfo\nendpoint: minio.minio.svc.cluster.local:9000\ninsecure: true\nsecretRef:\nname: minio-credentials\n- apiVersion: v1\nkind: Secret\nmetadata:\nname: minio-credentials\nnamespace: default\ntype: Opaque\ndata:\naccesskey: <BASE64>\nsecretkey: <BASE64>",
-      "items": {
-        "additionalProperties": {},
-        "type": "object"
-      },
+      "items": {},
       "type": "array"
     },
     "helmController": {
@@ -1935,17 +1906,37 @@
                 },
                 "type": "object"
               },
+              "container": {
+                "properties": {
+                  "additionalArgs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -1971,16 +1962,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "priorityClassName": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
                 "additionalProperties": {},
                 "type": "object"
@@ -2000,14 +1981,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -2018,123 +1997,6 @@
               "volumes": {
                 "additionalProperties": {},
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          "sha256:"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tag": {}
-                          },
-                          "required": [
-                            "tag"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "tag": {
-                            "not": {
-                              "enum": [
-                                "sha256:"
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "type": "string"
               }
             },
             "type": "object"
@@ -2244,10 +2106,7 @@
         "container": {
           "additionalProperties": false,
           "properties": {
-            "additionalArgs": {
-              "items": {},
-              "type": "array"
-            }
+            "additionalArgs": {}
           },
           "type": "object"
         },
@@ -2311,18 +2170,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {
@@ -2390,17 +2238,37 @@
                 },
                 "type": "object"
               },
+              "container": {
+                "properties": {
+                  "additionalArgs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -2425,16 +2293,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "priorityClassName": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
                 "additionalProperties": {},
                 "type": "object"
@@ -2454,14 +2312,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -2472,123 +2328,6 @@
               "volumes": {
                 "additionalProperties": {},
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          "sha256:"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tag": {}
-                          },
-                          "required": [
-                            "tag"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "tag": {
-                            "not": {
-                              "enum": [
-                                "sha256:"
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "type": "string"
               }
             },
             "type": "object"
@@ -2697,10 +2436,7 @@
         "container": {
           "additionalProperties": false,
           "properties": {
-            "additionalArgs": {
-              "items": {},
-              "type": "array"
-            }
+            "additionalArgs": {}
           },
           "type": "object"
         },
@@ -2763,18 +2499,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {
@@ -2857,17 +2582,37 @@
                 },
                 "type": "object"
               },
+              "container": {
+                "properties": {
+                  "additionalArgs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -2892,16 +2637,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "priorityClassName": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
                 "additionalProperties": {},
                 "type": "object"
@@ -2921,14 +2656,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -2939,123 +2672,6 @@
               "volumes": {
                 "additionalProperties": {},
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          "sha256:"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tag": {}
-                          },
-                          "required": [
-                            "tag"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "tag": {
-                            "not": {
-                              "enum": [
-                                "sha256:"
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "type": "string"
               }
             },
             "type": "object"
@@ -3164,10 +2780,7 @@
         "container": {
           "additionalProperties": false,
           "properties": {
-            "additionalArgs": {
-              "items": {},
-              "type": "array"
-            }
+            "additionalArgs": {}
           },
           "type": "object"
         },
@@ -3230,18 +2843,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {
@@ -3312,19 +2914,57 @@
                 },
                 "type": "object"
               },
+              "container": {
+                "properties": {
+                  "additionalArgs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "extraEnv": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ]
+              },
+              "extraSecretMounts": {
                 "anyOf": [
                   {
                     "items": {},
                     "type": "array"
                   },
                   {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
                   },
                   {
-                    "type": "string"
+                    "type": "object"
                   }
-                ]
+                ],
+                "description": "Defines additional mounts with secrets.\nSecrets must be manually created in the namespace or with kustomizeController.secret\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: secret-files\nreadOnly: true"
               },
               "imagePullPolicy": {
                 "type": "string"
@@ -3347,16 +2987,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "priorityClassName": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
                 "additionalProperties": {},
                 "type": "object"
@@ -3376,14 +3006,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -3401,107 +3029,88 @@
         },
         {
           "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
+                "anyOf": [
                   {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                    "not": {
+                      "properties": {
+                        "create": {}
                       },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
                   },
                   {
                     "properties": {
-                      "tag": {
-                        "enum": [
-                          "sha256:"
-                        ]
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "tag"
+                      "create"
                     ],
                     "type": "object"
                   }
                 ]
               },
               {
-                "allOf": [
+                "anyOf": [
                   {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
+                    "properties": {
+                      "envFrom": {
                         "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
+                          "map": {
+                            "properties": {
+                              "name": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
                           }
                         },
                         "required": [
-                          "create"
+                          "map"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "envFrom"
+                    ],
+                    "type": "object"
                   },
                   {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tag": {}
-                          },
-                          "required": [
-                            "tag"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
+                    "properties": {
+                      "envFrom": {
                         "properties": {
-                          "tag": {
-                            "not": {
-                              "enum": [
-                                "sha256:"
-                              ]
-                            }
+                          "secret": {
+                            "properties": {
+                              "name": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
                           }
                         },
                         "required": [
-                          "tag"
+                          "secret"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "envFrom"
+                    ],
+                    "type": "object"
                   }
                 ]
               }
@@ -3509,8 +3118,27 @@
           },
           "then": {
             "properties": {
-              "image": {
-                "type": "string"
+              "envFrom": {
+                "description": "Defines envFrom using a configmap and/or secret.",
+                "properties": {
+                  "map": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "secret": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -3619,10 +3247,7 @@
         "container": {
           "additionalProperties": false,
           "properties": {
-            "additionalArgs": {
-              "items": {},
-              "type": "array"
-            }
+            "additionalArgs": {}
           },
           "type": "object"
         },
@@ -3636,24 +3261,14 @@
             "map": {
               "additionalProperties": false,
               "properties": {
-                "name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
+                "name": {}
               },
               "type": "object"
             },
             "secret": {
               "additionalProperties": false,
               "properties": {
-                "name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
+                "name": {}
               },
               "type": "object"
             }
@@ -3675,19 +3290,7 @@
           ]
         },
         "extraSecretMounts": {
-          "description": "Defines additional mounts with secrets.\nSecrets must be manually created in the namespace or with kustomizeController.secret\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: secret-files\nreadOnly: true",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "secretName": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
+          "description": "Defines additional mounts with secrets.\nSecrets must be manually created in the namespace or with kustomizeController.secret\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: secret-files\nreadOnly: true"
         },
         "image": {},
         "imagePullPolicy": {},
@@ -3730,6 +3333,24 @@
               },
               "then": {
                 "properties": {
+                  "data": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "name": {
                     "type": "string"
                   }
@@ -3769,18 +3390,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {
@@ -3866,17 +3476,37 @@
                 },
                 "type": "object"
               },
+              "container": {
+                "properties": {
+                  "additionalArgs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -3900,16 +3530,6 @@
               "podSecurityContext": {
                 "additionalProperties": {},
                 "type": "object"
-              },
-              "priorityClassName": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "resources": {
                 "additionalProperties": {},
@@ -3951,14 +3571,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -3991,123 +3609,6 @@
                   }
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          "sha256:"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tag": {}
-                          },
-                          "required": [
-                            "tag"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "tag": {
-                            "not": {
-                              "enum": [
-                                "sha256:"
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "type": "string"
               }
             },
             "type": "object"
@@ -4267,12 +3768,70 @@
                 "properties": {
                   "ingress": {
                     "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ingressClassName: nginx"
+                      },
+                      "hosts": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "properties": {},
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      },
                       "labels": {
                         "additionalProperties": {
                           "type": "string"
                         },
                         "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
                         "type": "object"
+                      },
+                      "tls": {
+                        "anyOf": [
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "object"
+                          }
+                        ],
+                        "description": "- secretName: flux-webhook-tls\nhosts:\n- flux-webhook.example.com"
                       }
                     },
                     "type": "object"
@@ -4297,10 +3856,7 @@
         "container": {
           "additionalProperties": false,
           "properties": {
-            "additionalArgs": {
-              "items": {},
-              "type": "array"
-            }
+            "additionalArgs": {}
           },
           "type": "object"
         },
@@ -4381,18 +3937,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {
@@ -4422,42 +3967,14 @@
               "additionalProperties": false,
               "properties": {
                 "annotations": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+                  "additionalProperties": {},
                   "description": "ingressClassName: nginx",
                   "type": "object"
                 },
                 "create": {
                   "type": "boolean"
                 },
-                "hosts": {
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "host": {
-                        "type": "string"
-                      },
-                      "paths": {
-                        "items": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "path": {
-                              "type": "string"
-                            },
-                            "pathType": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
+                "hosts": {},
                 "ingressClassName": {},
                 "labels": {
                   "additionalProperties": {},
@@ -4465,21 +3982,7 @@
                   "type": "object"
                 },
                 "tls": {
-                  "description": "- secretName: flux-webhook-tls\nhosts:\n- flux-webhook.example.com",
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "hosts": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "secretName": {}
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
+                  "description": "- secretName: flux-webhook-tls\nhosts:\n- flux-webhook.example.com"
                 }
               },
               "type": "object"
@@ -4534,887 +4037,65 @@
               },
               "then": {
                 "properties": {
+                  "additionalLabels": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "podMetricsEndpoints": {
-                    "description": "podMetricsEndpoints defines how to scrape metrics from the selected pods.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "PodMetricsEndpoint defines an endpoint serving Prometheus metrics to be scraped by\nPrometheus.",
-                      "properties": {
-                        "authorization": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {
                           "additionalProperties": false,
-                          "description": "authorization configures the Authorization header credentials used by\nthe client.\n\nCannot be set at the same time as `basicAuth`, `bearerTokenSecret` or `oauth2`.",
                           "properties": {
-                            "credentials": {
-                              "additionalProperties": false,
-                              "description": "credentials defines a key of a Secret in the namespace that contains the credentials for authentication.",
-                              "properties": {
-                                "key": {
-                                  "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "default": "",
-                                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                  "type": "string"
-                                },
-                                "optional": {
-                                  "description": "Specify whether the Secret or its key must be defined",
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "key"
-                              ],
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
-                            },
-                            "type": {
-                              "description": "type defines the authentication type. The value is case-insensitive.\n\n\"Basic\" is not a supported value.\n\nDefault: \"Bearer\"",
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "basicAuth": {
-                          "additionalProperties": false,
-                          "description": "basicAuth defines the Basic Authentication credentials used by the\nclient.\n\nCannot be set at the same time as `authorization`, `bearerTokenSecret` or `oauth2`.",
-                          "properties": {
-                            "password": {
-                              "additionalProperties": false,
-                              "description": "password defines a key of a Secret containing the password for\nauthentication.",
-                              "properties": {
-                                "key": {
-                                  "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "default": "",
-                                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                  "type": "string"
-                                },
-                                "optional": {
-                                  "description": "Specify whether the Secret or its key must be defined",
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "key"
-                              ],
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
-                            },
-                            "username": {
-                              "additionalProperties": false,
-                              "description": "username defines a key of a Secret containing the username for\nauthentication.",
-                              "properties": {
-                                "key": {
-                                  "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "default": "",
-                                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                  "type": "string"
-                                },
-                                "optional": {
-                                  "description": "Specify whether the Secret or its key must be defined",
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "key"
-                              ],
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "bearerTokenSecret": {
-                          "additionalProperties": false,
-                          "description": "bearerTokenSecret defines a key of a Secret containing the bearer token\nused by the client for authentication. The secret needs to be in the\nsame namespace as the custom resource and readable by the Prometheus\nOperator.\n\nCannot be set at the same time as `authorization`, `basicAuth` or `oauth2`.\n\nDeprecated: use `authorization` instead.",
-                          "properties": {
-                            "key": {
-                              "description": "The key of the secret to select from.  Must be a valid secret key.",
+                            "port": {
                               "type": "string"
                             },
-                            "name": {
-                              "default": "",
-                              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                              "type": "string"
-                            },
-                            "optional": {
-                              "description": "Specify whether the Secret or its key must be defined",
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "key"
-                          ],
-                          "type": "object",
-                          "x-kubernetes-map-type": "atomic"
-                        },
-                        "enableHttp2": {
-                          "description": "enableHttp2 can be used to disable HTTP2.",
-                          "type": "boolean"
-                        },
-                        "filterRunning": {
-                          "description": "filterRunning when true, the pods which are not running (e.g. either in Failed or\nSucceeded state) are dropped during the target discovery.\n\nIf unset, the filtering is enabled.\n\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase",
-                          "type": "boolean"
-                        },
-                        "followRedirects": {
-                          "description": "followRedirects defines whether the client should follow HTTP 3xx\nredirects.",
-                          "type": "boolean"
-                        },
-                        "honorLabels": {
-                          "description": "honorLabels when true preserves the metric's labels when they collide\nwith the target's labels.",
-                          "type": "boolean"
-                        },
-                        "honorTimestamps": {
-                          "description": "honorTimestamps defines whether Prometheus preserves the timestamps\nwhen exposed by the target.",
-                          "type": "boolean"
-                        },
-                        "interval": {
-                          "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "metricRelabelings": {
-                          "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                          "items": {
-                            "additionalProperties": false,
-                            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                            "properties": {
-                              "action": {
-                                "default": "replace",
-                                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                                "enum": [
-                                  "replace",
-                                  "Replace",
-                                  "keep",
-                                  "Keep",
-                                  "drop",
-                                  "Drop",
-                                  "hashmod",
-                                  "HashMod",
-                                  "labelmap",
-                                  "LabelMap",
-                                  "labeldrop",
-                                  "LabelDrop",
-                                  "labelkeep",
-                                  "LabelKeep",
-                                  "lowercase",
-                                  "Lowercase",
-                                  "uppercase",
-                                  "Uppercase",
-                                  "keepequal",
-                                  "KeepEqual",
-                                  "dropequal",
-                                  "DropEqual"
-                                ],
-                                "type": "string"
-                              },
-                              "modulus": {
-                                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                                "format": "int64",
-                                "type": "integer"
-                              },
-                              "regex": {
-                                "description": "regex defines the regular expression against which the extracted value is matched.",
-                                "type": "string"
-                              },
-                              "replacement": {
-                                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                                "type": "string"
-                              },
-                              "separator": {
-                                "description": "separator defines the string between concatenated SourceLabels.",
-                                "type": "string"
-                              },
-                              "sourceLabels": {
-                                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                                "items": {
-                                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              },
-                              "targetLabel": {
-                                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                                "type": "string"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "type": "array"
-                        },
-                        "noProxy": {
-                          "description": "noProxy defines a comma-separated string that can contain IPs, CIDR notation, domain names\nthat should be excluded from proxying. IP and domain names can\ncontain port numbers.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                          "type": "string"
-                        },
-                        "oauth2": {
-                          "additionalProperties": false,
-                          "description": "oauth2 defines the OAuth2 settings used by the client.\n\nIt requires Prometheus >= 2.27.0.\n\nCannot be set at the same time as `authorization`, `basicAuth` or `bearerTokenSecret`.",
-                          "properties": {
-                            "clientId": {
-                              "additionalProperties": false,
-                              "description": "clientId defines a key of a Secret or ConfigMap containing the\nOAuth2 client's ID.",
-                              "properties": {
-                                "configMap": {
-                                  "additionalProperties": false,
-                                  "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key to select.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the ConfigMap or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                },
-                                "secret": {
-                                  "additionalProperties": false,
-                                  "description": "secret defines the Secret containing data to use for the targets.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the Secret or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "clientSecret": {
-                              "additionalProperties": false,
-                              "description": "clientSecret defines a key of a Secret containing the OAuth2\nclient's secret.",
-                              "properties": {
-                                "key": {
-                                  "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "default": "",
-                                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                  "type": "string"
-                                },
-                                "optional": {
-                                  "description": "Specify whether the Secret or its key must be defined",
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "key"
-                              ],
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
-                            },
-                            "endpointParams": {
-                              "additionalProperties": {
-                                "type": "string"
-                              },
-                              "description": "endpointParams configures the HTTP parameters to append to the token\nURL.",
-                              "type": "object"
-                            },
-                            "noProxy": {
-                              "description": "noProxy defines a comma-separated string that can contain IPs, CIDR notation, domain names\nthat should be excluded from proxying. IP and domain names can\ncontain port numbers.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                              "type": "string"
-                            },
-                            "proxyConnectHeader": {
-                              "additionalProperties": {
-                                "items": {
-                                  "additionalProperties": false,
-                                  "description": "SecretKeySelector selects a key of a Secret.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the Secret or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                },
-                                "type": "array"
-                              },
-                              "description": "proxyConnectHeader optionally specifies headers to send to\nproxies during CONNECT requests.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
-                            },
-                            "proxyFromEnvironment": {
-                              "description": "proxyFromEnvironment defines whether to use the proxy configuration defined by environment variables (HTTP_PROXY, HTTPS_PROXY, and NO_PROXY).\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                              "type": "boolean"
-                            },
-                            "proxyUrl": {
-                              "description": "proxyUrl defines the HTTP proxy server to use.",
-                              "pattern": "^(http|https|socks5)://.+$",
-                              "type": "string"
-                            },
-                            "scopes": {
-                              "description": "scopes defines the OAuth2 scopes used for the token request.",
+                            "relabelings": {
                               "items": {
-                                "type": "string"
+                                "additionalProperties": false,
+                                "properties": {
+                                  "action": {
+                                    "type": "string"
+                                  },
+                                  "regex": {
+                                    "type": "string"
+                                  },
+                                  "sourceLabels": {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                },
+                                "type": "object"
                               },
                               "type": "array"
-                            },
-                            "tlsConfig": {
-                              "additionalProperties": false,
-                              "description": "tlsConfig defines the TLS configuration to use when connecting to the OAuth2 server.\nIt requires Prometheus >= v2.43.0.",
-                              "properties": {
-                                "ca": {
-                                  "additionalProperties": false,
-                                  "description": "ca defines the Certificate authority used when verifying server certificates.",
-                                  "properties": {
-                                    "configMap": {
-                                      "additionalProperties": false,
-                                      "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                                      "properties": {
-                                        "key": {
-                                          "description": "The key to select.",
-                                          "type": "string"
-                                        },
-                                        "name": {
-                                          "default": "",
-                                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                          "type": "string"
-                                        },
-                                        "optional": {
-                                          "description": "Specify whether the ConfigMap or its key must be defined",
-                                          "type": "boolean"
-                                        }
-                                      },
-                                      "required": [
-                                        "key"
-                                      ],
-                                      "type": "object",
-                                      "x-kubernetes-map-type": "atomic"
-                                    },
-                                    "secret": {
-                                      "additionalProperties": false,
-                                      "description": "secret defines the Secret containing data to use for the targets.",
-                                      "properties": {
-                                        "key": {
-                                          "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                          "type": "string"
-                                        },
-                                        "name": {
-                                          "default": "",
-                                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                          "type": "string"
-                                        },
-                                        "optional": {
-                                          "description": "Specify whether the Secret or its key must be defined",
-                                          "type": "boolean"
-                                        }
-                                      },
-                                      "required": [
-                                        "key"
-                                      ],
-                                      "type": "object",
-                                      "x-kubernetes-map-type": "atomic"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "cert": {
-                                  "additionalProperties": false,
-                                  "description": "cert defines the Client certificate to present when doing client-authentication.",
-                                  "properties": {
-                                    "configMap": {
-                                      "additionalProperties": false,
-                                      "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                                      "properties": {
-                                        "key": {
-                                          "description": "The key to select.",
-                                          "type": "string"
-                                        },
-                                        "name": {
-                                          "default": "",
-                                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                          "type": "string"
-                                        },
-                                        "optional": {
-                                          "description": "Specify whether the ConfigMap or its key must be defined",
-                                          "type": "boolean"
-                                        }
-                                      },
-                                      "required": [
-                                        "key"
-                                      ],
-                                      "type": "object",
-                                      "x-kubernetes-map-type": "atomic"
-                                    },
-                                    "secret": {
-                                      "additionalProperties": false,
-                                      "description": "secret defines the Secret containing data to use for the targets.",
-                                      "properties": {
-                                        "key": {
-                                          "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                          "type": "string"
-                                        },
-                                        "name": {
-                                          "default": "",
-                                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                          "type": "string"
-                                        },
-                                        "optional": {
-                                          "description": "Specify whether the Secret or its key must be defined",
-                                          "type": "boolean"
-                                        }
-                                      },
-                                      "required": [
-                                        "key"
-                                      ],
-                                      "type": "object",
-                                      "x-kubernetes-map-type": "atomic"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "insecureSkipVerify": {
-                                  "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                                  "type": "boolean"
-                                },
-                                "keySecret": {
-                                  "additionalProperties": false,
-                                  "description": "keySecret defines the Secret containing the client key file for the targets.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the Secret or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                },
-                                "maxVersion": {
-                                  "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                                  "enum": [
-                                    "TLS10",
-                                    "TLS11",
-                                    "TLS12",
-                                    "TLS13"
-                                  ],
-                                  "type": "string"
-                                },
-                                "minVersion": {
-                                  "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                                  "enum": [
-                                    "TLS10",
-                                    "TLS11",
-                                    "TLS12",
-                                    "TLS13"
-                                  ],
-                                  "type": "string"
-                                },
-                                "serverName": {
-                                  "description": "serverName is used to verify the hostname for the targets.",
-                                  "type": "string"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "tokenUrl": {
-                              "description": "tokenUrl defines the URL to fetch the token from.",
-                              "minLength": 1,
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "clientId",
-                            "clientSecret",
-                            "tokenUrl"
-                          ],
-                          "type": "object"
-                        },
-                        "params": {
-                          "additionalProperties": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "description": "params define optional HTTP URL parameters.",
-                          "type": "object"
-                        },
-                        "path": {
-                          "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
-                          "type": "string"
-                        },
-                        "port": {
-                          "description": "port defines the `Pod` port name which exposes the endpoint.\n\nIf the pod doesn't expose a port with the same name, it will result\nin no targets being discovered.\n\nIf a `Pod` has multiple `Port`s with the same name (which is not\nrecommended), one target instance per unique port number will be\ngenerated.\n\nIt takes precedence over the `portNumber` and `targetPort` fields.",
-                          "type": "string"
-                        },
-                        "portNumber": {
-                          "description": "portNumber defines the `Pod` port number which exposes the endpoint.\n\nThe `Pod` must declare the specified `Port` in its spec or the\ntarget will be dropped by Prometheus.\n\nThis cannot be used to enable scraping of an undeclared port.\nTo scrape targets on a port which isn't exposed, you need to use\nrelabeling to override the `__address__` label (but beware of\nduplicate targets if the `Pod` has other declared ports).\n\nIn practice Prometheus will select targets for which the\nmatches the target's __meta_kubernetes_pod_container_port_number.",
-                          "format": "int32",
-                          "maximum": 65535,
-                          "minimum": 1,
-                          "type": "integer"
-                        },
-                        "proxyConnectHeader": {
-                          "additionalProperties": {
-                            "items": {
-                              "additionalProperties": false,
-                              "description": "SecretKeySelector selects a key of a Secret.",
-                              "properties": {
-                                "key": {
-                                  "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "default": "",
-                                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                  "type": "string"
-                                },
-                                "optional": {
-                                  "description": "Specify whether the Secret or its key must be defined",
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "key"
-                              ],
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
-                            },
-                            "type": "array"
-                          },
-                          "description": "proxyConnectHeader optionally specifies headers to send to\nproxies during CONNECT requests.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                          "type": "object",
-                          "x-kubernetes-map-type": "atomic"
-                        },
-                        "proxyFromEnvironment": {
-                          "description": "proxyFromEnvironment defines whether to use the proxy configuration defined by environment variables (HTTP_PROXY, HTTPS_PROXY, and NO_PROXY).\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                          "type": "boolean"
-                        },
-                        "proxyUrl": {
-                          "description": "proxyUrl defines the HTTP proxy server to use.",
-                          "pattern": "^(http|https|socks5)://.+$",
-                          "type": "string"
-                        },
-                        "relabelings": {
-                          "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                          "items": {
-                            "additionalProperties": false,
-                            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                            "properties": {
-                              "action": {
-                                "default": "replace",
-                                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                                "enum": [
-                                  "replace",
-                                  "Replace",
-                                  "keep",
-                                  "Keep",
-                                  "drop",
-                                  "Drop",
-                                  "hashmod",
-                                  "HashMod",
-                                  "labelmap",
-                                  "LabelMap",
-                                  "labeldrop",
-                                  "LabelDrop",
-                                  "labelkeep",
-                                  "LabelKeep",
-                                  "lowercase",
-                                  "Lowercase",
-                                  "uppercase",
-                                  "Uppercase",
-                                  "keepequal",
-                                  "KeepEqual",
-                                  "dropequal",
-                                  "DropEqual"
-                                ],
-                                "type": "string"
-                              },
-                              "modulus": {
-                                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                                "format": "int64",
-                                "type": "integer"
-                              },
-                              "regex": {
-                                "description": "regex defines the regular expression against which the extracted value is matched.",
-                                "type": "string"
-                              },
-                              "replacement": {
-                                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                                "type": "string"
-                              },
-                              "separator": {
-                                "description": "separator defines the string between concatenated SourceLabels.",
-                                "type": "string"
-                              },
-                              "sourceLabels": {
-                                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                                "items": {
-                                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                                  "type": "string"
-                                },
-                                "type": "array"
-                              },
-                              "targetLabel": {
-                                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                                "type": "string"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "type": "array"
-                        },
-                        "scheme": {
-                          "description": "scheme defines the HTTP scheme to use for scraping.",
-                          "enum": [
-                            "http",
-                            "https",
-                            "HTTP",
-                            "HTTPS"
-                          ],
-                          "type": "string"
-                        },
-                        "scrapeTimeout": {
-                          "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "targetPort": {
-                          "anyOf": [
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ],
-                          "description": "targetPort defines the name or number of the target port of the `Pod` object behind the Service, the\nport must be specified with container port property.\n\nDeprecated: use 'port' or 'portNumber' instead.",
-                          "x-kubernetes-int-or-string": true
-                        },
-                        "tlsConfig": {
-                          "additionalProperties": false,
-                          "description": "tlsConfig defines the TLS configuration used by the client.",
-                          "properties": {
-                            "ca": {
-                              "additionalProperties": false,
-                              "description": "ca defines the Certificate authority used when verifying server certificates.",
-                              "properties": {
-                                "configMap": {
-                                  "additionalProperties": false,
-                                  "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key to select.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the ConfigMap or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                },
-                                "secret": {
-                                  "additionalProperties": false,
-                                  "description": "secret defines the Secret containing data to use for the targets.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the Secret or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "cert": {
-                              "additionalProperties": false,
-                              "description": "cert defines the Client certificate to present when doing client-authentication.",
-                              "properties": {
-                                "configMap": {
-                                  "additionalProperties": false,
-                                  "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key to select.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the ConfigMap or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                },
-                                "secret": {
-                                  "additionalProperties": false,
-                                  "description": "secret defines the Secret containing data to use for the targets.",
-                                  "properties": {
-                                    "key": {
-                                      "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                      "type": "string"
-                                    },
-                                    "name": {
-                                      "default": "",
-                                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                      "type": "string"
-                                    },
-                                    "optional": {
-                                      "description": "Specify whether the Secret or its key must be defined",
-                                      "type": "boolean"
-                                    }
-                                  },
-                                  "required": [
-                                    "key"
-                                  ],
-                                  "type": "object",
-                                  "x-kubernetes-map-type": "atomic"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "insecureSkipVerify": {
-                              "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                              "type": "boolean"
-                            },
-                            "keySecret": {
-                              "additionalProperties": false,
-                              "description": "keySecret defines the Secret containing the client key file for the targets.",
-                              "properties": {
-                                "key": {
-                                  "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "default": "",
-                                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                  "type": "string"
-                                },
-                                "optional": {
-                                  "description": "Specify whether the Secret or its key must be defined",
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "key"
-                              ],
-                              "type": "object",
-                              "x-kubernetes-map-type": "atomic"
-                            },
-                            "maxVersion": {
-                              "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                              "enum": [
-                                "TLS10",
-                                "TLS11",
-                                "TLS12",
-                                "TLS13"
-                              ],
-                              "type": "string"
-                            },
-                            "minVersion": {
-                              "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                              "enum": [
-                                "TLS10",
-                                "TLS11",
-                                "TLS12",
-                                "TLS13"
-                              ],
-                              "type": "string"
-                            },
-                            "serverName": {
-                              "description": "serverName is used to verify the hostname for the targets.",
-                              "type": "string"
                             }
                           },
                           "type": "object"
                         },
-                        "trackTimestampsStaleness": {
-                          "description": "trackTimestampsStaleness defines whether Prometheus tracks staleness of\nthe metrics that have an explicit timestamp present in scraped data.\nHas no effect if `honorTimestamps` is false.\n\nIt requires Prometheus >= v2.48.0.",
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
+                        "type": "array"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -5423,9 +4104,7 @@
           ],
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "type": "object"
             },
             "create": {
@@ -5433,886 +4112,18 @@
               "type": "boolean"
             },
             "podMetricsEndpoints": {
-              "description": "podMetricsEndpoints defines how to scrape metrics from the selected pods.",
-              "items": {
-                "additionalProperties": false,
-                "description": "PodMetricsEndpoint defines an endpoint serving Prometheus metrics to be scraped by\nPrometheus.",
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "description": "authorization configures the Authorization header credentials used by\nthe client.\n\nCannot be set at the same time as `basicAuth`, `bearerTokenSecret` or `oauth2`.",
-                    "properties": {
-                      "credentials": {
-                        "additionalProperties": false,
-                        "description": "credentials defines a key of a Secret in the namespace that contains the credentials for authentication.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "type": {
-                        "description": "type defines the authentication type. The value is case-insensitive.\n\n\"Basic\" is not a supported value.\n\nDefault: \"Bearer\"",
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basicAuth": {
-                    "additionalProperties": false,
-                    "description": "basicAuth defines the Basic Authentication credentials used by the\nclient.\n\nCannot be set at the same time as `authorization`, `bearerTokenSecret` or `oauth2`.",
-                    "properties": {
-                      "password": {
-                        "additionalProperties": false,
-                        "description": "password defines a key of a Secret containing the password for\nauthentication.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "username": {
-                        "additionalProperties": false,
-                        "description": "username defines a key of a Secret containing the username for\nauthentication.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "bearerTokenSecret": {
-                    "additionalProperties": false,
-                    "description": "bearerTokenSecret defines a key of a Secret containing the bearer token\nused by the client for authentication. The secret needs to be in the\nsame namespace as the custom resource and readable by the Prometheus\nOperator.\n\nCannot be set at the same time as `authorization`, `basicAuth` or `oauth2`.\n\nDeprecated: use `authorization` instead.",
-                    "properties": {
-                      "key": {
-                        "description": "The key of the secret to select from.  Must be a valid secret key.",
-                        "type": "string"
-                      },
-                      "name": {
-                        "default": "",
-                        "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                        "type": "string"
-                      },
-                      "optional": {
-                        "description": "Specify whether the Secret or its key must be defined",
-                        "type": "boolean"
-                      }
-                    },
-                    "required": [
-                      "key"
-                    ],
-                    "type": "object",
-                    "x-kubernetes-map-type": "atomic"
-                  },
-                  "enableHttp2": {
-                    "description": "enableHttp2 can be used to disable HTTP2.",
-                    "type": "boolean"
-                  },
-                  "filterRunning": {
-                    "description": "filterRunning when true, the pods which are not running (e.g. either in Failed or\nSucceeded state) are dropped during the target discovery.\n\nIf unset, the filtering is enabled.\n\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase",
-                    "type": "boolean"
-                  },
-                  "followRedirects": {
-                    "description": "followRedirects defines whether the client should follow HTTP 3xx\nredirects.",
-                    "type": "boolean"
-                  },
-                  "honorLabels": {
-                    "description": "honorLabels when true preserves the metric's labels when they collide\nwith the target's labels.",
-                    "type": "boolean"
-                  },
-                  "honorTimestamps": {
-                    "description": "honorTimestamps defines whether Prometheus preserves the timestamps\nwhen exposed by the target.",
-                    "type": "boolean"
-                  },
-                  "interval": {
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "metricRelabelings": {
-                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "noProxy": {
-                    "description": "noProxy defines a comma-separated string that can contain IPs, CIDR notation, domain names\nthat should be excluded from proxying. IP and domain names can\ncontain port numbers.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "description": "oauth2 defines the OAuth2 settings used by the client.\n\nIt requires Prometheus >= 2.27.0.\n\nCannot be set at the same time as `authorization`, `basicAuth` or `bearerTokenSecret`.",
-                    "properties": {
-                      "clientId": {
-                        "additionalProperties": false,
-                        "description": "clientId defines a key of a Secret or ConfigMap containing the\nOAuth2 client's ID.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "clientSecret": {
-                        "additionalProperties": false,
-                        "description": "clientSecret defines a key of a Secret containing the OAuth2\nclient's secret.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "endpointParams": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "description": "endpointParams configures the HTTP parameters to append to the token\nURL.",
-                        "type": "object"
-                      },
-                      "noProxy": {
-                        "description": "noProxy defines a comma-separated string that can contain IPs, CIDR notation, domain names\nthat should be excluded from proxying. IP and domain names can\ncontain port numbers.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                        "type": "string"
-                      },
-                      "proxyConnectHeader": {
-                        "additionalProperties": {
-                          "items": {
-                            "additionalProperties": false,
-                            "description": "SecretKeySelector selects a key of a Secret.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "type": "array"
-                        },
-                        "description": "proxyConnectHeader optionally specifies headers to send to\nproxies during CONNECT requests.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "proxyFromEnvironment": {
-                        "description": "proxyFromEnvironment defines whether to use the proxy configuration defined by environment variables (HTTP_PROXY, HTTPS_PROXY, and NO_PROXY).\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                        "type": "boolean"
-                      },
-                      "proxyUrl": {
-                        "description": "proxyUrl defines the HTTP proxy server to use.",
-                        "pattern": "^(http|https|socks5)://.+$",
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "description": "scopes defines the OAuth2 scopes used for the token request.",
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "tlsConfig": {
-                        "additionalProperties": false,
-                        "description": "tlsConfig defines the TLS configuration to use when connecting to the OAuth2 server.\nIt requires Prometheus >= v2.43.0.",
-                        "properties": {
-                          "ca": {
-                            "additionalProperties": false,
-                            "description": "ca defines the Certificate authority used when verifying server certificates.",
-                            "properties": {
-                              "configMap": {
-                                "additionalProperties": false,
-                                "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                                "properties": {
-                                  "key": {
-                                    "description": "The key to select.",
-                                    "type": "string"
-                                  },
-                                  "name": {
-                                    "default": "",
-                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                    "type": "string"
-                                  },
-                                  "optional": {
-                                    "description": "Specify whether the ConfigMap or its key must be defined",
-                                    "type": "boolean"
-                                  }
-                                },
-                                "required": [
-                                  "key"
-                                ],
-                                "type": "object",
-                                "x-kubernetes-map-type": "atomic"
-                              },
-                              "secret": {
-                                "additionalProperties": false,
-                                "description": "secret defines the Secret containing data to use for the targets.",
-                                "properties": {
-                                  "key": {
-                                    "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                    "type": "string"
-                                  },
-                                  "name": {
-                                    "default": "",
-                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                    "type": "string"
-                                  },
-                                  "optional": {
-                                    "description": "Specify whether the Secret or its key must be defined",
-                                    "type": "boolean"
-                                  }
-                                },
-                                "required": [
-                                  "key"
-                                ],
-                                "type": "object",
-                                "x-kubernetes-map-type": "atomic"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "cert": {
-                            "additionalProperties": false,
-                            "description": "cert defines the Client certificate to present when doing client-authentication.",
-                            "properties": {
-                              "configMap": {
-                                "additionalProperties": false,
-                                "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                                "properties": {
-                                  "key": {
-                                    "description": "The key to select.",
-                                    "type": "string"
-                                  },
-                                  "name": {
-                                    "default": "",
-                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                    "type": "string"
-                                  },
-                                  "optional": {
-                                    "description": "Specify whether the ConfigMap or its key must be defined",
-                                    "type": "boolean"
-                                  }
-                                },
-                                "required": [
-                                  "key"
-                                ],
-                                "type": "object",
-                                "x-kubernetes-map-type": "atomic"
-                              },
-                              "secret": {
-                                "additionalProperties": false,
-                                "description": "secret defines the Secret containing data to use for the targets.",
-                                "properties": {
-                                  "key": {
-                                    "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                    "type": "string"
-                                  },
-                                  "name": {
-                                    "default": "",
-                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                    "type": "string"
-                                  },
-                                  "optional": {
-                                    "description": "Specify whether the Secret or its key must be defined",
-                                    "type": "boolean"
-                                  }
-                                },
-                                "required": [
-                                  "key"
-                                ],
-                                "type": "object",
-                                "x-kubernetes-map-type": "atomic"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "insecureSkipVerify": {
-                            "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                            "type": "boolean"
-                          },
-                          "keySecret": {
-                            "additionalProperties": false,
-                            "description": "keySecret defines the Secret containing the client key file for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "maxVersion": {
-                            "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                            "enum": [
-                              "TLS10",
-                              "TLS11",
-                              "TLS12",
-                              "TLS13"
-                            ],
-                            "type": "string"
-                          },
-                          "minVersion": {
-                            "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                            "enum": [
-                              "TLS10",
-                              "TLS11",
-                              "TLS12",
-                              "TLS13"
-                            ],
-                            "type": "string"
-                          },
-                          "serverName": {
-                            "description": "serverName is used to verify the hostname for the targets.",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "tokenUrl": {
-                        "description": "tokenUrl defines the URL to fetch the token from.",
-                        "minLength": 1,
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "clientId",
-                      "clientSecret",
-                      "tokenUrl"
-                    ],
-                    "type": "object"
-                  },
-                  "params": {
-                    "additionalProperties": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "description": "params define optional HTTP URL parameters.",
-                    "type": "object"
-                  },
-                  "path": {
-                    "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
-                    "type": "string"
-                  },
-                  "port": {
-                    "description": "port defines the `Pod` port name which exposes the endpoint.\n\nIf the pod doesn't expose a port with the same name, it will result\nin no targets being discovered.\n\nIf a `Pod` has multiple `Port`s with the same name (which is not\nrecommended), one target instance per unique port number will be\ngenerated.\n\nIt takes precedence over the `portNumber` and `targetPort` fields.",
-                    "type": "string"
-                  },
-                  "portNumber": {
-                    "description": "portNumber defines the `Pod` port number which exposes the endpoint.\n\nThe `Pod` must declare the specified `Port` in its spec or the\ntarget will be dropped by Prometheus.\n\nThis cannot be used to enable scraping of an undeclared port.\nTo scrape targets on a port which isn't exposed, you need to use\nrelabeling to override the `__address__` label (but beware of\nduplicate targets if the `Pod` has other declared ports).\n\nIn practice Prometheus will select targets for which the\nmatches the target's __meta_kubernetes_pod_container_port_number.",
-                    "format": "int32",
-                    "maximum": 65535,
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  "proxyConnectHeader": {
-                    "additionalProperties": {
-                      "items": {
-                        "additionalProperties": false,
-                        "description": "SecretKeySelector selects a key of a Secret.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "type": "array"
-                    },
-                    "description": "proxyConnectHeader optionally specifies headers to send to\nproxies during CONNECT requests.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                    "type": "object",
-                    "x-kubernetes-map-type": "atomic"
-                  },
-                  "proxyFromEnvironment": {
-                    "description": "proxyFromEnvironment defines whether to use the proxy configuration defined by environment variables (HTTP_PROXY, HTTPS_PROXY, and NO_PROXY).\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
-                    "type": "boolean"
-                  },
-                  "proxyUrl": {
-                    "description": "proxyUrl defines the HTTP proxy server to use.",
-                    "pattern": "^(http|https|socks5)://.+$",
-                    "type": "string"
-                  },
-                  "relabelings": {
-                    "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "scheme": {
-                    "description": "scheme defines the HTTP scheme to use for scraping.",
-                    "enum": [
-                      "http",
-                      "https",
-                      "HTTP",
-                      "HTTPS"
-                    ],
-                    "type": "string"
-                  },
-                  "scrapeTimeout": {
-                    "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "targetPort": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "targetPort defines the name or number of the target port of the `Pod` object behind the Service, the\nport must be specified with container port property.\n\nDeprecated: use 'port' or 'portNumber' instead.",
-                    "x-kubernetes-int-or-string": true
-                  },
-                  "tlsConfig": {
-                    "additionalProperties": false,
-                    "description": "tlsConfig defines the TLS configuration used by the client.",
-                    "properties": {
-                      "ca": {
-                        "additionalProperties": false,
-                        "description": "ca defines the Certificate authority used when verifying server certificates.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "cert": {
-                        "additionalProperties": false,
-                        "description": "cert defines the Client certificate to present when doing client-authentication.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "insecureSkipVerify": {
-                        "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                        "type": "boolean"
-                      },
-                      "keySecret": {
-                        "additionalProperties": false,
-                        "description": "keySecret defines the Secret containing the client key file for the targets.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "maxVersion": {
-                        "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "minVersion": {
-                        "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "serverName": {
-                        "description": "serverName is used to verify the hostname for the targets.",
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "trackTimestampsStaleness": {
-                    "description": "trackTimestampsStaleness defines whether Prometheus tracks staleness of\nthe metrics that have an explicit timestamp present in scraped data.\nHas no effect if `honorTimestamps` is false.\n\nIt requires Prometheus >= v2.48.0.",
-                    "type": "boolean"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             }
           },
           "type": "object"
@@ -6459,17 +4270,37 @@
                 },
                 "type": "object"
               },
+              "container": {
+                "properties": {
+                  "additionalArgs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -6493,16 +4324,6 @@
               "podSecurityContext": {
                 "additionalProperties": {},
                 "type": "object"
-              },
-              "priorityClassName": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "resources": {
                 "additionalProperties": {},
@@ -6544,14 +4365,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -6562,123 +4381,6 @@
               "volumes": {
                 "additionalProperties": {},
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          "sha256:"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tag": {}
-                          },
-                          "required": [
-                            "tag"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "tag": {
-                            "not": {
-                              "enum": [
-                                "sha256:"
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "type": "string"
               }
             },
             "type": "object"
@@ -6787,10 +4489,7 @@
         "container": {
           "additionalProperties": false,
           "properties": {
-            "additionalArgs": {
-              "items": {},
-              "type": "array"
-            }
+            "additionalArgs": {}
           },
           "type": "object"
         },
@@ -6870,18 +4569,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {
@@ -6925,8 +4613,18 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "annotations": {
                 "additionalProperties": {
@@ -6934,17 +4632,37 @@
                 },
                 "type": "object"
               },
+              "container": {
+                "properties": {
+                  "additionalArgs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -6962,22 +4680,22 @@
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "podSecurityContext": {
                 "additionalProperties": {},
                 "type": "object"
-              },
-              "priorityClassName": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "resources": {
                 "additionalProperties": {
@@ -7053,14 +4771,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -7071,93 +4787,6 @@
               "volumes": {
                 "additionalProperties": {},
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          "sha256:"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tag": {}
-                          },
-                          "required": [
-                            "tag"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "tag": {
-                            "not": {
-                              "enum": [
-                                "sha256:"
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "type": "string"
               }
             },
             "type": "object"
@@ -7251,10 +4880,7 @@
         "container": {
           "additionalProperties": false,
           "properties": {
-            "additionalArgs": {
-              "items": {},
-              "type": "array"
-            }
+            "additionalArgs": {}
           },
           "type": "object"
         },
@@ -7334,18 +4960,7 @@
           },
           "type": "object"
         },
-        "tag": {
-          "anyOf": [
-            {
-              "enum": [
-                "sha256:"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "tag": {},
         "tolerations": {
           "anyOf": [
             {

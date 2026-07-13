@@ -618,7 +618,9 @@ fn scalar_item_range_keeps_parent_collection_path() {
         .find(|use_| {
             use_.source_expr == "accessModes.*"
                 && use_.path.0 == ["spec".to_string(), "accessModes[*]".to_string()]
-                && use_.kind == helm_schema_ir::ValueKind::Scalar
+                // quoted items are total stringifications, so the row is
+                // serialized: the sink sees text, not the item's shape
+                && use_.kind == helm_schema_ir::ValueKind::Serialized
         })
         .expect("scalar-item range should still emit per-item uses");
     assert!(
@@ -674,7 +676,8 @@ fn scalar_range_wrapped_into_object_item_stays_on_leaf_path() {
     let leaf_use = ir
         .iter()
         .find(|use_| {
-            use_.source_expr == "hosts.*.paths.*" && use_.kind == helm_schema_ir::ValueKind::Scalar
+            use_.source_expr == "hosts.*.paths.*"
+                && use_.kind == helm_schema_ir::ValueKind::Serialized
         })
         .expect("scalar path item should still surface as a value use");
     assert!(

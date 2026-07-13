@@ -43,6 +43,19 @@ fn schema_accepts_type(schema: &serde_json::Value, schema_type: &str) -> bool {
             })
 }
 
+fn schema_contains_open_string_map(schema: &serde_json::Value) -> bool {
+    schema
+        .pointer("/additionalProperties/type")
+        .and_then(serde_json::Value::as_str)
+        == Some("string")
+        || ["anyOf", "oneOf"].into_iter().any(|keyword| {
+            schema
+                .get(keyword)
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|variants| variants.iter().any(schema_contains_open_string_map))
+        })
+}
+
 fn schema_validates_instance(schema: &serde_json::Value, instance: &serde_json::Value) -> bool {
     jsonschema::validator_for(schema)
         .expect("schema validator")
@@ -107,6 +120,9 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
                 test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
+            crd_catalog_cache_dir: Some(
+                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+            ),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -645,18 +661,12 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         .wrap_err("generate schema")?;
 
     let global_schema = serde_json::json!({
-      "additionalProperties": false,
+      // Helm shares `global` across the chart tree, so the root namespace
+      // stays open to keys only other charts read. `bar` renders only
+      // through `quote`, which stringifies any input.
+      "additionalProperties": {},
       "properties": {
-        "bar": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "bar": {}
       },
       "type": "object"
     });
@@ -678,16 +688,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
         "kid": {
           "additionalProperties": false,
           "properties": {
-            "foo": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "foo": {},
             "global": child_global_defaults_schema,
             "persistence": {
               "additionalProperties": false,
@@ -780,14 +781,18 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context()
     let digest = actual
         .pointer("/properties/kid/properties/image/properties/digest")
         .ok_or_else(|| eyre!("missing kid.image.digest schema: {actual}"))?;
-    assert!(
-        schema_accepts_type(digest, "string"),
-        "kid.image.digest should keep the string evidence from printf, got {digest}"
-    );
-    assert!(
-        schema_accepts_type(digest, "null"),
-        "kid.image.digest should still accept the explicit null default from subchart values.yaml, got {digest}"
-    );
+    // printf renders any argument, so the digest slot must accept the
+    // explicit null default, digest strings, and other renderable scalars.
+    for probe in [
+        serde_json::json!("sha256:abc"),
+        serde_json::json!(null),
+        serde_json::json!(7),
+    ] {
+        assert!(
+            schema_validates_instance(digest, &probe),
+            "kid.image.digest renders through printf, so {probe} must validate, got {digest}"
+        );
+    }
 
     Ok(())
 }
@@ -845,6 +850,9 @@ spec:
                 test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
+            crd_catalog_cache_dir: Some(
+                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+            ),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -1048,11 +1056,8 @@ spec:
         pod_annotations.get("required").is_none(),
         "podAnnotations should not inherit deployment required fields, got {pod_annotations}"
     );
-    sim_assert_eq!(
-        have: pod_annotations
-            .pointer("/additionalProperties/type")
-            .and_then(serde_json::Value::as_str),
-        want: Some("string"),
+    assert!(
+        schema_contains_open_string_map(pod_annotations),
         "podAnnotations should be an open annotations string map, got {pod_annotations}"
     );
 
@@ -1373,9 +1378,9 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::e
                         "additionalProperties": { "type": "string" },
                         "type": "object"
                     },
-                    "name": {
-                        "type": ["string", "null"]
-                    }
+                    // the name only renders through `quote`, which
+                    // stringifies any input
+                    "name": {}
                 },
                 "type": "object"
             }
@@ -1387,11 +1392,9 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::e
     Ok(())
 }
 
-/// Negative guard for the structural `set ... (X.K | default V)` matcher:
-/// a helper that mutates `serviceAccount.name` but only defaults some
-/// *other* path inside the RHS must not make `serviceAccount.name`
-/// nullable. The target path is nullable only when the static analysis
-/// can prove the `default` is applied to that exact target field.
+/// A default on an unrelated path must not be attributed to the mutation
+/// target. The target's declared null remains accepted independently, while
+/// the stringification sink contributes the scalar input alternatives.
 #[test]
 fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre::eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
@@ -1459,10 +1462,9 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
             "serviceAccount": {
                 "additionalProperties": false,
                 "properties": {
-                    "name": {
-                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                        "type": "string"
-                    }
+                    // the name only renders through `quote`, which
+                    // stringifies any input
+                    "name": {}
                 },
                 "type": "object"
             }
@@ -1604,6 +1606,9 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: false,
+            crd_catalog_cache_dir: Some(
+                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+            ),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -1614,49 +1619,20 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    // `nameOverride` is only read on the helper's `else` branch, so its
-    // typing (with the default-driven null) lives under the
-    // `not(fullnameOverride)` overlay and the base stays open.
+    // `fullnameOverride` is consumed by `trunc` directly, a real runtime
+    // string contract, so its typing stays. `nameOverride` only reaches the
+    // render as a printf data argument (any value formats), so its slot is
+    // unconstrained and no branch narrows it.
     let expected = serde_json::json!({
-        "$defs": {
-            "helm-truthy": {
-                "anyOf": [
-                    { "const": true },
-                    { "not": { "const": 0 }, "type": "number" },
-                    { "minLength": 1, "type": "string" },
-                    { "minItems": 1, "type": "array" },
-                    { "minProperties": 1, "type": "object" }
-                ]
-            }
-        },
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
-        "allOf": [
-            {
-                "if": {
-                    "not": {
-                        "properties": {
-                            "fullnameOverride": {
-                                "$ref": "#/$defs/helm-truthy"
-                            }
-                        },
-                        "required": ["fullnameOverride"],
-                        "type": "object"
-                    }
-                },
-                "then": {
-                    "properties": {
-                        "nameOverride": {
-                            "type": ["string", "null"]
-                        }
-                    },
-                    "type": "object"
-                }
-            }
-        ],
         "properties": {
             "fullnameOverride": {
-                "type": ["string", "null"]
+                "anyOf": [
+                    { "const": null },
+                    { "type": "null" },
+                    { "type": "string" }
+                ]
             },
             "nameOverride": {}
         },

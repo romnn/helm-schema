@@ -26,7 +26,9 @@ use condition_encoding::{
 };
 use overlay_lowering::{append_conditional_schemas, collect_conditional_schemas};
 use path_resolver::PathSchemaResolver;
-use provider_definitions::{extract_provider_definitions, insert_definitions_into_root};
+use provider_definitions::{
+    extract_provider_definitions, extract_repeated_provider_payloads, insert_definitions_into_root,
+};
 use schema_tree::{SchemaDocument, draft07_root_document};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
@@ -108,14 +110,16 @@ fn build_root_schema(
     let mut root_schema = SchemaDocument::new_root_object();
     let path_resolver = PathSchemaResolver::new(contract_schema_signals, values_yaml_doc, provider);
     let mut resolved_paths = path_resolver.resolve_all();
-    let provider_definitions =
-        extract_provider_definitions(&mut resolved_paths, values_descriptions);
-
-    let conditional_schemas = collect_conditional_schemas(
+    let mut conditional_schemas = collect_conditional_schemas(
         &resolved_paths,
         contract_schema_signals,
         values_yaml_doc,
         provider,
+    );
+    let provider_definitions = extract_provider_definitions(
+        &mut resolved_paths,
+        &mut conditional_schemas,
+        values_descriptions,
     );
     let conditional_targets = ConditionalTargetIndex::from_conditionals(&conditional_schemas);
     let accepted_values_root_paths = contract_schema_signals
@@ -145,15 +149,36 @@ fn build_root_schema(
     }
 
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
+    // A serialized path's schema is deliberately unconstrained; the
+    // declared-default filler must keep the slot present without re-typing
+    // it, exactly like a conditional target.
+    let mut default_fill_skip_paths = conditional_targets.target_paths.clone();
+    for resolved_path in &resolved_paths {
+        if resolved_path.used_as_serialized {
+            default_fill_skip_paths.insert(resolved_path.path_segments.clone());
+        }
+    }
     root_schema.merge_missing_values_yaml_defaults_under_roots(
         values_yaml_doc,
         &accepted_values_root_paths,
-        &conditional_targets.target_paths,
+        &default_fill_skip_paths,
     );
+    root_schema.open_helm_global_namespace();
 
     let mut root_schema = root_schema.into_value();
+    if let Ok(declared_defaults) = serde_json::to_value(values_yaml_doc)
+        && declared_defaults.is_object()
+    {
+        root_schema =
+            resolve_policy::preserve_declared_default_in_schema(root_schema, &declared_defaults);
+    }
     let mut provider_definitions = provider_definitions;
-    if value_references_helm_truthy(&root_schema) {
+    provider_definitions.extend(extract_repeated_provider_payloads(&mut root_schema));
+    if value_references_helm_truthy(&root_schema)
+        || provider_definitions
+            .values()
+            .any(value_references_helm_truthy)
+    {
         provider_definitions.insert(
             HELM_TRUTHY_DEFINITION_NAME.to_string(),
             helm_truthy_definition_schema(),
@@ -164,12 +189,7 @@ fn build_root_schema(
     root_schema
 }
 
-pub(crate) fn split_value_path(path: &str) -> Vec<String> {
-    path.split('.')
-        .filter(|segment| !segment.is_empty())
-        .map(std::string::ToString::to_string)
-        .collect()
-}
+pub(crate) use helm_schema_core::split_value_path;
 
 fn common_prefix_len(left: &[String], right: &[String]) -> usize {
     left.iter()

@@ -19,6 +19,7 @@ pub(crate) struct ResolvedPathSchema {
     pub(crate) schema: Value,
     pub(crate) values_yaml_schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
+    pub(crate) used_as_serialized: bool,
     pub(crate) used_as_pathless_fragment: bool,
     pub(crate) accepted_dependency_values_root_fragment: bool,
 }
@@ -115,6 +116,7 @@ fn resolve_path_evidence(
     >,
 ) -> ResolvedPathSchema {
     let value_path = evidence.value_path.clone();
+    let used_as_serialized = evidence.facts.used_as_serialized;
     let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
     let accepted_dependency_values_root_fragment =
         evidence.facts.accepted_dependency_values_root_fragment;
@@ -125,7 +127,15 @@ fn resolve_path_evidence(
         resolve_policy,
         provider_schema_cache,
     );
-    let schema = resolve_policy.resolve_schema_for_value_path(policy_inputs);
+    let mut schema = resolve_policy.resolve_schema_for_value_path(policy_inputs);
+    if let Some(values_yaml_info) = values_yaml_info {
+        for declared_default in &values_yaml_info.declared_defaults {
+            schema = crate::resolve_policy::open_objects_rejecting_declared_members(
+                schema,
+                declared_default,
+            );
+        }
+    }
     let provider_schema_candidate =
         provider_schema_candidate.filter(|provider_schema| provider_schema.survives_as(&schema));
 
@@ -137,6 +147,7 @@ fn resolve_path_evidence(
             .map(|path_info| path_info.schema.clone())
             .unwrap_or_else(empty_schema),
         provider_schema_candidate,
+        used_as_serialized,
         used_as_pathless_fragment,
         accepted_dependency_values_root_fragment,
     }
@@ -218,6 +229,13 @@ fn build_path_schema_inputs(
                 resolve_policy,
             ),
             type_hint_schema: type_hint_schema(&evidence.type_hints),
+            guarded_type_hint_schema: type_hint_schema(&evidence.guarded_type_hints),
+            fail_requirement_schema: fail_requirement_schema(
+                evidence
+                    .fail_implications
+                    .iter()
+                    .filter(|implication| implication.outer_guards.is_empty()),
+            ),
         },
         provider_schema_candidate,
     )
@@ -288,6 +306,73 @@ fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
                 .collect(),
         )
     }
+}
+
+/// Schema for `fail`-branch requirements. Non-member requirements accept
+/// null alongside the demanded type: fail tests routinely sit behind
+/// `default`-chained locals, where a null input takes the fallback and
+/// renders. Member requirements stay exact (a null member value really
+/// aborts).
+pub(crate) fn fail_requirement_schema<'a>(
+    implications: impl IntoIterator<Item = &'a helm_schema_core::ContractFailImplication>,
+) -> Value {
+    let mut parts = Vec::new();
+    for implication in implications {
+        let requirement =
+            fail_value_requirement_schema(&implication.requirements, implication.per_member);
+        if is_empty_schema(&requirement) {
+            continue;
+        }
+        if implication.per_member {
+            // Go's `range` iterates maps and lists; each schema keyword
+            // constrains only its own instance type, so both apply safely.
+            parts.push(serde_json::json!({
+                "additionalProperties": requirement,
+                "items": requirement,
+            }));
+        } else {
+            parts.push(requirement);
+        }
+    }
+    merge_schema_list(parts)
+}
+
+fn fail_value_requirement_schema(
+    requirements: &[helm_schema_core::FailValueRequirement],
+    per_member: bool,
+) -> Value {
+    use helm_schema_core::FailValueRequirement;
+    let mut parts = Vec::new();
+    let mut required_members: Vec<&str> = Vec::new();
+    for requirement in requirements {
+        match requirement {
+            FailValueRequirement::SchemaType(schema_type) => {
+                let type_schema = type_schema(schema_type);
+                if per_member {
+                    parts.push(type_schema);
+                } else {
+                    parts.push(serde_json::json!({
+                        "anyOf": [type_schema, { "type": "null" }]
+                    }));
+                }
+            }
+            FailValueRequirement::NotSchemaType(schema_type) => {
+                parts.push(serde_json::json!({ "not": type_schema(schema_type) }));
+            }
+            FailValueRequirement::HasMember(member) => {
+                required_members.push(member);
+            }
+        }
+    }
+    if !required_members.is_empty() {
+        required_members.sort_unstable();
+        required_members.dedup();
+        parts.push(serde_json::json!({
+            "type": "object",
+            "required": required_members,
+        }));
+    }
+    merge_schema_list(parts)
 }
 
 fn type_hint_schema(schema_types: &BTreeSet<String>) -> Value {

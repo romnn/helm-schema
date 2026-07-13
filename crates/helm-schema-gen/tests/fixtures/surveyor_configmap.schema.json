@@ -95,67 +95,6 @@
         },
         "type": "object"
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "config": {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "fullnameOverride": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "fullnameOverride"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
     }
   ],
   "properties": {
@@ -164,40 +103,45 @@
       "properties": {
         "jetstream": {
           "additionalProperties": false,
-          "properties": {
-            "accounts": {
-              "items": {
-                "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
                 "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "tls": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "ca": {
-                        "type": "string"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "accounts": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
                       },
-                      "cert": {
-                        "type": "string"
+                      {
+                        "type": "integer"
                       },
-                      "key": {
-                        "type": "string"
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
                       }
-                    },
-                    "type": "object"
-                  },
-                  "username": {
-                    "type": "string"
+                    ]
                   }
                 },
                 "type": "object"
-              },
-              "type": "array"
-            },
+              }
+            }
+          ],
+          "properties": {
+            "accounts": {},
             "enabled": {
               "type": "boolean"
             }
@@ -209,7 +153,7 @@
     },
     "fullnameOverride": {},
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "labels": {
           "additionalProperties": {},

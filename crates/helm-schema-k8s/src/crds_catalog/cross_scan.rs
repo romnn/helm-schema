@@ -8,14 +8,15 @@ use crate::inference::cache_scan::match_crd_filename;
 
 /// Walk every CONFIGURED `<crd_cache_root>/<source_id>/<group>/`
 /// directory and collect the version suffixes of files that match
-/// `(group, kind_lc)` other than `requested_version`. Used by Feature C
-/// to emit the informational `CrdVersionAvailableAtOtherVersions`
-/// diagnostic from local-cache evidence only.
+/// `(group, kind_lc)` other than `requested_version`. Used by the loose
+/// CRD lookup to emit the informational
+/// `CrdVersionAvailableAtOtherVersions` diagnostic from local-cache
+/// evidence only.
 ///
 /// `configured_source_ids` is the set of source-id directory names the
 /// caller currently has configured. Source-id dirs on disk that are not
-/// in this set are skipped (Finding 2 — stale removed-mirror caches
-/// MUST NOT feed live hints).
+/// in this set are skipped: stale removed-mirror caches MUST NOT feed
+/// live hints.
 #[must_use]
 pub(crate) fn collect_other_versions(
     cache_root: &Path,

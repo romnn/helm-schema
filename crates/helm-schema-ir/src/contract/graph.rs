@@ -16,6 +16,23 @@ pub struct ContractIr {
     uses: Vec<ContractUse>,
     dependency_uses: Vec<ContractUse>,
     type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints observed only under branch predicates: they hold
+    /// where those branches render, so they type conditional overlays but
+    /// never the unconditional base.
+    guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Paths consumed through total stringifications (`quote`, `toString`,
+    /// `join`, `printf`) anywhere in the interpretation: the chart tolerates
+    /// any input type at them even when no placed row exists.
+    shape_erased_value_paths: BTreeSet<String>,
+    /// Paths carrying a real runtime string contract (`trunc`, `b64enc`,
+    /// `fromYaml`, a dynamic `printf` format) anywhere.
+    string_contract_value_paths: BTreeSet<String>,
+    /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
+    /// carry an iterable input domain.
+    direct_range_source_paths: BTreeSet<String>,
+    /// `fail` captures: no valid values document may satisfy one of these
+    /// conjunctions.
+    fail_conditions: Vec<crate::eval_effect::FailCapture>,
     dependency_values_root_fragments: BTreeSet<String>,
 }
 
@@ -73,6 +90,23 @@ impl ContractIr {
                 .or_default()
                 .extend(schema_types);
         }
+        for (path, schema_types) in other.guarded_type_hints {
+            self.guarded_type_hints
+                .entry(path)
+                .or_default()
+                .extend(schema_types);
+        }
+        self.shape_erased_value_paths
+            .append(&mut other.shape_erased_value_paths);
+        self.string_contract_value_paths
+            .append(&mut other.string_contract_value_paths);
+        self.direct_range_source_paths
+            .append(&mut other.direct_range_source_paths);
+        for condition in std::mem::take(&mut other.fail_conditions) {
+            if !self.fail_conditions.contains(&condition) {
+                self.fail_conditions.push(condition);
+            }
+        }
     }
 
     /// Append guards to every claim in the graph without rewriting any paths.
@@ -113,6 +147,47 @@ impl ContractIr {
                 .extend(schema_types);
         }
         self.type_hints = type_hints;
+        let mut guarded_type_hints: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for (path, schema_types) in std::mem::take(&mut self.guarded_type_hints) {
+            guarded_type_hints
+                .entry(map(&path))
+                .or_default()
+                .extend(schema_types);
+        }
+        self.guarded_type_hints = guarded_type_hints;
+        self.shape_erased_value_paths = std::mem::take(&mut self.shape_erased_value_paths)
+            .into_iter()
+            .map(|path| map(&path))
+            .collect();
+        self.string_contract_value_paths = std::mem::take(&mut self.string_contract_value_paths)
+            .into_iter()
+            .map(|path| map(&path))
+            .collect();
+        self.direct_range_source_paths = std::mem::take(&mut self.direct_range_source_paths)
+            .into_iter()
+            .map(|path| map(&path))
+            .collect();
+        self.fail_conditions = std::mem::take(&mut self.fail_conditions)
+            .into_iter()
+            .map(|mut capture| {
+                capture.conjunction = capture
+                    .conjunction
+                    .into_iter()
+                    .map(|predicate| predicate.map_value_paths(&mut map))
+                    .collect();
+                capture.approximate_condition_paths = capture
+                    .approximate_condition_paths
+                    .into_iter()
+                    .map(|path| map(&path))
+                    .collect();
+                capture.direct_ranged_paths = capture
+                    .direct_ranged_paths
+                    .into_iter()
+                    .map(|path| map(&path))
+                    .collect();
+                capture
+            })
+            .collect();
     }
 
     /// Add declared input-type hints for values paths without projecting them
@@ -149,6 +224,63 @@ impl ContractIr {
         }
     }
 
+    pub(crate) fn extend_guarded_type_hints(
+        &mut self,
+        type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
+    ) {
+        for (path, schema_types) in type_hints {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let schema_types = schema_types
+                .into_iter()
+                .filter(|schema_type| !schema_type.trim().is_empty())
+                .collect::<BTreeSet<_>>();
+            if schema_types.is_empty() {
+                continue;
+            }
+            self.guarded_type_hints
+                .entry(path)
+                .or_default()
+                .extend(schema_types);
+        }
+    }
+
+    pub(crate) fn extend_shape_erased_value_paths(
+        &mut self,
+        paths: impl IntoIterator<Item = String>,
+    ) {
+        self.shape_erased_value_paths
+            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
+    pub(crate) fn extend_string_contract_value_paths(
+        &mut self,
+        paths: impl IntoIterator<Item = String>,
+    ) {
+        self.string_contract_value_paths
+            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
+    pub(crate) fn extend_direct_range_source_paths(
+        &mut self,
+        paths: impl IntoIterator<Item = String>,
+    ) {
+        self.direct_range_source_paths
+            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
+    pub(crate) fn extend_fail_conditions(
+        &mut self,
+        conditions: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
+    ) {
+        for conjunction in conditions {
+            if !self.fail_conditions.contains(&conjunction) {
+                self.fail_conditions.push(conjunction);
+            }
+        }
+    }
+
     /// Finalize the contract once and derive downstream artifacts from that
     /// one normalized contract representation.
     #[must_use]
@@ -158,6 +290,11 @@ impl ContractIr {
             mut uses,
             mut dependency_uses,
             type_hints,
+            guarded_type_hints,
+            shape_erased_value_paths,
+            string_contract_value_paths,
+            direct_range_source_paths,
+            mut fail_conditions,
             dependency_values_root_fragments,
         } = self;
         for source_expr in &dependency_values_root_fragments {
@@ -176,6 +313,17 @@ impl ContractIr {
         drop_default_guard_subsumed_duplicates(&mut uses);
         drop_self_truthy_subsumed_duplicates(&mut uses);
         canonicalize_contract_uses(&mut uses);
-        FinalizedContract::new(uses, type_hints, dependency_values_root_fragments)
+        fail_conditions.sort();
+        fail_conditions.dedup();
+        FinalizedContract::new(
+            uses,
+            type_hints,
+            guarded_type_hints,
+            shape_erased_value_paths,
+            string_contract_value_paths,
+            direct_range_source_paths,
+            fail_conditions,
+            dependency_values_root_fragments,
+        )
     }
 }

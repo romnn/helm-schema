@@ -174,37 +174,6 @@
         },
         "type": "object"
       }
-    },
-    {
-      "if": {
-        "not": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/helm-truthy"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nameOverride overrides nats-kafka.name"
-          }
-        },
-        "type": "object"
-      }
     }
   ],
   "properties": {
@@ -222,28 +191,15 @@
           "description": "registry: docker.io",
           "type": "string"
         },
-        "registry": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "repository": {
-          "type": "string"
-        },
-        "tag": {
-          "type": "string"
-        },
+        "registry": {},
+        "repository": {},
+        "tag": {},
         "tagOverride": {}
       },
       "type": "object"
     },
     "nameOverride": {
-      "description": "nameOverride overrides nats-kafka.name",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "nameOverride overrides nats-kafka.name"
     },
     "namespaceOverride": {
       "description": "namespaceOverride overrides nats-kafka.namespace",
@@ -256,30 +212,65 @@
       "additionalProperties": false,
       "properties": {
         "additionalArguments": {
-          "items": {
-            "type": "string"
-          },
+          "items": {},
           "type": "array"
         },
         "additionalVolumeMounts": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
         },
         "additionalVolumes": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
         },
         "affinity": {
-          "additionalProperties": {},
-          "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
         },
         "configPath": {
-          "description": "default: \"/etc/nats-kafka/nats-kafka.conf\"",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "default: \"/etc/nats-kafka/nats-kafka.conf\""
         },
         "connect": {
           "anyOf": [
@@ -299,10 +290,20 @@
           "type": "integer"
         },
         "deploymentLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
         },
         "logging": {
           "additionalProperties": false,
@@ -327,6 +328,48 @@
         },
         "monitoring": {
           "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "httpPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "httpPort"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "httpsPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "httpsPort"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "httpPort": {
+                    "description": "0 means no monitoring, -1 means some available port",
+                    "type": "integer"
+                  },
+                  "httpsPort": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
           "properties": {
             "httpHost": {
               "type": "string"
@@ -338,12 +381,7 @@
                 "null"
               ]
             },
-            "httpsPort": {
-              "type": [
-                "integer",
-                "null"
-              ]
-            },
+            "httpsPort": {},
             "tls": {
               "additionalProperties": false,
               "properties": {
@@ -375,7 +413,7 @@
               "type": "integer"
             },
             "credentials": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "secret": {
                   "additionalProperties": false,
@@ -401,15 +439,35 @@
           "type": "object"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
         },
         "podLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
         },
         "reconnectInterval": {
           "type": "integer"

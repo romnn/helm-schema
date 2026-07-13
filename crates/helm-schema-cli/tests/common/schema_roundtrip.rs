@@ -50,6 +50,9 @@ pub fn generate_chart_schema_for_path(
                 test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
+            crd_catalog_cache_dir: Some(
+                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+            ),
             disable_k8s_schemas: false,
             crd_override_dir: Some(test_util::workspace_root().join(".cache/crds-catalog-cache")),
             ..Default::default()

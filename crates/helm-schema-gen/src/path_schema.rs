@@ -11,6 +11,7 @@ pub(crate) fn merge_explicit_empty_placeholder(
     schema: Value,
     is_empty_map: bool,
     collection_shape_known: bool,
+    preserve_exact_off_state: bool,
 ) -> Value {
     if is_empty_map {
         if crate::schema_model::is_empty_schema(&schema) {
@@ -24,13 +25,35 @@ pub(crate) fn merge_explicit_empty_placeholder(
                 SchemaNode::unknown_object().into_value()
             };
         }
+        if preserve_exact_off_state {
+            return union_schema_list(vec![schema, exact_empty_object_schema()]);
+        }
         if schema_accepts_empty_object(&schema) {
-            return schema;
+            return stamp_explicit_map_openness(schema);
         }
         union_schema_list(vec![schema, exact_empty_object_schema()])
     } else {
         schema
     }
+}
+
+/// Makes a no-opinion `additionalProperties` explicit on a user-populated
+/// map's schema. Semantically a no-op (an absent `additionalProperties`
+/// already accepts everything), but the schema tree reads the explicit form
+/// as openness evidence: without it, a later literal member read (e.g. a
+/// guard probing one key) closes the map when its descendant fragment merges
+/// into the slot.
+pub(crate) fn stamp_explicit_map_openness(mut schema: Value) -> Value {
+    if let Some(object) = schema.as_object_mut()
+        && object.get("type").and_then(Value::as_str) == Some("object")
+        && !object.contains_key("additionalProperties")
+    {
+        object.insert(
+            "additionalProperties".to_string(),
+            crate::schema_model::empty_schema(),
+        );
+    }
+    schema
 }
 
 fn schema_accepts_empty_object(schema: &Value) -> bool {

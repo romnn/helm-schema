@@ -60,10 +60,25 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         let effects = Effects {
             chart_default_paths: summary.chart_defaults.clone(),
             type_hints: summary.type_hints.clone(),
+            guarded_type_hints: summary.guarded_type_hints.clone(),
+            parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
+            yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
             encoded_paths: summary.encoded_paths(),
+            shape_erased_paths: summary.shape_erased_paths.clone(),
+            string_contract_paths: summary.string_contract_paths.clone(),
+            // An include renders its body to text, so every path the value
+            // carries is derived text at the call site: a consuming stage
+            // (`include … | trimAll`) must not claim contracts on the
+            // helper's internal paths.
+            derived_text_paths: summary
+                .value
+                .as_ref()
+                .map(AbstractValue::paths)
+                .unwrap_or_default(),
             helper_reads: summary.reads.clone(),
             helper_rendered: summary.rendered.clone(),
             helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
+            helper_fails: summary.fail_conditions.clone(),
             ..Effects::default()
         };
         Some(EvalResult::with_effects(summary.value.clone(), effects))

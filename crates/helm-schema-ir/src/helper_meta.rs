@@ -15,6 +15,17 @@ use helm_schema_core::Predicate;
 pub(crate) struct HelperOutputMeta {
     pub(crate) predicates: BTreeSet<BTreeSet<Predicate>>,
     pub(crate) defaulted: bool,
+    /// The binding's value is a total stringification (`quote`, `toString`,
+    /// `join`) of this path, so splices rendering it expose no input shape.
+    pub(crate) shape_erased: bool,
+    /// The binding's value is derived text of this path (an `include`'s
+    /// rendered output, a `printf` result): a consuming transform applied to
+    /// the local operates on that text and claims nothing about the path.
+    pub(crate) derived_text: bool,
+    /// A string-consuming transform bound a runtime string contract on this
+    /// path while producing the binding's value: splices rendering it carry
+    /// the contract under their own render conditions.
+    pub(crate) string_contract: bool,
     pub(crate) provenance: Vec<ContractProvenance>,
     /// Predicate paths this row's derivation explicitly severed (index-call
     /// narrowing): guard reads of their strict ancestors are dropped.
@@ -25,6 +36,9 @@ impl HelperOutputMeta {
     pub(crate) fn merge(&mut self, other: &Self) {
         self.predicates.extend(other.predicates.iter().cloned());
         self.defaulted |= other.defaulted;
+        self.shape_erased |= other.shape_erased;
+        self.derived_text |= other.derived_text;
+        self.string_contract |= other.string_contract;
         merge_provenance_sites(&mut self.provenance, &other.provenance);
         self.suppress_predicate_paths
             .extend(other.suppress_predicate_paths.iter().cloned());
@@ -102,10 +116,9 @@ pub(crate) fn merge_provenance_sites(
 /// Whether two values paths describe related data: same top-level root, or
 /// one is an ancestor of the other.
 pub(crate) fn values_paths_are_related(left: &str, right: &str) -> bool {
-    fn root(path: &str) -> &str {
-        path.split('.').next().unwrap_or(path)
-    }
-    root(left) == root(right)
+    let left_root = helm_schema_core::split_value_path(left).into_iter().next();
+    let right_root = helm_schema_core::split_value_path(right).into_iter().next();
+    left_root == right_root
         || helm_schema_core::values_path_is_descendant(left, right)
         || helm_schema_core::values_path_is_descendant(right, left)
 }

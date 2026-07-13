@@ -5,11 +5,138 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::{Guard, GuardValue};
 use helm_schema_ast::type_is_schema_type;
+use helm_schema_ast::{
+    is_string_predicate_function, is_string_transform_function, is_total_numeric_cast_function,
+    is_total_stringification_function,
+};
 use helm_schema_core::Predicate;
 
 use super::ValuePathContext;
 
 impl ValuePathContext<'_> {
+    /// Transform facts a condition expression binds on its DIRECT selector
+    /// subjects (anything that went through another call is derived text
+    /// and claims nothing about the raw path):
+    /// - string-consuming calls (`regexMatch "…" .Values.name`,
+    ///   `gt (len (.Values.name | replace "-" "")) 32`) fail template
+    ///   evaluation for non-string values — a runtime string contract;
+    /// - total conversions (`eq (.Values.x | toString) "true"`,
+    ///   `int .Values.x`) render ANY input — shape erasure, exactly like
+    ///   the same conversion at a render site or in a `set` expression.
+    pub(crate) fn condition_transform_facts(
+        &self,
+        expr: &TemplateExpr,
+    ) -> (BTreeSet<String>, BTreeSet<String>) {
+        fn is_string_consumer(function: &str) -> bool {
+            (is_string_transform_function(function) && !is_total_stringification_function(function))
+                || is_string_predicate_function(function)
+        }
+        fn is_total_conversion(function: &str) -> bool {
+            is_total_stringification_function(function) || is_total_numeric_cast_function(function)
+        }
+        fn subject_paths(
+            context: &ValuePathContext<'_>,
+            subject: &TemplateExpr,
+        ) -> Option<BTreeSet<String>> {
+            matches!(
+                subject.deparen(),
+                TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+            )
+            .then(|| context.paths_for_expr(subject))
+        }
+        fn walk(
+            context: &ValuePathContext<'_>,
+            expr: &TemplateExpr,
+            contracts: &mut BTreeSet<String>,
+            erased: &mut BTreeSet<String>,
+        ) {
+            match expr.deparen() {
+                TemplateExpr::Call { function, args } => {
+                    if let Some(subject) = args.last()
+                        && let Some(paths) = subject_paths(context, subject)
+                    {
+                        if is_string_consumer(function) {
+                            contracts.extend(paths);
+                        } else if is_total_conversion(function) {
+                            erased.extend(paths);
+                        }
+                    }
+                    for arg in args {
+                        walk(context, arg, contracts, erased);
+                    }
+                }
+                TemplateExpr::Pipeline(stages) => {
+                    if let Some(first) = stages.first()
+                        && let Some(paths) = subject_paths(context, first)
+                    {
+                        // Stages run left-to-right: the FIRST classifying
+                        // stage decides the raw value's fate. A consumer
+                        // after a total conversion (`x | toString | trim`)
+                        // operates on the converted text and claims nothing
+                        // about the raw input.
+                        let first_classifier = stages.iter().skip(1).find_map(|stage| match stage
+                            .deparen()
+                        {
+                            TemplateExpr::Call { function, .. }
+                                if is_string_consumer(function)
+                                    || is_total_conversion(function) =>
+                            {
+                                Some(function.as_str())
+                            }
+                            _ => None,
+                        });
+                        match first_classifier {
+                            Some(function) if is_string_consumer(function) => {
+                                contracts.extend(paths.iter().cloned());
+                            }
+                            Some(_) => {
+                                erased.extend(paths);
+                            }
+                            None => {}
+                        }
+                    }
+                    for stage in stages {
+                        walk(context, stage, contracts, erased);
+                    }
+                }
+                _ => {}
+            }
+        }
+        let mut contracts = BTreeSet::new();
+        let mut erased = BTreeSet::new();
+        walk(self, expr, &mut contracts, &mut erased);
+        (contracts, erased)
+    }
+
+    /// Whether `condition_predicate_expr` represents this expression
+    /// EXACTLY, with no truthy fallback and no silently dropped conjunct.
+    /// Rows tolerate approximate (wider) conditions; fail-branch NEGATION
+    /// does not, so it consults this before trusting a captured stack.
+    pub(crate) fn condition_lowering_is_faithful(&self, expr: &TemplateExpr) -> bool {
+        match expr.deparen() {
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_) => {
+                !self.paths_for_expr(expr).is_empty()
+            }
+            TemplateExpr::Call { function, args } => match function.as_str() {
+                "and" | "or" => args
+                    .iter()
+                    .all(|arg| self.condition_lowering_is_faithful(arg)),
+                "not" => {
+                    args.len() == 1
+                        && self.condition_lowering_is_faithful(&args[0])
+                        && self.not_predicate(args).is_some()
+                }
+                "eq" => self.value_comparison_predicate(args, false).is_some(),
+                "ne" => self.value_comparison_predicate(args, true).is_some(),
+                "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
+                "hasKey" => self.has_key_predicate(args).is_some(),
+                "empty" => self.empty_predicate(args).is_some(),
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
     pub(crate) fn condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
         if let Some(predicate) = self.condition_predicate(expr) {
             return predicate;
@@ -39,7 +166,7 @@ impl ValuePathContext<'_> {
             "or" => self.or_predicate(args),
             "eq" => self.value_comparison_predicate(args, false),
             "ne" => self.value_comparison_predicate(args, true),
-            "typeIs" => self.type_is_predicate(args),
+            "typeIs" | "kindIs" => self.type_is_predicate(args),
             _ => self.truthy_predicate(expr),
         }
     }
@@ -69,6 +196,20 @@ impl ValuePathContext<'_> {
             }
             TemplateExpr::Call { function, args } if function == "ne" => {
                 self.value_comparison_predicate(args, false)
+            }
+            // `not (typeIs …)` negates the TYPE TEST; degrading it to a
+            // negated truthiness would conflate "not this type" with
+            // "falsy".
+            TemplateExpr::Call { function, args }
+                if function == "typeIs" || function == "kindIs" =>
+            {
+                self.type_is_predicate(args).map(|p| p.negated())
+            }
+            TemplateExpr::Call { function, args } if function == "hasKey" => {
+                self.has_key_predicate(args).map(|p| p.negated())
+            }
+            TemplateExpr::Call { function, args } if function == "and" => {
+                self.and_predicate(args).map(|p| p.negated())
             }
             _ => {
                 let paths = self.paths_for_expr(arg);
@@ -188,9 +329,25 @@ impl ValuePathContext<'_> {
         let [left, right] = args else {
             return None;
         };
+        // `eq (typeOf .Values.x) "string"` (also through a bound local
+        // `$tp := typeOf .Values.x`) is a TYPE TEST on the path, never a
+        // value equality.
+        if let Some(predicate) = self.type_descriptor_comparison(left, right, negated) {
+            return Some(predicate);
+        }
+        // Only a DIRECT selector operand claims a value equality: seeing
+        // through a call (`eq (typeOf .Values.x) "string"`) would compare
+        // the call's OUTPUT, not the path's value.
+        let direct_selector = |expr: &TemplateExpr| match expr.deparen() {
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => true,
+            TemplateExpr::Variable(name) => !self
+                .typeof_bindings
+                .contains_key(name.trim_start_matches('$')),
+            _ => false,
+        };
         let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
-            (Some(value), None) => (value, self.paths_for_expr(right)),
-            (None, Some(value)) => (value, self.paths_for_expr(left)),
+            (Some(value), None) if direct_selector(right) => (value, self.paths_for_expr(right)),
+            (None, Some(value)) if direct_selector(left) => (value, self.paths_for_expr(left)),
             _ => return None,
         };
         let predicates = paths
@@ -211,6 +368,63 @@ impl ValuePathContext<'_> {
             })
             .collect::<Vec<_>>();
         (!predicates.is_empty()).then(|| Predicate::all(predicates))
+    }
+
+    /// A `typeOf`/`kindOf` comparison against a string literal, either
+    /// directly (`eq (typeOf .Values.x) "string"`) or through a bound local
+    /// (`$tp := typeOf .Values.x` then `eq $tp "string"`). Lowers to a
+    /// [`Guard::TypeIs`] on the described path.
+    fn type_descriptor_comparison(
+        &self,
+        left: &TemplateExpr,
+        right: &TemplateExpr,
+        negated: bool,
+    ) -> Option<Predicate> {
+        let described_path = |expr: &TemplateExpr| -> Option<String> {
+            match expr.deparen() {
+                TemplateExpr::Call { function, args }
+                    if matches!(function.as_str(), "typeOf" | "kindOf") && args.len() == 1 =>
+                {
+                    // Selectors and bound locals (a range's value variable,
+                    // a `$x := .Values.y` binding) both describe a single
+                    // resolvable path.
+                    let subject = args[0].deparen();
+                    matches!(
+                        subject,
+                        TemplateExpr::Field(_)
+                            | TemplateExpr::Selector { .. }
+                            | TemplateExpr::Variable(_)
+                    )
+                    .then(|| self.paths_for_expr(subject))
+                    .filter(|paths| paths.len() == 1)
+                    .and_then(|paths| paths.into_iter().next())
+                }
+                TemplateExpr::Variable(name) => self
+                    .typeof_bindings
+                    .get(name.trim_start_matches('$'))
+                    .cloned(),
+                _ => None,
+            }
+        };
+        fn type_literal(expr: &TemplateExpr) -> Option<&str> {
+            match expr.deparen() {
+                TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name)) => {
+                    Some(name.as_str())
+                }
+                _ => None,
+            }
+        }
+        let (path, type_name) = match (described_path(left), described_path(right)) {
+            (Some(path), None) => (path, type_literal(right)?),
+            (None, Some(path)) => (path, type_literal(left)?),
+            _ => return None,
+        };
+        let schema_type = helm_schema_ast::go_type_schema_type(type_name)?;
+        let guard = Predicate::from(Guard::TypeIs {
+            path,
+            schema_type: schema_type.to_string(),
+        });
+        Some(if negated { guard.negated() } else { guard })
     }
 
     fn comparison_has_unrepresentable_values(&self, args: &[TemplateExpr]) -> bool {
@@ -249,9 +463,14 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
                 _ => None,
             }
         }
+        AbstractValue::ValuesPath(path) => Some(
+            Predicate::from(Guard::Absent {
+                path: helm_schema_core::append_value_path(path, key),
+            })
+            .negated(),
+        ),
         AbstractValue::Top
         | AbstractValue::Unknown
-        | AbstractValue::ValuesPath(_)
         | AbstractValue::OutputPath(_, _)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)

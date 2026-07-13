@@ -363,9 +363,8 @@ fn api_version_guess_cache_scan_spans_all_configured_crd_sources() {
     );
 }
 
-// Pins Finding 2 — a CRD source-id dir on disk that is NOT in the
-// currently-configured mirror set MUST NOT contribute inference
-// candidates. The "removed-mirror" case: yesterday's run used
+// A CRD source-id dir on disk that is NOT in the currently-configured
+// mirror set MUST NOT contribute inference candidates. The "removed-mirror" case: yesterday's run used
 // `--crd-catalog-mirror=https://stale.example.com`, today's run
 // doesn't. Today's inference must ignore the stale-mirror dir.
 #[test]
@@ -414,7 +413,7 @@ fn api_version_guess_cache_scan_ignores_stale_unconfigured_crd_source() {
     );
 }
 
-// Pins Finding 3 (round 2) — `PodDisruptionBudget` is version-dependent
+// `PodDisruptionBudget` is version-dependent
 // (`policy/v1` since v1.21, `policy/v1beta1` before), so it MUST NOT
 // appear on the unambiguous shortlist. With auto-fallback enabled the
 // cache can hold BOTH versions; if the shortlist also contributed an
@@ -431,7 +430,7 @@ fn shortlist_does_not_resolve_pod_disruption_budget() {
     );
 }
 
-// Pins Finding 3 (round 2) end-to-end — PDB inference with BOTH
+// End-to-end variant of the shortlist rule above: PDB inference with BOTH
 // policy/v1 (in v1.35 primary cache) and policy/v1beta1 (in v1.24
 // auto-fallback cache) populated must NOT fire AmbiguousApiVersion.
 // The combination of (a) PDB off shortlist and (b) inference scanning
@@ -492,8 +491,8 @@ fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() {
     }
 }
 
-// Pins Finding 3 (round 3) Option B — InferredApiVersion is
-// informational and must NOT fire for built-in K8s kinds whose
+// InferredApiVersion is informational and must NOT fire for built-in
+// K8s kinds whose
 // canonical apiVersion is obvious (ConfigMap→v1, Deployment→apps/v1,
 // ClusterRole→rbac.authorization.k8s.io/v1, …). Inference resolution
 // still runs (so the schema is still loaded) — only the diagnostic
@@ -576,8 +575,8 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
     );
 }
 
-// Pins Finding 4 (round 2) — inference K8s cache scan must skip
-// auto-fallback version dirs even when they are part of the
+// The inference K8s cache scan must skip auto-fallback version dirs
+// even when they are part of the
 // configured chain via `K8sVersionChain::new(_, Some(window))`.
 // Only EXPLICIT versions participate in inference; auto-fallback
 // dirs exist as schema-lookup escape valves, not as user intent.
@@ -629,9 +628,9 @@ fn k8s_cache_scan_skips_auto_fallback_version_dir() {
     );
 }
 
-// Pins Finding 2 (K8s side) — K8s cache scan must equivalently ignore
-// stale `<source_id>` dirs left behind by a previously configured
-// `--k8s-schema-mirror`.
+// Like the CRD-side stale-mirror test above, the K8s cache scan must
+// ignore stale `<source_id>` dirs left behind by a previously
+// configured `--k8s-schema-mirror`.
 #[test]
 fn api_version_guess_k8s_cache_scan_ignores_stale_unconfigured_source() {
     let cache = tmp_dir("inf-k8s-sources-stale");

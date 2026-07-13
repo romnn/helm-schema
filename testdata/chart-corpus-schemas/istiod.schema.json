@@ -54,6 +54,127 @@
           "_original": {
             "additionalProperties": {},
             "type": "object"
+          },
+          "gatewayClasses": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "revision": {}
+                  },
+                  "required": [
+                    "revision"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "revision": {
+                    "not": {
+                      "enum": [
+                        ""
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "revision"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "revisionTags": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -883,10 +1004,7 @@
       "type": "object"
     },
     "crlConfigMapName": {},
-    "defaults": {
-      "additionalProperties": {},
-      "type": "object"
-    },
+    "defaults": {},
     "deploymentAnnotations": {
       "additionalProperties": {
         "type": "string"
@@ -894,9 +1012,8 @@
       "type": "object"
     },
     "deploymentLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
+      "additionalProperties": {},
+      "properties": {},
       "type": "object"
     },
     "env": {
@@ -936,18 +1053,13 @@
       "additionalProperties": {},
       "type": "object"
     },
-    "gatewayClasses": {
-      "additionalProperties": {},
-      "type": "object"
-    },
+    "gatewayClasses": {},
     "gateways": {},
     "global": {
       "additionalProperties": {},
       "properties": {
         "certSigners": {
-          "items": {
-            "type": "string"
-          },
+          "items": {},
           "type": "array"
         },
         "configCluster": {},
@@ -998,25 +1110,13 @@
         },
         "meshID": {},
         "meshNetworks": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "additionalProperties": {},
+          "type": "object"
         },
         "multiCluster": {
           "additionalProperties": false,
           "properties": {
-            "clusterName": {
-              "type": [
-                "string",
-                "null"
-              ]
-            }
+            "clusterName": {}
           },
           "type": "object"
         },
@@ -1065,12 +1165,7 @@
                 }
               ]
             },
-            "variant": {
-              "type": [
-                "string",
-                "null"
-              ]
-            }
+            "variant": {}
           },
           "type": "object"
         },
@@ -1098,12 +1193,7 @@
             "datadog": {
               "additionalProperties": false,
               "properties": {
-                "address": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
+                "address": {}
               },
               "type": "object"
             },
@@ -1118,30 +1208,10 @@
             "stackdriver": {
               "additionalProperties": false,
               "properties": {
-                "debug": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "maxNumberOfAnnotations": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "maxNumberOfAttributes": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "maxNumberOfMessageEvents": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
+                "debug": {},
+                "maxNumberOfAnnotations": {},
+                "maxNumberOfAttributes": {},
+                "maxNumberOfMessageEvents": {}
               },
               "type": "object"
             },
@@ -1161,9 +1231,7 @@
             "null"
           ]
         },
-        "variant": {
-          "type": "string"
-        }
+        "variant": {}
       },
       "type": "object"
     },
@@ -1179,10 +1247,7 @@
         "null"
       ]
     },
-    "initContainers": {
-      "additionalProperties": {},
-      "type": "object"
-    },
+    "initContainers": {},
     "ipFamilies": {
       "items": {},
       "type": "array"
@@ -1199,12 +1264,7 @@
       },
       "type": "object"
     },
-    "jwksResolverExtraRootCA": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "jwksResolverExtraRootCA": {},
     "keepaliveMaxServerConnectionAge": {},
     "memory": {
       "additionalProperties": false,
@@ -1232,7 +1292,7 @@
       ]
     },
     "pdb": {
-      "additionalProperties": {},
+      "additionalProperties": false,
       "properties": {
         "maxUnavailable": {},
         "minAvailable": {},
@@ -1249,9 +1309,8 @@
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
+      "additionalProperties": {},
+      "properties": {},
       "type": "object"
     },
     "profile": {},
@@ -1273,15 +1332,8 @@
     "rollingMaxSurge": {},
     "rollingMaxUnavailable": {},
     "seccompProfile": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "type": "string"
-        }
-      ]
+      "additionalProperties": {},
+      "type": "object"
     },
     "serviceAccountAnnotations": {
       "additionalProperties": {
@@ -1299,41 +1351,29 @@
       "additionalProperties": false,
       "properties": {
         "alwaysInjectSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "additionalProperties": {},
+          "type": "object"
         },
         "defaultTemplates": {},
         "enableNamespacesByDefault": {},
         "injectedAnnotations": {},
         "neverInjectSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "additionalProperties": {},
+          "type": "object"
         },
         "reinvocationPolicy": {},
         "templates": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "additionalProperties": {},
+          "properties": {
+            "agentgateway": {},
+            "gateway": {},
+            "grpc-agent": {},
+            "grpc-simple": {},
+            "kube-gateway": {},
+            "sidecar": {},
+            "waypoint": {}
+          },
+          "type": "object"
         }
       },
       "type": "object"

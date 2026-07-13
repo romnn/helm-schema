@@ -600,10 +600,10 @@ fn assignment_rhs_include_is_not_treated_as_emitted_yaml_structure() {
 }
 
 #[test]
-fn nested_tpl_inside_printf_still_counts_as_fragment_render() {
+fn tpl_of_plain_value_inside_printf_is_not_definite_fragment_render() {
     let exprs = parse_action_expressions(r#"{{ printf "%s" (tpl .Values.auth.database $) }}"#);
     assert!(
-        exprs.iter().any(TemplateExpr::renders_yaml_fragment),
-        "nested tpl forwarded through printf must still count as fragment render: {exprs:?}"
+        !exprs.iter().any(TemplateExpr::renders_yaml_fragment),
+        "tpl's context does not prove that its string input renders YAML structure: {exprs:?}"
     );
 }

@@ -12,6 +12,11 @@ pub struct ContractUse {
     pub resource: Option<ResourceRef>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub provenance: Vec<ContractProvenance>,
+    /// A string-consuming transform (`trunc`, `b64enc`, a dynamic `printf`
+    /// format) produced this rendered text: rendering fails for non-string
+    /// values, but only where THIS row's condition holds.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub has_string_contract: bool,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -28,6 +33,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             resource: Option<ResourceRef>,
             #[serde(default)]
             provenance: Vec<ContractProvenance>,
+            #[serde(default)]
+            has_string_contract: bool,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -38,6 +45,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             condition: wire.condition,
             resource: wire.resource,
             provenance: wire.provenance,
+            has_string_contract: wire.has_string_contract,
         })
     }
 }
@@ -87,6 +95,7 @@ impl ContractUse {
             condition,
             resource,
             provenance: provenance.into_iter().collect(),
+            has_string_contract: false,
         }
     }
 

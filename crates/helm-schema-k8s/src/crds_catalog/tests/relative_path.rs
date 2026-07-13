@@ -14,8 +14,8 @@ fn third_party_crds_yield_relative_path() {
     );
 }
 
-// Pins Finding 3 — every built-in K8s API group must be excluded
-// from the CRD-catalog lookup path. Regression on this surface
+// Every built-in K8s API group must be excluded from the
+// CRD-catalog lookup path. Regression on this surface
 // produces spurious CrdVersionNotFound diagnostics for built-in
 // grouped resources (Ingress, NetworkPolicy, Role, RoleBinding,
 // ClusterRole, ClusterRoleBinding, …).
@@ -63,11 +63,10 @@ fn legacy_short_groups_are_excluded() {
     }
 }
 
-// Pins Finding 2 (round 2) — CRDs that use a `.k8s.io` suffix must
-// resolve to a relative path so the CRD-catalog lookup runs for
-// them. The previously-shipped blanket `.ends_with(".k8s.io")`
-// rule routed them to the built-in K8s path and produced spurious
-// MissingSchema in the loose-mode Temporal acceptance run.
+// CRDs that use a `.k8s.io` suffix must resolve to a relative path
+// so the CRD-catalog lookup runs for them. A blanket
+// `.ends_with(".k8s.io")` rule would route them to the built-in K8s
+// path and produce spurious MissingSchema diagnostics.
 #[test]
 fn k8s_io_crd_groups_yield_relative_path() {
     // VPA — the canonical `.k8s.io`-suffixed CRD.

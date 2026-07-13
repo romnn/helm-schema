@@ -31,7 +31,129 @@
   "allOf": [
     {
       "if": {
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "additionalAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Additional annotations to add into metadata.",
+            "type": "object"
+          },
+          "additionalLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Additional labels to add into metadata.\napp: karpenter",
+            "type": "object"
+          },
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's computed fullname."
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's name."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
+          {
+            "properties": {
+              "additionalAnnotations": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "additionalAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "additionalAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Additional annotations to add into metadata.",
+            "type": "object"
+          },
+          "service": {
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Additional annotations for the Service.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "anyOf": [
               {
@@ -75,21 +197,104 @@
             ]
           },
           {
-            "properties": {
-              "serviceMonitor": {
+            "anyOf": [
+              {
                 "properties": {
-                  "enabled": {
+                  "additionalAnnotations": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "additionalAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "additionalAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Additional annotations to add into metadata.",
+            "type": "object"
+          },
+          "serviceAccount": {
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Additional annotations for the ServiceAccount.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "serviceMonitor"
+              "serviceAccount"
             ],
             "type": "object"
           }
@@ -147,15 +352,11 @@
       "then": {
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Overrides the chart's name."
+            "description": "Overrides the chart's name.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "type": "object"
@@ -164,11 +365,21 @@
   ],
   "properties": {
     "additionalAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Additional annotations to add into metadata.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Additional annotations to add into metadata."
     },
     "additionalClusterRoleRules": {
       "anyOf": [
@@ -186,11 +397,21 @@
       "description": "Specifies additional rules for the core ClusterRole."
     },
     "additionalLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Additional labels to add into metadata.\napp: karpenter",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Additional labels to add into metadata.\napp: karpenter"
     },
     "affinity": {
       "additionalProperties": {
@@ -604,14 +825,26 @@
               "items": {
                 "additionalProperties": false,
                 "properties": {
-                  "podAffinityTerm": {}
+                  "podAffinityTerm": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "labelSelector": {}
+                    },
+                    "type": "object"
+                  }
                 },
                 "type": "object"
               },
               "type": "array"
             },
             "requiredDuringSchedulingIgnoredDuringExecution": {
-              "items": {},
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "labelSelector": {}
+                },
+                "type": "object"
+              },
               "type": "array"
             }
           },
@@ -637,7 +870,13 @@
               "items": {
                 "additionalProperties": false,
                 "properties": {
-                  "podAffinityTerm": {}
+                  "podAffinityTerm": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "labelSelector": {}
+                    },
+                    "type": "object"
+                  }
                 },
                 "type": "object"
               },
@@ -649,6 +888,7 @@
                   "type": "string"
                 },
                 "properties": {
+                  "labelSelector": {},
                   "topologyKey": {
                     "type": "string"
                   }
@@ -665,6 +905,59 @@
     },
     "controller": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "extraVolumeMounts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraVolumeMounts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "sidecarVolumeMounts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "sidecarVolumeMounts"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "sidecarContainer": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Additional sidecarContainer config"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
       "properties": {
         "containerName": {
@@ -733,22 +1026,13 @@
           "additionalProperties": false,
           "properties": {
             "digest": {
-              "description": "SHA256 digest of the controller image.",
-              "type": [
-                "string",
-                "null"
-              ]
+              "description": "SHA256 digest of the controller image."
             },
             "repository": {
-              "description": "Repository path to the controller image.",
-              "type": "string"
+              "description": "Repository path to the controller image."
             },
             "tag": {
-              "description": "Tag of the controller image.",
-              "type": [
-                "string",
-                "null"
-              ]
+              "description": "Tag of the controller image."
             }
           },
           "type": "object"
@@ -764,38 +1048,73 @@
           "type": "object"
         },
         "resources": {
-          "additionalProperties": {},
-          "description": "Resources for the controller container.\nWe usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nrequests:\ncpu: 1\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 1Gi",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Resources for the controller container.\nWe usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nrequests:\ncpu: 1\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 1Gi"
         },
         "securityContext": {
           "additionalProperties": false,
           "properties": {
             "appArmorProfile": {
-              "additionalProperties": {},
-              "description": "AppArmor profile for the controller container.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ],
+              "description": "AppArmor profile for the controller container."
             },
             "seLinuxOptions": {
-              "additionalProperties": {},
-              "description": "SELinux options for the controller container.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ],
+              "description": "SELinux options for the controller container."
             },
             "seccompProfile": {
-              "additionalProperties": {},
-              "description": "Seccomp profile for the controller container.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ],
+              "description": "Seccomp profile for the controller container."
             }
           },
           "type": "object"
         },
         "sidecarContainer": {
-          "description": "Additional sidecarContainer config",
-          "items": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "type": "array"
+          "description": "Additional sidecarContainer config"
         },
         "sidecarVolumeMounts": {
           "anyOf": [
@@ -816,9 +1135,19 @@
       "type": "object"
     },
     "dnsConfig": {
-      "additionalProperties": {},
-      "description": "Configure DNS Config for the pod\noptions:\n- name: ndots\nvalue: \"1\"",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Configure DNS Config for the pod\noptions:\n- name: ndots\nvalue: \"1\""
     },
     "dnsPolicy": {
       "description": "Configure the DNS Policy for the pod",
@@ -873,16 +1202,22 @@
       "description": "Image pull secrets for Docker images."
     },
     "initContainers": {
-      "additionalProperties": {},
-      "description": "add additional initContainers to run before karpenter container starts\n- name: list-ec2-instances\nimage: amazon/aws-cli:latest\ncommand: [ 'aws', 'ec2', 'describe-instance-types']",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "add additional initContainers to run before karpenter container starts\n- name: list-ec2-instances\nimage: amazon/aws-cli:latest\ncommand: [ 'aws', 'ec2', 'describe-instance-types']"
     },
     "logErrorOutputPaths": {
-      "description": "Log errorOutputPaths - defaults to stderr only",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
+      "description": "Log errorOutputPaths - defaults to stderr only"
     },
     "logLevel": {
       "description": "Global log level, defaults to 'info'",
@@ -892,11 +1227,7 @@
       ]
     },
     "logOutputPaths": {
-      "description": "Log outputPaths - defaults to stdout only",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
+      "description": "Log outputPaths - defaults to stdout only"
     },
     "nameOverride": {
       "description": "Overrides the chart's name.",
@@ -916,11 +1247,21 @@
       "type": "object"
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Additional annotations for the pod.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Additional annotations for the pod."
     },
     "podDisruptionBudget": {
       "additionalProperties": false,
@@ -935,11 +1276,21 @@
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Additional labels for the pod.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Additional labels for the pod."
     },
     "podSecurityContext": {
       "additionalProperties": {
@@ -980,11 +1331,7 @@
       "type": "object"
     },
     "priorityClassName": {
-      "description": "PriorityClass name for the pod.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "PriorityClass name for the pod."
     },
     "replicas": {
       "description": "Number of replicas.",
@@ -995,19 +1342,13 @@
       "type": "integer"
     },
     "schedulerName": {
-      "description": "Specify which Kubernetes scheduler should dispatch the pod.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Specify which Kubernetes scheduler should dispatch the pod."
     },
     "service": {
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "description": "Additional annotations for the Service.",
           "type": "object"
         }
@@ -1039,9 +1380,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "description": "Additional annotations for the ServiceAccount.",
           "type": "object"
         },
@@ -1082,218 +1421,43 @@
               "endpointConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
                     "type": "object"
                   },
                   {
-                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
+                    "additionalProperties": {},
+                    "type": "object"
                   }
                 ],
                 "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
               },
               "metricRelabelings": {
-                "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
                   },
-                  "type": "object"
-                },
-                "type": "array"
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs"
               },
               "relabelings": {
-                "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
                   },
-                  "type": "object"
-                },
-                "type": "array"
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
               }
             },
             "type": "object"
@@ -1311,160 +1475,42 @@
           "type": "boolean"
         },
         "endpointConfig": {
+          "additionalProperties": {},
+          "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint",
+          "type": "object"
+        },
+        "metricRelabelings": {
           "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
             {
               "items": {},
               "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
             }
           ],
-          "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
-        },
-        "metricRelabelings": {
-          "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "type": "array"
+          "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs"
         },
         "relabelings": {
-          "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
         },
         "sampleLimit": {
-          "description": "Specifies the sampleLimit for prometheus scrapes.\nPer-scrape limit on the number of scraped samples that will be accepted.\nIf more than this number of samples are present after metric relabeling\nthe entire scrape will be treated as failed. 0 means no limit.",
-          "format": "int64",
-          "type": "integer"
+          "description": "Specifies the sampleLimit for prometheus scrapes.\nPer-scrape limit on the number of scraped samples that will be accepted.\nIf more than this number of samples are present after metric relabeling\nthe entire scrape will be treated as failed. 0 means no limit."
         }
       },
       "type": "object"
@@ -1474,96 +1520,28 @@
       "description": "Global Settings to configure Karpenter",
       "properties": {
         "batchIdleDuration": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "The maximum amount of time with no new ending pods that if exceeded ends the current batching window. If pods arrive\nfaster than this time, the batching window will be extended up to the maxDuration. If they arrive slower, the pods\nwill be batched separately."
         },
         "batchMaxDuration": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "The maximum length of a batch window. The longer this is, the more pods we can consider for provisioning at one\ntime which usually results in fewer but larger nodes."
         },
         "clusterCABundle": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Cluster CA bundle for TLS configuration of provisioned nodes. If not set, this is taken from the controller's TLS configuration for the API server."
         },
         "clusterEndpoint": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Cluster endpoint. If not set, will be discovered during startup (EKS only)."
         },
         "clusterName": {
           "description": "Cluster name.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "disableClusterStateObservability": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Disable cluster state metrics and events."
         },
         "disableDryRun": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Disable dry run validation for EC2NodeClasses."
         },
         "eksControlPlane": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Marking this true means that your cluster is running with an EKS control plane and Karpenter should attempt to discover cluster details from the DescribeCluster API."
         },
         "featureGates": {
@@ -1594,42 +1572,12 @@
           "type": "object"
         },
         "ignoreDRARequests": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Ignore pods' DRA requests during scheduling simulations."
         },
         "interruptionQueue": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Interruption queue is the name of the SQS queue used for processing interruption events from EC2.\nInterruption handling is disabled if not specified. Enabling interruption handling may\nrequire additional permissions on the controller service account. Additional permissions are outlined in the docs."
         },
         "isolatedVPC": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "If true then assume we can't reach AWS services which don't have a VPC endpoint.\nThis also has the effect of disabling look-ups to the AWS pricing endpoint."
         },
         "minValuesPolicy": {
@@ -1647,28 +1595,9 @@
           ]
         },
         "reservedENIs": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Reserved ENIs are not included in the calculations for max-pods or kube-reserved.\nThis is most often used in the VPC CNI custom networking setup https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html."
         },
         "vmMemoryOverheadPercent": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "The VM memory overhead as a percent that will be subtracted from the total memory for all instance types. The value of `0.075` equals to 7.5%."
         }
       },
@@ -1703,8 +1632,7 @@
       "type": "object"
     },
     "terminationGracePeriodSeconds": {
-      "description": "Override the default termination grace period for the pod.",
-      "type": "null"
+      "description": "Override the default termination grace period for the pod."
     },
     "tolerations": {
       "anyOf": [
@@ -1749,6 +1677,7 @@
               ]
             },
             "properties": {
+              "labelSelector": {},
               "maxSkew": {
                 "type": "integer"
               },

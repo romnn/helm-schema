@@ -57,7 +57,11 @@ impl CommentScanner {
         let body = comment_body(trimmed);
         if let Some((path, description)) = explicit_comment_description(body) {
             self.flush_trailing_comments();
-            insert_description(&mut self.descriptions, &[path], description);
+            insert_description(
+                &mut self.descriptions,
+                &helm_schema_core::split_value_path(&path),
+                description,
+            );
             return;
         }
 
@@ -257,7 +261,7 @@ fn insert_description(
     }
 
     descriptions
-        .entry(path.join("."))
+        .entry(helm_schema_core::join_value_path(path))
         .and_modify(|existing| {
             if !existing.is_empty() {
                 existing.push('\n');

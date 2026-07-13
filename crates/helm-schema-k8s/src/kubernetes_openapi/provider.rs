@@ -45,10 +45,10 @@ fn mem_key(source_id: &str, version: &str, filename: &str) -> MemKey {
 }
 
 /// Composer of fetch + cache + lookup primitives for upstream K8s
-/// OpenAPI schemas. Carries a [`K8sVersionChain`] (Feature B) and a
-/// [`MirrorChain`] (Feature B+) and walks the cross product
-/// version-first / mirror-first per the design in
-/// `plan/helm-schema/multi-version-k8s-and-apiversion-guessing.md`.
+/// OpenAPI schemas. Carries a [`K8sVersionChain`] and a
+/// [`MirrorChain`] and walks the cross product version-first /
+/// mirror-first: all configured sources are tried at one version
+/// before falling back to the next version.
 #[derive(Debug)]
 pub struct KubernetesJsonSchemaProvider {
     pub versions: K8sVersionChain,
@@ -390,8 +390,8 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     /// when the configured chain didn't resolve the resource.
     ///
     /// Stale `<source_id>` dirs left on disk from removed mirrors are
-    /// skipped (Finding 2 — only currently-configured sources may
-    /// surface inference / hint signals).
+    /// skipped: only currently-configured sources may surface
+    /// inference / hint signals.
     ///
     /// Returns a sorted+deduped list of `version_dir` strings.
     fn cache_versions_holding(&self, resource: &ResourceRef) -> Vec<String> {

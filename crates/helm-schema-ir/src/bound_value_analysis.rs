@@ -51,7 +51,12 @@ impl BoundValueContext {
         domain
             .iter()
             .filter(|value| self.constraints.allows(&binding.key_var, value))
-            .map(|value| format!("{}.{}.{}", binding.base, value, rest))
+            .map(|value| {
+                let mut segments = helm_schema_core::split_value_path(&binding.base);
+                segments.push(value.clone());
+                segments.extend(helm_schema_core::split_value_path(&rest));
+                helm_schema_core::join_value_path(segments)
+            })
             .collect()
     }
 
@@ -156,7 +161,7 @@ fn bound_selector_read(expr: &TemplateExpr) -> Option<(&str, String)> {
     if variable.is_empty() || path.is_empty() {
         return None;
     }
-    Some((variable.as_str(), path.join(".")))
+    Some((variable.as_str(), helm_schema_core::join_value_path(path)))
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

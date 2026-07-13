@@ -12,11 +12,11 @@ use tracing::instrument;
 /// from library callers.
 #[derive(Debug, Clone, Default)]
 pub struct ProviderOptions {
-    /// User-ordered K8s version list (Feature A).
+    /// User-ordered K8s version list; the first entry is the primary.
     pub k8s_versions: Vec<String>,
-    /// Auto-fallback window (Feature B). `None` = disabled.
+    /// Auto-fallback window of older K8s minors. `None` = disabled.
     pub k8s_version_fallback_window: Option<u32>,
-    /// Additional K8s schema mirror URLs (Feature B+).
+    /// Additional K8s schema mirror URLs.
     pub k8s_schema_mirrors: Vec<String>,
     /// Managed K8s cache root.
     pub k8s_schema_cache_dir: Option<PathBuf>,
@@ -26,10 +26,10 @@ pub struct ProviderOptions {
     pub allow_net: bool,
     pub disable_k8s_schemas: bool,
 
-    /// `crd_lookup_loose=true` activates Feature C cross-scan +
-    /// `CrdVersionAvailableAtOtherVersions` hint.
+    /// `crd_lookup_loose=true` activates the cross-version CRD cache
+    /// scan + `CrdVersionAvailableAtOtherVersions` hint.
     pub crd_lookup_loose: bool,
-    /// Additional CRD catalog mirror URLs (Feature C).
+    /// Additional CRD catalog mirror URLs.
     pub crd_catalog_mirrors: Vec<String>,
     /// Managed CRD cache root.
     pub crd_catalog_cache_dir: Option<PathBuf>,

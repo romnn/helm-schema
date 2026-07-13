@@ -98,211 +98,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "networkPolicy": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "ingress": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "allowExternal": {}
-                        },
-                        "required": [
-                          "allowExternal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "allowExternal": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternal"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "extraLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Apply extra labels to common labels.",
-            "properties": {},
-            "type": "object"
-          },
-          "global": {
-            "properties": {
-              "commonLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Common labels for all object directly managed by this chart.",
-                "properties": {},
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "tempo": {
-            "properties": {
-              "tag": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "serviceMonitor": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceMonitor"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "extraLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Apply extra labels to common labels.",
-            "type": "object"
-          },
-          "global": {
-            "properties": {
-              "commonLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Common labels for all object directly managed by this chart.",
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "tempo": {
-            "properties": {
-              "tag": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "anyOf": [
@@ -429,6 +224,192 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "ingress": {}
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "ingress": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "ingress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "networkPolicy": {
+                            "properties": {
+                              "allowExternal": {}
+                            },
+                            "required": [
+                              "allowExternal"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "networkPolicy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "allowExternal": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "allowExternal"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "extraLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "description": "Apply extra labels to common labels."
+          },
+          "global": {
+            "properties": {
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
+                ],
+                "description": "Common labels for all object directly managed by this chart."
+              }
+            },
+            "type": "object"
+          },
+          "tempo": {
+            "properties": {
+              "tag": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -510,16 +491,36 @@
   ],
   "properties": {
     "affinity": {
-      "additionalProperties": {},
-      "description": "Affinity for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Affinity for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "annotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotations for the StatefulSet",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Annotations for the StatefulSet"
     },
     "config": {
       "anyOf": [
@@ -533,12 +534,21 @@
       "description": "Tempo configuration file contents"
     },
     "extraLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Apply extra labels to common labels.",
-      "properties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Apply extra labels to common labels."
     },
     "extraVolumes": {
       "anyOf": [
@@ -563,15 +573,24 @@
       ]
     },
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "commonLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Common labels for all object directly managed by this chart.",
-          "properties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Common labels for all object directly managed by this chart."
         }
       },
       "type": "object"
@@ -597,11 +616,7 @@
       "type": "object"
     },
     "nameOverride": {
-      "description": "Overrides the chart's name",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Overrides the chart's name"
     },
     "networkPolicy": {
       "additionalProperties": false,
@@ -653,14 +668,12 @@
                   "to": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
@@ -745,9 +758,19 @@
           "then": {
             "properties": {
               "explicitNamespacesSelector": {
-                "additionalProperties": {},
-                "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ],
+                "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
               }
             },
             "type": "object"
@@ -809,9 +832,19 @@
       "type": "object"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Node labels for pod assignment. See: https://kubernetes.io/docs/user-guide/node-selection/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Node labels for pod assignment. See: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "persistence": {
       "additionalProperties": false,
@@ -833,16 +866,14 @@
               "accessModes": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "storageClassName: local-path"
@@ -856,9 +887,6 @@
               "selector": {
                 "additionalProperties": {},
                 "type": "object"
-              },
-              "size": {
-                "type": "string"
               }
             },
             "type": "object"
@@ -902,22 +930,41 @@
       "type": "object"
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Pod Annotations",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Pod Annotations"
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Pod (extra) Labels",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Pod (extra) Labels"
     },
     "priorityClassName": {
-      "description": "The name of the PriorityClass",
-      "type": "null"
+      "description": "The name of the PriorityClass"
     },
     "replicas": {
       "description": "Define the amount of instances",
@@ -1084,10 +1131,20 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
         },
         "clusterIP": {},
         "externalIPs": {
@@ -1095,14 +1152,23 @@
           "type": "object"
         },
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
         },
         "loadBalancerIP": {
-          "description": "(string) IP address, in case of 'type: LoadBalancer'",
-          "type": "null"
+          "description": "(string) IP address, in case of 'type: LoadBalancer'"
         },
         "loadBalancerSourceRanges": {
           "additionalProperties": {},
@@ -1176,14 +1242,12 @@
               "imagePullSecrets": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Image pull secrets for the service account"
@@ -1319,24 +1383,7 @@
                 "type": "object"
               },
               "interval": {
-                "anyOf": [
-                  {
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "scrapeTimeout": {
-                "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               }
             },
             "type": "object"
@@ -1365,9 +1412,22 @@
       "additionalProperties": false,
       "properties": {
         "extraArgs": {
-          "additionalProperties": {},
-          "description": "allowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nAdditional container arguments",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "allowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nAdditional container arguments"
         },
         "extraEnv": {
           "anyOf": [
@@ -1759,8 +1819,18 @@
           "type": "string"
         },
         "securityContext": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
         },
         "server": {
           "additionalProperties": false,
@@ -1839,17 +1909,39 @@
           },
           "then": {
             "properties": {
-              "extraEnv": {
+              "extraArgs": {
                 "anyOf": [
                   {
-                    "items": {},
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
                     "type": "array"
                   },
                   {
-                    "type": "null"
+                    "type": "integer"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional container arguments"
+              },
+              "extraEnv": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
                   }
                 ],
                 "description": "Environment variables to add"
@@ -1857,14 +1949,12 @@
               "extraVolumeMounts": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Volume mounts to add"
@@ -1882,9 +1972,19 @@
                 "type": "object"
               },
               "securityContext": {
-                "additionalProperties": {},
-                "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable",
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ],
+                "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable"
               },
               "tag": {
                 "type": [
@@ -1903,9 +2003,7 @@
           "type": "boolean"
         },
         "extraArgs": {
-          "additionalProperties": {},
-          "description": "Additional container arguments",
-          "type": "object"
+          "description": "Additional container arguments"
         },
         "extraEnv": {
           "anyOf": [
@@ -1954,27 +2052,49 @@
               },
               "then": {
                 "properties": {
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-                    "type": "object"
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated"
                   },
-                  "tls": {
+                  "hosts": {
                     "anyOf": [
                       {
                         "items": {},
                         "type": "array"
                       },
                       {
+                        "type": "integer"
+                      },
+                      {
                         "type": "null"
                       },
                       {
-                        "type": "string"
+                        "type": "object"
                       }
-                    ],
-                    "description": "- secretName: tempo-query-tls\nhosts:\n- query.tempo.example.com"
+                    ]
+                  },
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -1983,9 +2103,7 @@
           ],
           "properties": {
             "annotations": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated",
               "type": "object"
             },
@@ -2007,15 +2125,7 @@
               ],
               "description": "Extra paths to prepend to every host configuration. This is useful when working with annotation based services.\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nOr for k8s > 1.19\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
             },
-            "hosts": {
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": "array"
-            },
+            "hosts": {},
             "ingressClassName": {},
             "labels": {
               "additionalProperties": {},
@@ -2030,18 +2140,6 @@
               "type": "string"
             },
             "tls": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "- secretName: tempo-query-tls\nhosts:\n- query.tempo.example.com"
             }
           },

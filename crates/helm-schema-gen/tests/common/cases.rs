@@ -524,8 +524,8 @@ pub const BITNAMI_REDIS_PROMETHEUSRULE_BEHAVIOR: SchemaBehaviorCase<'static> = S
     expectations: &[
         SchemaExpectation {
             instance: r#"{"metrics":{"enabled":true,"prometheusRule":{"enabled":true,"namespace":7}}}"#,
-            accepted: false,
-            message: "metrics.prometheusRule.namespace must stay namespace/string-like when the PrometheusRule renders",
+            accepted: true,
+            message: "metrics.prometheusRule.namespace is explicitly stringified before rendering",
         },
         SchemaExpectation {
             instance: r#"{"metrics":{"enabled":false,"prometheusRule":{"enabled":true,"namespace":7}}}"#,
@@ -609,8 +609,8 @@ pub const SIGNOZ_POSTGRESQL_SECRETS_BEHAVIOR: SchemaBehaviorCase<'static> = Sche
     expectations: &[
         SchemaExpectation {
             instance: r#"{"serviceBindings":{"enabled":true},"architecture":"replication","primary":{"name":7}}"#,
-            accepted: false,
-            message: "primary.name must stay string-like when service-binding host rendering uses it",
+            accepted: true,
+            message: "primary.name is explicitly stringified by the fullname helper",
         },
         SchemaExpectation {
             instance: r#"{"serviceBindings":{"enabled":false},"architecture":"replication","primary":{"name":7}}"#,

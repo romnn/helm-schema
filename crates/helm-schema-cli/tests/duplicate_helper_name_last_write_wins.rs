@@ -126,6 +126,9 @@ fn duplicate_helper_name_losing_body_does_not_contaminate_type_hints()
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: false,
+            crd_catalog_cache_dir: Some(
+                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+            ),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()

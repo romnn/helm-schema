@@ -5,7 +5,10 @@ use serde_json::Value;
 
 use crate::{
     ValuesSchemaInput, generate_values_schema,
-    resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs},
+    resolve_policy::{
+        ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
+        open_objects_rejecting_declared_members,
+    },
     values_yaml::ValuesYamlPathFacts,
 };
 use helm_schema_ast::DefineIndex;
@@ -111,6 +114,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
     contract.push_pathless_dependency_fragment("webhook");
 
@@ -143,12 +147,20 @@ fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
 }
 
 fn type_hints_for(source: impl SchemaSignalSource) -> BTreeMap<String, BTreeSet<String>> {
+    // Union of base hints and overlay-scoped hints: callers pin that a hint
+    // was extracted at all, not which scope it binds in.
     source
         .into_schema_signals()
         .schema_evidence_by_value_path()
         .iter()
-        .filter(|(_, evidence)| !evidence.type_hints.is_empty())
-        .map(|(path, evidence)| (path.clone(), evidence.type_hints.clone()))
+        .map(|(path, evidence)| {
+            let mut hints = evidence.type_hints.clone();
+            for overlay in &evidence.conditional_overlays {
+                hints.extend(overlay.evidence.type_hints.iter().cloned());
+            }
+            (path.clone(), hints)
+        })
+        .filter(|(_, hints)| !hints.is_empty())
         .collect()
 }
 
@@ -164,6 +176,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
             "Service".to_string(),
         )),
         provenance: Vec::new(),
+        has_string_contract: false,
     }];
     let contract = with_type_hints(
         ContractIr::from_contract_uses(uses),
@@ -209,6 +222,17 @@ fn schema_contains_open_string_map(schema: &Value) -> bool {
 }
 
 fn schema_contains_type(schema: &Value, schema_type: &str) -> bool {
+    if schema.get("const").is_some_and(|value| match schema_type {
+        "null" => value.is_null(),
+        "boolean" => value.is_boolean(),
+        "number" => value.is_number(),
+        "string" => value.is_string(),
+        "array" => value.is_array(),
+        "object" => value.is_object(),
+        _ => false,
+    }) {
+        return true;
+    }
     if schema.get("type").and_then(Value::as_str) == Some(schema_type) {
         return true;
     }
@@ -504,13 +528,25 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
     let metric_relabelings = generated
         .pointer("/properties/serviceMonitor/properties/metricRelabelings")
         .expect("generated metricRelabelings property");
+    let provider_ref =
+        any_of_variant_matching(metric_relabelings, |variant| variant.get("$ref").is_some())
+            .and_then(|variant| variant.get("$ref"))
+            .and_then(Value::as_str)
+            .expect("generated metricRelabelings provider reference");
+    let provider_schema = generated
+        .pointer(
+            provider_ref
+                .strip_prefix('#')
+                .expect("local provider reference"),
+        )
+        .expect("generated metricRelabelings provider definition");
     sim_assert_eq!(
-        have: metric_relabelings.get("type").and_then(Value::as_str),
+        have: provider_schema.get("type").and_then(Value::as_str),
         want: Some("array"),
         "generated metricRelabelings schema should stay array-shaped: {generated}"
     );
     sim_assert_eq!(
-        have: metric_relabelings
+        have: provider_schema
             .pointer("/items/properties/action/type")
             .and_then(Value::as_str),
         want: Some("string"),
@@ -544,7 +580,9 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
         .expect("resolved extraEnvs");
     assert!(
         resolved_extra_envs.provider_schema_candidate.is_some(),
-        "extraEnvs should preserve provider schema candidate"
+        "extraEnvs should preserve provider schema candidate: {}; evidence={:#?}",
+        resolved_extra_envs.schema,
+        schema_signals.evidence_for("extraEnvs")
     );
     sim_assert_eq!(
         have: resolved_extra_envs
@@ -677,6 +715,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
                 "ServiceMonitor".to_string(),
             )),
             provenance: Vec::new(),
+            has_string_contract: false,
         },
         ContractUse {
             source_expr: "serviceMonitor.metricRelabelings".to_string(),
@@ -694,6 +733,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
                 "ServiceMonitor".to_string(),
             )),
             provenance: Vec::new(),
+            has_string_contract: false,
         },
     ];
 
@@ -724,6 +764,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: Some(resource.clone()),
             provenance: Vec::new(),
+            has_string_contract: false,
         },
         ContractUse {
             source_expr: "second".to_string(),
@@ -732,6 +773,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: Some(resource),
             provenance: Vec::new(),
+            has_string_contract: false,
         },
     ];
     let schema_signals = schema_signals_for(uses);
@@ -774,6 +816,7 @@ fn values_yaml_comments_override_provider_descriptions() {
             "ConfigMap".to_string(),
         )),
         provenance: Vec::new(),
+        has_string_contract: false,
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
     let schema_signals = schema_signals_for(uses);
@@ -887,6 +930,9 @@ fn bitnami_labels_helpers() -> String {
 /// True if the schema permits a `null` value — either directly via
 /// `{"type": "null"}` or as one branch of an `anyOf` union.
 fn permits_null(schema: &Value) -> bool {
+    if schema.get("const").is_some_and(Value::is_null) {
+        return true;
+    }
     if schema.get("type").and_then(Value::as_str) == Some("null") {
         return true;
     }
@@ -1085,10 +1131,268 @@ fn simple_template_schema() {
 }
 
 #[test]
+fn literal_dotted_index_and_get_keys_generate_one_root_property() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          direct: {{ index .Values "foo.bar" | quote }}
+          selected: {{ (get .Values "foo.bar").baz | quote }}
+    "#};
+    let values_yaml = indoc! {r#"
+        foo.bar:
+          baz: value
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema.pointer("/properties/foo.bar").is_some(),
+        "the literal dotted key should remain one root segment: {schema}"
+    );
+    assert!(
+        schema.pointer("/properties/foo").is_none(),
+        "the path currency must not fabricate a `foo` parent: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "foo.bar": { "baz": "value" } })
+        ),
+        "the chart's literal dotted-key default should validate: {schema}"
+    );
+}
+
+#[test]
+fn tpl_context_does_not_type_the_templated_value_as_an_object() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: example
+        data:
+          {{- range .Values.items }}
+          name: {{ tpl .name $ }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        items:
+          - name: example
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let Some(name) = schema.pointer("/properties/items/items/properties/name") else {
+        panic!("ranged item name missing from {schema}");
+    };
+
+    assert!(
+        permits_type(name, "string"),
+        "tpl's first argument is string content: {schema}"
+    );
+    assert!(
+        !permits_type(name, "object"),
+        "tpl's context must not become content: {schema}"
+    );
+}
+
+#[test]
+fn tpl_of_to_yaml_without_shape_evidence_stays_untyped() {
+    let src = indoc! {r#"
+        {{- if .Values.ingress.tls }}
+        tls: {{ tpl (toYaml .Values.ingress.tls) $ | nindent 2 }}
+        {{- end }}
+    "#};
+    let values_yaml = "ingress: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for tls in [
+        serde_json::json!([]),
+        serde_json::json!({ "secretName": "tls" }),
+    ] {
+        let instance = serde_json::json!({ "ingress": { "tls": tls } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "toYaml provides provenance but no input shape: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn serialized_collection_owns_descendant_shape() {
+    let src = indoc! {r#"
+        {{- range .Values.ingress.extraPaths }}
+        {{- if .backend.serviceName }}{{ fail "legacy backend" }}{{ end }}
+        {{- end }}
+        paths: {{ tpl (toYaml .Values.ingress.extraPaths) $ | nindent 2 }}
+    "#};
+    let values_yaml = "ingress:\n  extraPaths: []\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let instance = serde_json::json!({
+        "ingress": {
+            "extraPaths": [{
+                "path": "/health",
+                "backend": {"service": {"name": "health", "port": {"number": 8080}}}
+            }]
+        }
+    });
+
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "descendant reads must not reconstruct serialized input shape: {schema}"
+    );
+}
+
+#[test]
+fn ranged_type_branch_keeps_serialized_object_alternative() {
+    let src = indoc! {r#"
+        {{- range .Values.extraObjects }}
+        {{- if typeIs "string" . }}
+        {{ tpl . $ }}
+        {{- else }}
+        {{ tpl (. | toYaml) $ }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("extraObjects: []\n"));
+
+    for item in [
+        serde_json::json!("kind: ConfigMap"),
+        serde_json::json!({"apiVersion": "v1", "kind": "ConfigMap"}),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &serde_json::json!({"extraObjects": [item]})),
+            "typeIs string and serialized else branches must preserve both alternatives: {schema}"
+        );
+    }
+}
+
+#[test]
+fn structural_conversion_and_kind_guards_preserve_input_shape_alternatives() {
+    let src = indoc! {r#"
+        {{- if kindIs "map" .Values.extraArgs }}
+        args: {{ toYaml .Values.extraArgs }}
+        {{- else if kindIs "slice" .Values.extraArgs }}
+        args: {{ toYaml .Values.extraArgs }}
+        {{- end }}
+        parsed: {{ .Values.config | fromYaml | toYaml }}
+        joined: {{ join "," .Values.urls }}
+    "#};
+    let values_yaml = indoc! {r#"
+        extraArgs: {}
+        config: "enabled: true"
+        urls: sentinel:26379
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for extra_args in [
+        serde_json::json!({ "flag": "value" }),
+        serde_json::json!(["--flag"]),
+    ] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({
+                    "extraArgs": extra_args,
+                    "config": "enabled: true",
+                    "urls": "sentinel:26379"
+                })
+            ),
+            "kindIs branches must preserve both advertised shapes: {schema}"
+        );
+    }
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "extraArgs": {},
+                "config": "enabled: false",
+                "urls": ["one:26379", "two:26379"]
+            })
+        ),
+        "fromYaml consumes strings and join accepts any input: {schema}"
+    );
+}
+
+#[test]
+fn destructured_range_over_declared_map_keeps_map_shape() {
+    let src = indoc! {r#"
+        ports:
+          {{- range $name, $port := .Values.extraPorts }}
+          {{ $name }}: {{ $port | quote }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("extraPorts: {}\n"));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "extraPorts": { "http": 8080 } })
+        ),
+        "a key/value range over a declared map must accept map inputs: {schema}"
+    );
+}
+
+#[test]
+fn helper_destructured_range_keeps_declared_map_open() {
+    let helpers = indoc! {r#"
+        {{- define "config" }}
+        {{- range $key, $value := .Values.redis.config }}
+        {{ $key }} {{ $value }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          redis.conf: |
+            {{- include "config" . | nindent 4 }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("redis:\n  config:\n    save: \"\"\n"),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({"redis": {"config": {"appendonly": "no"}}})
+        ),
+        "a destructured helper range accepts arbitrary map keys: {schema}"
+    );
+}
+
+#[test]
+fn document_condition_keeps_helper_conversion_input_type() {
+    let helpers = indoc! {r#"
+        {{- define "config-has-processors" }}
+        {{- $config := .Values.config | default "" | fromYaml }}
+        {{- if $config.processors }}true{{ else }}false{{ end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        {{- if eq (include "config-has-processors" .) "true" }}
+        apiVersion: v1
+        kind: ConfigMap
+        {{- end }}
+    "#};
+    let schema =
+        schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some("config: null\n"));
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({"config": "processors: {}"})),
+        "fromYaml in a condition helper constrains its source as string input: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({"config": {"processors": {}}})),
+        "fromYaml must not expose its parsed object as the source input shape: {schema}"
+    );
+}
+
+#[test]
 fn self_guarded_empty_string_preserves_empty_fallback_branch() {
     let provider_schema = serde_json::json!({
         "type": "string",
-        "minLength": 1
+        "minLength": 1,
+        "pattern": "^https?://"
     });
     let values_yaml_schema = serde_json::json!({
         "type": "string"
@@ -1111,6 +1415,8 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         values_yaml_schema,
         guard_predicate_schema: serde_json::json!({}),
         type_hint_schema: serde_json::json!({}),
+        guarded_type_hint_schema: serde_json::json!({}),
+        fail_requirement_schema: serde_json::json!({}),
     });
 
     assert!(
@@ -1127,6 +1433,47 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
     assert!(
         permits_null(&schema),
         "nullable wrapping should preserve the empty-string branch, got {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!("not-a-url")),
+        "the falsy fallback must not erase provider facets for non-empty values: {schema}"
+    );
+}
+
+#[test]
+fn declared_object_members_open_only_the_closed_levels_that_reject_them() {
+    let schema = serde_json::json!({
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "known": {"type": "string"},
+            "nested": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {"typed": {"type": "integer"}}
+            }
+        }
+    });
+    let declared = serde_json::json!({
+        "known": "value",
+        "extra": true,
+        "nested": {"typed": 1, "extension": "value"}
+    });
+
+    let opened = open_objects_rejecting_declared_members(schema, &declared);
+
+    sim_assert_eq!(
+        have: opened,
+        want: serde_json::json!({
+            "type": "object",
+            "properties": {
+                "known": {"type": "string"},
+                "nested": {
+                    "type": "object",
+                    "properties": {"typed": {"type": "integer"}}
+                }
+            }
+        })
     );
 }
 
@@ -1211,6 +1558,825 @@ fn step1_no_with_fragment_does_not_widen_to_null() {
         .pointer("/properties/nameOverride")
         .expect("nameOverride present");
     sim_assert_eq!(have: name, want: &serde_json::json!({}));
+}
+
+#[test]
+fn self_guarded_null_default_without_sink_type_stays_unconstrained() {
+    let src = indoc! {r"
+        {{- if .Values.terminationGracePeriodSeconds }}
+        terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        terminationGracePeriodSeconds:
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let Some(termination_grace_period) =
+        schema.pointer("/properties/terminationGracePeriodSeconds")
+    else {
+        panic!("terminationGracePeriodSeconds missing from {schema}");
+    };
+
+    sim_assert_eq!(
+        have: termination_grace_period,
+        want: &serde_json::json!({}),
+        "a null default is an unset sentinel, not exclusive null typing: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "terminationGracePeriodSeconds": 90 })
+        ),
+        "a configured non-null value must remain accepted without stronger sink evidence: {schema}"
+    );
+}
+
+/// `quote`, `squote`, and `toString` call Sprig's `strval`, whose
+/// fallback is `fmt.Sprintf("%v", value)` — maps, lists, and nil all render
+/// as text. The input domain is unconstrained; only the OUTPUT is a string.
+#[test]
+fn quote_stringification_accepts_any_input() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: example
+        data:
+          {{- if .Values.enabled }}
+          flag: {{ .Values.flag | quote }}
+          count: {{ .Values.count | quote }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        flag: false
+        count: 7
+        enabled: true
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "enabled": true, "flag": false, "count": 7 }),
+        serde_json::json!({ "enabled": true, "flag": "false", "count": "7" }),
+        serde_json::json!({ "enabled": true, "flag": {}, "count": 7 }),
+        serde_json::json!({ "enabled": true, "flag": false, "count": [] }),
+        serde_json::json!({ "enabled": true, "flag": null, "count": { "k": "v" } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "strval stringifies any input, so quote constrains nothing: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Direct-call forms: the total stringifications accept any input in
+/// prefix position too, and `join` converts anything through `strslice`
+/// (lists element-wise, non-lists as singletons, nil as empty).
+#[test]
+fn total_stringification_direct_forms_accept_any_input() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: example
+        data:
+          quoted: {{ quote .Values.quoted }}
+          squoted: {{ squote .Values.squoted }}
+          stringified: {{ toString .Values.stringified }}
+          joined: {{ join "," .Values.joined }}
+    "#};
+    let values_yaml = indoc! {"
+        quoted: probe
+        squoted: probe
+        stringified: probe
+        joined: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for probe in [
+        serde_json::json!("text"),
+        serde_json::json!(7),
+        serde_json::json!(true),
+        serde_json::json!(null),
+        serde_json::json!({ "k": "v" }),
+        serde_json::json!(["item"]),
+    ] {
+        let instance = serde_json::json!({
+            "quoted": probe,
+            "squoted": probe,
+            "stringified": probe,
+            "joined": probe,
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "total stringification accepts any input: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Sprig's numeric casts (`int`, `int64`, `float64`) convert through
+/// `cast.ToXxx`, which coerces ANY input (junk becomes zero) instead of
+/// failing: metrics-server passes `"365"` through
+/// `int .Values.tls.helm.certDurationDays` and coredns emits
+/// `.Values.autoscaler.coresPerReplica | float64`, and Helm renders both.
+#[test]
+fn numeric_casts_accept_any_input() {
+    let src = indoc! {r#"
+        {{- $days := int .Values.certDurationDays }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          days: {{ $days | quote }}
+          cores: {{ .Values.coresPerReplica | float64 }}
+    "#};
+    let values_yaml = indoc! {"
+        certDurationDays: 365
+        coresPerReplica: 256
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "certDurationDays": 365, "coresPerReplica": 256 }),
+        serde_json::json!({ "certDurationDays": "365", "coresPerReplica": "256" }),
+        serde_json::json!({ "certDurationDays": { "bad": true }, "coresPerReplica": [1] }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "numeric casts coerce any input: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A total stringification that appears only inside a CONDITION erases the
+/// input shape exactly like the same conversion at a render site or in a
+/// `set` expression (vault gates its PSP templates on
+/// `eq (.Values.global.psp.enable | toString) "true"`, and Helm accepts the
+/// string form).
+#[test]
+fn condition_only_to_string_erases_declared_typing() {
+    let helpers = indoc! {r#"
+        {{- define "repro.ha" -}}
+        {{- if eq (.Values.ha.enabled | toString) "true" -}}
+        true
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if eq (.Values.psp.enable | toString) "true" }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: psp
+        {{- end }}
+        {{- if eq (include "repro.ha" .) "true" }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ha
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        psp:
+          enable: false
+        ha:
+          enabled: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "psp": { "enable": true }, "ha": { "enabled": true } }),
+        serde_json::json!({ "psp": { "enable": "true" }, "ha": { "enabled": "true" } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "stringified flag comparisons accept boolean and string forms: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A `typeOf`/`kindOf` comparison dispatches on the value's runtime type
+/// (velero: `eq (typeOf .Values.initContainers) "string"` chooses `tpl` vs
+/// `toYaml`; vault binds `$type := typeOf .Values.server.affinity` first).
+/// Every arm renders SOME types and unmatched types render nothing — also
+/// valid — so the dispatch must not close the path to one arm's type, and
+/// an arm's sink typing holds only under its test.
+#[test]
+fn type_dispatch_keeps_string_and_structured_alternatives() {
+    let src = indoc! {r#"
+        {{- $type := typeOf .Values.affinity }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: server
+        spec:
+          template:
+            spec:
+              affinity:
+                {{- if eq $type "string" }}
+                {{- tpl .Values.affinity . | nindent 8 }}
+                {{- else }}
+                {{- toYaml .Values.affinity | nindent 8 }}
+                {{- end }}
+              initContainers:
+                {{- if eq (typeOf .Values.initContainers) "string" }}
+                {{- tpl .Values.initContainers . | nindent 8 }}
+                {{- else }}
+                {{- toYaml .Values.initContainers | nindent 8 }}
+                {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        affinity: {}
+        initContainers: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "affinity": { "nodeAffinity": {} }, "initContainers": [{ "name": "init" }] }),
+        serde_json::json!({ "affinity": "{{ .Values.name }}", "initContainers": "- name: init" }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "type dispatch keeps every arm's form valid: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A partial type dispatch (loki's `hostUsers`: a `kindIs "bool"` arm and a
+/// string arm, no catch-all) must not close the path to the tested types:
+/// an unmatched type renders nothing, which Helm accepts.
+#[test]
+fn partial_type_dispatch_does_not_close_untested_types() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+        spec:
+          {{- if kindIs "bool" .Values.hostUsers }}
+          hostUsers: {{ .Values.hostUsers }}
+          {{- else if kindIs "string" .Values.hostUsers }}
+          hostUsers: {{ tpl .Values.hostUsers . }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        hostUsers: true
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "hostUsers": true }),
+        serde_json::json!({ "hostUsers": "{{ .Values.global.hostUsers }}" }),
+        serde_json::json!({ "hostUsers": { "unmatched": "renders nothing" } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "untested types render nothing and stay valid: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Direct `typeIs`/`kindIs` tests also use exact Go type names (velero:
+/// `typeIs "[]interface {}" .Values.configuration.backupStorageLocation`):
+/// the guard is a partial type dispatch, so untested types skip the branch
+/// and render nothing, which stays valid.
+#[test]
+fn type_is_decodes_exact_go_container_names() {
+    let src = indoc! {r#"
+        {{- if typeIs "[]interface {}" .Values.locations }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: locations
+        data:
+          {{- range .Values.locations }}
+          {{ .name }}: configured
+          {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        locations: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "locations": [{ "name": "a" }] }),
+        serde_json::json!({ "locations": "ignored" }),
+        serde_json::json!({ "locations": { "unmatched": true } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "exact Go names decode as type tests; untested types skip the branch: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Condition pipelines classify left-to-right (datadog:
+/// `eq (.Values.agents.image.tag | toString | trimSuffix "-jmx") "latest"`):
+/// a consumer AFTER a total conversion operates on converted text and
+/// claims nothing about the raw value, while a consumer BEFORE any
+/// conversion still binds the raw string contract.
+#[test]
+fn condition_pipeline_order_scopes_string_consumers() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          {{- if eq (.Values.tag | toString | trimSuffix "-jmx") "latest" }}
+          latest: "true"
+          {{- end }}
+          {{- if eq (.Values.suffix | trimSuffix "-" | toString) "x" }}
+          suffixed: "true"
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        tag: latest
+        suffix: x-
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "tag": 7 })),
+        "toString converts before the trim, so numbers render: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "suffix": { "bad": true } })),
+        "a consumer ahead of the conversion still needs a string: {schema}"
+    );
+}
+
+/// An explicit `fail` branch is a VALIDATOR: rendering aborts whenever its
+/// guards hold, so valid inputs must falsify the failing test wherever the
+/// outer conditions hold (kyverno fails on non-string image tags inside a
+/// helper; traefik fails on plugins missing moduleName/version while
+/// ranging them; sealed-secrets fails on non-string annotation map values).
+#[test]
+fn fail_branches_bind_validator_requirements() {
+    let helpers = indoc! {r#"
+        {{- define "repro.image" -}}
+        {{- $tag := default .defaultTag .image.tag -}}
+        {{- if not (typeIs "string" $tag) -}}
+          {{ fail "Image tags must be strings." }}
+        {{- end -}}
+        {{- print "img:" $tag -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+        spec:
+          containers:
+          - name: main
+            image: {{ include "repro.image" (dict "image" .Values.image "defaultTag" .Chart.AppVersion) | quote }}
+            args:
+            {{- range $name, $plugin := .Values.plugins }}
+            {{- if or (ne (typeOf $plugin) "map[string]interface {}") (not (hasKey $plugin "moduleName")) }}
+              {{- fail (printf "plugin %s is missing moduleName" $name) }}
+            {{- end }}
+            - "--plugin={{ $name }}"
+            {{- end }}
+            env:
+            {{- range $k, $v := .Values.annotations }}
+              {{- if not (and $v (kindIs "string" $v)) }}
+                {{ fail "Annotation values have to be strings" }}
+              {{- end }}
+            {{- end }}
+            - name: PROBE
+              value: "set"
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          tag: latest
+        plugins: {}
+        annotations: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "image": { "tag": 7 } }),
+            false,
+            "non-string tag fails",
+        ),
+        (
+            serde_json::json!({ "image": { "tag": "v1" } }),
+            true,
+            "string tag renders",
+        ),
+        (
+            serde_json::json!({ "image": { "tag": null } }),
+            true,
+            "null tag takes the default",
+        ),
+        (
+            serde_json::json!({ "plugins": { "bad": 7 } }),
+            false,
+            "scalar plugin fails",
+        ),
+        (
+            serde_json::json!({ "plugins": { "bad": {} } }),
+            false,
+            "plugin without moduleName fails",
+        ),
+        (
+            serde_json::json!({ "plugins": { "ok": { "moduleName": "m" } } }),
+            true,
+            "complete plugin renders",
+        ),
+        (
+            serde_json::json!({ "annotations": { "bad": 7 } }),
+            false,
+            "non-string annotation fails",
+        ),
+        (
+            serde_json::json!({ "annotations": { "ok": "v" } }),
+            true,
+            "string annotation renders",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A `fail` guarded by a condition the lowering can only APPROXIMATE on
+/// the tested path must not become a requirement: kyverno's replicas
+/// helper fails only when `eq (int .) 0`, which does not decode, so
+/// negating the decodable remainder would reject every normal count.
+#[test]
+fn approximate_fail_guards_abstain() {
+    let helpers = indoc! {r#"
+        {{- define "repro.replicas" -}}
+        {{- if and (not (kindIs "invalid" .)) (not (kindIs "string" .)) -}}
+        {{- if eq (int .) 0 -}}
+          {{- fail "0 replicas is not supported" -}}
+        {{- end -}}
+        {{- end -}}
+        {{- . -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: probe
+        spec:
+          replicas: {{ include "repro.replicas" .Values.replicas }}
+    "#};
+    let values_yaml = indoc! {"
+        replicas: 1
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "replicas": 3 })),
+        "a normal replica count renders; the undecodable zero-check must not manufacture a requirement: {schema}"
+    );
+}
+
+/// A total stringification is neutral evidence about its own input; an
+/// INDEPENDENT unconditional string consumer still binds. Cilium's
+/// `cluster.name` is quoted into the configmap, but `replace` also consumes
+/// it in validation logic — a map value fails `helm template` there.
+#[test]
+fn stringified_use_keeps_unconditional_string_transform_contract() {
+    let src = indoc! {r#"
+        {{- if gt (len (.Values.cluster.name | replace "-" "")) 30 }}
+        {{- fail "cluster name too long" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          cluster-name: {{ .Values.cluster.name | quote }}
+    "#};
+    let values_yaml = indoc! {"
+        cluster:
+          name: default
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "cluster": { "name": "prod" } })
+        ),
+        "string cluster names render: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "cluster": { "name": { "bad": true } } })
+        ),
+        "replace consumes the raw name, so a map fails rendering and must be rejected: {schema}"
+    );
+}
+
+/// Mutually exclusive guarded uses lower their own domains under their own
+/// conditions (falco's `rolearn`): the quote branch renders anything, the
+/// b64enc branch fails rendering for non-strings.
+#[test]
+fn quote_branch_does_not_erase_b64enc_branch_contract() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          {{- if .Values.aws.useirsa }}
+          role-arn: {{ .Values.aws.rolearn | quote }}
+          {{- else }}
+          AWS_ROLEARN: "{{ .Values.aws.rolearn | b64enc }}"
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        aws:
+          useirsa: true
+          rolearn: ""
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    // The b64enc contract rides its own row's condition: it binds only
+    // where that branch renders. In the quote branch the same map renders
+    // fine (Helm prints it as text).
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "aws": { "useirsa": true, "rolearn": { "bad": true } } })
+        ),
+        "the quote branch renders any value: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "aws": { "useirsa": false, "rolearn": { "bad": true } } })
+        ),
+        "the b64enc branch rejects non-strings: {schema}"
+    );
+    for useirsa in [true, false] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({ "aws": { "useirsa": useirsa, "rolearn": "arn:aws:iam::1:role/x" } })
+            ),
+            "strings render in both branches (useirsa={useirsa}): {schema}"
+        );
+    }
+}
+
+/// A `join` occurrence proves nothing about OTHER occurrences: sealed-secrets
+/// also `range`s `additionalNamespaces` under its namespaced-roles flag, and
+/// a scalar fails that render (`range can\'t iterate over ns-a`).
+#[test]
+fn join_use_does_not_erase_range_branch() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          {{- if .Values.additionalNamespaces }}
+          namespaces: {{ join "," .Values.additionalNamespaces | quote }}
+          {{- end }}
+        {{- if .Values.rbac.namespacedRoles }}
+        {{- range .Values.additionalNamespaces }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: role-{{ . }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        additionalNamespaces: []
+        rbac:
+          namespacedRoles: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "additionalNamespaces": "ns-a" })
+        ),
+        "with namespaced roles off, only the join renders and a scalar is fine: {schema}"
+    );
+    for namespaces in [
+        serde_json::json!(["ns-a"]),
+        serde_json::json!({ "a": "ns-a" }),
+    ] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({
+                    "rbac": { "namespacedRoles": true },
+                    "additionalNamespaces": namespaces
+                })
+            ),
+            "range iterates lists and maps: {schema}"
+        );
+    }
+    // `range` cannot iterate a string, so `namespacedRoles=true` plus a
+    // string fails `helm template` and the guarded iterable domain rejects
+    // the combination.
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "rbac": { "namespacedRoles": true },
+                "additionalNamespaces": "ns-a"
+            })
+        ),
+        "inside the ranged branch a string cannot iterate: {schema}"
+    );
+    // Integer counts iterate (Helm's `--set` channel delivers int64; a
+    // JSON Schema cannot separate that from the failing values-file
+    // float64 spelling, so the renderable channel wins); non-integral
+    // numbers fail in every channel.
+    for count in [2, 0, -1] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({
+                    "rbac": { "namespacedRoles": true },
+                    "additionalNamespaces": count
+                })
+            ),
+            "range iterates integer counts: {schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "rbac": { "namespacedRoles": true },
+                "additionalNamespaces": 2.5
+            })
+        ),
+        "non-integral numbers cannot iterate: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "rbac": { "namespacedRoles": true } })
+        ),
+        "an absent collection ranges zero times and renders: {schema}"
+    );
+}
+
+/// printf's format parameter is a real Go `string`: NFS provisioner calls
+/// `printf .Values.storageClass.provisionerName`, and a non-string value
+/// fails template evaluation (`wrong type for value; expected string`).
+#[test]
+fn dynamic_printf_format_requires_string() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ printf .Values.storageClass.provisionerName }}
+    "#};
+    let values_yaml = indoc! {"
+        storageClass:
+          provisionerName: cluster.local/provisioner
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "storageClass": { "provisionerName": "x/y" } })
+        ),
+        "string formats evaluate: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "storageClass": { "provisionerName": 7 } })
+        ),
+        "a non-string printf format fails template evaluation and must be rejected: {schema}"
+    );
+}
+
+/// printf's data parameters render through any verb (Go fmt embeds
+/// mismatches in the output): airflow formats `dags.gitSync.subPath` with a
+/// literal format and Helm renders `subPath: 7` as `%!s(int64=7)`.
+#[test]
+fn printf_data_argument_accepts_any_value_through_helper_sink() {
+    let helpers = indoc! {r#"
+        {{- define "airflow_dags" -}}
+        {{- printf "%s/dags/repo/%s" .Values.airflowHome .Values.dags.gitSync.subPath -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          dags_folder: {{ include "airflow_dags" . }}
+    "#};
+    let values_yaml = indoc! {r#"
+        airflowHome: /opt/airflow
+        dags:
+          gitSync:
+            subPath: ""
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for sub_path in [
+        serde_json::json!("repo/dags"),
+        serde_json::json!(7),
+        serde_json::json!(null),
+    ] {
+        let instance = serde_json::json!({ "dags": { "gitSync": { "subPath": sub_path } } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "printf data arguments render any value: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Chart repro (sealed-secrets `additionalNamespaces`): a declared-list
+/// value joined under a self-truthy guard renders map and scalar values
+/// through Sprig's singleton fallback, so the declared array type must not
+/// reject them.
+#[test]
+fn self_guarded_join_of_declared_list_accepts_any_input() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          template:
+            spec:
+              containers:
+                - name: controller
+                  args:
+                    {{- if .Values.additionalNamespaces }}
+                    - --additional-namespaces
+                    - {{ join "," .Values.additionalNamespaces | quote }}
+                    {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        additionalNamespaces: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for probe in [
+        serde_json::json!(["ns-a", "ns-b"]),
+        serde_json::json!("ns-a"),
+        serde_json::json!({ "k": "v" }),
+    ] {
+        let instance = serde_json::json!({ "additionalNamespaces": probe });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "strslice converts any joined input: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Chart repro (grafana `sidecar.alerts.skipTlsVerify`): an undeclared
+/// value quoted into a typed string sink (`env[].value`) under a `with`
+/// guard renders any type, so the sink typing must not flow back through the
+/// stringification.
+#[test]
+fn with_guarded_quote_into_string_sink_accepts_any_input() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          template:
+            spec:
+              containers:
+                - name: sidecar
+                  env:
+                    {{- with .Values.sidecar.skipTlsVerify }}
+                    - name: SKIP_TLS_VERIFY
+                      value: {{ quote . }}
+                    {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("sidecar: {}\n"));
+
+    for probe in [
+        serde_json::json!(true),
+        serde_json::json!("true"),
+        serde_json::json!({ "k": "v" }),
+        serde_json::json!([1, 2]),
+    ] {
+        let instance = serde_json::json!({ "sidecar": { "skipTlsVerify": probe } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "quote erases input shape at the env sink: instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// Step 2 (prefix form): `default <literal> .Values.X` with null default in
@@ -1510,6 +2676,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -1555,6 +2722,7 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -1602,6 +2770,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -1637,6 +2806,7 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -1711,6 +2881,7 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -1776,6 +2947,7 @@ fn equal_nil_guard_treats_absent_path_as_matching_nil() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -1822,6 +2994,7 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -1878,6 +3051,7 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         }]),
         &[("feature.enabled", "boolean"), ("feature.host", "string")],
     );
@@ -1939,6 +3113,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
         ContractUse {
             source_expr: "feature.value".to_string(),
@@ -1950,6 +3125,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
     ]);
 
@@ -1986,15 +3162,15 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
         want: Some(&serde_json::json!("string")),
         "name branch should keep the metadata.name string contract: {schema}"
     );
-    sim_assert_eq!(
-        have: labels_branch.pointer("/then/properties/feature/properties/value/type"),
-        want: Some(&serde_json::json!("object")),
+    let labels_value = labels_branch
+        .pointer("/then/properties/feature/properties/value")
+        .expect("labels branch value schema");
+    assert!(
+        schema_contains_type(labels_value, "object"),
         "labels branch should lower to an object contract: {schema}"
     );
-    sim_assert_eq!(
-        have: labels_branch
-            .pointer("/then/properties/feature/properties/value/additionalProperties/type"),
-        want: Some(&serde_json::json!("string")),
+    assert!(
+        schema_contains_open_string_map(labels_value),
         "labels branch should preserve the metadata.labels string-map shape: {schema}"
     );
 }
@@ -2011,6 +3187,7 @@ fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
 
     let schema = generate_values_schema(
@@ -2068,6 +3245,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
         ContractUse {
             source_expr: "feature.value".to_string(),
@@ -2079,6 +3257,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
     ]);
 
@@ -2098,15 +3277,15 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
         schema_contains_open_string_map(base_value_schema),
         "the guarded fragment branch should also stay visible on the base path when both variants exist: {schema}"
     );
-    sim_assert_eq!(
-        have: schema.pointer("/allOf/0/then/properties/feature/properties/value/type"),
-        want: Some(&serde_json::json!("object")),
+    let guarded_value = schema
+        .pointer("/allOf/0/then/properties/feature/properties/value")
+        .expect("guarded feature.value schema");
+    assert!(
+        schema_contains_type(guarded_value, "object"),
         "the guarded branch should still reapply the fragment/object schema: {schema}"
     );
-    sim_assert_eq!(
-        have: schema
-            .pointer("/allOf/0/then/properties/feature/properties/value/additionalProperties/type"),
-        want: Some(&serde_json::json!("string")),
+    assert!(
+        schema_contains_open_string_map(guarded_value),
         "the guarded object branch should preserve metadata.labels string-map shape: {schema}"
     );
 }
@@ -2122,6 +3301,7 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
 
     let schema = generate_values_schema(
@@ -2352,7 +3532,7 @@ fn helper_local_assignments_render_through_printf_scalar_slot() {
 }
 
 #[test]
-fn helper_local_printf_aliases_flow_into_contract_type_hints() {
+fn helper_local_printf_aliases_flow_without_input_typing() {
     let helpers = indoc! {r#"
         {{- define "common.image" -}}
         {{- $registryName := .imageRoot.registry -}}
@@ -2376,15 +3556,32 @@ fn helper_local_printf_aliases_flow_into_contract_type_hints() {
                   image: {{ template "common.image" (dict "imageRoot" .Values.image) }}
     "#};
 
+    // printf renders any argument and `toString` totally stringifies the
+    // tag, so the helper-local aliases must not string-type the image
+    // inputs: a numeric `tag: 1.25` renders fine and must validate.
     let hints = type_hints_for(parse_ir_with_helpers(src, helpers));
     for path in ["image.registry", "image.repository", "image.tag"] {
         assert!(
             hints
                 .get(path)
-                .is_some_and(|types| types.contains("string")),
-            "expected helper-local printf alias to add a string type hint for {path}, got {hints:?}"
+                .is_none_or(|types| !types.contains("string")),
+            "printf/toString must not bind a string contract on {path}, got {hints:?}"
         );
     }
+    let values_yaml = indoc! {"
+        image:
+          registry: docker.io
+          repository: bitnami/app
+          tag: latest
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let instance = serde_json::json!({
+        "image": { "registry": "docker.io", "repository": "bitnami/app", "tag": 1.25 }
+    });
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "a numeric image tag renders through toString/printf: {schema}"
+    );
 }
 
 #[test]
@@ -2496,17 +3693,28 @@ fn wrapper_helper_digest_branch_keeps_explicit_null_nullable() {
     let ir = SymbolicIrContext::new(&define_index).generate_contract_ir(src);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
-    let digest = schema
-        .pointer("/properties/image/properties/digest")
-        .expect("image.digest present");
-    assert!(
-        permits_type(digest, "string"),
-        "digest should keep string evidence from the helper image renderer, got {digest}; ir={ir:?}"
-    );
-    assert!(
-        permits_null(digest),
-        "digest should preserve the explicit null default through the helper-local assignment chain, got {digest}; ir={ir:?}"
-    );
+    // The digest only renders through `toString` (a total stringification),
+    // so the schema must accept the explicit-null default, a digest string,
+    // and any other renderable value.
+    for digest in [
+        serde_json::json!("sha256:abc"),
+        serde_json::json!(null),
+        serde_json::json!(7),
+    ] {
+        let instance = serde_json::json!({
+            "image": {
+                "registry": "docker.io",
+                "repository": "example/app",
+                "tag": "latest",
+                "digest": digest,
+            },
+            "global": {},
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "digest renders through toString, so {instance} must validate: {schema}"
+        );
+    }
 }
 
 #[test]
@@ -2604,11 +3812,8 @@ fn step_fragment_empty_map_default_keeps_open_string_map() {
     let annotations = schema
         .pointer("/properties/annotations")
         .expect("annotations present");
-    sim_assert_eq!(
-        have: annotations
-            .pointer("/additionalProperties/type")
-            .and_then(Value::as_str),
-        want: Some("string"),
+    assert!(
+        schema_contains_open_string_map(annotations),
         "annotations should stay an open string map, got {annotations}"
     );
 }
@@ -2723,9 +3928,9 @@ fn scalar_item_range_keeps_provider_array_metadata() {
         "accessModes should be an array, got {access_modes}"
     );
     sim_assert_eq!(
-        have: access_modes.pointer("/items/type").and_then(Value::as_str),
-        want: Some("string"),
-        "accessModes items should stay strings, got {access_modes}"
+        have: access_modes.get("items"),
+        want: Some(&serde_json::json!({})),
+        "quoted items render any input through strval, so the provider string typing must not flow back, got {access_modes}"
     );
     assert!(
         access_modes
@@ -2760,7 +3965,7 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
               http:
                 paths:
                 {{- range .paths }}
-                  - path: {{ . | quote }}
+                  - path: {{ . }}
                     pathType: Prefix
                     backend:
                       service:
@@ -2786,14 +3991,14 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
         want: Some("array"),
         "hosts[].paths should stay an array input, got {host_paths}"
     );
-    sim_assert_eq!(
-        have: host_paths.pointer("/items/type").and_then(Value::as_str),
-        want: Some("string"),
-        "hosts[].paths items should stay strings, got {host_paths}"
+    let path_items = host_paths.get("items").expect("hosts[].paths items");
+    assert!(
+        schema_contains_type(path_items, "string"),
+        "hosts[].paths items should retain the provider string branch, got {host_paths}"
     );
     assert!(
-        host_paths.pointer("/items/anyOf").is_none(),
-        "hosts[].paths should not widen to object|string items, got {host_paths}"
+        !schema_contains_type(path_items, "object"),
+        "quoted scalar inputs must not widen to object items, got {host_paths}"
     );
 }
 
@@ -2920,6 +4125,7 @@ fn wildcard_source_path_creates_array_without_empty_object_variant() {
         condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
+        has_string_contract: false,
     }];
     let values_yaml = indoc! {"
         image:
@@ -3128,12 +4334,12 @@ fn nested_bound_helper_keeps_structured_parent_object() {
         image.get("anyOf").is_none(),
         "image should not widen to object-or-string, got {image}"
     );
+    // registry renders only through printf, which formats any argument, so
+    // its slot stays untyped.
     sim_assert_eq!(
-        have: image
-            .pointer("/properties/registry/type")
-            .and_then(Value::as_str),
-        want: Some("string"),
-        "image.registry should stay string-typed, got {image}"
+        have: image.pointer("/properties/registry"),
+        want: Some(&serde_json::json!({})),
+        "image.registry renders through printf and stays untyped, got {image}"
     );
 }
 
@@ -3188,16 +4394,15 @@ fn nested_scalar_helper_argument_to_yaml_fragment_stays_at_leaf_path() {
         ),
         "defaulted nameOverride should accept the chart's empty-string sentinel, got {schema}; ir={ir:?}"
     );
-    let guarded_name = schema
-        .pointer("/allOf/0/then/properties/nameOverride")
-        .expect("guarded nameOverride overlay present");
+    // The fullname flows through printf (formats any argument), so
+    // nameOverride stays untyped — crucially, it must NOT inherit the
+    // Ingress backend OBJECT schema its rendered text lands in.
+    let name = schema
+        .pointer("/properties/nameOverride")
+        .expect("nameOverride present");
     assert!(
-        permits_type(guarded_name, "string"),
-        "nameOverride should stay string-like on its branch, got {guarded_name}; ir={ir:?}"
-    );
-    assert!(
-        !permits_type(guarded_name, "object"),
-        "scalar helper input should not inherit the Ingress backend object schema, got {guarded_name}; ir={ir:?}"
+        !schema_contains_type(name, "object"),
+        "scalar helper input should not inherit the Ingress backend object schema, got {name}; ir={ir:?}"
     );
 }
 
@@ -3266,14 +4471,22 @@ fn image_pull_secret_fragment_helper_does_not_project_image_root_as_pod_spec() {
                 .is_none_or(|required| !required.iter().any(|key| key == "containers")),
             "{pointer} should not inherit PodSpec.required from imagePullSecrets, got {image}"
         );
-        sim_assert_eq!(
-            have: image
-                .pointer("/properties/registry/type")
-                .and_then(Value::as_str),
-            want: Some("string"),
-            "{pointer}.registry should stay string-typed, got {image}"
-        );
     }
+    // image.registry renders only through printf, which formats any
+    // argument, so its slot stays untyped; clientImage.registry never
+    // reaches printf, so its declared string typing stands.
+    sim_assert_eq!(
+        have: schema.pointer("/properties/image/properties/registry"),
+        want: Some(&serde_json::json!({})),
+        "image.registry renders through printf and stays untyped, got {schema}"
+    );
+    sim_assert_eq!(
+        have: schema
+            .pointer("/properties/clientImage/properties/registry/type")
+            .and_then(Value::as_str),
+        want: Some("string"),
+        "clientImage.registry keeps its declared string typing, got {schema}"
+    );
 }
 
 #[test]
@@ -3386,30 +4599,18 @@ fn nested_printf_helper_call_preserves_helper_output_guards() {
     let ir = parse_ir_with_helpers(src, helpers);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
-    let fullname = schema
-        .pointer("/properties/fullnameOverride")
-        .expect("fullnameOverride present");
-    assert!(
-        permits_null(fullname),
-        "nested printf helper output should keep fullnameOverride nullable, got {fullname}; ir={ir:?}"
-    );
-    // nameOverride is only read on the `else` branch, so its typing lives
-    // under the `not(fullnameOverride)` overlay; the declared null default
-    // must stay valid there.
-    assert!(
-        schema_accepts_instance(
-            &schema,
-            &serde_json::json!({ "fullnameOverride": null, "nameOverride": null })
-        ),
-        "declared null overrides must stay valid, got {schema}; ir={ir:?}"
-    );
-    let guarded_name = schema
-        .pointer("/allOf/0/then/properties/nameOverride")
-        .expect("guarded nameOverride overlay present");
-    assert!(
-        permits_null(guarded_name),
-        "nested printf helper output should keep nameOverride nullable on its branch, got {guarded_name}; ir={ir:?}"
-    );
+    // Both overrides render only through printf, which formats any
+    // argument, so their slots stay untyped: the declared null defaults and
+    // every other renderable value must validate.
+    for instance in [
+        serde_json::json!({ "fullnameOverride": null, "nameOverride": null }),
+        serde_json::json!({ "fullnameOverride": "name", "nameOverride": 7 }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "printf formats any override value: instance={instance}; schema={schema}; ir={ir:?}"
+        );
+    }
 }
 
 #[test]
@@ -3440,27 +4641,18 @@ fn assigned_nested_printf_helper_call_preserves_helper_output_guards() {
     let ir = parse_ir_with_helpers(src, helpers);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
-    let fullname = schema
-        .pointer("/properties/fullnameOverride")
-        .expect("fullnameOverride present");
-    assert!(
-        permits_null(fullname),
-        "assigned nested helper output should keep fullnameOverride nullable, got {fullname}; ir={ir:?}"
-    );
-    assert!(
-        schema_accepts_instance(
-            &schema,
-            &serde_json::json!({ "fullnameOverride": null, "nameOverride": null })
-        ),
-        "declared null overrides must stay valid, got {schema}; ir={ir:?}"
-    );
-    let guarded_name = schema
-        .pointer("/allOf/0/then/properties/nameOverride")
-        .expect("guarded nameOverride overlay present");
-    assert!(
-        permits_null(guarded_name),
-        "assigned nested helper output should keep nameOverride nullable on its branch, got {guarded_name}; ir={ir:?}"
-    );
+    // Both overrides render only through printf, which formats any
+    // argument, so their slots stay untyped: the declared null defaults and
+    // every other renderable value must validate.
+    for instance in [
+        serde_json::json!({ "fullnameOverride": null, "nameOverride": null }),
+        serde_json::json!({ "fullnameOverride": "name", "nameOverride": 7 }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "printf formats any override value: instance={instance}; schema={schema}; ir={ir:?}"
+        );
+    }
 }
 
 #[test]
@@ -3737,10 +4929,15 @@ fn local_default_alias_render_applies_provider_schema_to_fallback_path() {
         "properties": {
             "global": {
                 "type": "object",
-                "additionalProperties": false,
+                // Helm shares `global` across the chart tree; the namespace
+                // stays open to keys only other charts read.
+                "additionalProperties": {},
                 "properties": {
                     "storageClass": {
                         "anyOf": [
+                            {
+                                "const": null
+                            },
                             {
                                 "enum": [
                                     "-"
@@ -3762,6 +4959,9 @@ fn local_default_alias_render_applies_provider_schema_to_fallback_path() {
                 "properties": {
                     "storageClass": {
                         "anyOf": [
+                            {
+                                "const": null
+                            },
                             {
                                 "enum": [
                                     "-"
@@ -4115,6 +5315,167 @@ fn guard_only_empty_map_default_stays_open_object() {
     );
 }
 
+/// The temporal chart declares `imagePullSecrets: {}` and splices it whole
+/// (`with` + `toYaml`) into a Kubernetes LIST position. The shipped empty-map
+/// off-state AND the real list form must both validate; the luup3 gate caught
+/// a round-2 state where the list typing squeezed out the declared default.
+#[test]
+fn with_guarded_whole_splice_accepts_empty_map_default_and_list_form() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: repro
+        spec:
+          template:
+            spec:
+              {{- with .Values.imagePullSecrets }}
+              imagePullSecrets:
+              {{- toYaml . | nindent 8 }}
+              {{- end }}
+              containers:
+                - name: app
+                  image: busybox
+    "#};
+    let values_yaml = indoc! {"
+        imagePullSecrets: {}
+    "};
+
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "imagePullSecrets": {} })),
+        "the declared empty-map off-state must stay accepted: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "imagePullSecrets": [{ "name": "regcred" }] })
+        ),
+        "the rendered list form must stay accepted: {schema}"
+    );
+}
+
+/// An UNDECLARED map the chart itself iterates (istiod's `env` has no
+/// values.yaml default) is user-populated; a typed member guard must not
+/// close it.
+#[test]
+fn undeclared_self_ranged_map_stays_open() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: repro
+        data:
+          {{- if not .Values.env.FORCE }}
+          forced: "no"
+          {{- end }}
+          {{- range $key, $val := .Values.env }}
+          {{ $key }}: {{ $val | quote }}
+          {{- end }}
+    "#};
+
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "env": { "ANY_KEY": "x" } })),
+        "user-populated entries of an undeclared ranged map must stay accepted: {schema}"
+    );
+}
+
+/// A declared-empty map spliced whole through `toYaml` (cert-manager's
+/// `config`) is user-populated even when guard reads probe typed members;
+/// the open arm of its off-state union hosts the members without closing.
+#[test]
+fn serialized_empty_map_union_keeps_open_arm_for_members() {
+    let src = indoc! {r#"
+        {{- if .Values.config.apiVersion }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: versioned
+        data:
+          v: {{ .Values.config.apiVersion | quote }}
+        {{- end }}
+        ---
+        {{- if .Values.config }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: repro
+        data:
+          config.yaml: |
+        {{ toYaml .Values.config | indent 4 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        config: {}
+    "};
+
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for instance in [
+        serde_json::json!({ "config": {} }),
+        serde_json::json!({ "config": { "userField": true } }),
+        serde_json::json!({ "config": { "apiVersion": "controller.config/v1alpha1" } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "serialized user-populated map must accept {instance}: {schema}"
+        );
+    }
+}
+
+/// A guard probing one literal member of a user-populated map (datadog's
+/// `envDict.HELM_FORCE_RENDER` pattern) must not close the map: the map is
+/// declared `{}` and consumed by a helper that ranges over its entries, so
+/// arbitrary user keys stay accepted alongside the probed member.
+#[test]
+fn member_probe_keeps_helper_ranged_empty_map_open() {
+    let helpers = indoc! {r#"
+        {{- define "repro.entries" -}}
+        {{- range $key, $value := . }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if not .Values.envDict.FORCE }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: guarded
+        data:
+          on: "true"
+        {{- end }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: repro
+        data:
+          entries: |
+        {{- include "repro.entries" .Values.envDict | indent 4 }}
+    "#};
+    let values_yaml = indoc! {"
+        envDict: {}
+    "};
+
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let env_dict = schema
+        .pointer("/properties/envDict")
+        .expect("envDict present");
+    assert!(
+        env_dict.get("additionalProperties") != Some(&Value::Bool(false)),
+        "member probe must not close the user-populated map, got {env_dict}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "envDict": { "USER_KEY": "value" } })
+        ),
+        "user-populated entries must stay accepted, got {env_dict}"
+    );
+}
+
 /// A quoted YAML key inside a string-map field should still keep the concrete
 /// leaf path, so the map value is typed as the string entry schema instead of
 /// the parent object schema.
@@ -4384,6 +5745,7 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
         ]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
     contract.push_pathless_scalar("signoz-otel-gateway");
     contract.add_type_hint("signoz-otel-gateway.serviceAccount.name", "string");
@@ -4444,6 +5806,7 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
     contract.push_pathless_scalar("clickhouse");
     let schema = generate_values_schema(
@@ -4487,6 +5850,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
         ContractUse {
             source_expr: "signoz.smtpVars.existingSecret.name".to_string(),
@@ -4502,6 +5866,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
     ]);
     contract.push_pathless_scalar("signoz");
@@ -4570,6 +5935,7 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
     contract.push_pathless_scalar("alertmanager");
     contract.add_type_hint("alertmanager.enabled", "boolean");
@@ -4608,6 +5974,7 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
     contract.push_pathless_scalar("clickhouse");
     contract.add_type_hint("clickhouse.enabled", "boolean");
@@ -4696,6 +6063,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 ]),
                 resource: None,
                 provenance: Vec::new(),
+                has_string_contract: false,
             },
             ContractUse {
                 source_expr: "serviceAccount.name".to_string(),
@@ -4711,6 +6079,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 }]),
                 resource: None,
                 provenance: Vec::new(),
+                has_string_contract: false,
             },
         ]),
         &[("serviceAccount.name", "string")],
@@ -4770,7 +6139,7 @@ fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
           {{- end }}
           rules:
             {{- range .config.hosts }}
-            - host: {{ .host | quote }}
+            - host: {{ .host }}
               http:
                 paths:
                   {{- range .paths }}
@@ -5421,11 +6790,16 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
     "};
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let leader_election = schema
+        .pointer("/properties/leaderElection")
+        .expect("leaderElection present");
+    let leader_election_object = object_variant_with_property(leader_election, "leaseDuration")
+        .expect("leaderElection object branch with leaseDuration");
 
     assert!(
         permits_type(
-            schema
-                .pointer("/properties/leaderElection/properties/leaseDuration")
+            leader_election_object
+                .pointer("/properties/leaseDuration")
                 .expect("leaseDuration present"),
             "string"
         ),
@@ -5532,7 +6906,7 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
           {{- end }}
           rules:
             {{- range .config.hosts }}
-            - host: {{ .host | quote }}
+            - host: {{ .host }}
               http:
                 paths:
                   {{- range .paths }}
@@ -5814,6 +7188,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     };
     let bare = ContractUse {
         source_expr: "image.tag".into(),
@@ -5822,6 +7197,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         condition: helm_schema_core::GuardDnf::from_guards(vec![]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     };
 
     let signals = schema_signals_for(vec![guarded, bare]);

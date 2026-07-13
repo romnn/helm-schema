@@ -1,5 +1,4 @@
-//! Feature C — CRD mirror chain + cross-scan + no-substitution
-//! contracts.
+//! CRD mirror chain + cross-scan + no-substitution contracts.
 
 use std::fs;
 use std::sync::Arc;

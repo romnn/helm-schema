@@ -20,9 +20,9 @@
 //!
 //! Charts whose own `values.yaml` is currently rejected by the generated
 //! schema are listed in `KNOWN_VALUES_REJECTIONS`; each entry is a known
-//! generator defect recorded in `plan/chart-corpus-expansion.md`. Their tests
-//! pin the defect: once generation improves, the test fails and the entry
-//! must be removed alongside a fixture update.
+//! generator defect. Their tests pin the defect: once generation improves,
+//! the test fails and the entry must be removed alongside a fixture
+//! update.
 
 use test_util::prelude::sim_assert_eq;
 #[path = "common/schema_roundtrip.rs"]
@@ -30,64 +30,14 @@ mod schema_roundtrip;
 #[path = "common/values_validation.rs"]
 mod values_validation;
 
-use color_eyre::eyre::{OptionExt as _, WrapErr as _};
+use color_eyre::eyre::WrapErr as _;
 use serde_json::Value;
 
-/// Charts whose shipped `values.yaml` currently fails validation against the
-/// schema we generate for them. See `plan/chart-corpus-expansion.md` for the
-/// per-chart defect analysis.
-const KNOWN_VALUES_REJECTIONS: &[&str] = &[
-    "cilium",
-    "grafana",
-    "kube-prometheus-stack",
-    "kyverno",
-    "loki",
-];
-
-/// Charts whose full schema is not pinned as a fixture. The only entry is
-/// kube-prometheus-stack: its generated schema is currently ~20 MB compact
-/// because whole-CRD typed subtrees (PrometheusSpec and friends) are inlined
-/// per conditional overlay arm instead of shared through `$defs`. That size
-/// pathology is a round-2 finding in `plan/chart-corpus-expansion.md`; until
-/// it is fixed, the chart pins its top-level key set instead.
-const UNPINNED_SCHEMAS: &[&str] = &["kube-prometheus-stack"];
-
-const KUBE_PROMETHEUS_STACK_TOP_LEVEL_KEYS: &[&str] = &[
-    "additionalPrometheusRules",
-    "additionalPrometheusRulesMap",
-    "alertmanager",
-    "cleanPrometheusOperatorObjectNames",
-    "commonLabels",
-    "coreDns",
-    "crds",
-    "customRules",
-    "defaultRules",
-    "extraManifests",
-    "fullnameOverride",
-    "global",
-    "grafana",
-    "kube-state-metrics",
-    "kubeApiServer",
-    "kubeControllerManager",
-    "kubeDns",
-    "kubeEtcd",
-    "kubeProxy",
-    "kubeScheduler",
-    "kubeStateMetrics",
-    "kubeTargetVersionOverride",
-    "kubeVersionOverride",
-    "kubelet",
-    "kubernetesServiceMonitors",
-    "nameOverride",
-    "namespaceOverride",
-    "nodeExporter",
-    "prometheus",
-    "prometheus-node-exporter",
-    "prometheus-windows-exporter",
-    "prometheusOperator",
-    "thanosRuler",
-    "windowsMonitoring",
-];
+/// Charts whose shipped `values.yaml` currently fails validation against
+/// the schema we generate for them. Keep this empty: a new entry means a
+/// new generator defect, and it should only be added together with a
+/// written analysis of that defect.
+const KNOWN_VALUES_REJECTIONS: &[&str] = &[];
 
 fn assert_chart_schema_fixture(chart: &str) -> color_eyre::eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
@@ -106,28 +56,10 @@ fn assert_chart_schema_fixture(chart: &str) -> color_eyre::eyre::Result<()> {
         let errors = values_validation::validate_json_against_schema(&values_json, &schema);
         assert!(
             !errors.is_empty(),
-            "{chart}: values.yaml now validates; remove it from KNOWN_VALUES_REJECTIONS \
-             and close the corresponding finding in plan/chart-corpus-expansion.md"
+            "{chart}: values.yaml now validates; remove it from KNOWN_VALUES_REJECTIONS"
         );
     } else {
         values_validation::assert_values_json_validates(&values_json, &schema);
-    }
-
-    if UNPINNED_SCHEMAS.contains(&chart) {
-        let mut top_level_keys: Vec<&str> = schema
-            .get("properties")
-            .and_then(Value::as_object)
-            .ok_or_eyre("schema.properties must be an object")?
-            .keys()
-            .map(String::as_str)
-            .collect();
-        top_level_keys.sort_unstable();
-        sim_assert_eq!(
-            have: top_level_keys,
-            want: KUBE_PROMETHEUS_STACK_TOP_LEVEL_KEYS.to_vec(),
-            "{chart}: top-level schema keys changed"
-        );
-        return Ok(());
     }
 
     let fixture_path = test_util::workspace_testdata()

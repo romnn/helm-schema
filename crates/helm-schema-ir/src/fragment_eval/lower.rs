@@ -59,12 +59,14 @@ pub(crate) const MAX_SCALAR_ARMS: usize = 8;
 pub(crate) const MAX_SCALAR_ARM_FANOUT: usize = 64;
 
 /// Effect-derived context under which a hole's value lowers: which paths the
-/// expression defaulted or encoded, which paths carry chart-level `set …
-/// default` normalization, and the per-path binding-time helper meta of
-/// locals the expression read.
+/// expression defaulted, transformed, or serialized, which paths carry
+/// chart-level `set … default` normalization, and the per-path binding-time
+/// helper meta of locals the expression read.
 pub(crate) struct LowerScope<'a> {
     pub(crate) defaulted_paths: &'a BTreeSet<String>,
     pub(crate) encoded_paths: &'a BTreeSet<String>,
+    pub(crate) shape_erased_paths: &'a BTreeSet<String>,
+    pub(crate) string_contract_paths: &'a BTreeSet<String>,
     pub(crate) chart_value_defaults: &'a BTreeSet<String>,
     pub(crate) local_output_meta: &'a std::collections::BTreeMap<String, HelperOutputMeta>,
 }
@@ -85,6 +87,10 @@ impl LowerScope<'_> {
             meta: SpliceMeta {
                 defaulted,
                 encoded: path_is_encoded(path, self.encoded_paths),
+                shape_erased: helper_meta.is_some_and(|meta| meta.shape_erased)
+                    || path_is_encoded(path, self.shape_erased_paths),
+                string_contract: helper_meta.is_some_and(|meta| meta.string_contract)
+                    || path_is_encoded(path, self.string_contract_paths),
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),
@@ -105,12 +111,13 @@ impl LowerScope<'_> {
         path: &str,
         kind: ValueKind,
     ) -> Vec<(PathCondition, Splice)> {
-        match self.local_output_meta.get(path) {
+        let meta = self.local_output_meta.get(path);
+        match meta {
             Some(meta) if !meta.predicates.is_empty() => helper_meta_conditions(meta)
                 .into_iter()
                 .map(|condition| (condition, self.splice(path, kind, Some(meta))))
                 .collect(),
-            _ => vec![(Predicate::True, self.splice(path, kind, None))],
+            _ => vec![(Predicate::True, self.splice(path, kind, meta))],
         }
     }
 }
@@ -222,6 +229,14 @@ pub(crate) fn lower_value(
                 }
             }
             if !taint.is_empty() {
+                let kind = if taint
+                    .iter()
+                    .all(|path| path_is_encoded(path, scope.shape_erased_paths))
+                {
+                    ValueKind::Serialized
+                } else {
+                    kind
+                };
                 out.arms.push((
                     Predicate::True,
                     AbstractFragment::Opaque(Opaque {

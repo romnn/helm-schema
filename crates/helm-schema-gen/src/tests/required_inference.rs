@@ -51,6 +51,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
         ContractUse {
             source_expr: "feature".to_string(),
@@ -61,6 +62,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             }]),
             resource: None,
             provenance: Vec::new(),
+            has_string_contract: false,
         },
     ]);
     let schema_signals = contract.finalize().into_schema_signals();
@@ -88,6 +90,7 @@ fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
         condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
     let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
@@ -117,6 +120,7 @@ fn explicit_nested_values_defaults_suppress_required_inference() {
         }]),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     }]);
     let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));

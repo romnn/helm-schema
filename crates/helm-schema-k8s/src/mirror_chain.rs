@@ -52,7 +52,7 @@ impl MirrorChain {
     /// The set of source-id directory names currently configured (`default`
     /// plus any user-supplied mirrors). Cache scans MUST consult only these;
     /// on-disk dirs from previously-removed mirrors are stale and must not
-    /// influence live inference or cross-version hints (Finding 2).
+    /// influence live inference or cross-version hints.
     #[must_use]
     pub(crate) fn source_ids(&self) -> HashSet<String> {
         self.sources

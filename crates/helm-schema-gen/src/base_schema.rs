@@ -13,6 +13,9 @@ use crate::split_value_path;
 pub(crate) enum BaseOwner {
     /// Not a conditional target: the resolved schema verbatim.
     Resolved,
+    /// A serialization transform owns the subtree because its sink exposes
+    /// provenance without exposing input shape.
+    Serialized,
     /// Preserved conditional target: the resolved schema with fixed objects
     /// unclosed.
     ResolvedUnclosed,
@@ -29,7 +32,9 @@ pub(crate) enum BaseOwner {
 impl BaseOwner {
     pub(crate) fn schema(self, resolved_path: &ResolvedPathSchema) -> Option<SchemaNode> {
         match self {
-            Self::Resolved => Some(SchemaNode::foreign(resolved_path.schema.clone())),
+            Self::Resolved | Self::Serialized => {
+                Some(SchemaNode::foreign(resolved_path.schema.clone()))
+            }
             Self::ResolvedUnclosed => Some(SchemaNode::foreign(unclose_fixed_objects(
                 resolved_path.schema.clone(),
             ))),
@@ -43,7 +48,7 @@ impl BaseOwner {
     pub(crate) const fn replaces(self) -> bool {
         matches!(
             self,
-            Self::ResolvedUnclosed | Self::OpenFragment | Self::Empty
+            Self::Serialized | Self::ResolvedUnclosed | Self::OpenFragment | Self::Empty
         )
     }
 }
@@ -57,6 +62,10 @@ pub(crate) fn classify_base(
         .any(|length| replaced_ancestors.contains(&resolved_path.path_segments[..length]));
     if has_replaced_ancestor {
         return BaseOwner::OwnedByAncestor;
+    }
+
+    if resolved_path.used_as_serialized {
+        return BaseOwner::Serialized;
     }
 
     if is_pathless_dependency_root_with_guarded_descendant(resolved_path, conditional_targets) {

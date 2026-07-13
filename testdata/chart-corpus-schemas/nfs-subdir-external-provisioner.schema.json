@@ -501,6 +501,27 @@
               "string",
               "null"
             ]
+          },
+          "nfs": {
+            "properties": {
+              "mountOptions": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -509,8 +530,18 @@
   ],
   "properties": {
     "affinity": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
     },
     "buildMode": {},
     "fullnameOverride": {
@@ -549,11 +580,21 @@
       ]
     },
     "labels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Additional labels for any resource created",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Additional labels for any resource created"
     },
     "leaderElection": {
       "additionalProperties": false,
@@ -574,12 +615,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "nfs": {
       "additionalProperties": false,
       "allOf": [
@@ -610,17 +646,7 @@
         }
       ],
       "properties": {
-        "mountOptions": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "mountOptions": {},
         "path": {
           "type": "string"
         },
@@ -635,15 +661,35 @@
       "type": "object"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Deployment pod annotations",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Deployment pod annotations"
     },
     "podDisruptionBudget": {
       "additionalProperties": false,
@@ -699,12 +745,7 @@
       },
       "type": "object"
     },
-    "priorityClassName": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "priorityClassName": {},
     "rbac": {
       "additionalProperties": false,
       "description": "For RBAC support:",
@@ -720,9 +761,19 @@
       "type": "integer"
     },
     "resources": {
-      "additionalProperties": {},
-      "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
     "securityContext": {
       "additionalProperties": {},
@@ -934,19 +985,12 @@
           "description": "Set a StorageClass name\nIgnored if storageClass.create is false"
         },
         "onDelete": {
-          "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set.",
-          "type": "null"
+          "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set."
         },
         "pathPattern": {
-          "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set.",
-          "type": "null"
+          "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
         },
-        "provisionerName": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "provisionerName": {},
         "reclaimPolicy": {
           "description": "Method used to reclaim an obsoleted volume"
         },

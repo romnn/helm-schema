@@ -124,7 +124,11 @@ impl TemplateExpr {
     pub fn renders_yaml_fragment(&self) -> bool {
         match self.deparen() {
             TemplateExpr::Call { function, args } => {
-                matches!(function.as_str(), "toYaml" | "nindent" | "indent" | "tpl")
+                matches!(function.as_str(), "toYaml" | "nindent" | "indent")
+                    || (function == "tpl"
+                        && args
+                            .first()
+                            .is_some_and(TemplateExpr::renders_yaml_fragment))
                     || args.iter().any(TemplateExpr::renders_yaml_fragment)
             }
             TemplateExpr::Pipeline(stages) => {

@@ -35,6 +35,24 @@ fn extracts_leading_inline_and_nested_values_comments() {
 }
 
 #[test]
+fn dotted_literal_key_description_uses_the_shared_path_currency() {
+    let yaml = indoc! {"
+        # Grafana's primary configuration
+        grafana.ini:
+          paths:
+            data: /var/lib/grafana
+    "};
+
+    let descriptions = extract_values_yaml_descriptions(yaml);
+
+    sim_assert_eq!(
+        have: descriptions.get(r"grafana\.ini").map(String::as_str),
+        want: Some("Grafana's primary configuration")
+    );
+    assert!(!descriptions.contains_key("grafana.ini"));
+}
+
+#[test]
 fn comments_inside_parent_pair_document_first_nested_key() {
     let yaml = indoc! {"
         global:

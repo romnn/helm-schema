@@ -8,6 +8,7 @@ use serde_yaml::Value as YamlValue;
 
 use crate::condition_encoding::{build_condition_clauses, evaluate_guard_set_on_values};
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
+use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::conditional_target_schema;
 use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
@@ -19,7 +20,8 @@ pub(crate) struct ConditionalResolvedSchema {
     ancestor_segments: Vec<String>,
     relative_target_segments: Vec<String>,
     guards: Vec<ConditionalGuard>,
-    target_schema: Value,
+    pub(crate) target_schema: Value,
+    pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
     pub(crate) preserve_base_schema: bool,
     pub(crate) target_is_fragment: bool,
 }
@@ -42,6 +44,40 @@ pub(crate) fn collect_conditional_schemas(
             continue;
         };
 
+        // Guarded `fail` implications: wherever the outer guards hold, the
+        // failing test's negation must hold. Runtime-hard, so the arm
+        // carries the requirement directly.
+        for implication in &evidence.fail_implications {
+            if implication.outer_guards.is_empty() {
+                continue;
+            }
+            if !guards_supported_for_conditional_lowering(
+                &implication.outer_guards,
+                &resolved_by_path,
+                values_yaml_doc,
+            ) {
+                continue;
+            }
+            let target_schema =
+                crate::path_resolver::fail_requirement_schema(std::iter::once(implication));
+            if crate::schema_model::is_empty_schema(&target_schema) {
+                continue;
+            }
+            let target_segments = split_value_path(target_value_path);
+            let ancestor_segments =
+                conditional_ancestor_segments(&target_segments, &implication.outer_guards);
+            conditionals.push(ConditionalResolvedSchema {
+                target_value_path: target_value_path.clone(),
+                relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
+                ancestor_segments,
+                guards: implication.outer_guards.clone(),
+                target_schema,
+                provider_schema_candidate: None,
+                preserve_base_schema: true,
+                target_is_fragment: false,
+            });
+        }
+
         for overlay in &evidence.conditional_overlays {
             if !guards_supported_for_conditional_lowering(
                 &overlay.guards,
@@ -55,18 +91,65 @@ pub(crate) fn collect_conditional_schemas(
             let ancestor_segments =
                 conditional_ancestor_segments(&target_segments, &overlay.guards);
             let active_by_defaults = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
+            let resolved_overlay =
+                resolve_overlay_target_schema(target_value_path, overlay, provider);
             let target_schema = conditional_target_schema(
                 target_value_path,
                 overlay,
                 values_yaml_doc,
-                provider,
+                resolved_overlay.schema,
                 resolved_target.values_yaml_schema.clone(),
                 resolved_target.schema.clone(),
                 active_by_defaults,
             );
+            // A branch that RANGES the path binds an iterable requirement
+            // on top of whatever else it claims: Go's `range` iterates
+            // arrays, maps, and integer counts (Helm's `--set` channel
+            // delivers int64, which iterates; JSON Schema cannot separate
+            // that from a values-file integer, so the wider channel wins)
+            // and skips nil, but fails rendering on strings and
+            // non-integral numbers.
+            let target_schema = if overlay.evidence.facts.is_ranged_source {
+                crate::merge::merge_schema_list(vec![
+                    target_schema,
+                    serde_json::json!({
+                        "anyOf": [
+                            { "type": "array" },
+                            { "type": "object" },
+                            { "type": "integer" },
+                            { "type": "null" },
+                        ]
+                    }),
+                ])
+            } else {
+                target_schema
+            };
             if crate::schema_model::is_empty_schema(&target_schema) {
+                // A branch whose renders are all serialized proves the wider
+                // contract inside that branch, so it carries no schema; it
+                // stays a conditional TARGET so base classification still
+                // uncloses/opens the base the way the guarded renders
+                // demand. Mixed branches resolve their own evidence above,
+                // so a stringified occurrence never erases an independent
+                // stricter sibling.
+                if overlay.evidence.facts.used_as_serialized {
+                    conditionals.push(ConditionalResolvedSchema {
+                        target_value_path: target_value_path.clone(),
+                        relative_target_segments: target_segments[ancestor_segments.len()..]
+                            .to_vec(),
+                        ancestor_segments,
+                        guards: overlay.guards.clone(),
+                        target_schema,
+                        provider_schema_candidate: None,
+                        preserve_base_schema: overlay.preserve_base_schema,
+                        target_is_fragment: overlay.evidence.facts.used_as_fragment,
+                    });
+                }
                 continue;
             }
+            let provider_schema_candidate = resolved_overlay
+                .provider_schema_candidate
+                .filter(|candidate| candidate.survives_as(&target_schema));
 
             conditionals.push(ConditionalResolvedSchema {
                 target_value_path: target_value_path.clone(),
@@ -74,6 +157,7 @@ pub(crate) fn collect_conditional_schemas(
                 ancestor_segments,
                 guards: overlay.guards.clone(),
                 target_schema,
+                provider_schema_candidate,
                 preserve_base_schema: overlay.preserve_base_schema,
                 target_is_fragment: overlay.evidence.facts.used_as_fragment,
             });
@@ -87,9 +171,9 @@ pub(crate) fn resolve_overlay_target_schema(
     target_value_path: &str,
     overlay: &ConditionalPathOverlay,
     provider: &dyn ResourceSchemaOracle,
-) -> Value {
+) -> ResolvedPathSchema {
     let evidence = overlay.evidence.as_path_evidence(target_value_path);
-    PathSchemaResolver::resolve_single_path_evidence(&evidence, provider).schema
+    PathSchemaResolver::resolve_single_path_evidence(&evidence, provider)
 }
 
 fn conditional_ancestor_segments(
@@ -165,6 +249,11 @@ pub(crate) fn append_conditional_schemas(
         Vec<ConditionalResolvedSchema>,
     > = BTreeMap::new();
     for conditional in conditionals {
+        // Schema-less conditionals exist only to mark a serialized-use
+        // target for base classification; nothing to emit.
+        if crate::schema_model::is_empty_schema(&conditional.target_schema) {
+            continue;
+        }
         grouped
             .entry((
                 conditional.ancestor_segments.clone(),

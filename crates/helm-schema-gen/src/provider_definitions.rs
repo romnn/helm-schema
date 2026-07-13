@@ -4,12 +4,15 @@ use helm_schema_core::{ProviderOrigin, ProviderSchemaSource};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
+use crate::overlay_lowering::ConditionalResolvedSchema;
 use crate::path_resolver::ResolvedPathSchema;
 use crate::provider_schema::{ProviderSchemaCandidate, rewrite_internal_refs_for_root_definition};
 
 const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
 const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
+const PROVIDER_SHARED_DEFINITION_PREFIX: &str = "providerShared";
+const MIN_SHARED_PROVIDER_PAYLOAD_BYTES: usize = 16 * 1024;
 
 /// Extract repeated provider-owned schema leaves into root `$defs`
 /// definitions, rewriting each extracted `resolved_path.schema` to an
@@ -17,11 +20,15 @@ const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
 #[tracing::instrument(skip_all)]
 pub(crate) fn extract_provider_definitions(
     resolved_paths: &mut [ResolvedPathSchema],
+    conditional_schemas: &mut [ConditionalResolvedSchema],
     values_descriptions: &BTreeMap<String, String>,
 ) -> BTreeMap<String, Value> {
     let description_paths = DescriptionPathIndex::new(values_descriptions);
-    let entries =
-        ProviderSchemaDefinitionEntries::from_resolved_paths(resolved_paths, &description_paths);
+    let entries = ProviderSchemaDefinitionEntries::from_resolved_paths_and_conditionals(
+        resolved_paths,
+        conditional_schemas,
+        &description_paths,
+    );
     let mut ref_names_by_key = BTreeMap::new();
     let mut definitions_by_name = BTreeMap::new();
     let mut used_definition_names = BTreeSet::new();
@@ -34,6 +41,11 @@ pub(crate) fn extract_provider_definitions(
         definitions_by_name.insert(name, definition_schema);
     }
 
+    // A `$ref` is only a faithful substitute while the site still carries the
+    // candidate payload verbatim. Resolve policy may have processed the site
+    // schema (default-acceptance unions, falsy off-states, values merges);
+    // those sites keep their inline schema, and the whole-document
+    // repeated-payload pass still shares any large payload embedded inside.
     for resolved_path in resolved_paths {
         let Some(provider_schema_candidate) = resolved_path.provider_schema_candidate.as_ref()
         else {
@@ -42,10 +54,29 @@ pub(crate) fn extract_provider_definitions(
         if description_paths.has_description_at_or_below(&resolved_path.path_segments) {
             continue;
         }
+        if resolved_path.schema != *provider_schema_candidate.schema() {
+            continue;
+        }
         let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
             continue;
         };
         resolved_path.schema = reference_schema(name);
+    }
+    for conditional in conditional_schemas {
+        let Some(provider_schema_candidate) = conditional.provider_schema_candidate.as_ref() else {
+            continue;
+        };
+        let target_segments = crate::split_value_path(&conditional.target_value_path);
+        if description_paths.has_description_at_or_below(&target_segments) {
+            continue;
+        }
+        if conditional.target_schema != *provider_schema_candidate.schema() {
+            continue;
+        }
+        let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
+            continue;
+        };
+        conditional.target_schema = reference_schema(name);
     }
 
     definitions_by_name
@@ -74,14 +105,195 @@ pub(crate) fn insert_definitions_into_root(
     }
 }
 
+pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap<String, Value> {
+    #[derive(Debug)]
+    struct RepeatedPayload {
+        schema: Value,
+        uses: usize,
+    }
+
+    let mut payloads = BTreeMap::<String, RepeatedPayload>::new();
+    collect_repeated_schema_cores(schema, &mut |key, core| {
+        if key.len() < MIN_SHARED_PROVIDER_PAYLOAD_BYTES {
+            return;
+        }
+        let payload = payloads.entry(key).or_insert_with(|| RepeatedPayload {
+            schema: core,
+            uses: 0,
+        });
+        payload.uses += 1;
+    });
+
+    let selected = payloads
+        .into_iter()
+        .filter(|(_, payload)| payload.uses > 1)
+        .enumerate()
+        .map(|(index, (key, payload))| {
+            (
+                key,
+                (
+                    format!("{PROVIDER_SHARED_DEFINITION_PREFIX}{}", index + 1),
+                    payload.schema,
+                ),
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
+    let mut used = BTreeSet::new();
+    replace_repeated_schema_cores(schema, &selected, &mut used);
+
+    selected
+        .into_values()
+        .filter(|(name, _)| used.contains(name))
+        .collect()
+}
+
+fn collect_repeated_schema_cores(schema: &Value, record: &mut impl FnMut(String, Value)) {
+    let Value::Object(object) = schema else {
+        return;
+    };
+    let core = schema_core(object);
+    record(json_schema_walk::canonical_json_string(&core), core);
+    visit_schema_children(object, |child| {
+        collect_repeated_schema_cores(child, record);
+    });
+}
+
+fn replace_repeated_schema_cores(
+    schema: &mut Value,
+    selected: &BTreeMap<String, (String, Value)>,
+    used: &mut BTreeSet<String>,
+) {
+    let Value::Object(object) = schema else {
+        return;
+    };
+    let core = schema_core(object);
+    let key = json_schema_walk::canonical_json_string(&core);
+    if let Some((name, _)) = selected.get(&key) {
+        let mut replacement = schema_decorations(object);
+        replacement.insert(
+            "allOf".to_string(),
+            Value::Array(vec![reference_schema(name)]),
+        );
+        *object = replacement;
+        used.insert(name.clone());
+        return;
+    }
+    visit_schema_children_mut(object, |child| {
+        replace_repeated_schema_cores(child, selected, used);
+    });
+}
+
+fn schema_core(object: &Map<String, Value>) -> Value {
+    Value::Object(
+        object
+            .iter()
+            .filter(|(key, _)| !is_schema_decoration(key))
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect(),
+    )
+}
+
+fn schema_decorations(object: &Map<String, Value>) -> Map<String, Value> {
+    object
+        .iter()
+        .filter(|(key, _)| is_schema_decoration(key))
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect()
+}
+
+fn is_schema_decoration(key: &str) -> bool {
+    crate::schema_model::is_annotation_keyword(key) || key == "$comment" || key.starts_with("x-")
+}
+
+fn visit_schema_children(object: &Map<String, Value>, mut visit: impl FnMut(&Value)) {
+    for key in ["properties", "patternProperties", "definitions", "$defs"] {
+        if let Some(children) = object.get(key).and_then(Value::as_object) {
+            for child in children.values() {
+                visit(child);
+            }
+        }
+    }
+    for key in [
+        "additionalProperties",
+        "additionalItems",
+        "contains",
+        "propertyNames",
+        "not",
+        "if",
+        "then",
+        "else",
+    ] {
+        if let Some(child) = object.get(key) {
+            visit(child);
+        }
+    }
+    if let Some(items) = object.get("items") {
+        if let Some(items) = items.as_array() {
+            for item in items {
+                visit(item);
+            }
+        } else {
+            visit(items);
+        }
+    }
+    for key in ["allOf", "anyOf", "oneOf"] {
+        if let Some(children) = object.get(key).and_then(Value::as_array) {
+            for child in children {
+                visit(child);
+            }
+        }
+    }
+}
+
+fn visit_schema_children_mut(object: &mut Map<String, Value>, mut visit: impl FnMut(&mut Value)) {
+    for key in ["properties", "patternProperties", "definitions", "$defs"] {
+        if let Some(children) = object.get_mut(key).and_then(Value::as_object_mut) {
+            for child in children.values_mut() {
+                visit(child);
+            }
+        }
+    }
+    for key in [
+        "additionalProperties",
+        "additionalItems",
+        "contains",
+        "propertyNames",
+        "not",
+        "if",
+        "then",
+        "else",
+    ] {
+        if let Some(child) = object.get_mut(key) {
+            visit(child);
+        }
+    }
+    if let Some(items) = object.get_mut("items") {
+        if let Some(items) = items.as_array_mut() {
+            for item in items {
+                visit(item);
+            }
+        } else {
+            visit(items);
+        }
+    }
+    for key in ["allOf", "anyOf", "oneOf"] {
+        if let Some(children) = object.get_mut(key).and_then(Value::as_array_mut) {
+            for child in children {
+                visit(child);
+            }
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 struct ProviderSchemaDefinitionEntries {
     by_key: BTreeMap<String, ProviderSchemaDefinitionEntry>,
 }
 
 impl ProviderSchemaDefinitionEntries {
-    fn from_resolved_paths(
+    fn from_resolved_paths_and_conditionals(
         resolved_paths: &[ResolvedPathSchema],
+        conditional_schemas: &[ConditionalResolvedSchema],
         description_paths: &DescriptionPathIndex,
     ) -> Self {
         let mut entries = Self::default();
@@ -91,6 +303,20 @@ impl ProviderSchemaDefinitionEntries {
                 continue;
             };
             if description_paths.has_description_at_or_below(&resolved_path.path_segments) {
+                continue;
+            }
+            if !provider_schema_candidate.is_definition_candidate() {
+                continue;
+            }
+            entries.insert(provider_schema_candidate);
+        }
+        for conditional in conditional_schemas {
+            let Some(provider_schema_candidate) = conditional.provider_schema_candidate.as_ref()
+            else {
+                continue;
+            };
+            let target_segments = crate::split_value_path(&conditional.target_value_path);
+            if description_paths.has_description_at_or_below(&target_segments) {
                 continue;
             }
             if !provider_schema_candidate.is_definition_candidate() {

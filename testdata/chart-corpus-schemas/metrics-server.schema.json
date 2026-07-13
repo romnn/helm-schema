@@ -529,166 +529,34 @@
                 "type": "object"
               },
               "interval": {
-                "anyOf": [
-                  {
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "type": "string"
               },
               "metricRelabelings": {
-                "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "relabelings": {
-                "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "scrapeTimeout": {
                 "anyOf": [
                   {
-                    "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
+                    "additionalProperties": {},
+                    "type": "object"
                   },
                   {
-                    "type": "null"
+                    "items": {},
+                    "type": "array"
                   }
                 ]
+              },
+              "relabelings": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ]
+              },
+              "scrapeTimeout": {
+                "type": "string"
               }
             },
             "type": "object"
@@ -1139,36 +1007,6 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/helm-truthy"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -1297,17 +1135,6 @@
           },
           "then": {
             "properties": {
-              "image": {
-                "properties": {
-                  "repository": {
-                    "type": "string"
-                  },
-                  "tag": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
               "nanny": {
                 "properties": {
                   "minClusterSize": {
@@ -1522,8 +1349,18 @@
       "type": "object"
     },
     "affinity": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
     },
     "apiService": {
       "additionalProperties": false,
@@ -1597,21 +1434,22 @@
       "type": "array"
     },
     "commonLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "containerPort": {
       "anyOf": [
         {
-          "type": "integer"
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
         },
         {
-          "type": "string"
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
         }
       ]
     },
+    "containerPort": {},
     "defaultArgs": {
       "items": {
         "type": "string"
@@ -1619,15 +1457,35 @@
       "type": "array"
     },
     "deploymentAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotations to add to the deployment",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Annotations to add to the deployment"
     },
     "dnsConfig": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
     },
     "extraVolumeMounts": {
       "anyOf": [
@@ -1657,12 +1515,7 @@
         }
       ]
     },
-    "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "fullnameOverride": {},
     "hostNetwork": {
       "additionalProperties": false,
       "properties": {
@@ -1679,15 +1532,9 @@
         "pullPolicy": {
           "type": "string"
         },
-        "repository": {
-          "type": "string"
-        },
+        "repository": {},
         "tag": {
-          "description": "Overrides the image tag whose default is v{{ .Chart.AppVersion }}",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Overrides the image tag whose default is v{{ .Chart.AppVersion }}"
         }
       },
       "type": "object"
@@ -1771,21 +1618,36 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": [
-        "string",
-        "null"
+    "nameOverride": {},
+    "nodeSelector": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
       ]
     },
-    "nodeSelector": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
     },
     "podDisruptionBudget": {
       "additionalProperties": false,
@@ -1794,34 +1656,43 @@
           "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
           "type": "boolean"
         },
-        "maxUnavailable": {
-          "type": "null"
-        },
-        "minAvailable": {
-          "type": "null"
-        },
-        "unhealthyPodEvictionPolicy": {
-          "type": "null"
-        }
+        "maxUnavailable": {},
+        "minAvailable": {},
+        "unhealthyPodEvictionPolicy": {}
       },
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "podSecurityContext": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "priorityClassName": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
       ]
     },
+    "podSecurityContext": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
+    },
+    "priorityClassName": {},
     "rbac": {
       "additionalProperties": false,
       "properties": {
@@ -2022,17 +1893,37 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ]
         },
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Add these labels to have metrics-server show up in `kubectl cluster-info`\nkubernetes.io/cluster-service: \"true\"\nkubernetes.io/name: \"Metrics-server\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Add these labels to have metrics-server show up in `kubectl cluster-info`\nkubernetes.io/cluster-service: \"true\"\nkubernetes.io/name: \"Metrics-server\""
         },
         "port": {
           "type": "integer"
@@ -2096,14 +1987,12 @@
               "secrets": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The list of secrets mountable by this service account.\nSee https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets"
@@ -2202,142 +2091,32 @@
         },
         "interval": {},
         "metricRelabelings": {
-          "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "relabelings": {
-          "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "scrapeTimeout": {}
       },
@@ -2365,28 +2144,12 @@
               "certManager": {
                 "properties": {
                   "duration": {
-                    "anyOf": [
-                      {
-                        "description": "Requested 'duration' (i.e. lifetime) of the Certificate. Note that the\nissuer may choose to ignore the requested duration, just like any other\nrequested attribute.\n\nIf unset, this defaults to 90 days.\nMinimum accepted duration is 1 hour.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+                    "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec",
+                    "type": "string"
                   },
                   "renewBefore": {
-                    "anyOf": [
-                      {
-                        "description": "How long before the currently issued certificate's expiry cert-manager should\nrenew the certificate. For example, if a certificate is valid for 60 minutes,\nand `renewBefore=10m`, cert-manager will begin to attempt to renew the certificate\n50 minutes after it was issued (i.e. when there are 10 minutes remaining until\nthe certificate is no longer valid).\n\nNOTE: The actual lifetime of the issued certificate is used to determine the\nrenewal time. If an issuer returns a certificate with a different lifetime than\nthe one requested, cert-manager will use the lifetime of the issued certificate.\n\nIf unset, this defaults to 1/3 of the issued certificate's lifetime.\nMinimum accepted value is 5 minutes.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.\nCannot be set if the `renewBeforePercentage` field is set.",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+                    "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec",
+                    "type": "string"
                   }
                 },
                 "type": "object"
@@ -2576,8 +2339,7 @@
           "additionalProperties": false,
           "properties": {
             "certDurationDays": {
-              "description": "Cert validity duration in days",
-              "type": "integer"
+              "description": "Cert validity duration in days"
             },
             "lookup": {
               "description": "Use helm lookup function to reuse Secret created in previous helm install",
@@ -2654,9 +2416,19 @@
       ]
     },
     "updateStrategy": {
-      "additionalProperties": {},
-      "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 0\nmaxUnavailable: 1",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 0\nmaxUnavailable: 1"
     }
   },
   "type": "object"

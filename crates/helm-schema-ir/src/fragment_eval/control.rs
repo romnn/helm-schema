@@ -4,7 +4,7 @@
 //! bindings join across branches with the same rules as the symbolic
 //! walker.
 
-use helm_schema_ast::{TemplateHeader, range_variable_name_expr};
+use helm_schema_ast::{TemplateExpr, TemplateHeader, range_variable_name_expr};
 use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
 use crate::abstract_value::AbstractValue;
@@ -50,17 +50,26 @@ impl Interpreter<'_> {
         let entry_locals = self.locals.clone();
         let entry_predicates = self.active_predicates.len();
         let entry_dots = self.dot_stack.len();
+        let entry_approximate = self.approximate_condition_paths.len();
+        let entry_ranged = self.active_direct_ranged_paths.len();
 
         let mut out = Contributions::default();
         let mut outcomes = Vec::new();
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
         let mut has_unconditional_else = false;
         let mut promote_body_outcome = false;
+        let mut prior_approximate_paths: Vec<String> = Vec::new();
 
         for (index, _branch) in region.branches.iter().enumerate() {
             self.locals = entry_locals.clone();
             self.active_predicates.truncate(entry_predicates);
             self.dot_stack.truncate(entry_dots);
+            self.approximate_condition_paths.truncate(entry_approximate);
+            self.active_direct_ranged_paths.truncate(entry_ranged);
+            // An arm under the negation of an approximately-lowered prior
+            // is approximate on the same paths.
+            self.approximate_condition_paths
+                .extend(prior_approximate_paths.iter().cloned());
 
             let mut arm_condition = Predicate::True;
             // Later arms run under the negations of every earlier decoded
@@ -81,8 +90,14 @@ impl Interpreter<'_> {
             // region intersects (none when it spans several documents).
             let region_site = self.region_site(region.span);
             let previous_site = std::mem::replace(&mut self.current_site, region_site);
+            let arm_entry_approximate = self.approximate_condition_paths.len();
             let (own_condition, extra, iterations) =
                 self.activate_arm(&arm, nodes, region.span.start);
+            prior_approximate_paths.extend(
+                self.approximate_condition_paths[arm_entry_approximate..]
+                    .iter()
+                    .cloned(),
+            );
             self.current_site = previous_site;
             if let Some(own) = own_condition {
                 arm_condition = and_conditions(arm_condition, own.clone());
@@ -132,6 +147,8 @@ impl Interpreter<'_> {
         self.locals = entry_locals.clone();
         self.active_predicates.truncate(entry_predicates);
         self.dot_stack.truncate(entry_dots);
+        self.approximate_condition_paths.truncate(entry_approximate);
+        self.active_direct_ranged_paths.truncate(entry_ranged);
         if promote_body_outcome {
             // A statically nonempty exact range definitely ran its body:
             // bindings written there survive without an entry-state merge.
@@ -227,6 +244,7 @@ impl Interpreter<'_> {
                 ControlKind::Range => ArmSpec::Range {
                     header: facts.and_then(|facts| facts.header.clone()),
                     destructured: facts.is_some_and(|facts| facts.range_destructured),
+                    value_variable: facts.and_then(|facts| facts.range_value_variable.clone()),
                 },
                 ControlKind::Define | ControlKind::Block => ArmSpec::Else,
             };
@@ -269,21 +287,54 @@ impl Interpreter<'_> {
             ArmSpec::Range {
                 header,
                 destructured,
-            } => self.activate_range(header.as_ref(), *destructured, nodes, region_start),
+                value_variable,
+            } => self.activate_range(
+                header.as_ref(),
+                *destructured,
+                value_variable.as_deref(),
+                nodes,
+                region_start,
+            ),
         }
     }
 
     fn activate_if(&mut self, header: Option<&TemplateHeader>) -> Option<PathCondition> {
         let header = header?;
-        let (mut predicate, bound_values) = {
+        let (mut predicate, faithful, bound_values, (string_contracts, shape_erased)) = {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
+                context.condition_lowering_is_faithful(header.expr()),
                 context.bound_output_paths_expr(header.expr()),
+                context.condition_transform_facts(header.expr()),
             )
         };
+        if !faithful {
+            let paths = self
+                .value_path_context()
+                .resolved_values_paths_from_expr(header.expr());
+            self.approximate_condition_paths.extend(paths);
+        }
         for path in &bound_values {
             self.push_read(path, &[]);
+        }
+        // A total conversion in the condition
+        // (`eq (.Values.x | toString) "true"`) renders any input, exactly
+        // like the same conversion in a `set` expression or render hole.
+        self.shape_erased_paths.extend(shape_erased);
+        // A string-consuming call in the condition (`regexMatch`, `replace`,
+        // …) fails template evaluation for non-string subjects: that is a
+        // runtime string contract, exactly like a rendered `trunc`.
+        for path in string_contracts {
+            let sink = if self.hint_scope_is_unconditional(&path) {
+                &mut self.type_hints
+            } else {
+                &mut self.guarded_type_hints
+            };
+            sink.entry(path.clone())
+                .or_default()
+                .insert("string".to_string());
+            self.string_contract_paths.insert(path);
         }
         // Helper-body conditions over bound helper calls resolve through the
         // call's summary: its claim paths become guard reads, and when the
@@ -316,16 +367,27 @@ impl Interpreter<'_> {
     }
 
     /// The most-specific claim paths of bound helper calls inside a
-    /// helper-body condition (empty at document scope and for conditions
-    /// without resolvable calls).
+    /// condition (empty for conditions without resolvable calls).
     fn helper_condition_claim_paths(
         &mut self,
         expr: &helm_schema_ast::TemplateExpr,
     ) -> std::collections::BTreeSet<String> {
-        if !self.helper_scope || !expr_contains_bound_helper_call(expr, self.db) {
+        if !expr_contains_bound_helper_call(expr, self.db) {
             return std::collections::BTreeSet::new();
         }
         let hole = self.eval_hole_exprs_for_condition(expr);
+        for path in &hole.effects.parsed_yaml_input_paths {
+            self.type_hints
+                .entry(path.clone())
+                .or_default()
+                .insert("string".to_string());
+        }
+        // Total conversions and string contracts observed inside the called
+        // helper hold regardless of where the call sits.
+        self.shape_erased_paths
+            .extend(hole.effects.shape_erased_paths.iter().cloned());
+        self.string_contract_paths
+            .extend(hole.effects.string_contract_paths.iter().cloned());
         let mut paths: std::collections::BTreeSet<String> = hole
             .effects
             .helper_reads
@@ -351,7 +413,7 @@ impl Interpreter<'_> {
             self.dot_stack.push(None);
             return None;
         };
-        let (predicate, bound_values, dot) = {
+        let (predicate, faithful, bound_values, dot) = {
             let context = self.value_path_context();
             // Helper bodies decode `with` like `if` (truthy conditions), the
             // shape the summary lane always produced: a helper row's
@@ -362,12 +424,20 @@ impl Interpreter<'_> {
             } else {
                 context.with_condition_predicate_expr(header.expr())
             };
+            let faithful = context.condition_lowering_is_faithful(header.expr());
             (
                 predicate,
+                faithful,
                 context.bound_output_paths_expr(header.expr()),
                 context.with_body_fragment_value_expr(header.expr()),
             )
         };
+        if !faithful {
+            let paths = self
+                .value_path_context()
+                .resolved_values_paths_from_expr(header.expr());
+            self.approximate_condition_paths.extend(paths);
+        }
         // The with-predicate is pushed before its reads so the reads carry
         // the `Guard::With` markers, mirroring the current walker.
         let guards = predicate.contract_guards();
@@ -393,6 +463,7 @@ impl Interpreter<'_> {
         &mut self,
         header: Option<&TemplateHeader>,
         destructured: bool,
+        value_variable: Option<&str>,
         nodes: &[NodeView<'_>],
         region_start: usize,
     ) -> (
@@ -407,6 +478,14 @@ impl Interpreter<'_> {
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
         }
+        // The header's collection expression, unwrapped from its variable
+        // bindings (`range $k, $v := <source>` iterates `<source>`).
+        let mut range_source = header.expr();
+        while let TemplateExpr::VariableDefinition { value, .. }
+        | TemplateExpr::Assignment { value, .. } = range_source
+        {
+            range_source = value;
+        }
         let (source_paths, direct_path) = {
             let context = self.value_path_context();
             (
@@ -414,7 +493,7 @@ impl Interpreter<'_> {
                     .resolved_values_paths_from_expr(header.expr())
                     .into_iter()
                     .collect::<Vec<_>>(),
-                context.single_direct_iterable_range_path_expr(header.expr()),
+                context.single_direct_iterable_range_path_expr(range_source),
             )
         };
         let shape = self.range_body_shape(nodes);
@@ -423,6 +502,18 @@ impl Interpreter<'_> {
         let emit_header_read = destructured || !shape.emits_sequence_items || renders_scalar_items;
         let renders_mapping_entries =
             destructured && !shape.emits_sequence_items && shape.has_dynamic_entries;
+        // Structural claims about the ranged path hold only when the range
+        // iterates the path ITSELF: `range until (int .Values.n)` iterates a
+        // DERIVED list, so it says nothing about the path's own shape.
+        if let Some(path) = &direct_path {
+            self.direct_range_source_paths.insert(path.clone());
+            if destructured {
+                self.type_hints
+                    .entry(path.clone())
+                    .or_default()
+                    .insert("object".to_string());
+            }
+        }
 
         let mut own = Vec::new();
         let mut extra = Contributions::default();
@@ -437,7 +528,12 @@ impl Interpreter<'_> {
             };
             if emit_header_read && !renders_scalar_items {
                 if self.helper_scope {
-                    self.push_read(path, &[]);
+                    if destructured {
+                        let guard = Guard::Range { path: path.clone() };
+                        self.push_read(path, std::slice::from_ref(&guard));
+                    } else {
+                        self.push_read(path, &[]);
+                    }
                 } else {
                     let guard = Guard::Range { path: path.clone() };
                     self.push_read(path, std::slice::from_ref(&guard));
@@ -477,7 +573,11 @@ impl Interpreter<'_> {
         if let Some(iterations) = iterations {
             return (Some(Predicate::all(own)), extra, Some(iterations));
         }
-        let mut dot = direct_path.map(|path| AbstractValue::ValuesPath(format!("{path}.*")));
+        if let Some(path) = &direct_path {
+            self.active_direct_ranged_paths.push(path.clone());
+        }
+        let mut dot = direct_path
+            .map(|path| AbstractValue::ValuesPath(helm_schema_core::append_value_path(&path, "*")));
         if self.helper_scope {
             let iterable = self.range_iterable_fragment_value(header);
             let item_dot = iterable
@@ -492,6 +592,20 @@ impl Interpreter<'_> {
             {
                 self.locals.fragment_values.insert(variable, binding);
             }
+        }
+        // Bind the range's VALUE variable to the member identity: `$v` in
+        // `range $k, $v := .Values.x` (and `$e` in `range $e := .Values.x`)
+        // holds each member, so type tests and `fail` guards on it describe
+        // `x.*`. The KEY variable of a destructured range has no member
+        // identity, and hole rendering deliberately does not resolve these
+        // (member reads must not manufacture placed rows).
+        let member_variable = match value_variable {
+            Some(variable) => Some(variable.to_string()),
+            None if !destructured => helm_schema_ast::range_variable_name_expr(header.expr()),
+            None => None,
+        };
+        if let Some((variable, binding)) = member_variable.zip(dot.clone()) {
+            self.locals.range_member_values.insert(variable, binding);
         }
         self.dot_stack.push(dot);
         (Some(Predicate::all(own)), extra, None)

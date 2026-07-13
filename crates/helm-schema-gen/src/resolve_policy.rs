@@ -2,13 +2,12 @@ use serde_json::Value;
 
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractValuePathFacts, GuardValue,
-    ProviderSchemaUse, ResourceSchemaOracle, ValueKind,
+    ProviderSchemaUse, ValueKind,
 };
 use serde_yaml::Value as YamlValue;
 
 use crate::foreign_schema::ForeignSchemaRestriction;
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
-use crate::overlay_lowering::resolve_overlay_target_schema;
 use crate::path_schema::{
     generalize_fixed_object_schema_to_open_map, merge_explicit_empty_placeholder,
     open_fragment_values_schema,
@@ -21,8 +20,8 @@ use crate::schema_model::{
 };
 use crate::schema_node::SchemaNode;
 use crate::schema_node::is_placeholder_fragment_object_schema;
-use crate::values_yaml::ValuesYamlPathFacts;
 use crate::values_yaml::yaml_value_at_path;
+use crate::values_yaml::{FalsyDefault, ValuesYamlPathFacts};
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
@@ -106,6 +105,14 @@ pub(crate) struct ValuePathSchemaInputs {
     pub(crate) values_yaml_schema: Value,
     pub(crate) guard_predicate_schema: Value,
     pub(crate) type_hint_schema: Value,
+    /// Branch-scoped hints: they may only WIDEN an otherwise-typed base
+    /// (add accepted alternatives), never stand alone as its typing —
+    /// `allOf` branches can narrow but never re-widen a base.
+    pub(crate) guarded_type_hint_schema: Value,
+    /// Requirements from unconditional `fail` branches: rendering aborts
+    /// for violating values, so this merges into the base unsuppressed
+    /// (serialized dominance and widening lanes never relax it).
+    pub(crate) fail_requirement_schema: Value,
 }
 
 impl ResolvePolicy {
@@ -116,7 +123,7 @@ impl ResolvePolicy {
     ) -> Option<Value> {
         match use_.kind {
             ValueKind::Fragment => Some(schema.clone()),
-            ValueKind::PartialScalar => None,
+            ValueKind::PartialScalar | ValueKind::Serialized => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
                 ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
             }
@@ -171,7 +178,32 @@ impl ResolvePolicy {
             values_yaml_schema,
             guard_predicate_schema,
             type_hint_schema,
+            guarded_type_hint_schema,
+            fail_requirement_schema,
         } = input;
+        // A serialized or totally-stringified render accepts any input
+        // type, so the chart provably tolerates anything at this path in
+        // the states where that use is live. The declared default then
+        // documents intent without narrowing. Real contracts from OTHER
+        // uses (provider sinks on their own rows, string-transform hints,
+        // guard schemas) still apply below: one stringified occurrence must
+        // not erase an independent stricter consumer.
+        let values_yaml_schema = if facts.contract.used_as_serialized {
+            empty_schema()
+        } else {
+            values_yaml_schema
+        };
+        // The same argument defers guard-derived typing on serialized
+        // paths: a `typeIs "string"` guard partitions branches, and a
+        // serialized sibling branch proves the complement renders too, so
+        // the guard's type may only WIDEN an otherwise-typed base below —
+        // never stand alone as its typing.
+        let mut guard_predicate_schema = guard_predicate_schema;
+        let deferred_guard_schema = if facts.contract.used_as_serialized {
+            std::mem::replace(&mut guard_predicate_schema, empty_schema())
+        } else {
+            empty_schema()
+        };
         let preserve_explicit_null_default_by_contract =
             facts.preserve_explicit_null_default(&type_hint_schema, &guard_predicate_schema);
         let preserve_empty_string_fallback =
@@ -203,29 +235,77 @@ impl ResolvePolicy {
                 values_yaml_schema,
                 guard_predicate_schema,
                 type_hint_schema,
+                guarded_type_hint_schema: empty_schema(),
+                fail_requirement_schema: empty_schema(),
             },
             preserve_empty_string_fallback,
         );
+        let widening_schema = merge_two_schemas(guarded_type_hint_schema, deferred_guard_schema);
+        let merged = if !is_empty_schema(&merged) && !is_empty_schema(&widening_schema) {
+            merge_two_schemas(merged, widening_schema)
+        } else {
+            merged
+        };
+        let merged = if let Some(default) = facts.values_yaml.falsy_default
+            && facts.contract.has_self_guarded_render_use
+            && !facts.contract.has_unconditional_render_use
+            && rejects_declared_falsy_default(&merged, facts.values_yaml)
+        {
+            union_schema_list(vec![merged, falsy_default_schema(default)])
+        } else {
+            merged
+        };
         let preserve_explicit_null_default = preserve_explicit_null_default_by_contract
             || (facts.values_yaml.is_explicit_null
                 && facts.contract.used_as_fragment
                 && !is_empty_schema(&merged));
 
-        if (preserve_explicit_null_default
+        let resolved = if (preserve_explicit_null_default
             || (is_scalar_like_schema(&merged) && facts.contract.is_nullable))
             && !is_empty_schema(&merged)
         {
             add_null_schema(merged)
         } else if preserve_explicit_null_default {
-            type_schema("null")
+            empty_schema()
         } else if facts.empty_map_placeholder_has_structural_object_use(&merged) {
             merge_explicit_empty_placeholder(
                 merged,
                 facts.values_yaml.is_empty_map,
-                facts.contract.has_referenced_descendants,
+                // Bare `p.*` value rows also spell `*` (map-value flows),
+                // so only STRUCTURED item rows prove a list shape here.
+                facts.contract.has_structured_item_descendants,
+                facts.contract.has_render_use && facts.contract.all_render_uses_self_guarded,
             )
+        } else if facts.values_yaml.has_no_schema_evidence && facts.contract.is_ranged_source {
+            // An undeclared map the chart itself iterates is user-populated
+            // (istiod's `range $key, $val := .Values.env` has no values.yaml
+            // default at all); its keys are data, so member probes must not
+            // close it. The stamp only applies to object-typed schemas.
+            crate::path_schema::stamp_explicit_map_openness(merged)
+        } else if facts.contract.used_as_serialized
+            && facts.contract.has_referenced_descendants
+            && is_empty_schema(&merged)
+        {
+            // Descendant rows insert under this unconstrained slot; the
+            // carrier merge reads a bare `{}` as an empty placeholder and
+            // closes it, while an explicit `additionalProperties: {}`
+            // counts as openness evidence and survives.
+            serde_json::json!({ "additionalProperties": {} })
         } else {
             merged
+        };
+        // A `fail` branch's requirement is runtime-hard: rendering aborts
+        // for violating values, so it CONJOINS after every union lane —
+        // no declared-default preservation or placeholder alternative may
+        // bypass it. An explicit `allOf` keeps the conjunction:
+        // `merge_two_schemas` falls back to a union for incompatible
+        // shapes, which would make the requirement bypassable.
+        if is_empty_schema(&fail_requirement_schema) {
+            resolved
+        } else if is_empty_schema(&resolved) {
+            fail_requirement_schema
+        } else {
+            serde_json::json!({ "allOf": [resolved, fail_requirement_schema] })
         }
     }
 
@@ -289,6 +369,7 @@ impl ResolvePolicy {
         guard_predicate_schema: &Value,
     ) -> Value {
         if facts.contract.is_partial_scalar_value_path
+            && !facts.contract.used_as_serialized
             && is_empty_schema(provider_schema)
             && is_empty_schema(type_hint_schema)
             && is_empty_schema(guard_predicate_schema)
@@ -346,7 +427,11 @@ impl ResolvePolicy {
             }
         } else if !is_empty_schema(&input.values_yaml_schema) {
             input.values_yaml_schema
-        } else if input.facts.contract.used_as_fragment {
+        } else if input.facts.contract.used_as_fragment && !input.facts.contract.used_as_serialized
+        {
+            // A fragment-only path with no other evidence is probably a
+            // map; a stringified sibling use proves non-object values
+            // render too, so the guess must not stand.
             SchemaNode::unknown_object().into_value()
         } else {
             empty_schema()
@@ -357,6 +442,32 @@ impl ResolvePolicy {
     }
 }
 
+fn rejects_declared_falsy_default(schema: &Value, facts: ValuesYamlPathFacts) -> bool {
+    let Some(default) = facts.falsy_default else {
+        return false;
+    };
+    !schema_accepts_json_value(schema, &falsy_default_json(default))
+}
+
+fn falsy_default_schema(default: FalsyDefault) -> Value {
+    Value::Object(
+        [("const".to_string(), falsy_default_json(default))]
+            .into_iter()
+            .collect(),
+    )
+}
+
+fn falsy_default_json(default: FalsyDefault) -> Value {
+    match default {
+        FalsyDefault::Null => Value::Null,
+        FalsyDefault::False => Value::Bool(false),
+        FalsyDefault::Zero => Value::Number(0.into()),
+        FalsyDefault::EmptyString => Value::String(String::new()),
+        FalsyDefault::EmptySequence => Value::Array(Vec::new()),
+        FalsyDefault::EmptyMapping => Value::Object(serde_json::Map::new()),
+    }
+}
+
 /// The branch schema is the strongest available evidence schema that is not a
 /// vacuous placeholder when real content exists and accepts the chart's
 /// shipped default whenever the branch tolerates its own absence.
@@ -364,13 +475,11 @@ pub(crate) fn conditional_target_schema(
     target_value_path: &str,
     overlay: &ConditionalPathOverlay,
     values_yaml_doc: &YamlValue,
-    provider: &dyn ResourceSchemaOracle,
+    branch_schema: Value,
     values_yaml_schema: Value,
     resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
-    let branch_schema = resolve_overlay_target_schema(target_value_path, overlay, provider);
-
     let declared_default = yaml_value_at_path(values_yaml_doc, target_value_path)
         .and_then(|value| serde_json::to_value(value).ok());
     // A branch that rejects the path's own declared default narrows values
@@ -382,9 +491,39 @@ pub(crate) fn conditional_target_schema(
     };
 
     let branch_schema = if active_by_defaults.is_some()
+        && !overlay.evidence.facts.used_as_serialized
         && should_merge_values_yaml_into_conditional_branch(&branch_schema, &values_yaml_schema)
     {
-        merge_schema_list(vec![branch_schema, values_yaml_schema])
+        merge_schema_list(vec![branch_schema, values_yaml_schema.clone()])
+    } else {
+        branch_schema
+    };
+    let branch_schema = if rejects_declared_default(&branch_schema) {
+        declared_default.as_ref().map_or_else(
+            || branch_schema.clone(),
+            |default_value| {
+                let declared_type = if default_value.is_object() {
+                    Some("object")
+                } else if default_value.is_array() {
+                    Some("array")
+                } else {
+                    None
+                };
+                if declared_type
+                    .is_some_and(|schema_type| !schema_allows_type(&branch_schema, schema_type))
+                {
+                    union_schema_list(vec![
+                        branch_schema.clone(),
+                        open_objects_rejecting_declared_members(
+                            values_yaml_schema.clone(),
+                            default_value,
+                        ),
+                    ])
+                } else {
+                    open_objects_rejecting_declared_members(branch_schema.clone(), default_value)
+                }
+            },
+        )
     } else {
         branch_schema
     };
@@ -412,10 +551,97 @@ pub(crate) fn conditional_target_schema(
     }
 
     if rejects_declared_default(&branch_schema) {
-        resolved_fallback
+        declared_default
+            .as_ref()
+            .map_or(resolved_fallback.clone(), |default_value| {
+                open_objects_rejecting_declared_members(resolved_fallback, default_value)
+            })
     } else {
         branch_schema
     }
+}
+
+pub(crate) fn open_objects_rejecting_declared_members(schema: Value, declared: &Value) -> Value {
+    preserve_declared_default(schema, declared, false)
+}
+
+pub(crate) fn preserve_declared_default_in_schema(schema: Value, declared: &Value) -> Value {
+    preserve_declared_default(schema, declared, true)
+}
+
+fn preserve_declared_default(mut schema: Value, declared: &Value, preserve_scalar: bool) -> Value {
+    let (Some(schema_object), Some(declared_object)) =
+        (schema.as_object_mut(), declared.as_object())
+    else {
+        if let (Some(schema_object), Some(declared_items)) =
+            (schema.as_object_mut(), declared.as_array())
+            && let Some(items_schema) = schema_object.get_mut("items")
+        {
+            for declared_item in declared_items {
+                *items_schema = preserve_declared_default(
+                    std::mem::take(items_schema),
+                    declared_item,
+                    preserve_scalar,
+                );
+            }
+        }
+        return if !preserve_scalar || schema_accepts_json_value(&schema, declared) {
+            schema
+        } else {
+            union_schema_list(vec![
+                schema,
+                SchemaNode::const_value(declared.clone()).into_value(),
+            ])
+        };
+    };
+
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        let Some(branches) = schema_object.get_mut(keyword).and_then(Value::as_array_mut) else {
+            continue;
+        };
+        for branch in branches {
+            *branch = preserve_declared_default(std::mem::take(branch), declared, false);
+        }
+    }
+    for keyword in ["then", "else"] {
+        let Some(branch) = schema_object.get_mut(keyword) else {
+            continue;
+        };
+        *branch = preserve_declared_default(std::mem::take(branch), declared, false);
+    }
+
+    let known_properties = schema_object
+        .get("properties")
+        .and_then(Value::as_object)
+        .map(|properties| {
+            properties
+                .keys()
+                .cloned()
+                .collect::<std::collections::BTreeSet<_>>()
+        })
+        .unwrap_or_default();
+    if schema_object.get("additionalProperties") == Some(&Value::Bool(false))
+        && declared_object
+            .keys()
+            .any(|key| !known_properties.contains(key))
+    {
+        schema_object.remove("additionalProperties");
+    }
+
+    let Some(properties) = schema_object
+        .get_mut("properties")
+        .and_then(Value::as_object_mut)
+    else {
+        return schema;
+    };
+    for (key, child_schema) in properties {
+        let Some(child_default) = declared_object.get(key) else {
+            continue;
+        };
+        *child_schema =
+            preserve_declared_default(std::mem::take(child_schema), child_default, preserve_scalar);
+    }
+    schema
 }
 
 fn should_merge_values_yaml_into_conditional_branch(

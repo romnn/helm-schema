@@ -61,6 +61,9 @@ pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
 
 pub fn assert_ir_fixture(case: IrCorpusCase<'_>) {
     let actual = render_ir_case(case);
+    if std::env::var(case.dump_env).is_ok() {
+        return;
+    }
     let expected: Value = serde_json::from_str(case.expected_fixture).expect("expected ir json");
 
     sim_assert_eq!(have: actual, want: expected);

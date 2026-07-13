@@ -9,10 +9,22 @@ use crate::schema_node::SchemaNode;
 
 pub(crate) struct ValuesYamlPathInfo {
     pub(crate) schema: Value,
+    pub(crate) declared_defaults: Vec<Value>,
     pub(crate) is_explicit_null: bool,
     pub(crate) is_empty_string: bool,
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
+    pub(crate) falsy_default: Option<FalsyDefault>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum FalsyDefault {
+    Null,
+    False,
+    Zero,
+    EmptyString,
+    EmptySequence,
+    EmptyMapping,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -22,6 +34,7 @@ pub(crate) struct ValuesYamlPathFacts {
     pub(crate) is_empty_string: bool,
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
+    pub(crate) falsy_default: Option<FalsyDefault>,
 }
 
 impl ValuesYamlPathFacts {
@@ -41,6 +54,7 @@ impl ValuesYamlPathInfo {
             is_empty_string: self.is_empty_string,
             is_empty_map: self.is_empty_map,
             is_mapping: self.is_mapping,
+            falsy_default: self.falsy_default,
         }
     }
 }
@@ -85,6 +99,10 @@ fn lookup_values_yaml_path_info(
     }
 
     let schema = merge_schema_list(values.iter().copied().map(schema_from_yaml_value).collect());
+    let declared_defaults = values
+        .iter()
+        .filter_map(|value| serde_json::to_value(value).ok())
+        .collect();
     let is_explicit_null = values.len() == 1 && matches!(values[0], YamlValue::Null);
     let is_empty_string = values
         .iter()
@@ -95,14 +113,37 @@ fn lookup_values_yaml_path_info(
     let is_mapping = values
         .iter()
         .all(|value| matches!(value, YamlValue::Mapping(_)));
+    let falsy_default = (values.len() == 1)
+        .then(|| falsy_default(values[0]))
+        .flatten();
 
     Some(ValuesYamlPathInfo {
         schema,
+        declared_defaults,
         is_explicit_null,
         is_empty_string,
         is_empty_map,
         is_mapping,
+        falsy_default,
     })
+}
+
+fn falsy_default(value: &YamlValue) -> Option<FalsyDefault> {
+    match value {
+        YamlValue::Null => Some(FalsyDefault::Null),
+        YamlValue::Bool(false) => Some(FalsyDefault::False),
+        YamlValue::Number(number)
+            if number.as_i64() == Some(0)
+                || number.as_u64() == Some(0)
+                || number.as_f64() == Some(0.0) =>
+        {
+            Some(FalsyDefault::Zero)
+        }
+        YamlValue::String(value) if value.is_empty() => Some(FalsyDefault::EmptyString),
+        YamlValue::Sequence(value) if value.is_empty() => Some(FalsyDefault::EmptySequence),
+        YamlValue::Mapping(value) if value.is_empty() => Some(FalsyDefault::EmptyMapping),
+        _ => None,
+    }
 }
 
 pub(crate) fn yaml_value_at_segments<'a>(
@@ -195,7 +236,9 @@ fn shortest_referenced_relative_path(
     let mut prefix = Vec::new();
     for segment in relative_segments {
         prefix.push(segment.clone());
-        let candidate_path = format!("{value_path}.{}", prefix.join("."));
+        let mut candidate_segments = crate::split_value_path(value_path);
+        candidate_segments.extend(prefix.iter().cloned());
+        let candidate_path = helm_schema_core::join_value_path(candidate_segments);
         if referenced_value_paths.contains(&candidate_path) {
             return prefix;
         }

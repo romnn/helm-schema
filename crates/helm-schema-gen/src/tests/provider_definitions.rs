@@ -16,6 +16,7 @@ fn resolved_path(path: &str, schema: Value) -> ResolvedPathSchema {
         )),
         values_yaml_schema: crate::schema_model::empty_schema(),
         schema,
+        used_as_serialized: false,
         used_as_pathless_fragment: false,
         accepted_dependency_values_root_fragment: false,
     }
@@ -75,6 +76,7 @@ fn resolved_sourced_path(path: &str, schema: Value, pointer: &str) -> ResolvedPa
         provider_schema_candidate: Some(sourced_provider_schema_candidate(schema.clone(), pointer)),
         values_yaml_schema: crate::schema_model::empty_schema(),
         schema,
+        used_as_serialized: false,
         used_as_pathless_fragment: false,
         accepted_dependency_values_root_fragment: false,
     }
@@ -94,7 +96,7 @@ fn repeated_provider_subtrees_move_to_root_definitions() {
         resolved_path("second", provider_schema.clone()),
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -146,7 +148,7 @@ fn repeated_provider_subtrees_with_one_source_use_source_stable_definition_name(
         resolved_sourced_path("second", provider_schema.clone(), source.pointer()),
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -200,6 +202,7 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
             )),
             values_yaml_schema: crate::schema_model::empty_schema(),
             schema: provider_schema.clone(),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
@@ -221,12 +224,13 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
                     }
                 }
             }),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
     let expected_definition = json!({
@@ -284,6 +288,7 @@ fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema(
             ),
             values_yaml_schema: crate::schema_model::empty_schema(),
             schema: provider_schema.clone(),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
@@ -300,12 +305,13 @@ fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema(
             ),
             values_yaml_schema: crate::schema_model::empty_schema(),
             schema: provider_schema.clone(),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -355,6 +361,7 @@ fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
             ),
             values_yaml_schema: crate::schema_model::empty_schema(),
             schema: provider_schema.clone(),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
@@ -368,12 +375,13 @@ fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
             )),
             values_yaml_schema: crate::schema_model::empty_schema(),
             schema: provider_schema.clone(),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -403,6 +411,7 @@ fn structurally_equal_provider_schemas_share_even_with_different_sources() {
             )),
             values_yaml_schema: crate::schema_model::empty_schema(),
             schema: provider_schema.clone(),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
@@ -415,12 +424,13 @@ fn structurally_equal_provider_schemas_share_even_with_different_sources() {
             )),
             values_yaml_schema: crate::schema_model::empty_schema(),
             schema: provider_schema.clone(),
+            used_as_serialized: false,
             used_as_pathless_fragment: false,
             accepted_dependency_values_root_fragment: false,
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -446,7 +456,7 @@ fn scalar_provider_schemas_stay_inline() {
         resolved_path("second", provider_schema.clone()),
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &BTreeMap::new());
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -471,7 +481,7 @@ fn described_provider_subtrees_stay_inline_even_when_other_paths_share_definitio
     let descriptions =
         BTreeMap::from([("first.name".to_string(), "chart-authored name".to_string())]);
 
-    let definitions = extract_provider_definitions(&mut paths, &descriptions);
+    let definitions = extract_provider_definitions(&mut paths, &mut [], &descriptions);
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -487,5 +497,49 @@ fn described_provider_subtrees_stay_inline_even_when_other_paths_share_definitio
     sim_assert_eq!(
         have: root.pointer("/$defs/providerSchema1"),
         want: Some(&provider_schema)
+    );
+}
+
+#[test]
+fn repeated_large_structural_payloads_keep_local_annotations() {
+    let variants = (0..2_000)
+        .map(|index| Value::String(format!("variant-{index:04}")))
+        .collect::<Vec<_>>();
+    let structural = json!({"type": "string", "enum": variants});
+    let mut root = json!({
+        "type": "object",
+        "properties": {
+            "first": {
+                "description": "first use",
+                "type": "string",
+                "enum": structural["enum"].clone()
+            },
+            "second": {
+                "description": "second use",
+                "type": "string",
+                "enum": structural["enum"].clone()
+            }
+        }
+    });
+
+    let definitions = extract_repeated_provider_payloads(&mut root);
+
+    sim_assert_eq!(
+        have: definitions.get("providerShared1"),
+        want: Some(&structural)
+    );
+    sim_assert_eq!(
+        have: root.pointer("/properties/first"),
+        want: Some(&json!({
+            "description": "first use",
+            "allOf": [{"$ref": "#/$defs/providerShared1"}]
+        }))
+    );
+    sim_assert_eq!(
+        have: root.pointer("/properties/second"),
+        want: Some(&json!({
+            "description": "second use",
+            "allOf": [{"$ref": "#/$defs/providerShared1"}]
+        }))
     );
 }

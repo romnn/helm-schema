@@ -53,6 +53,12 @@ impl ProviderSchemaCandidate {
 
     pub(crate) fn survives_as(&self, schema: &Value) -> bool {
         &self.schema == schema
+            || ["anyOf", "oneOf"].into_iter().any(|keyword| {
+                schema
+                    .get(keyword)
+                    .and_then(Value::as_array)
+                    .is_some_and(|variants| variants.iter().any(|variant| variant == &self.schema))
+            })
     }
 
     pub(crate) fn is_definition_candidate(&self) -> bool {

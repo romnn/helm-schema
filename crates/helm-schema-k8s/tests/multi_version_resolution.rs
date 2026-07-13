@@ -1,5 +1,6 @@
-//! Feature A + B end-to-end tests using `MockFetcher` so no real
-//! network calls happen.
+//! Multi-version K8s resolution (explicit version list + auto-fallback
+//! window) end-to-end tests using `MockFetcher` so no real network
+//! calls happen.
 
 use std::sync::Arc;
 

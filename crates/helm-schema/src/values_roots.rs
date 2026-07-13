@@ -41,9 +41,10 @@ impl ValuesRoots {
                 if key.is_empty() {
                     continue;
                 }
-                roots.top_level_paths.insert(key.to_string());
+                let path = helm_schema_core::join_value_path([key]);
+                roots.top_level_paths.insert(path.clone());
                 if matches!(value, YamlValue::Mapping(_)) {
-                    roots.top_level_mapping_paths.insert(key.to_string());
+                    roots.top_level_mapping_paths.insert(path);
                 }
             }
         }
@@ -59,7 +60,7 @@ fn collect_explicit_paths(
     out: &mut BTreeSet<String>,
 ) {
     if !current_path.is_empty() {
-        out.insert(current_path.join("."));
+        out.insert(helm_schema_core::join_value_path(&*current_path));
     }
 
     let YamlValue::Mapping(mapping) = value else {

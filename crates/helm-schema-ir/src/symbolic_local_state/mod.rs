@@ -19,6 +19,15 @@ pub(crate) struct SymbolicLocalState {
     /// Values paths defaulted by structural `set X "K" (X.K | default V)`
     /// helper mutations that have already run in source order.
     pub(crate) chart_value_defaults: BTreeSet<String>,
+    /// Locals bound to a TYPE DESCRIPTOR of a values path
+    /// (`$tp := typeOf .Values.x`): comparing such a local to a literal is
+    /// a type test on the path, never a value equality.
+    pub(crate) typeof_sources: HashMap<String, String>,
+    /// Range variables bound to the MEMBER identity of a directly ranged
+    /// path (`$v` in `range $k, $v := .Values.x` holds each `x.*` value).
+    /// Conditions and assignments resolve through these; hole rendering
+    /// does not, so member reads do not manufacture placed rows.
+    pub(crate) range_member_values: HashMap<String, AbstractValue>,
     local_scopes: Vec<LocalScopeFrame>,
 }
 
@@ -34,6 +43,8 @@ struct VariableLocalState {
     fragment_value: Option<AbstractValue>,
     default_paths: Option<BTreeSet<String>>,
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
+    typeof_source: Option<String>,
+    range_member_value: Option<AbstractValue>,
 }
 
 impl SymbolicLocalState {
@@ -133,6 +144,8 @@ impl SymbolicLocalState {
             fragment_value: self.fragment_values.get(variable).cloned(),
             default_paths: self.default_paths.get(variable).cloned(),
             output_meta: self.output_meta.get(variable).cloned(),
+            typeof_source: self.typeof_sources.get(variable).cloned(),
+            range_member_value: self.range_member_values.get(variable).cloned(),
         }
     }
 
@@ -142,6 +155,8 @@ impl SymbolicLocalState {
             || self.fragment_values.contains_key(variable)
             || self.default_paths.contains_key(variable)
             || self.output_meta.contains_key(variable)
+            || self.typeof_sources.contains_key(variable)
+            || self.range_member_values.contains_key(variable)
     }
 
     fn set_get_binding(&mut self, variable: String, binding: GetBinding) {
@@ -155,6 +170,12 @@ impl SymbolicLocalState {
         restore_map_entry(&mut self.fragment_values, variable, previous.fragment_value);
         restore_map_entry(&mut self.default_paths, variable, previous.default_paths);
         restore_map_entry(&mut self.output_meta, variable, previous.output_meta);
+        restore_map_entry(&mut self.typeof_sources, variable, previous.typeof_source);
+        restore_map_entry(
+            &mut self.range_member_values,
+            variable,
+            previous.range_member_value,
+        );
     }
 
     fn set_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
@@ -172,6 +193,8 @@ impl SymbolicLocalState {
         self.fragment_values.remove(variable);
         self.default_paths.remove(variable);
         self.output_meta.remove(variable);
+        self.typeof_sources.remove(variable);
+        self.range_member_values.remove(variable);
     }
 }
 

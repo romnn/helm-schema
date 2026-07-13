@@ -19,6 +19,12 @@ pub(super) fn joined_branch_outcomes(
         fragment_values: join_map(&outcomes, |state| &state.fragment_values, join_value_choice),
         default_paths: join_map(&outcomes, |state| &state.default_paths, join_path_union),
         output_meta: join_map(&outcomes, |state| &state.output_meta, join_meta_by_path),
+        typeof_sources: join_map(&outcomes, |state| &state.typeof_sources, join_if_equal),
+        range_member_values: join_map(
+            &outcomes,
+            |state| &state.range_member_values,
+            join_value_choice,
+        ),
         chart_value_defaults: intersect_chart_defaults(&outcomes),
         local_scopes: entry.local_scopes.clone(),
     }

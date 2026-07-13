@@ -60,6 +60,9 @@ fn infer_required_skips_synthetic_top_level_value_keys() -> color_eyre::eyre::Re
                 test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
+            crd_catalog_cache_dir: Some(
+                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+            ),
             disable_k8s_schemas: false,
             crd_override_dir: Some(test_util::workspace_root().join(".cache/crds-catalog-cache")),
             ..Default::default()

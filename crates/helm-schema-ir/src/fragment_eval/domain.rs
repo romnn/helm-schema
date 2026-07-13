@@ -280,6 +280,15 @@ pub struct SpliceMeta {
     /// The rendered text is an encoded transform of the value (`b64enc`),
     /// so the sink schema does not constrain the value's shape.
     pub encoded: bool,
+    /// The rendered text is a total stringification of the value (`quote`,
+    /// `squote`, `toString`, `join`): any input type renders, so the sink
+    /// neither constrains nor reveals the input shape.
+    pub shape_erased: bool,
+    /// A string-consuming transform (`trunc`, `b64enc`, a dynamic `printf`
+    /// format) shaped the rendered text: rendering fails for non-string
+    /// values, so this splice's row binds a string contract under its own
+    /// conditions.
+    pub string_contract: bool,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

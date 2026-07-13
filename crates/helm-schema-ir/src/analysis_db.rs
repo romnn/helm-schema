@@ -155,8 +155,8 @@ impl IrAnalysisDb {
 /// One dot (`.`) binding as the two evaluation flavors see it: value
 /// analysis reads the context-value projection (`helper`), fragment
 /// evaluation reads the raw fragment shape (`fragment`). The flavors
-/// interpret the same binding differently on purpose (see
-/// `plan/helper-single-walker-rewrite-postmortem.md`).
+/// interpret the same binding differently on purpose: collapsing to a
+/// single projection loses information the other flavor needs.
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct DotFrame {
     pub(crate) helper: Option<AbstractValue>,

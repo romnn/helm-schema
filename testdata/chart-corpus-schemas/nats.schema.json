@@ -149,288 +149,6 @@
                     "properties": {
                       "ingress": {
                         "properties": {
-                          "hosts": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "hosts"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "websocket"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "ports": {
-                          "properties": {
-                            "websocket": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "websocket"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "ports"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "ports": {
-                        "properties": {
-                          "websocket": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "websocket"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ports"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "config": {
-            "description": "NATS config",
-            "properties": {
-              "websocket": {
-                "properties": {
-                  "ingress": {
-                    "description": "ingress\nservice must be enabled also",
-                    "properties": {
-                      "className": {
-                        "description": "sets to the ingress class name",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "name": {
-                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}-ws\"",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "tlsSecretName": {
-                        "description": "set to an existing secret name to enable TLS on the ingress; applies to all hosts",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "global": {
-            "description": "Global options",
-            "properties": {
-              "labels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "global labels will be applied to all resources deployed by the chart",
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "namespaceOverride": {
-            "description": "override the namespace that resources are installed into",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "config": {
-                "properties": {
-                  "websocket": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "websocket"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "config": {
-                "properties": {
-                  "websocket": {
-                    "properties": {
-                      "ingress": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "websocket"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "config": {
-                "properties": {
-                  "websocket": {
-                    "properties": {
-                      "ingress": {
-                        "properties": {
                           "tlsSecretName": {
                             "$ref": "#/$defs/helm-truthy"
                           }
@@ -589,14 +307,12 @@
                       "hosts": {
                         "anyOf": [
                           {
+                            "additionalProperties": {},
+                            "type": "object"
+                          },
+                          {
                             "items": {},
                             "type": "array"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
                           }
                         ],
                         "description": "must contain at least 1 host otherwise ingress will not be created"
@@ -605,6 +321,267 @@
                     "type": "object"
                   }
                 },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "hosts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "hosts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "ports": {
+                          "properties": {
+                            "websocket": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "websocket"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ports"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "ports": {
+                        "properties": {
+                          "websocket": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "websocket"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ports"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "description": "NATS config",
+            "properties": {
+              "websocket": {
+                "properties": {
+                  "ingress": {
+                    "description": "ingress\nservice must be enabled also",
+                    "properties": {
+                      "name": {
+                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}-ws\"",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "global": {
+            "description": "Global options",
+            "properties": {
+              "labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "global labels will be applied to all resources deployed by the chart",
                 "type": "object"
               }
             },
@@ -828,13 +805,6 @@
               }
             },
             "type": "object"
-          },
-          "namespaceOverride": {
-            "description": "override the namespace that resources are installed into",
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
         "type": "object"
@@ -842,6 +812,14 @@
     }
   ],
   "properties": {
+    "$tplYaml": {
+      "items": {},
+      "type": "array"
+    },
+    "$tplYamlSpread": {
+      "items": {},
+      "type": "array"
+    },
     "config": {
       "additionalProperties": false,
       "description": "NATS config",
@@ -1125,15 +1103,6 @@
                         "properties": {
                           "name": {
                             "description": "defaults to \"{{ include \"nats.fullname\" $ }}-js\"",
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "size": {
-                            "type": "string"
-                          },
-                          "storageClassName": {
                             "type": [
                               "string",
                               "null"
@@ -1479,15 +1448,6 @@
                           "string",
                           "null"
                         ]
-                      },
-                      "size": {
-                        "type": "string"
-                      },
-                      "storageClassName": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       }
                     },
                     "type": "object"
@@ -1587,12 +1547,8 @@
                   "items": {},
                   "type": "array"
                 },
-                "path": {
-                  "type": "string"
-                },
-                "pathType": {
-                  "type": "string"
-                },
+                "path": {},
+                "pathType": {},
                 "tlsSecretName": {
                   "description": "set to an existing secret name to enable TLS on the ingress; applies to all hosts"
                 }
@@ -1657,11 +1613,18 @@
           "type": "object"
         },
         "name": {
-          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-config\"",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-config\""
         },
         "patch": {
           "items": {},
@@ -1764,14 +1727,10 @@
       "type": "array"
     },
     "fullnameOverride": {
-      "description": "override full name of the chart+release",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "override full name of the chart+release"
     },
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Global options",
       "properties": {
         "image": {
@@ -1782,9 +1741,7 @@
             },
             "pullSecretNames": {
               "description": "global list of secret names to use as image pull secrets for all pod specs in the chart\nsecrets must exist in the same namespace\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/",
-              "items": {
-                "type": "string"
-              },
+              "items": {},
               "type": "array"
             },
             "registry": {
@@ -1794,11 +1751,21 @@
           "type": "object"
         },
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "global labels will be applied to all resources deployed by the chart",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "global labels will be applied to all resources deployed by the chart"
         }
       },
       "type": "object"
@@ -1813,11 +1780,18 @@
           "type": "object"
         },
         "name": {
-          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-headless\"",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-headless\""
         },
         "patch": {
           "items": {},
@@ -1827,18 +1801,21 @@
       "type": "object"
     },
     "nameOverride": {
-      "description": "Common options\noverride name of the chart",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Common options\noverride name of the chart"
     },
     "namespaceOverride": {
-      "description": "override the namespace that resources are installed into",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "override the namespace that resources are installed into"
     },
     "natsBox": {
       "additionalProperties": false,
@@ -1875,20 +1852,6 @@
               "container": {
                 "description": "deployment -> pod template -> nats-box container",
                 "properties": {
-                  "image": {
-                    "properties": {
-                      "digest": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "repository": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
                   "resources": {
                     "additionalProperties": {},
                     "type": "object"
@@ -1907,6 +1870,12 @@
                     ]
                   }
                 },
+                "type": "object"
+              },
+              "contexts": {
+                "additionalProperties": {},
+                "description": "NATS contexts",
+                "properties": {},
                 "type": "object"
               },
               "contextsSecret": {
@@ -1931,86 +1900,6 @@
                       "string",
                       "null"
                     ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "container": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "digest": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "digest"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "container"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "container": {
-                "description": "deployment -> pod template -> nats-box container",
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "tag": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -2104,9 +1993,7 @@
               "additionalProperties": false,
               "properties": {
                 "digest": {},
-                "fullImageName": {
-                  "type": "null"
-                },
+                "fullImageName": {},
                 "global": {
                   "additionalProperties": false,
                   "properties": {
@@ -2114,24 +2001,15 @@
                       "additionalProperties": false,
                       "properties": {
                         "pullPolicy": {},
-                        "registry": {
-                          "type": "string"
-                        }
+                        "registry": {}
                       },
                       "type": "object"
                     }
                   },
                   "type": "object"
                 },
-                "pullPolicy": {
-                  "type": "null"
-                },
-                "registry": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
+                "pullPolicy": {},
+                "registry": {},
                 "repository": {},
                 "resources": {
                   "additionalProperties": {},
@@ -2177,191 +2055,8 @@
           "type": "object"
         },
         "contexts": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "cert": {
-                      "type": "string"
-                    },
-                    "contents": {},
-                    "dir": {},
-                    "key": {
-                      "type": "string"
-                    },
-                    "secretName": {}
-                  },
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                }
-              ]
-            },
-            "properties": {
-              "creds": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "contents": {},
-                  "dir": {},
-                  "key": {
-                    "type": "string"
-                  },
-                  "secretName": {}
-                },
-                "type": "object"
-              },
-              "merge": {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              "nkey": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "contents": {},
-                  "dir": {},
-                  "key": {
-                    "type": "string"
-                  },
-                  "secretName": {}
-                },
-                "type": "object"
-              },
-              "patch": {
-                "items": {},
-                "type": "array"
-              },
-              "tls": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "cert": {
-                    "type": "string"
-                  },
-                  "dir": {},
-                  "key": {
-                    "type": "string"
-                  },
-                  "secretName": {}
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "NATS contexts",
-          "properties": {
-            "default": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "properties": {
-                      "cert": {
-                        "type": "string"
-                      },
-                      "contents": {},
-                      "dir": {},
-                      "key": {
-                        "type": "string"
-                      },
-                      "secretName": {}
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  }
-                ]
-              },
-              "properties": {
-                "creds": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "contents": {
-                      "description": "set contents in order to create a secret with the creds file contents"
-                    },
-                    "dir": {
-                      "description": "defaults to /etc/nats-creds/<context-name>"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "secretName": {
-                      "description": "set secretName in order to mount an existing secret to dir"
-                    }
-                  },
-                  "type": "object"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "description": "merge or patch the context\nhttps://docs.nats.io/using-nats/nats-tools/nats_cli#nats-contexts",
-                  "type": "object"
-                },
-                "nkey": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "contents": {
-                      "description": "set contents in order to create a secret with the nkey file contents"
-                    },
-                    "dir": {
-                      "description": "defaults to /etc/nats-nkeys/<context-name>"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "secretName": {
-                      "description": "set secretName in order to mount an existing secret to dir"
-                    }
-                  },
-                  "type": "object"
-                },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "tls": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "description": "used to connect with client certificates",
-                  "properties": {
-                    "cert": {
-                      "type": "string"
-                    },
-                    "dir": {
-                      "description": "defaults to /etc/nats-certs/<context-name>"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "secretName": {
-                      "description": "set secretName in order to mount an existing secret to dir"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            }
-          },
           "type": "object"
         },
         "contextsSecret": {
@@ -2384,8 +2079,7 @@
           "type": "object"
         },
         "defaultContextName": {
-          "description": "name of context to select by default",
-          "type": "string"
+          "description": "name of context to select by default"
         },
         "deployment": {
           "additionalProperties": false,
@@ -2532,9 +2226,18 @@
           "type": "array"
         },
         "topologySpreadConstraints": {
-          "additionalProperties": {},
-          "description": "map of topologyKey: topologySpreadConstraint\nlabelSelector will be added to match StatefulSet pods\ntopologySpreadConstraints:\nkubernetes.io/hostname:\nmaxSkew: 1",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "map of topologyKey: topologySpreadConstraint\nlabelSelector will be added to match StatefulSet pods\ntopologySpreadConstraints:\nkubernetes.io/hostname:\nmaxSkew: 1"
         }
       },
       "type": "object"
@@ -2556,20 +2259,6 @@
           },
           "then": {
             "properties": {
-              "image": {
-                "properties": {
-                  "digest": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "repository": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
               "monitorDomain": {
                 "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate",
                 "type": "string"
@@ -2583,57 +2272,6 @@
                     "type": "string"
                   }
                 ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "digest": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "digest"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "tag": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
               }
             },
             "type": "object"
@@ -2708,9 +2346,7 @@
           "additionalProperties": false,
           "properties": {
             "digest": {},
-            "fullImageName": {
-              "type": "null"
-            },
+            "fullImageName": {},
             "global": {
               "additionalProperties": false,
               "properties": {
@@ -2718,24 +2354,15 @@
                   "additionalProperties": false,
                   "properties": {
                     "pullPolicy": {},
-                    "registry": {
-                      "type": "string"
-                    }
+                    "registry": {}
                   },
                   "type": "object"
                 }
               },
               "type": "object"
             },
-            "pullPolicy": {
-              "type": "null"
-            },
-            "registry": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "pullPolicy": {},
+            "registry": {},
             "repository": {},
             "tag": {}
           },
@@ -2781,121 +2408,6 @@
     },
     "reloader": {
       "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "digest": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "repository": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "digest": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "digest"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "tag": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "description": "stateful set -> pod template -> reloader container",
       "properties": {
         "enabled": {
@@ -2910,9 +2422,7 @@
           "additionalProperties": false,
           "properties": {
             "digest": {},
-            "fullImageName": {
-              "type": "null"
-            },
+            "fullImageName": {},
             "global": {
               "additionalProperties": false,
               "properties": {
@@ -2920,24 +2430,15 @@
                   "additionalProperties": false,
                   "properties": {
                     "pullPolicy": {},
-                    "registry": {
-                      "type": "string"
-                    }
+                    "registry": {}
                   },
                   "type": "object"
                 }
               },
               "type": "object"
             },
-            "pullPolicy": {
-              "type": "null"
-            },
-            "registry": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+            "pullPolicy": {},
+            "registry": {},
             "repository": {},
             "tag": {}
           },
@@ -2975,11 +2476,18 @@
           "type": "object"
         },
         "name": {
-          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\"",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
         },
         "patch": {
           "items": {},
@@ -3126,11 +2634,18 @@
           "type": "object"
         },
         "name": {
-          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\"",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
         },
         "patch": {
           "items": {},
@@ -3144,15 +2659,10 @@
       "description": "reference a common CA Certificate or Bundle in all nats config `tls` blocks and nats-box contexts\nnote: `tls.verify` still must be set in the appropriate nats config `tls` blocks to require mTLS",
       "properties": {
         "configMapName": {
-          "description": "set configMapName in order to mount an existing configMap to dir",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "set configMapName in order to mount an existing configMap to dir"
         },
         "dir": {
-          "description": "directory to mount the configMap or secret to",
-          "type": "string"
+          "description": "directory to mount the configMap or secret to"
         },
         "enabled": {
           "type": "boolean"
@@ -3165,11 +2675,7 @@
           ]
         },
         "secretName": {
-          "description": "set secretName in order to mount an existing secretName to dir",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "set secretName in order to mount an existing secretName to dir"
         }
       },
       "type": "object"

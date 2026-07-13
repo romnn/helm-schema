@@ -249,6 +249,8 @@ fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {
             expanded.push(branch);
         }
     }
+    expanded.sort();
+    expanded.dedup();
     *uses = expanded;
 }
 

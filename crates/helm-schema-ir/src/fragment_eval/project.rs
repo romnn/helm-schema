@@ -59,6 +59,16 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
             .iter()
             .map(|(path, hints)| (path.clone(), hints.clone())),
     );
+    contract.extend_guarded_type_hints(
+        document
+            .guarded_type_hints
+            .iter()
+            .map(|(path, hints)| (path.clone(), hints.clone())),
+    );
+    contract.extend_shape_erased_value_paths(document.shape_erased_paths.iter().cloned());
+    contract.extend_string_contract_value_paths(document.string_contract_paths.iter().cloned());
+    contract.extend_direct_range_source_paths(document.direct_range_source_paths.iter().cloned());
+    contract.extend_fail_conditions(document.fail_conditions.iter().cloned());
     contract
 }
 
@@ -68,16 +78,110 @@ fn walk_guarded(
     conditions: &mut Vec<Predicate>,
     contract: &mut ContractIr,
 ) {
+    let open_mapping_entry = find_open_mapping_entry(guarded);
     for (condition, node) in &guarded.arms {
         let pushed = !condition.is_trivial();
         if pushed {
             conditions.push(condition.clone());
         }
-        walk_node(node, path, conditions, contract);
+        let mut effective_path = path.clone();
+        if let Some((owner, key)) = &open_mapping_entry
+            && arm_continues_open_mapping_entry(owner, key, condition, node)
+        {
+            effective_path.0.push(key.to_string());
+        }
+        walk_node(node, &effective_path, conditions, contract);
         if pushed {
             conditions.pop();
         }
     }
+}
+
+/// The trailing literal mapping entry an arm leaves OPEN: a valueless
+/// `config:`-style header whose only successors are dynamic entries. A
+/// `with`-scoped splice (velero's `{{- with .config }} config: {{- range … }}`
+/// pattern) emits the header in one arm and the member writes as sibling
+/// arms; those siblings belong under the header's key.
+fn find_open_mapping_entry(guarded: &Guarded<AbstractFragment>) -> Option<(Predicate, String)> {
+    guarded.arms.iter().rev().find_map(|(condition, node)| {
+        let AbstractFragment::Mapping(mapping) = node else {
+            return None;
+        };
+        mapping
+            .entries
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(index, entry)| match &entry.key {
+                EntryKey::Literal(key)
+                    if !key.is_empty()
+                        && entry.value.arms.is_empty()
+                        && mapping.entries[index + 1..]
+                            .iter()
+                            .all(|entry| matches!(entry.key, EntryKey::Dynamic(_))) =>
+                {
+                    Some((condition.clone(), key.clone()))
+                }
+                _ => None,
+            })
+    })
+}
+
+/// Whether an arm's content continues the open mapping entry of `owner`:
+/// the arm must run under (at least) the owner's conjuncts, and be either a
+/// ranged splice or a mapping made only of dynamic entries and the open
+/// header itself.
+fn arm_continues_open_mapping_entry(
+    owner: &Predicate,
+    key: &str,
+    condition: &Predicate,
+    node: &AbstractFragment,
+) -> bool {
+    if !predicate_is_conjunctive_subset(owner, condition) {
+        return false;
+    }
+    match node {
+        AbstractFragment::Splice(_) => predicate_has_range(condition),
+        AbstractFragment::Mapping(mapping) => mapping.entries.iter().all(|entry| {
+            matches!(entry.key, EntryKey::Dynamic(_))
+                || matches!(&entry.key, EntryKey::Literal(entry_key)
+                    if entry_key == key && entry.value.arms.is_empty())
+        }),
+        _ => false,
+    }
+}
+
+fn predicate_has_range(predicate: &Predicate) -> bool {
+    match predicate {
+        Predicate::Guard(Guard::Range { .. }) => true,
+        Predicate::Not(inner) => predicate_has_range(inner),
+        Predicate::And(predicates) | Predicate::Or(predicates) => {
+            predicates.iter().any(predicate_has_range)
+        }
+        Predicate::True | Predicate::False | Predicate::Guard(_) => false,
+    }
+}
+
+fn predicate_is_conjunctive_subset(subset: &Predicate, superset: &Predicate) -> bool {
+    fn collect(predicate: &Predicate, out: &mut std::collections::BTreeSet<Predicate>) {
+        match predicate {
+            Predicate::True => {}
+            Predicate::And(predicates) => {
+                for predicate in predicates {
+                    collect(predicate, out);
+                }
+            }
+            other => {
+                out.insert(other.clone());
+            }
+        }
+    }
+
+    let mut subset_conjuncts = std::collections::BTreeSet::new();
+    let mut superset_conjuncts = std::collections::BTreeSet::new();
+    collect(subset, &mut subset_conjuncts);
+    collect(superset, &mut superset_conjuncts);
+    subset_conjuncts.is_subset(&superset_conjuncts)
 }
 
 fn walk_node(
@@ -190,20 +294,32 @@ fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> Con
         };
         condition = condition.conjoined_with_guards([default_guard.clone()]);
     }
-    // Encoded renders don't expose the value's shape to the sink schema.
-    let kind = if splice.meta.encoded {
-        ValueKind::PartialScalar
+    // Serialization and encoding transforms don't expose the input shape to
+    // the sink schema. Fragment serialization stays distinguishable from a
+    // scalar text transform so provider resolution cannot recover its shape.
+    // A total stringification (`quote`, `toString`, `join`) erases shape at
+    // every position: unlike `b64enc`, its input is not required to be text.
+    let kind = if splice.meta.shape_erased {
+        ValueKind::Serialized
+    } else if splice.meta.encoded {
+        if splice.kind == ValueKind::Fragment {
+            ValueKind::Serialized
+        } else {
+            ValueKind::PartialScalar
+        }
     } else {
         splice.kind
     };
-    placed_row(
+    let mut row = placed_row(
         splice.values_path.clone(),
         path,
         kind,
         condition,
         splice.meta.site.as_deref(),
         &splice.meta.provenance,
-    )
+    );
+    row.has_string_contract = splice.meta.string_contract && kind != ValueKind::Serialized;
+    row
 }
 
 /// One placed row with the shared site policy applied: List-item path

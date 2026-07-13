@@ -54,7 +54,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "metadata",
         "annotations"
@@ -392,6 +392,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -432,6 +433,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -527,7 +529,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "metadata",
         "labels"
@@ -598,7 +600,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "metadata",
         "namespace"
@@ -656,52 +658,11 @@
           },
           {
             "path": "metrics.prometheusRule.rules",
-            "type": "not"
+            "type": "truthy"
           }
         ]
       ],
       "kind": "Scalar",
-      "path": [
-        "spec",
-        "groups[*]",
-        "rules"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "metrics.prometheusRule.rules"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.rules",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Fragment",
       "path": [
         "spec",
         "groups[*]",
@@ -725,6 +686,47 @@
           "span": {
             "end": 774,
             "start": 748
+          },
+          "template_path": "<inline:2>"
+        }
+      ],
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "PrometheusRule"
+      },
+      "source_expr": "metrics.prometheusRule.rules"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.rules",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "groups[*]",
+        "rules"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 817,
+            "start": 804
           },
           "template_path": "<inline:2>"
         }
@@ -892,6 +894,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -973,6 +976,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -1062,7 +1066,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "metadata",
         "name"
@@ -1110,7 +1114,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "groups[*]",
@@ -1151,6 +1155,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",

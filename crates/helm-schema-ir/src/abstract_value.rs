@@ -192,11 +192,11 @@ impl AbstractValue {
 
         match self {
             Self::ValuesPath(prefix) => {
-                if prefix.is_empty() {
-                    Some(Self::ValuesPath(rest.join(".")))
-                } else {
-                    Some(Self::ValuesPath(format!("{prefix}.{}", rest.join("."))))
-                }
+                let mut segments = helm_schema_core::split_value_path(prefix);
+                segments.extend(rest.iter().cloned());
+                Some(Self::ValuesPath(helm_schema_core::join_value_path(
+                    segments,
+                )))
             }
             Self::OutputPath(prefix, meta) => Some(Self::OutputPath(prefix.clone(), meta.clone())),
             Self::RootContext => {
@@ -204,7 +204,9 @@ impl AbstractValue {
                     if rest.len() == 1 {
                         Some(Self::values_root())
                     } else {
-                        Some(Self::ValuesPath(rest[1..].join(".")))
+                        Some(Self::ValuesPath(helm_schema_core::join_value_path(
+                            &rest[1..],
+                        )))
                     }
                 } else {
                     None
@@ -452,19 +454,12 @@ impl AbstractValue {
 }
 
 fn item_path(path: &str) -> String {
-    if path.is_empty() {
-        "*".to_string()
-    } else {
-        format!("{path}.*")
-    }
+    helm_schema_core::append_value_path(path, "*")
 }
 
 pub(crate) fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {
     encoded_paths.iter().any(|encoded_path| {
-        path == encoded_path
-            || path
-                .strip_prefix(encoded_path)
-                .is_some_and(|suffix| suffix.starts_with('.'))
+        path == encoded_path || helm_schema_core::values_path_is_descendant(path, encoded_path)
     })
 }
 

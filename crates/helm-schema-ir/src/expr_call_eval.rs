@@ -2,15 +2,16 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::abstract_value::AbstractValue;
+use crate::abstract_value::{AbstractValue, path_is_encoded};
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::helper_meta::HelperOutputMeta;
 use helm_schema_ast::expression_schema_type;
+use helm_schema_ast::type_is_schema_type;
 use helm_schema_ast::{
     is_merge_function, is_provenance_preserving_function, is_string_transform_function,
-    type_is_schema_type,
+    is_total_numeric_cast_function, is_total_stringification_function,
 };
 use helm_schema_ast::{literal_printf_format, render_printf_string_sets};
 
@@ -46,7 +47,17 @@ pub(crate) fn eval_call_with_helper_calls(
         "tpl" if args.len() == 2 => eval_tpl(args, env, resolver),
         "cat" => eval_cat(args, env, resolver),
         "index" => eval_index(args, env, resolver),
-        "typeIs" if args.len() >= 2 => eval_type_is(args, env, resolver),
+        "get" if args.len() == 2 => eval_index(args, env, resolver),
+        "typeIs" | "kindIs" if args.len() >= 2 => eval_type_is(args, env, resolver),
+        "fromYaml" if args.len() == 1 => eval_from_yaml(args, env, resolver),
+        "toYaml" if args.len() == 1 => eval_to_yaml(args, env, resolver),
+        "join" if args.len() == 2 => eval_join(args, env, resolver),
+        function if is_total_numeric_cast_function(function) && args.len() == 1 => {
+            let result = eval_all_args(args, env, resolver);
+            let mut effects = result.effects;
+            record_total_conversion_effects(identity_value_paths(&result.value), &mut effects);
+            EvalResult::with_effects(result.value, effects)
+        }
         function if is_string_transform_function(function) => {
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
@@ -96,6 +107,33 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 }
                 EvalResult::with_effects(current.value, effects)
             }
+            "fromYaml" => eval_from_yaml_pipeline(current, args, env, resolver),
+            "printf" => {
+                let mut effects = current.effects;
+                // The piped value is printf's FINAL data argument; `args`
+                // hold the format plus any leading data arguments.
+                let piped = identity_value_paths(&current.value);
+                record_printf_argument_effects(false, &piped, &mut effects);
+                for (index, arg) in args.iter().enumerate() {
+                    let result = eval_expr_with_helper_calls(arg, env, resolver);
+                    let identity_paths = identity_value_paths(&result.value);
+                    effects.merge(result.effects);
+                    record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
+                }
+                EvalResult::with_effects(current.value, effects)
+            }
+            "join" => eval_join_pipeline(current, args, env, resolver),
+            function if is_total_numeric_cast_function(function) => {
+                let mut effects = current.effects;
+                record_total_conversion_effects(identity_value_paths(&current.value), &mut effects);
+                merge_arg_effects(args, env, resolver, &mut effects);
+                EvalResult::with_effects(current.value, effects)
+            }
+            "toYaml" => {
+                let mut result = eval_to_yaml_result(current);
+                merge_arg_effects(args, env, resolver, &mut result.effects);
+                result
+            }
             function if is_provenance_preserving_function(function) => {
                 let mut effects = current.effects;
                 merge_arg_effects(args, env, resolver, &mut effects);
@@ -133,7 +171,31 @@ fn record_string_transform_effects(
     effects: &mut Effects,
 ) {
     let paths = identity_value_paths(value);
-    effects.add_type_hints(paths.clone(), "string");
+    if is_total_stringification_function(function) {
+        // Sprig's `strval` fallback renders ANY input (maps, lists, nil), so
+        // a total stringification constrains nothing about its input and the
+        // sink observes only the rendered text, never the input shape.
+        record_total_conversion_effects(paths, effects);
+        return;
+    }
+    // A path that already passed a converting stage in this expression
+    // (`printf … | trunc`) or that flows out of a shape-erasing local
+    // binding (`$pass := … | toString` then `$pass | b64enc`) reaches this
+    // consumer as derived text: the earlier conversion owns the input
+    // contract, so the consumer claims nothing about the raw path.
+    let raw: BTreeSet<String> = paths
+        .iter()
+        .filter(|path| {
+            !effects.derived_text_paths.contains(*path)
+                && !effects
+                    .local_output_meta
+                    .get(*path)
+                    .is_some_and(|meta| meta.shape_erased || meta.derived_text)
+        })
+        .cloned()
+        .collect();
+    effects.string_contract_paths.extend(raw);
+    effects.derived_text_paths.extend(paths.iter().cloned());
     if function == "b64enc" {
         effects.add_encoded_paths(paths);
     }
@@ -200,11 +262,7 @@ fn eval_set_call(
     };
     for target_path in &target_paths {
         for key in &keys {
-            let defaulted_path = if target_path.is_empty() {
-                key.clone()
-            } else {
-                format!("{target_path}.{key}")
-            };
+            let defaulted_path = helm_schema_core::append_value_path(target_path, key);
             if effects.defaults.contains(&defaulted_path) {
                 effects.chart_default_paths.insert(defaulted_path);
             }
@@ -270,7 +328,16 @@ fn eval_default(
     let mut effects = primary.effects;
     let primary_paths = identity_value_paths(&primary.value);
     effects.add_default_paths(primary_paths.clone());
-    if let Some(schema_type) = fallback_args.first().and_then(expression_schema_type) {
+    // Only a LITERAL fallback types the path: `default "x" .Values.name`
+    // documents a string-shaped input. A call fallback (`default (include
+    // …) .Values.ns`) only proves the fallback renders text; the path
+    // itself accepts whatever the render site accepts.
+    if let Some(schema_type) = fallback_args
+        .first()
+        .map(TemplateExpr::deparen)
+        .filter(|expr| matches!(expr, TemplateExpr::Literal(_)))
+        .and_then(expression_schema_type)
+    {
         effects.add_type_hints(primary_paths, schema_type);
     }
     let mut values = primary.value.into_iter().collect::<Vec<_>>();
@@ -444,18 +511,18 @@ fn eval_index(
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct PathSegmentOption {
-    segment: String,
+    segments: Vec<String>,
     integer_index: bool,
 }
 
 fn apply_index_segment(value: &AbstractValue, option: &PathSegmentOption) -> Option<AbstractValue> {
     if !option.integer_index {
-        return value.apply_to_path(std::slice::from_ref(&option.segment));
+        return value.apply_to_path(&option.segments);
     }
 
     match value {
         AbstractValue::List(items) => {
-            let index = option.segment.parse::<usize>().ok()?;
+            let index = option.segments.first()?.parse::<usize>().ok()?;
             items.get(index).cloned()
         }
         AbstractValue::Choice(choices) => AbstractValue::choice(
@@ -518,7 +585,7 @@ fn eval_printf(
     let mut widened_paths = BTreeSet::new();
     let mut values = Vec::with_capacity(args.len());
 
-    for arg in args {
+    for (index, arg) in args.iter().enumerate() {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         let identity_paths = identity_value_paths(&result.value);
         widened_paths.extend(
@@ -526,8 +593,9 @@ fn eval_printf(
                 .difference(&identity_paths)
                 .cloned(),
         );
-        provenance_paths.extend(identity_paths);
         effects.merge(result.effects);
+        record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
+        provenance_paths.extend(identity_paths);
         values.push(result.value);
     }
 
@@ -536,7 +604,6 @@ fn eval_printf(
         render_printf_string_sets(format, &arg_strings)
     });
 
-    effects.add_type_hints(provenance_paths.clone(), "string");
     let mut values = Vec::new();
     if let Some(rendered) = rendered {
         values.push(AbstractValue::StringSet(rendered));
@@ -550,6 +617,52 @@ fn eval_printf(
         values.push(widened);
     }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+/// A total conversion (`quote`/`toString` via `strval`, the numeric casts
+/// via `cast.ToXxx`) renders ANY input, so it constrains nothing about it
+/// and the sink observes only derived output, never the input shape. Only
+/// an earlier string-consuming stage (`b64enc | quote`) keeps its contract
+/// on the raw path.
+fn record_total_conversion_effects(paths: BTreeSet<String>, effects: &mut Effects) {
+    let erasable = paths
+        .iter()
+        .filter(|path| !effects.string_contract_paths.contains(*path))
+        .cloned()
+        .collect();
+    effects.add_shape_erased_paths(erasable);
+    effects.derived_text_paths.extend(paths);
+}
+
+/// printf's parameters have different input contracts: the format parameter
+/// is a real Go `string` (a non-string format fails template evaluation), so
+/// a dynamic format binds a string contract on its raw paths; data parameters
+/// render through any verb (Go's fmt embeds mismatches in the output instead
+/// of failing), so like `quote` they erase input shape. Every argument
+/// becomes derived text for later stages.
+fn record_printf_argument_effects(
+    is_format: bool,
+    identity_paths: &BTreeSet<String>,
+    effects: &mut Effects,
+) {
+    if is_format {
+        let raw: BTreeSet<String> = identity_paths
+            .iter()
+            .filter(|path| !effects.derived_text_paths.contains(*path))
+            .cloned()
+            .collect();
+        effects.string_contract_paths.extend(raw);
+    } else {
+        let erasable = identity_paths
+            .iter()
+            .filter(|path| !effects.string_contract_paths.contains(*path))
+            .cloned()
+            .collect();
+        effects.add_shape_erased_paths(erasable);
+    }
+    effects
+        .derived_text_paths
+        .extend(identity_paths.iter().cloned());
 }
 
 fn eval_print(
@@ -588,9 +701,136 @@ fn eval_tpl(
 ) -> EvalResult {
     let template = eval_expr_with_helper_calls(&args[0], env, resolver);
     let mut effects = template.effects;
-    effects.merge(eval_expr_with_helper_calls(&args[1], env, resolver).effects);
-    let value = template.value.and_then(rendered_content_value);
+    // The context argument's value AND effects are deliberately discarded:
+    // a context like `$` reads the whole values tree, and letting that read
+    // reach the call site stamps the context's map shape onto the rendered
+    // scalar (grafana's `name: {{ tpl .name $ }}` items were typed as
+    // objects this way).
+    let _context = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let value = if expression_applies_to_yaml(&args[0]) {
+        let paths = value_paths(&template.value);
+        effects.add_encoded_paths(paths.clone());
+        effects.add_shape_erased_paths(paths.clone());
+        AbstractValue::widened(paths)
+    } else {
+        template.value
+    }
+    .and_then(rendered_content_value);
     EvalResult::with_effects(value, effects)
+}
+
+fn expression_applies_to_yaml(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Call { function, .. } => function == "toYaml",
+        TemplateExpr::Pipeline(stages) => stages.iter().any(|stage| {
+            matches!(stage.deparen(), TemplateExpr::Call { function, .. } if function == "toYaml")
+        }),
+        _ => false,
+    }
+}
+
+fn eval_from_yaml(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let result = eval_expr_with_helper_calls(&args[0], env, resolver);
+    eval_from_yaml_result(result)
+}
+
+fn eval_to_yaml(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let result = eval_expr_with_helper_calls(&args[0], env, resolver);
+    eval_to_yaml_result(result)
+}
+
+fn eval_to_yaml_result(result: EvalResult) -> EvalResult {
+    let paths = identity_value_paths(&result.value);
+    let mut effects = result.effects;
+    effects.yaml_serialized_paths.extend(paths.iter().cloned());
+    // The output is rendered YAML text: a later consuming transform
+    // (`toYaml x | trim`) operates on that text and claims nothing about
+    // the raw value, which serializes at any type.
+    effects.derived_text_paths.extend(paths);
+    EvalResult::with_effects(result.value, effects)
+}
+
+fn eval_from_yaml_pipeline(
+    current: EvalResult,
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut result = eval_from_yaml_result(current);
+    merge_arg_effects(args, env, resolver, &mut result.effects);
+    result
+}
+
+fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
+    let paths = identity_value_paths(&result.value);
+    let round_trips_yaml = !paths.is_empty()
+        && paths
+            .iter()
+            .all(|path| path_is_encoded(path, &result.effects.yaml_serialized_paths));
+    let mut effects = result.effects;
+    let string_input_paths = paths
+        .iter()
+        .filter(|path| !path_is_encoded(path, &effects.yaml_serialized_paths))
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    effects.add_type_hints(string_input_paths.clone(), "string");
+    effects
+        .string_contract_paths
+        .extend(string_input_paths.iter().cloned());
+    effects.parsed_yaml_input_paths.extend(string_input_paths);
+    let value = if round_trips_yaml {
+        result.value
+    } else {
+        AbstractValue::widened(paths)
+    };
+    EvalResult::with_effects(value, effects)
+}
+
+fn eval_join(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let separator = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let mut result = eval_expr_with_helper_calls(&args[1], env, resolver);
+    result.effects.merge(separator.effects);
+    erase_join_input_shape(&mut result);
+    result
+}
+
+fn eval_join_pipeline(
+    mut current: EvalResult,
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    merge_arg_effects(args, env, resolver, &mut current.effects);
+    erase_join_input_shape(&mut current);
+    current
+}
+
+/// `join` is a total stringification like `toString`: Sprig's `strslice`
+/// converts lists element-wise, wraps any other non-nil value as a singleton,
+/// and turns nil into an empty slice, so any input type renders. As with
+/// `quote`, a path that already passed a string-consuming transform keeps
+/// its own contract.
+fn erase_join_input_shape(result: &mut EvalResult) {
+    let paths = identity_value_paths(&result.value);
+    let erasable = paths
+        .iter()
+        .filter(|path| !result.effects.string_contract_paths.contains(*path))
+        .cloned()
+        .collect();
+    result.effects.add_shape_erased_paths(erasable);
+    result.effects.derived_text_paths.extend(paths);
 }
 
 /// `cat` joins its arguments into one string, so the output content is the
@@ -662,6 +902,7 @@ fn eval_ternary(
             values.push(value);
         }
     }
+    effects.promote_tested_type_hints();
     EvalResult::with_effects(AbstractValue::choice(values), effects)
 }
 
@@ -670,8 +911,8 @@ fn eval_type_is(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let mut values = Vec::new();
     let mut effects = Effects::default();
+    let mut values = Vec::new();
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
@@ -679,7 +920,7 @@ fn eval_type_is(
     }
     if let Some(schema_type) = type_is_schema_type(args.first()) {
         let paths = values.get(1).map(identity_value_paths).unwrap_or_default();
-        effects.add_type_hints(paths, &schema_type);
+        effects.add_tested_type_hints(paths, &schema_type);
     }
     EvalResult::with_effects(None, effects)
 }
@@ -766,12 +1007,12 @@ fn path_segment_options(
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
             Some(vec![PathSegmentOption {
-                segment: value.clone(),
+                segments: vec![value.clone()],
                 integer_index: false,
             }])
         }
         TemplateExpr::Literal(Literal::Int(value)) => Some(vec![PathSegmentOption {
-            segment: value.to_string(),
+            segments: vec![value.to_string()],
             integer_index: true,
         }]),
         _ => {
@@ -781,15 +1022,23 @@ fn path_segment_options(
             if strings.is_empty() {
                 None
             } else {
-                Some(
-                    strings
-                        .into_iter()
-                        .map(|segment| PathSegmentOption {
-                            segment,
+                let mut options = Vec::new();
+                for value in strings {
+                    options.push(PathSegmentOption {
+                        segments: vec![value.clone()],
+                        integer_index: false,
+                    });
+                    let structural_segments = helm_schema_core::split_value_path(&value);
+                    if structural_segments.len() > 1 {
+                        options.push(PathSegmentOption {
+                            segments: structural_segments,
                             integer_index: false,
-                        })
-                        .collect(),
-                )
+                        });
+                    }
+                }
+                options.sort_by(|left, right| left.segments.cmp(&right.segments));
+                options.dedup();
+                Some(options)
             }
         }
     }

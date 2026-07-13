@@ -167,21 +167,34 @@ fn string_transform_pipeline_preserves_all_printf_argument_paths() {
     let expr = single_expr(r#"printf "%s-%s" .Values.primary.name .Values.suffix | trunc 63"#);
     let result = eval_expr(&expr, &EvalEnv::default());
 
-    assert!(
-        result
-            .effects
-            .type_hints
-            .get("primary.name")
-            .is_some_and(|hints| hints.contains("string")),
-        "primary.name should remain visible through printf before trunc"
+    for path in ["primary.name", "suffix"] {
+        assert!(
+            result.effects.derived_text_paths.contains(path),
+            "{path} should remain visible through printf as derived text"
+        );
+        // trunc consumes printf's derived text, so it must not bind a
+        // string contract on the raw argument paths: printf renders
+        // anything.
+        sim_assert_eq!(
+            have: result.effects.type_hints.get(path),
+            want: None,
+            "{path} must not inherit trunc's contract through printf"
+        );
+    }
+}
+
+#[test]
+fn quote_pipeline_erases_input_shape_without_typing() {
+    let result = eval_expr(&single_expr(r#".Values.flag | quote"#), &EvalEnv::default());
+
+    sim_assert_eq!(
+        have: result.effects.type_hints.get("flag"),
+        want: None,
+        "quote renders any input through strval, so it types nothing"
     );
     assert!(
-        result
-            .effects
-            .type_hints
-            .get("suffix")
-            .is_some_and(|hints| hints.contains("string")),
-        "suffix should remain visible through printf before trunc"
+        result.effects.shape_erased_paths.contains("flag"),
+        "the sink observes quote's rendered text, never the input shape"
     );
 }
 
@@ -377,17 +390,18 @@ fn selector_on_local_dict_records_only_selected_child_reads() {
 }
 
 #[test]
-fn unsupported_printf_format_preserves_string_hint_without_exact_string() {
+fn unsupported_printf_format_types_nothing_without_exact_string() {
     let expr = single_expr(r#"printf "%d" .Values.count"#);
     let result = eval_expr(&expr, &EvalEnv::default());
 
+    sim_assert_eq!(
+        have: result.effects.type_hints.get("count"),
+        want: None,
+        "Go fmt embeds verb mismatches in the output instead of failing, so printf types nothing"
+    );
     assert!(
-        result
-            .effects
-            .type_hints
-            .get("count")
-            .is_some_and(|hints| hints.contains("string")),
-        "unsupported printf formats still prove scalar string-context use"
+        result.effects.derived_text_paths.contains("count"),
+        "printf arguments stay visible as derived text"
     );
     assert!(
         result

@@ -731,36 +731,6 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/helm-truthy"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -905,31 +875,39 @@
       "type": "array"
     },
     "additionalEnv": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Array containing extra environment variables which can be templated.\nFor example:\n- name: RELEASE_NAME\nvalue: \"{{ .Release.Name }}\"\n- name: MY_VAR\nvalue: \"mySpecialKey\""
     },
     "affinity": {
-      "additionalProperties": {},
-      "description": "Affinity for the operator to be installed.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Affinity for the operator to be installed."
     },
     "commonAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotations to be added to all other resources.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Annotations to be added to all other resources."
     },
     "config": {
       "additionalProperties": false,
@@ -1218,142 +1196,30 @@
                 "type": "object"
               },
               "podMonitorMetricRelabelings": {
-                "description": "Metrics relabel configurations to apply to samples before ingestion.",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
                   },
-                  "type": "object"
-                },
-                "type": "array"
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Metrics relabel configurations to apply to samples before ingestion."
               },
               "podMonitorRelabelings": {
-                "description": "Relabel configurations to apply to samples before scraping.",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
                   },
-                  "type": "object"
-                },
-                "type": "array"
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Relabel configurations to apply to samples before scraping."
               }
             },
             "type": "object"
@@ -1445,32 +1311,6 @@
                       {
                         "anyOf": [
                           {
-                            "not": {
-                              "properties": {
-                                "sidecarLabel": {}
-                              },
-                              "required": [
-                                "sidecarLabel"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "sidecarLabel": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "sidecarLabel"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
                             "properties": {
                               "labels": {
                                 "$ref": "#/$defs/helm-truthy"
@@ -1513,32 +1353,6 @@
                   },
                   {
                     "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "sidecarLabel": {}
-                              },
-                              "required": [
-                                "sidecarLabel"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "sidecarLabel": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "sidecarLabel"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
                       {
                         "not": {
                           "properties": {
@@ -1597,19 +1411,12 @@
               },
               "then": {
                 "properties": {
-                  "sidecarLabelValue": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Label value that ConfigMaps should have to be loaded as dashboards. DEPRECATED: Use labels instead."
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Labels that ConfigMaps should have to get configured in Grafana.",
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -1629,9 +1436,7 @@
               "type": "boolean"
             },
             "labels": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "description": "Labels that ConfigMaps should have to get configured in Grafana.",
               "type": "object"
             },
@@ -1661,142 +1466,34 @@
           "type": "boolean"
         },
         "podMonitorMetricRelabelings": {
-          "description": "Metrics relabel configurations to apply to samples before ingestion.",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Metrics relabel configurations to apply to samples before ingestion."
         },
         "podMonitorRelabelings": {
-          "description": "Relabel configurations to apply to samples before scraping.",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Relabel configurations to apply to samples before scraping."
         }
       },
       "type": "object"
@@ -1819,12 +1516,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "namespaceOverride": {
       "type": [
         "string",
@@ -1832,23 +1524,53 @@
       ]
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Nodeselector for the operator to be installed.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Nodeselector for the operator to be installed."
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotations to be added to the pod.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Annotations to be added to the pod."
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Labels to be added to the pod.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Labels to be added to the pod."
     },
     "podSecurityContext": {
       "additionalProperties": {
@@ -2025,9 +1747,19 @@
       "description": "Topology Spread Constraints for the operator to be installed."
     },
     "updateStrategy": {
-      "additionalProperties": {},
-      "description": "Update strategy for the operator.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy\nFor example:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Update strategy for the operator.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy\nFor example:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%"
     },
     "webhook": {
       "additionalProperties": false,

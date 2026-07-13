@@ -48,8 +48,21 @@ pub(crate) struct FragmentSummary {
     pub(crate) root: Guarded<AbstractFragment>,
     /// Pathless reads observed in the body (helper-internal guards only).
     pub(crate) reads: Vec<ValueRead>,
-    /// Declared input-type hints observed in the body.
+    /// Declared input-type hints observed unconditionally in the body.
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints observed only under body branch predicates.
+    pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Paths consumed as serialized YAML by `fromYaml` in the body.
+    pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
+    /// Paths serialized with `toYaml` in the helper's projected output.
+    pub(crate) yaml_serialized_paths: BTreeSet<String>,
+    /// Paths consumed through total stringifications anywhere in the body:
+    /// the chart tolerates any input type at them.
+    pub(crate) shape_erased_paths: BTreeSet<String>,
+    /// Paths carrying a real runtime string contract in the body.
+    pub(crate) string_contract_paths: BTreeSet<String>,
+    /// `fail` captures of the body, helper-internal state only.
+    pub(crate) fail_conditions: Vec<crate::eval_effect::FailCapture>,
     /// Chart-level `set … default` normalizations the body applies.
     pub(crate) chart_defaults: BTreeSet<String>,
     /// The value projection (see module docs), computed once.
@@ -118,6 +131,12 @@ pub(crate) fn eval_bound_helper_fragment(
         reads,
         suppress_predicate_paths: suppress,
         type_hints: interpreter.type_hints,
+        guarded_type_hints: interpreter.guarded_type_hints,
+        parsed_yaml_input_paths: interpreter.parsed_yaml_input_paths,
+        yaml_serialized_paths: interpreter.yaml_serialized_paths,
+        shape_erased_paths: interpreter.shape_erased_paths,
+        string_contract_paths: interpreter.string_contract_paths,
+        fail_conditions: interpreter.fail_conditions,
         chart_defaults: interpreter.chart_defaults_observed,
     };
     // Render-suppressed splices (block-scalar bodies) influence the text
@@ -247,6 +266,8 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
     merge_provenance_sites(&mut provenance, &splice.meta.provenance);
     let mut meta = HelperOutputMeta {
         defaulted: splice.meta.defaulted,
+        shape_erased: splice.meta.shape_erased,
+        string_contract: splice.meta.string_contract,
         provenance,
         ..HelperOutputMeta::default()
     };

@@ -230,7 +230,9 @@ fn merge_array_schemas(a: &Value, b: &Value) -> Option<Value> {
     }
 
     out.insert("type".to_string(), Value::String("array".to_string()));
-    out.entry("items".to_string()).or_insert(Value::Null);
+    // No `items` stamp when neither side had an opinion: `items: null` is
+    // not a schema, and the null-tolerant arms above already treat an
+    // absent `items` as no opinion.
     Some(Value::Object(out))
 }
 

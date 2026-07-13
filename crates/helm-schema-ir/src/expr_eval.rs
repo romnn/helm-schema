@@ -159,7 +159,7 @@ fn values_path_value(path: &[String]) -> AbstractValue {
     if path.len() == 1 {
         AbstractValue::values_root()
     } else {
-        AbstractValue::ValuesPath(path[1..].join("."))
+        AbstractValue::ValuesPath(helm_schema_core::join_value_path(&path[1..]))
     }
 }
 

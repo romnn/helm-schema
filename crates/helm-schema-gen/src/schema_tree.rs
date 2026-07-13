@@ -25,6 +25,18 @@ impl SchemaDocument {
         insert_schema_at_parts(&mut self.root, path_segments, schema);
     }
 
+    /// Opens the root `global` property. Helm shares `global` values across
+    /// the whole chart tree, so parent and sibling charts consume keys the
+    /// analyzed chart never reads; closing the namespace to this chart's
+    /// observed members would reject valid umbrella configurations.
+    pub(crate) fn open_helm_global_namespace(&mut self) {
+        if let SchemaNode::Object { properties, .. } = &mut self.root
+            && let Some(global) = properties.get_mut("global")
+        {
+            global.open_object();
+        }
+    }
+
     pub(crate) fn replace_path_schema(&mut self, path_segments: &[String], schema: SchemaNode) {
         replace_schema_at_parts(&mut self.root, path_segments, schema);
     }
@@ -424,12 +436,103 @@ fn replace_schema_value_at_path(
     })
 }
 
+/// Host a `*` member row inside an object-shaped node's
+/// `additionalProperties` (a ranged MAP's per-value rows). Returns false
+/// when the node is not an open object-shaped schema, leaving list
+/// handling to the caller.
+fn insert_map_member_row(
+    node: &mut SchemaNode,
+    path_segments: &[String],
+    leaf: &SchemaNode,
+) -> bool {
+    let insert = |member: &mut SchemaNode| {
+        if path_segments.len() == 1 {
+            merge_into_schema_slot(member, leaf.clone());
+        } else {
+            insert_schema_at_parts(member, &path_segments[1..], leaf.clone());
+        }
+    };
+    match node {
+        SchemaNode::Object {
+            additional_properties,
+            ..
+        } => {
+            let member = additional_properties.get_or_insert_with(|| Box::new(SchemaNode::empty()));
+            if member.is_false_schema() {
+                return false;
+            }
+            insert(member.as_mut());
+            true
+        }
+        SchemaNode::Foreign(Value::Object(object))
+            if object.get("type").and_then(Value::as_str) == Some("object")
+                && object
+                    .get("additionalProperties")
+                    .is_none_or(|additional| additional != &Value::Bool(false)) =>
+        {
+            let mut member = object
+                .get("additionalProperties")
+                .cloned()
+                .map_or_else(SchemaNode::empty, SchemaNode::foreign);
+            insert(&mut member);
+            object.insert("additionalProperties".to_string(), member.into_value());
+            true
+        }
+        _ => false,
+    }
+}
+
 fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf: SchemaNode) {
     if path_segments.is_empty() {
         return;
     }
 
+    // `range` iterates maps as well as lists, so a member row's `*` segment
+    // means "each member value" of whatever container the node already is:
+    // an object-shaped node hosts it under `additionalProperties` instead
+    // of growing an array alternative.
+    if path_segments[0] == "*" && insert_map_member_row(node, path_segments, &leaf) {
+        return;
+    }
+
     if matches!(node, SchemaNode::Foreign(_)) && !node.is_empty_slot() {
+        // Descend through properties the resolved value already declares, so
+        // the descendant merges at the deepest existing node and that node's
+        // own openness decides the outcome (a top-level merge of a nested
+        // carrier would let the carrier's materialized closure shut an open
+        // map one level down).
+        if path_segments.len() > 1
+            && path_segments[0] != "*"
+            && let SchemaNode::Foreign(value) = node
+            && let Some(child_value) = value
+                .get_mut("properties")
+                .and_then(|properties| properties.get_mut(&path_segments[0]))
+        {
+            let mut child_node = SchemaNode::foreign(std::mem::take(child_value));
+            insert_schema_at_parts(&mut child_node, &path_segments[1..], leaf);
+            *child_value = child_node.into_value();
+            return;
+        }
+        // A union base (an off-state arm plus one open object arm, e.g. a
+        // declared-empty serialized map) hosts descendants in its open arm:
+        // merging a carrier at the union level would replace the open arm
+        // with the carrier's materialized closure.
+        if path_segments[0] != "*"
+            && let SchemaNode::Foreign(value) = node
+            && let Some(arms) = value.get_mut("anyOf").and_then(Value::as_array_mut)
+        {
+            let arm_is_open_object = |arm: &Value| {
+                arm.get("additionalProperties")
+                    .is_some_and(|ap| ap.as_bool() != Some(false))
+            };
+            let mut open_arms = arms.iter_mut().filter(|arm| arm_is_open_object(arm));
+            if let (Some(arm), None) = (open_arms.next(), open_arms.next()) {
+                let mut arm_node = SchemaNode::foreign(std::mem::take(arm));
+                insert_schema_at_parts(&mut arm_node, path_segments, leaf);
+                *arm = arm_node.into_value();
+                return;
+            }
+        }
         let mut fragment = SchemaNode::empty();
         insert_schema_at_parts(&mut fragment, path_segments, leaf);
         merge_into_schema_slot(node, fragment);

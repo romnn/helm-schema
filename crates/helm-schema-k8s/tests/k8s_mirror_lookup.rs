@@ -1,4 +1,4 @@
-//! Feature B+ — K8s mirror chain + per-source cache namespacing.
+//! K8s mirror chain + per-source cache namespacing.
 
 use std::fs;
 use std::sync::Arc;

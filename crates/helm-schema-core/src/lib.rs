@@ -13,13 +13,14 @@ mod provider_schema_fragment;
 mod provider_schema_use;
 mod schema_provider;
 mod types;
+mod value_path;
 
 pub use capability::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBranchBody};
 pub use capability_liveness::{CapabilityOracle, live_literals};
 pub use contract_signals::{
-    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractFailImplication,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
-    ContractValuePathFacts, MetadataFieldKind,
+    ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
 };
 pub use contract_use::ContractUse;
 pub use guard::{Guard, GuardValue};
@@ -36,3 +37,4 @@ pub use provider_schema_fragment::{
 pub use provider_schema_use::ProviderSchemaUse;
 pub use schema_provider::ResourceSchemaOracle;
 pub use types::{ResourceRef, ValueKind, YamlPath};
+pub use value_path::{append_value_path, join_value_path, split_value_path};

@@ -19,11 +19,21 @@ impl FinalizedContract {
     pub(in crate::contract) fn new(
         normalized_uses: Vec<ContractUse>,
         type_hints: BTreeMap<String, BTreeSet<String>>,
+        guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+        shape_erased_value_paths: BTreeSet<String>,
+        string_contract_value_paths: BTreeSet<String>,
+        direct_range_source_paths: BTreeSet<String>,
+        fail_conditions: Vec<crate::eval_effect::FailCapture>,
         dependency_values_root_fragments: BTreeSet<String>,
     ) -> Self {
         let schema_signals = derive_schema_signals_from_contract_parts(
             &normalized_uses,
             &type_hints,
+            &guarded_type_hints,
+            &shape_erased_value_paths,
+            &string_contract_value_paths,
+            &direct_range_source_paths,
+            &fail_conditions,
             &dependency_values_root_fragments,
         );
 

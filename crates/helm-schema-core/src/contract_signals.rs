@@ -81,9 +81,11 @@ impl ConditionalOverlayEvidence {
             guard_predicates: Vec::new(),
             metadata_field_kinds: self.metadata_field_kinds.clone(),
             type_hints: self.type_hints.clone(),
+            guarded_type_hints: BTreeSet::new(),
             provider_schema_uses: self.provider_schema_uses.clone(),
             requiredness: ContractRequirednessEvidence::default(),
             conditional_overlays: Vec::new(),
+            fail_implications: Vec::new(),
         }
     }
 }
@@ -115,9 +117,43 @@ pub struct ContractPathSchemaEvidence {
     pub guard_predicates: Vec<ConditionalGuard>,
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     pub type_hints: BTreeSet<String>,
+    /// Hints observed only under branch predicates. At the path level these
+    /// may only WIDEN (add accepted alternatives to an otherwise-typed
+    /// base): `allOf` branches can narrow but never re-widen a base, so a
+    /// branch-scoped domain alternative must surface here.
+    pub guarded_type_hints: BTreeSet<String>,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub requiredness: ContractRequirednessEvidence,
     pub conditional_overlays: Vec<ConditionalPathOverlay>,
+    /// Requirements implied by explicit `fail` branches: the failing test's
+    /// negation must hold wherever the outer guards do. Runtime-hard
+    /// evidence — rendering genuinely aborts — so lowering must not let
+    /// weaker streams suppress it.
+    pub fail_implications: Vec<ContractFailImplication>,
+}
+
+/// One `fail`-branch implication on a values path.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ContractFailImplication {
+    /// Conditions outside the failing test; empty means the requirement
+    /// binds the path unconditionally.
+    pub outer_guards: Vec<ConditionalGuard>,
+    /// The requirement applies to every MEMBER value of the path (the fail
+    /// sits inside `range` over it) instead of the path's own value.
+    pub per_member: bool,
+    /// Conjunction of requirements the affected value must satisfy.
+    pub requirements: Vec<FailValueRequirement>,
+}
+
+/// One requirement a `fail` branch imposes on an affected value.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum FailValueRequirement {
+    /// The value must be of this JSON Schema type.
+    SchemaType(String),
+    /// The value must NOT be of this JSON Schema type.
+    NotSchemaType(String),
+    /// The value must be an object containing this member.
+    HasMember(String),
 }
 
 impl ContractPathSchemaEvidence {
@@ -199,7 +235,25 @@ impl ContractSchemaSignals {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractValuePathFacts {
     pub has_referenced_descendants: bool,
+    /// Descendant rows that continue through a `*` item segment. Item rows
+    /// describe a ranged collection's element shape; a literal member read
+    /// (e.g. a guard probing one key of a user-populated map) does not.
+    pub has_item_descendants: bool,
+    /// Item descendants that continue INTO element structure (`p.*.field`).
+    /// A bare `p.*` value row proves no LIST shape: `range` iterates maps
+    /// too, so declared-empty maps with only bare member-value rows stay
+    /// user-populated.
+    pub has_structured_item_descendants: bool,
     pub used_as_fragment: bool,
+    /// The path renders through a serializing or total-stringification sink
+    /// (`tpl (toYaml …)`, `quote`, `toString`, `join`): any input type
+    /// renders, so the use exposes provenance but no input shape.
+    pub used_as_serialized: bool,
+    /// A string-consuming transform (`trunc`, `b64enc`, `fromYaml`, a
+    /// dynamic `printf` format) bound a real runtime string contract on the
+    /// path: rendering fails for non-string values, so this typing survives
+    /// even when another use stringifies the path.
+    pub has_string_contract: bool,
     pub used_as_pathless_fragment: bool,
     pub accepted_values_root_fragment: bool,
     pub accepted_dependency_values_root_fragment: bool,

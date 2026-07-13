@@ -303,6 +303,129 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "extraLabels": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "extraLabels"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "namespaceOverride": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "namespaceOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "renderHelmLabels": {}
+                  },
+                  "required": [
+                    "renderHelmLabels"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "renderHelmLabels": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "renderHelmLabels"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "fullnameOverride": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nameOverride": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "secretClaims": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "List of `SecretClaim` resources to create\n- name: secretName        # required\npath: testPath          # required\ntype: kubernetes.io/tls # optional\nrenew: 60               # optional"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "networkPolicy": {
             "properties": {
@@ -335,6 +458,344 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "agentListenerEnabled": {}
+                      },
+                      "required": [
+                        "agentListenerEnabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "agentListenerEnabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "agentListenerEnabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "externalAgents": {
+                        "properties": {
+                          "except": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "except"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "externalAgents"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "externalAgents": {
+                        "properties": {
+                          "ipCIDR": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "ipCIDR"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "externalAgents"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "externalAgents": {
+                "description": "project: myproject",
+                "properties": {
+                  "except": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "A list of IP sub-ranges to be excluded from the allowlisted IP range"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "agentListenerEnabled": {}
+                      },
+                      "required": [
+                        "agentListenerEnabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "agentListenerEnabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "agentListenerEnabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "internalAgents": {
+                          "properties": {
+                            "allowed": {}
+                          },
+                          "required": [
+                            "allowed"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "internalAgents"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "internalAgents": {
+                        "properties": {
+                          "allowed": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "allowed"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "internalAgents"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "internalAgents": {
+                "description": "You can allow agents to connect from both within the cluster (from within specific/all namespaces) AND/OR from a given external IP range",
+                "properties": {
+                  "namespaceLabels": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "A map of labels (keys/values) that agents namespaces must have to be able to connect to controller"
+                  },
+                  "podLabels": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "A map of labels (keys/values) that agent pods must have to be able to connect to controller"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -352,23 +813,15 @@
       "type": "object"
     },
     "additionalClouds": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
+      "additionalProperties": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalAgentsOverride": {}
         },
-        {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "additionalAgentsOverride": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        }
-      ],
-      "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com"
+        "type": "object"
+      },
+      "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com",
+      "type": "object"
     },
     "agent": {
       "additionalProperties": {
@@ -489,9 +942,7 @@
             "properties": {
               "TTYEnabled": {},
               "alwaysPullImage": {},
-              "args": {
-                "type": "string"
-              },
+              "args": {},
               "command": {},
               "image": {
                 "additionalProperties": false,
@@ -501,16 +952,11 @@
                 },
                 "type": "object"
               },
-              "jenkinsUrl": {
-                "additionalProperties": {},
-                "type": "object"
-              },
+              "jenkinsUrl": {},
               "livenessProbe": {
                 "additionalProperties": false,
                 "properties": {
-                  "execArgs": {
-                    "type": "string"
-                  },
+                  "execArgs": {},
                   "failureThreshold": {},
                   "initialDelaySeconds": {},
                   "periodSeconds": {},
@@ -577,9 +1023,7 @@
           "type": "integer"
         },
         "customJenkinsLabels": {
-          "description": "Append Jenkins labels to the agent",
-          "items": {},
-          "type": "array"
+          "description": "Append Jenkins labels to the agent"
         },
         "defaultsProviderTemplate": {
           "description": "The name of the pod template to use for providing default values",
@@ -597,9 +1041,16 @@
           "type": "boolean"
         },
         "envVars": {
-          "description": "Environment variables for the agent Pod\n- name: PATH\nvalue: /usr/local/bin",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Environment variables for the agent Pod\n- name: PATH\nvalue: /usr/local/bin"
         },
         "garbageCollection": {
           "additionalProperties": {
@@ -684,31 +1135,12 @@
           "type": "boolean"
         },
         "instanceCap": {
-          "description": "Max number of agents to launch for this type of agent",
-          "type": "integer"
+          "description": "Max number of agents to launch for this type of agent"
         },
         "jenkinsTunnel": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Overrides the Kubernetes Jenkins tunnel"
         },
         "jenkinsUrl": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Overrides the Kubernetes Jenkins URL"
         },
         "jnlpregistry": {
@@ -723,12 +1155,10 @@
           "type": "integer"
         },
         "livenessProbe": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "ephemeralStorage:\nexecArgs: \"cat /tmp/healthy\"\nfailureThreshold: 3\ninitialDelaySeconds: 0\nperiodSeconds: 10\nsuccessThreshold: 1\ntimeoutSeconds: 1",
           "properties": {
-            "execArgs": {
-              "type": "string"
-            },
+            "execArgs": {},
             "failureThreshold": {},
             "initialDelaySeconds": {},
             "periodSeconds": {},
@@ -738,8 +1168,7 @@
           "type": "object"
         },
         "maxRequestsPerHostStr": {
-          "description": "The maximum concurrent connections to Kubernetes API",
-          "type": "string"
+          "description": "The maximum concurrent connections to Kubernetes API"
         },
         "namespace": {
           "description": "Namespace in which the Kubernetes agents should be launched"
@@ -749,9 +1178,7 @@
           "description": "Node labels for pod assignment\nKey Value selectors. Ex:\nnodeSelector\njenkins-agent: v1",
           "type": "object"
         },
-        "nodeUsageMode": {
-          "type": "string"
-        },
+        "nodeUsageMode": {},
         "podLabels": {
           "additionalProperties": {},
           "description": "Custom Pod labels (an object with `label-key: label-value` pairs)",
@@ -830,14 +1257,6 @@
           "type": "boolean"
         },
         "retentionTimeout": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Time in minutes after which the Kubernetes cloud plugin will clean up an idle worker that has not already terminated"
         },
         "runAsGroup": {
@@ -847,16 +1266,19 @@
           "description": "Configure container user"
         },
         "secretEnvVars": {
-          "description": "Mount a secret as environment variable\n- key: PATH\noptional: false # default: false\nsecretKey: MY-K8S-PATH\nsecretName: my-k8s-secret",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Mount a secret as environment variable\n- key: PATH\noptional: false # default: false\nsecretKey: MY-K8S-PATH\nsecretName: my-k8s-secret"
         },
         "serviceAccount": {
-          "description": "Override the default service account",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Override the default service account"
         },
         "showRawYaml": {
           "description": "Disable if you do not want the Yaml the agent pod template to show up\nin the job Console Output. This can be helpful for either security reasons\nor simply to clean up the output to make it easier to read.",
@@ -897,11 +1319,61 @@
         "volumes": {
           "anyOf": [
             {
-              "items": {},
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "ConfigMap"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "EmptyDir"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "EphemeralVolume"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "HostPath"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "Nfs"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "PVC"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "Secret"
+                        ]
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "type": "array"
             },
             {
               "type": "null"
+            },
+            {
+              "type": "object"
             },
             {
               "type": "string"
@@ -910,14 +1382,6 @@
           "description": "Additional volumes\n- type: ConfigMap\nconfigMapName: myconfigmap\nmountPath: /var/myapp/myconfigmap\n- type: EmptyDir\nmountPath: /var/myapp/myemptydir\nmemory: false\n- type: EphemeralVolume\nmountPath: /var/myapp/myephemeralvolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\n- type: HostPath\nhostPath: /var/lib/containers\nmountPath: /var/myapp/myhostpath\n- type: Nfs\nmountPath: /var/myapp/mynfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\n- type: PVC\nclaimName: mypvc\nmountPath: /var/myapp/mypvc\nreadOnly: false\n- type: Secret\ndefaultMode: \"600\"\nmountPath: /var/myapp/mysecret\nsecretName: mysecret\nPod-wide environment, these vars are visible to any container in the agent pod"
         },
         "waitForPodSec": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Seconds to wait for pod to be running"
         },
         "websocket": {
@@ -929,7 +1393,7 @@
           "type": "string"
         },
         "workspaceVolume": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
           "properties": {
             "type": {
@@ -992,40 +1456,51 @@
     },
     "awsSecurityGroupPolicies": {
       "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "policies": {
-          "items": {
-            "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
             "properties": {
-              "name": {
-                "type": "string"
-              },
-              "podSelector": {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              "securityGroupIds": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "policies": {
                 "anyOf": [
                   {
-                    "items": {},
+                    "items": {
+                      "properties": {},
+                      "type": "object"
+                    },
                     "type": "array"
+                  },
+                  {
+                    "type": "integer"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "type": "string"
+                    "type": "object"
                   }
                 ]
               }
             },
             "type": "object"
-          },
-          "type": "array"
+          }
         }
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "policies": {}
       },
       "type": "object"
     },
@@ -1041,6 +1516,357 @@
     "controller": {
       "additionalProperties": false,
       "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "sidecars": {
+                      "properties": {
+                        "configAutoReload": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configAutoReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecars"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "sidecars": {
+                    "properties": {
+                      "configAutoReload": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "configAutoReload"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "sidecars"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "JCasC": {
+                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
+                "properties": {
+                  "configScripts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
+                  }
+                },
+                "type": "object"
+              },
+              "jenkinsHome": {
+                "description": "Custom Jenkins home path",
+                "type": "string"
+              },
+              "jenkinsUriPrefix": {
+                "description": "Root URI Jenkins will be served on",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecars": {
+                        "properties": {
+                          "configAutoReload": {
+                            "properties": {
+                              "enabled": {}
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "configAutoReload"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecars"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecars": {
+                      "properties": {
+                        "configAutoReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configAutoReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecars"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "JCasC": {
+                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
+                "properties": {
+                  "configScripts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "additionalExistingSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalExistingSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "additionalSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "admin": {
+                          "properties": {
+                            "createSecret": {}
+                          },
+                          "required": [
+                            "createSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "admin"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "admin": {
+                        "properties": {
+                          "createSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "admin"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "existingSecret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "existingSecret"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "additionalExistingSecrets": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "List of additional existing secrets to mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalExistingSecrets:\n- name: secret-name-1\nkeyName: username\n- name: secret-name-1\nkeyName: password"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "installPlugins": {}
+                  },
+                  "required": [
+                    "installPlugins"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "installPlugins": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "installPlugins"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "additionalPlugins": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "List of plugins to install in addition to those listed in controller.installPlugins"
+              },
+              "jenkinsRef": {
+                "description": "Custom Jenkins reference path",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
         {
           "if": {
             "allOf": [
@@ -1173,15 +1999,8 @@
                 "description": "When enabling LDAP or another non-Jenkins identity source, the built-in admin account will no longer exist.\nIf you disable the non-Jenkins identity store and instead use the Jenkins internal one,\nyou should revert controller.admin.username to your preferred admin user:",
                 "properties": {
                   "existingSecret": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "The name of an existing secret containing the admin credentials"
+                    "description": "The name of an existing secret containing the admin credentials",
+                    "type": "string"
                   },
                   "passwordKey": {
                     "anyOf": [
@@ -1261,16 +2080,14 @@
               "agentListenerLoadBalancerSourceRanges": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Allowed inbound IP for the agentListener service"
@@ -1322,6 +2139,81 @@
               "agentListenerServiceType": {
                 "description": "Defines how to expose the agentListener service",
                 "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceEnabled": {}
+                  },
+                  "required": [
+                    "serviceEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "serviceEnabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "extraPorts": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Optionally configure other ports to expose in the controller container\n- name: BuildInfoProxy\nport: 9000\ntargetPort: 9010 (Optional: Use to explicitly set targetPort if different from port)"
+              },
+              "serviceAnnotations": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Jenkins controller service annotations",
+                "type": "object"
+              },
+              "serviceLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Labels for the Jenkins controller-service\nservice.beta.kubernetes.io/aws-load-balancer-backend-protocol: https",
+                "type": "object"
+              },
+              "serviceType": {
+                "description": "k8s service type",
+                "type": "string"
+              },
+              "targetPort": {
+                "description": "k8s target port",
+                "type": "integer"
               }
             },
             "type": "object"
@@ -1381,49 +2273,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "runAsUser": {}
-                      },
-                      "required": [
-                        "runAsUser"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "runAsUser": {
-                        "not": {
-                          "enum": [
-                            0
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "runAsUser"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "podSecurityContextOverride": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "podSecurityContextOverride"
-                  ],
-                  "type": "object"
-                }
               }
             ]
           },
@@ -1517,49 +2366,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "runAsUser": {}
-                      },
-                      "required": [
-                        "runAsUser"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "runAsUser": {
-                        "not": {
-                          "enum": [
-                            0
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "runAsUser"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "podSecurityContextOverride": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "podSecurityContextOverride"
-                  ],
-                  "type": "object"
-                }
               }
             ]
           },
@@ -1568,6 +2374,11 @@
               "fsGroupChangePolicy": {
                 "description": "Deprecated in favor of `controller.podSecurityContextOverride`. fsGroupChangePolicy for the pod security context",
                 "type": "string"
+              },
+              "securityContextCapabilities": {
+                "additionalProperties": {},
+                "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW",
+                "type": "object"
               }
             },
             "type": "object"
@@ -1672,83 +2483,6 @@
                   }
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "sidecars": {
-                      "properties": {
-                        "configAutoReload": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "configAutoReload"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sidecars"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "sidecars": {
-                    "properties": {
-                      "configAutoReload": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "configAutoReload"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sidecars"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "jenkinsHome": {
-                "description": "Custom Jenkins home path",
-                "type": "string"
-              },
-              "jenkinsRef": {
-                "description": "Custom Jenkins reference path",
-                "type": "string"
-              },
-              "jenkinsUriPrefix": {
-                "description": "Root URI Jenkins will be served on",
-                "type": "string"
               }
             },
             "type": "object"
@@ -2002,19 +2736,42 @@
               "loadBalancerSourceRanges": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Allowed inbound IP addresses"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "initContainerResources": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "initContainerResources"
+              ],
+              "type": "object"
+            }
+          },
+          "then": {
+            "properties": {
+              "resources": {
+                "additionalProperties": {},
+                "description": "Resource allocation (Requests and Limits)",
+                "type": "object"
               }
             },
             "type": "object"
@@ -2049,173 +2806,6 @@
           },
           "then": {
             "properties": {
-              "podSecurityContextOverride": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Completely overwrites the contents of the pod security context, ignoring the values provided for `runAsUser`, `fsGroup`, and `securityContextCapabilities`"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "healthProbes": {}
-                      },
-                      "required": [
-                        "healthProbes"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "healthProbes": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "healthProbes"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "probes": {}
-                      },
-                      "required": [
-                        "probes"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "probes": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "probes"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "probes": {
-                "properties": {
-                  "livenessProbe": {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  "readinessProbe": {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  "startupProbe": {
-                    "additionalProperties": {},
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "properties": {
-                "initContainerResources": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "initContainerResources"
-              ],
-              "type": "object"
-            }
-          },
-          "then": {
-            "properties": {
-              "resources": {
-                "additionalProperties": {},
-                "description": "Resource allocation (Requests and Limits)",
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "usePodSecurityContext": {}
-                      },
-                      "required": [
-                        "usePodSecurityContext"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "usePodSecurityContext": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "usePodSecurityContext"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "podSecurityContextOverride": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "podSecurityContextOverride"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
               "runAsUser": {
                 "anyOf": [
                   {
@@ -2226,168 +2816,6 @@
                   }
                 ],
                 "description": "Deprecated in favor of `controller.podSecurityContextOverride`. uid that jenkins runs with."
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "fsGroup": {}
-                      },
-                      "required": [
-                        "fsGroup"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "fsGroup": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "fsGroup"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "runAsUser": {}
-                      },
-                      "required": [
-                        "runAsUser"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "runAsUser": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "runAsUser"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "usePodSecurityContext": {}
-                      },
-                      "required": [
-                        "usePodSecurityContext"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "usePodSecurityContext": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "usePodSecurityContext"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "podSecurityContextOverride": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "podSecurityContextOverride"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "securityContextCapabilities": {
-                "additionalProperties": {},
-                "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW",
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceEnabled": {}
-                  },
-                  "required": [
-                    "serviceEnabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceEnabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "serviceEnabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "serviceAnnotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Jenkins controller service annotations",
-                "type": "object"
-              },
-              "serviceLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels for the Jenkins controller-service\nservice.beta.kubernetes.io/aws-load-balancer-backend-protocol: https",
-                "type": "object"
-              },
-              "serviceType": {
-                "description": "k8s service type",
-                "type": "string"
-              },
-              "targetPort": {
-                "description": "k8s target port",
-                "type": "integer"
               }
             },
             "type": "object"
@@ -2544,21 +2972,27 @@
               "description": "Jenkins Config as Code Authorization Strategy-section"
             },
             "configMapAnnotations": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "Annotations for the JCasC ConfigMap",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              ],
+              "description": "Annotations for the JCasC ConfigMap"
             },
             "configScripts": {
-              "additionalProperties": {},
-              "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'.",
-              "type": "object"
+              "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
             },
             "configUrls": {
-              "description": "Remote URLs for configuration files.\n- https://acme.org/jenkins.yaml",
-              "items": {},
-              "type": "array"
+              "description": "Remote URLs for configuration files.\n- https://acme.org/jenkins.yaml"
             },
             "defaultConfig": {
               "description": "Enables default Jenkins configuration via configuration as code plugin",
@@ -2624,14 +3058,10 @@
           "type": "object"
         },
         "additionalExistingSecrets": {
-          "description": "List of additional existing secrets to mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalExistingSecrets:\n- name: secret-name-1\nkeyName: username\n- name: secret-name-1\nkeyName: password",
-          "items": {},
-          "type": "array"
+          "description": "List of additional existing secrets to mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalExistingSecrets:\n- name: secret-name-1\nkeyName: username\n- name: secret-name-1\nkeyName: password"
         },
         "additionalPlugins": {
-          "description": "List of plugins to install in addition to those listed in controller.installPlugins",
-          "items": {},
-          "type": "array"
+          "description": "List of plugins to install in addition to those listed in controller.installPlugins"
         },
         "additionalSecrets": {
           "description": "List of additional secrets to create and mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalSecrets:\n- name: nameOfSecret\nvalue: secretText",
@@ -2740,25 +3170,32 @@
         "adminSecret": {},
         "adminUser": {},
         "affinity": {
-          "additionalProperties": {},
-          "description": "Affinity settings",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Affinity settings"
         },
         "agentListenerEnabled": {
           "description": "Create Agent listener service",
           "type": "boolean"
         },
         "agentListenerExternalTrafficPolicy": {
-          "description": "Traffic Policy of for the agentListener service",
-          "type": "null"
+          "description": "Traffic Policy of for the agentListener service"
         },
         "agentListenerHostPort": {
-          "description": "Host port to listen for agents",
-          "type": "null"
+          "description": "Host port to listen for agents"
         },
         "agentListenerLoadBalancerIP": {
-          "description": "Static IP for the agentListener LoadBalancer",
-          "type": "null"
+          "description": "Static IP for the agentListener LoadBalancer"
         },
         "agentListenerLoadBalancerSourceRanges": {
           "anyOf": [
@@ -2776,8 +3213,7 @@
           "description": "Allowed inbound IP for the agentListener service"
         },
         "agentListenerNodePort": {
-          "description": "Node port to listen for agents",
-          "type": "null"
+          "description": "Node port to listen for agents"
         },
         "agentListenerPort": {
           "description": "Listening port for agents",
@@ -2883,33 +3319,9 @@
           "type": "string"
         },
         "containerEnv": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Environment variables for Jenkins Container\n- name: http_proxy\nvalue: \"http://192.168.64.1:3128\""
         },
         "containerEnvFrom": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Environment variable sources for Jenkins Container"
         },
         "containerSecurityContext": {
@@ -2952,24 +3364,10 @@
           "type": "object"
         },
         "customInitContainers": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Custom init-container specification in raw-yaml format\n- name: custom-init\nimage: \"alpine:3\"\nimagePullPolicy: Always\ncommand: [ \"uname\", \"-a\" ]"
         },
         "customJenkinsLabels": {
-          "description": "Append Jenkins labels to the controller",
-          "items": {},
-          "type": "array"
+          "description": "Append Jenkins labels to the controller"
         },
         "deploymentAnnotations": {},
         "deploymentLabels": {},
@@ -2985,9 +3383,19 @@
           "type": "array"
         },
         "dnsConfig": {
-          "additionalProperties": {},
-          "description": "DNS config for the pod",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "DNS config for the pod"
         },
         "enableRawHtmlMarkupFormatter": {
           "description": "Enable HTML parsing using OWASP Markup Formatter Plugin (antisamy-markup-formatter)",
@@ -3002,13 +3410,10 @@
           "type": "string"
         },
         "existingSecret": {
-          "description": "'name' is a name of an existing secret in the same namespace as jenkins,\n'keyName' is the name of one of the keys inside the current secret.\nthe 'name' and 'keyName' are concatenated with a '-' in between, so for example:\nan existing secret \"secret-credentials\" and a key inside it named \"github-password\" should be used in JCasC as ${secret-credentials-github-password}\n'name' and 'keyName' must be lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-',\nand must start and end with an alphanumeric character (e.g. 'my-name', or '123-abc')\nexistingSecret existing secret \"secret-credentials\" and a key inside it named \"github-username\" should be used in JCasC as ${github-username}\nWhen using existingSecret no need to specify the keyName under additionalExistingSecrets.",
-          "type": "null"
+          "description": "'name' is a name of an existing secret in the same namespace as jenkins,\n'keyName' is the name of one of the keys inside the current secret.\nthe 'name' and 'keyName' are concatenated with a '-' in between, so for example:\nan existing secret \"secret-credentials\" and a key inside it named \"github-password\" should be used in JCasC as ${secret-credentials-github-password}\n'name' and 'keyName' must be lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-',\nand must start and end with an alphanumeric character (e.g. 'my-name', or '123-abc')\nexistingSecret existing secret \"secret-credentials\" and a key inside it named \"github-username\" should be used in JCasC as ${github-username}\nWhen using existingSecret no need to specify the keyName under additionalExistingSecrets."
         },
         "extraPorts": {
-          "description": "Optionally configure other ports to expose in the controller container\n- name: BuildInfoProxy\nport: 9000\ntargetPort: 9010 (Optional: Use to explicitly set targetPort if different from port)",
-          "items": {},
-          "type": "array"
+          "description": "Optionally configure other ports to expose in the controller container\n- name: BuildInfoProxy\nport: 9000\ntargetPort: 9010 (Optional: Use to explicitly set targetPort if different from port)"
         },
         "fsGroup": {
           "description": "Deprecated in favor of `controller.podSecurityContextOverride`. uid that will be used for persistent volume."
@@ -3106,27 +3511,18 @@
               },
               "then": {
                 "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "HTTPRoute annotations",
-                    "type": "object"
-                  },
                   "apiVersion": {
                     "type": "string"
                   },
                   "extraRules": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Extra HTTPRoute rules that will be appended before the default backend"
@@ -3137,14 +3533,12 @@
                   "parentRefs": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "specify the Gateway instance to bind the HTTPRoute to."
@@ -3157,9 +3551,7 @@
           "description": "Gateway API HTTPRoute",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "HTTPRoute annotations",
-              "type": "object"
+              "description": "HTTPRoute annotations"
             },
             "apiVersion": {},
             "enabled": {
@@ -3276,10 +3668,6 @@
                       }
                     ],
                     "description": "Name of the secret that already has SSL keystore"
-                  },
-                  "path": {
-                    "description": "Path of HTTPS keystore file",
-                    "type": "string"
                   }
                 },
                 "type": "object"
@@ -3472,25 +3860,27 @@
               "type": "string"
             },
             "tag": {
-              "description": "Controller image tag override; i.e., tag: \"2.440.1-jdk21\"",
-              "type": [
-                "string",
-                "null"
-              ]
+              "anyOf": [
+                {
+                  "const": null
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Controller image tag override; i.e., tag: \"2.440.1-jdk21\""
             },
             "tagLabel": {
-              "description": "Controller image tag label",
-              "type": [
-                "string",
-                "null"
-              ]
+              "description": "Controller image tag label"
             }
           },
           "type": "object"
         },
         "imagePullSecretName": {
-          "description": "Controller image pull secret",
-          "type": "null"
+          "description": "Controller image pull secret"
         },
         "imageTag": {},
         "ingress": {
@@ -3510,43 +3900,6 @@
               },
               "then": {
                 "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Primary Ingress annotations",
-                    "type": "object"
-                  },
-                  "hostName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Primary Ingress hostname"
-                  },
-                  "ingressClassName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Primary Ingress ingressClassName"
-                  },
                   "labels": {
                     "additionalProperties": {
                       "type": "string"
@@ -3557,54 +3910,24 @@
                   "pathType": {
                     "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix",
                     "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
                   },
-                  {
-                    "properties": {
-                      "path": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "path"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "paths": {
+                  "tls": {
                     "anyOf": [
                       {
                         "items": {},
                         "type": "array"
                       },
                       {
+                        "type": "integer"
+                      },
+                      {
                         "type": "null"
                       },
                       {
-                        "type": "string"
+                        "type": "object"
                       }
                     ],
-                    "description": "Override for the default Primary Ingress paths\n- backend:\nserviceName: ssl-redirect\nservicePort: use-annotation\n- backend:\nserviceName: >-\n{{ template \"jenkins.fullname\" . }}\nDon't use string here, use only integer value!\nservicePort: 8080"
+                    "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
                   }
                 },
                 "type": "object"
@@ -3613,9 +3936,7 @@
           ],
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Primary Ingress annotations",
-              "type": "object"
+              "description": "Primary Ingress annotations"
             },
             "apiVersion": {
               "description": "Primary Ingress API version",
@@ -3626,33 +3947,9 @@
               "type": "boolean"
             },
             "hostName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Primary Ingress hostname"
             },
             "ingressClassName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Primary Ingress ingressClassName"
             },
             "labels": {
@@ -3661,123 +3958,62 @@
               "type": "object"
             },
             "path": {
-              "description": "Primary Ingress path",
-              "type": "null"
+              "description": "Primary Ingress path"
             },
             "pathType": {
               "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix"
             },
             "paths": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Override for the default Primary Ingress paths\n- backend:\nserviceName: ssl-redirect\nservicePort: use-annotation\n- backend:\nserviceName: >-\n{{ template \"jenkins.fullname\" . }}\nDon't use string here, use only integer value!\nservicePort: 8080"
             },
             "resourceRootUrl": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Primary Hostname to serve assets from"
             },
             "tls": {
-              "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local",
-              "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "hosts": {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {},
-                          "type": "object"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  "secretName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
+              "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
             }
           },
           "type": "object"
         },
         "initConfigMap": {
-          "description": "Name of the existing ConfigMap that contains init scripts",
-          "type": "null"
+          "description": "Name of the existing ConfigMap that contains init scripts"
         },
         "initContainerEnv": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Environment variables for Init Container\ninitContainerEnv:\n- name: http_proxy\nvalue: \"http://192.168.64.1:3128\""
         },
         "initContainerEnvFrom": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Environment variable sources for Init Container"
         },
         "initContainerResources": {
-          "additionalProperties": {},
-          "description": "Resources allocation (Requests and Limits) for Init Container\ninitContainerResources:\nrequests:\ncpu: \"50m\"\nmemory: \"256Mi\"\nlimits:\ncpu: \"2000m\"\nmemory: \"4096Mi\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Resources allocation (Requests and Limits) for Init Container\ninitContainerResources:\nrequests:\ncpu: \"50m\"\nmemory: \"256Mi\"\nlimits:\ncpu: \"2000m\"\nmemory: \"4096Mi\""
         },
         "initScripts": {
-          "additionalProperties": {},
-          "description": "Map of groovy init scripts to be executed during Jenkins controller start\ntest: |-\nprint 'adding global pipeline libraries, register properties, bootstrap jobs...'",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "properties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Map of groovy init scripts to be executed during Jenkins controller start\ntest: |-\nprint 'adding global pipeline libraries, register properties, bootstrap jobs...'"
         },
         "initializeOnce": {
           "description": "Initialize only on first installation. Ensures plugins do not get updated inadvertently. Requires `persistence.enabled` to be set to `true`",
@@ -3820,8 +4056,7 @@
           ]
         },
         "jenkinsRef": {
-          "description": "Custom Jenkins reference path",
-          "type": "string"
+          "description": "Custom Jenkins reference path"
         },
         "jenkinsUriPrefix": {
           "description": "Root URI Jenkins will be served on"
@@ -3841,21 +4076,29 @@
           "type": "string"
         },
         "jmxPort": {
-          "description": "Open a port, for JMX stats",
-          "type": "null"
+          "description": "Open a port, for JMX stats"
         },
         "legacyRemotingSecurityEnabled": {
           "description": "Whether legacy remoting security should be enabled",
           "type": "boolean"
         },
         "lifecycle": {
-          "additionalProperties": {},
-          "description": "Lifecycle specification for controller-container\npostStart:\nexec:\ncommand:\n- \"uname\"\n- \"-a\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Lifecycle specification for controller-container\npostStart:\nexec:\ncommand:\n- \"uname\"\n- \"-a\""
         },
         "loadBalancerIP": {
-          "description": "Optionally assign a known public LB IP",
-          "type": "null"
+          "description": "Optionally assign a known public LB IP"
         },
         "loadBalancerSourceRanges": {
           "anyOf": [
@@ -3884,13 +4127,22 @@
           "description": "Yaml of the markup formatter to use"
         },
         "nodePort": {
-          "description": "k8s node port. Only used if serviceType is NodePort",
-          "type": "null"
+          "description": "k8s node port. Only used if serviceType is NodePort"
         },
         "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node labels for pod assignment",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Node labels for pod assignment"
         },
         "numExecutors": {
           "description": "Set Number of executors",
@@ -3906,11 +4158,7 @@
           "type": "boolean"
         },
         "podAnnotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Annotations for controller pod",
-          "type": "object"
+          "description": "Annotations for controller pod"
         },
         "podDisruptionBudget": {
           "additionalProperties": false,
@@ -3975,333 +4223,43 @@
           "type": "object"
         },
         "podLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Custom Pod labels (an object with `label-key: label-value` pairs)",
-          "type": "object"
-        },
-        "podSecurityContextOverride": {
           "anyOf": [
             {
-              "additionalProperties": {},
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
               "type": "object"
             },
             {
-              "type": "null"
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             }
           ],
+          "description": "Custom Pod labels (an object with `label-key: label-value` pairs)"
+        },
+        "podSecurityContextOverride": {
           "description": "Completely overwrites the contents of the pod security context, ignoring the values provided for `runAsUser`, `fsGroup`, and `securityContextCapabilities`"
         },
         "priorityClassName": {
-          "description": "The name of a `priorityClass` to apply to the controller pod",
-          "type": "null"
+          "description": "The name of a `priorityClass` to apply to the controller pod"
         },
         "probes": {
           "additionalProperties": false,
           "properties": {
-            "livenessProbe": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "readinessProbe": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "startupProbe": {
-              "additionalProperties": {},
-              "type": "object"
-            }
+            "livenessProbe": {},
+            "readinessProbe": {},
+            "startupProbe": {}
           },
           "type": "object"
         },
         "projectNamingStrategy": {
-          "description": "Configures the restrictions for naming projects. Set this key to null or empty to skip it in the default config.",
-          "type": "string"
+          "description": "Configures the restrictions for naming projects. Set this key to null or empty to skip it in the default config."
         },
         "prometheus": {
           "additionalProperties": false,
           "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              "then": {
-                "properties": {
-                  "alertingrules": {
-                    "description": "Array of prometheus alerting rules",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RuleGroup is a list of sequentially evaluated recording and alerting rules.",
-                      "properties": {
-                        "interval": {
-                          "description": "Interval determines how often rules in the group are evaluated.",
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "labels": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Labels to add or overwrite before storing the result for its rules.\nThe labels defined at the rule level take precedence.\n\nIt requires Prometheus >= 3.0.0.\nThe field is ignored for Thanos Ruler.",
-                          "type": "object"
-                        },
-                        "limit": {
-                          "description": "Limit the number of alerts an alerting rule and series a recording\nrule can produce.\nLimit is supported starting with Prometheus >= 2.31 and Thanos Ruler >= 0.24.",
-                          "type": "integer"
-                        },
-                        "name": {
-                          "description": "Name of the rule group.",
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "partial_response_strategy": {
-                          "description": "PartialResponseStrategy is only used by ThanosRuler and will\nbe ignored by Prometheus instances.\nMore info: https://github.com/thanos-io/thanos/blob/main/docs/components/rule.md#partial-response",
-                          "pattern": "^(?i)(abort|warn)?$",
-                          "type": "string"
-                        },
-                        "query_offset": {
-                          "description": "Defines the offset the rule evaluation timestamp of this particular group by the specified duration into the past.\n\nIt requires Prometheus >= v2.53.0.\nIt is not supported for ThanosRuler.",
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "rules": {
-                          "description": "List of alerting and recording rules.",
-                          "items": {
-                            "additionalProperties": false,
-                            "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                            "properties": {
-                              "alert": {
-                                "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
-                                "type": "string"
-                              },
-                              "annotations": {
-                                "additionalProperties": {
-                                  "type": "string"
-                                },
-                                "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                                "type": "object"
-                              },
-                              "expr": {
-                                "anyOf": [
-                                  {
-                                    "type": "integer"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ],
-                                "description": "PromQL expression to evaluate.",
-                                "x-kubernetes-int-or-string": true
-                              },
-                              "for": {
-                                "description": "Alerts are considered firing once they have been returned for this long.",
-                                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                                "type": "string"
-                              },
-                              "keep_firing_for": {
-                                "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                                "minLength": 1,
-                                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                                "type": "string"
-                              },
-                              "labels": {
-                                "additionalProperties": {
-                                  "type": "string"
-                                },
-                                "description": "Labels to add or overwrite.",
-                                "type": "object"
-                              },
-                              "record": {
-                                "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "expr"
-                            ],
-                            "type": "object"
-                          },
-                          "type": "array"
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array",
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "metricRelabelings": {
-                    "description": "MetricRelabelConfigs to apply to samples before ingestion.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "relabelings": {
-                    "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "scrapeEndpoint": {
-                    "description": "The endpoint prometheus should get metrics from",
-                    "type": "string"
-                  },
-                  "scrapeInterval": {
-                    "description": "How often prometheus should scrape metrics",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "serviceMonitorNamespace": {
-                    "description": "Set a custom namespace where to deploy ServiceMonitor resource",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
             {
               "if": {
                 "allOf": [
@@ -4331,6 +4289,26 @@
               },
               "then": {
                 "properties": {
+                  "alertingRulesAdditionalLabels": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Additional labels to add to the PrometheusRule object"
+                  },
                   "prometheusRuleNamespace": {
                     "anyOf": [
                       {
@@ -4345,269 +4323,158 @@
                 },
                 "type": "object"
               }
+            },
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "alertingrules": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Array of prometheus alerting rules"
+                  },
+                  "metricRelabelings": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ],
+                    "description": "MetricRelabelConfigs to apply to samples before ingestion."
+                  },
+                  "relabelings": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ],
+                    "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
+                  },
+                  "scrapeEndpoint": {
+                    "description": "The endpoint prometheus should get metrics from",
+                    "type": "string"
+                  },
+                  "scrapeInterval": {
+                    "description": "How often prometheus should scrape metrics",
+                    "type": "string"
+                  },
+                  "serviceMonitorAdditionalLabels": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Additional labels to add to the service monitor object"
+                  },
+                  "serviceMonitorNamespace": {
+                    "description": "Set a custom namespace where to deploy ServiceMonitor resource",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
             }
           ],
           "description": "Expose Prometheus metrics\nIf enabled, add the prometheus plugin to the list of plugins to install\nhttps://plugins.jenkins.io/prometheus",
           "properties": {
             "alertingRulesAdditionalLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "description": "Additional labels to add to the PrometheusRule object",
               "type": "object"
             },
             "alertingrules": {
-              "description": "Array of prometheus alerting rules",
-              "items": {
-                "additionalProperties": false,
-                "description": "RuleGroup is a list of sequentially evaluated recording and alerting rules.",
-                "properties": {
-                  "interval": {
-                    "description": "Interval determines how often rules in the group are evaluated.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Labels to add or overwrite before storing the result for its rules.\nThe labels defined at the rule level take precedence.\n\nIt requires Prometheus >= 3.0.0.\nThe field is ignored for Thanos Ruler.",
-                    "type": "object"
-                  },
-                  "limit": {
-                    "description": "Limit the number of alerts an alerting rule and series a recording\nrule can produce.\nLimit is supported starting with Prometheus >= 2.31 and Thanos Ruler >= 0.24.",
-                    "type": "integer"
-                  },
-                  "name": {
-                    "description": "Name of the rule group.",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "partial_response_strategy": {
-                    "description": "PartialResponseStrategy is only used by ThanosRuler and will\nbe ignored by Prometheus instances.\nMore info: https://github.com/thanos-io/thanos/blob/main/docs/components/rule.md#partial-response",
-                    "pattern": "^(?i)(abort|warn)?$",
-                    "type": "string"
-                  },
-                  "query_offset": {
-                    "description": "Defines the offset the rule evaluation timestamp of this particular group by the specified duration into the past.\n\nIt requires Prometheus >= v2.53.0.\nIt is not supported for ThanosRuler.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "rules": {
-                    "description": "List of alerting and recording rules.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                      "properties": {
-                        "alert": {
-                          "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
-                          "type": "string"
-                        },
-                        "annotations": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                          "type": "object"
-                        },
-                        "expr": {
-                          "anyOf": [
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ],
-                          "description": "PromQL expression to evaluate.",
-                          "x-kubernetes-int-or-string": true
-                        },
-                        "for": {
-                          "description": "Alerts are considered firing once they have been returned for this long.",
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "keep_firing_for": {
-                          "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                          "minLength": 1,
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "labels": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Labels to add or overwrite.",
-                          "type": "object"
-                        },
-                        "record": {
-                          "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "expr"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              },
-              "type": "array",
-              "x-kubernetes-list-map-keys": [
-                "name"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
               ],
-              "x-kubernetes-list-type": "map"
+              "description": "Array of prometheus alerting rules"
             },
             "enabled": {
               "description": "Enables prometheus service monitor",
               "type": "boolean"
             },
             "metricRelabelings": {
-              "description": "MetricRelabelConfigs to apply to samples before ingestion.",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "MetricRelabelConfigs to apply to samples before ingestion."
             },
             "prometheusRuleNamespace": {
               "description": "Set a custom namespace where to deploy PrometheusRule resource"
             },
             "relabelings": {
-              "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
             },
             "scrapeEndpoint": {
               "description": "The endpoint prometheus should get metrics from"
@@ -4616,9 +4483,7 @@
               "description": "How often prometheus should scrape metrics"
             },
             "serviceMonitorAdditionalLabels": {
-              "additionalProperties": {
-                "type": "string"
-              },
+              "additionalProperties": {},
               "description": "Additional labels to add to the service monitor object",
               "type": "object"
             },
@@ -4753,9 +4618,16 @@
           ]
         },
         "scriptApproval": {
-          "description": "List of groovy functions to approve\n- \"method groovy.json.JsonSlurperClassic parseText java.lang.String\"\n- \"new groovy.json.JsonSlurperClassic\"",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "List of groovy functions to approve\n- \"method groovy.json.JsonSlurperClassic parseText java.lang.String\"\n- \"new groovy.json.JsonSlurperClassic\""
         },
         "secondaryingress": {
           "additionalProperties": false,
@@ -4774,46 +4646,47 @@
               },
               "then": {
                 "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Secondary Ingress annotations\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress",
-                    "type": "object"
-                  },
-                  "hostName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Secondary Ingress hostname"
-                  },
-                  "ingressClassName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
-                  },
                   "labels": {
                     "additionalProperties": {
                       "type": "string"
                     },
                     "description": "Secondary Ingress labels",
                     "type": "object"
+                  },
+                  "paths": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Secondary Ingress paths\nFor Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'\nFor Kubernetes v1.19+, use 'networking.k8s.io/v1'"
+                  },
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secondary Ingress TLS configuration\n- secretName: jenkins-external.example.com\nhosts:\n- jenkins-external.example.com"
                   }
                 },
                 "type": "object"
@@ -4823,9 +4696,7 @@
           "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Secondary Ingress annotations\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress",
-              "type": "object"
+              "description": "Secondary Ingress annotations\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress"
             },
             "apiVersion": {
               "description": "Secondary Ingress API version",
@@ -4836,33 +4707,9 @@
               "type": "boolean"
             },
             "hostName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Secondary Ingress hostname"
             },
             "ingressClassName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
             },
             "labels": {
@@ -4871,79 +4718,16 @@
               "type": "object"
             },
             "paths": {
-              "description": "Secondary Ingress paths\nFor Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'\nFor Kubernetes v1.19+, use 'networking.k8s.io/v1'",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
+              "description": "Secondary Ingress paths\nFor Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'\nFor Kubernetes v1.19+, use 'networking.k8s.io/v1'"
             },
             "tls": {
-              "anyOf": [
-                {
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "hosts": {
-                        "items": {
-                          "anyOf": [
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "type": "array"
-                      },
-                      "secretName": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
               "description": "Secondary Ingress TLS configuration\n- secretName: jenkins-external.example.com\nhosts:\n- jenkins-external.example.com"
             }
           },
           "type": "object"
         },
         "secretClaims": {
-          "description": "List of `SecretClaim` resources to create\n- name: secretName        # required\npath: testPath          # required\ntype: kubernetes.io/tls # optional\nrenew: 60               # optional",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "path": {
-                "type": "string"
-              },
-              "renew": {},
-              "type": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          },
-          "type": "array"
+          "description": "List of `SecretClaim` resources to create\n- name: secretName        # required\npath: testPath          # required\ntype: kubernetes.io/tls # optional\nrenew: 60               # optional"
         },
         "securityContextCapabilities": {
           "additionalProperties": {},
@@ -4960,8 +4744,7 @@
           "type": "boolean"
         },
         "serviceExternalTrafficPolicy": {
-          "description": "Use Local to preserve the client source IP and avoids a second hop for LoadBalancer and NodePort type services,\nbut risks potentially imbalanced traffic spreading.",
-          "type": "null"
+          "description": "Use Local to preserve the client source IP and avoids a second hop for LoadBalancer and NodePort type services,\nbut risks potentially imbalanced traffic spreading."
         },
         "serviceLabels": {
           "additionalProperties": {},
@@ -4983,18 +4766,6 @@
           "additionalProperties": false,
           "properties": {
             "additionalSidecarContainers": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Configures additional sidecar container(s) for the Jenkins controller\nThe example below runs the client for https://smee.io as sidecar container next to Jenkins,\nthat allows triggering build behind a secure firewall.\nhttps://jenkins.io/blog/2019/01/07/webhook-firewalls/#triggering-builds-with-webhooks-behind-a-secure-firewall\nNote: To use it you should go to https://smee.io/new and update the url to the generated one.\n- name: smee\nimage: docker.io/twalter/smee-client:1.0.2\nargs: [\"--port\", \"{{ .Values.controller.servicePort }}\", \"--path\", \"/github-webhook/\", \"--url\", \"https://smee.io/new\"]\nresources:\nlimits:\ncpu: 50m\nmemory: 128Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
             },
             "configAutoReload": {
@@ -5029,44 +4800,10 @@
                   },
                   "then": {
                     "properties": {
-                      "additionalVolumeMounts": {
-                        "anyOf": [
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Enables additional volume mounts for the config auto-reload container"
-                      },
                       "containerSecurityContext": {
                         "additionalProperties": {},
                         "description": "Enable container security context",
                         "type": "object"
-                      },
-                      "envFrom": {
-                        "anyOf": [
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Environment variable sources for the Jenkins Config as Code auto-reload container"
-                      },
-                      "folder": {
-                        "description": "folder in the pod that should hold the collected dashboards:",
-                        "type": "string"
                       },
                       "healthPort": {
                         "description": "Port for sidecar health probes",
@@ -5110,12 +4847,6 @@
                           }
                         ],
                         "description": "The scheme to use when connecting to the Jenkins configuration as code endpoint"
-                      },
-                      "searchNamespace": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       }
                     },
                     "type": "object"
@@ -5125,18 +4856,6 @@
               "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
               "properties": {
                 "additionalVolumeMounts": {
-                  "anyOf": [
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Enables additional volume mounts for the config auto-reload container"
                 },
                 "containerSecurityContext": {
@@ -5159,32 +4878,15 @@
                 "env": {
                   "description": "Environment variables for the Jenkins Config as Code auto-reload container\n- name: REQ_TIMEOUT\nvalue: \"30\"",
                   "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {}
-                    },
-                    "type": "object"
+                    "additionalProperties": {}
                   },
                   "type": "array"
                 },
                 "envFrom": {
-                  "anyOf": [
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Environment variable sources for the Jenkins Config as Code auto-reload container"
                 },
                 "folder": {
-                  "description": "folder in the pod that should hold the collected dashboards:",
-                  "type": "string"
+                  "description": "folder in the pod that should hold the collected dashboards:"
                 },
                 "healthPort": {
                   "description": "Port for sidecar health probes"
@@ -5257,8 +4959,7 @@
                   "type": "boolean"
                 },
                 "sleepTime": {
-                  "description": "How many seconds to wait before updating config-maps/secrets (sets METHOD=SLEEP on the sidecar)",
-                  "type": "null"
+                  "description": "How many seconds to wait before updating config-maps/secrets (sets METHOD=SLEEP on the sidecar)"
                 },
                 "sshTcpPort": {
                   "description": "SSH port value can be set to any unused TCP port. The default, 1044, is a non-standard SSH port that has been chosen at random.\nThis is only used to reload JCasC config from the sidecar container running in the Jenkins controller pod.\nThis TCP port will not be open in the pod (unless you specifically configure this), so Jenkins will not be\naccessible via SSH from outside the pod. Note if you use non-root pod privileges (runAsUser & fsGroup),\nthis must be > 1024:",
@@ -5283,18 +4984,38 @@
         "slaveListenerServiceType": {},
         "slaveReadTimeout": {},
         "statefulSetAnnotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Annotations for controller StatefulSet",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Annotations for controller StatefulSet"
         },
         "statefulSetLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Jenkins controller custom labels for the StatefulSet\nfoo: bar\nbar: foo",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Jenkins controller custom labels for the StatefulSet\nfoo: bar\nbar: foo"
         },
         "tag": {},
         "tagLabel": {},
@@ -5302,16 +5023,13 @@
           "description": "k8s target port"
         },
         "terminationGracePeriodSeconds": {
-          "description": "Set TerminationGracePeriodSeconds",
-          "type": "null"
+          "description": "Set TerminationGracePeriodSeconds"
         },
         "terminationMessagePath": {
-          "description": "Set the termination message path",
-          "type": "null"
+          "description": "Set the termination message path"
         },
         "terminationMessagePolicy": {
-          "description": "Set the termination message policy",
-          "type": "null"
+          "description": "Set the termination message policy"
         },
         "testEnabled": {
           "description": "Can be used to disable rendering controller test resources when using helm template",
@@ -5348,9 +5066,19 @@
           "description": "Topology spread constraints"
         },
         "updateStrategy": {
-          "additionalProperties": {},
-          "description": "Update strategy for StatefulSet",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "Update strategy for StatefulSet"
         },
         "usePodSecurityContext": {
           "description": "Enable pod security context (must be `true` if podSecurityContextOverride, runAsUser or fsGroup are set)",
@@ -5364,11 +5092,21 @@
       "description": "The Jenkins credentials to access the Kubernetes API server. For the default cluster it is not needed."
     },
     "extraLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Configures extra labels for the agent all objects",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Configures extra labels for the agent all objects"
     },
     "extraObjects": {
       "description": "Configures extra manifests"
@@ -5382,11 +5120,13 @@
           "type": "object"
         },
         {
-          "description": "jobLabel selects the label from the associated Kubernetes `Service`\nobject which will be used as the `job` label for all metrics.\n\nFor example if `jobLabel` is set to `foo` and the Kubernetes `Service`\nobject is labeled with `foo: bar`, then Prometheus adds the `job=\"bar\"`\nlabel to all ingested metrics.\n\nIf the value of this field is empty or if the label doesn't exist for\nthe given Service, the `job` label of the metrics defaults to the name\nof the associated Kubernetes `Service`.",
-          "type": "string"
+          "const": null
         },
         {
           "type": "null"
+        },
+        {
+          "type": "string"
         }
       ],
       "description": "Override the full resource names"
@@ -5434,24 +5174,30 @@
     "nameOverride": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "const": null
         },
         {
-          "description": "jobLabel selects the label from the associated Kubernetes `Service`\nobject which will be used as the `job` label for all metrics.\n\nFor example if `jobLabel` is set to `foo` and the Kubernetes `Service`\nobject is labeled with `foo: bar`, then Prometheus adds the `job=\"bar\"`\nlabel to all ingested metrics.\n\nIf the value of this field is empty or if the label doesn't exist for\nthe given Service, the `job` label of the metrics defaults to the name\nof the associated Kubernetes `Service`.",
+          "type": "null"
+        },
+        {
           "type": "string"
         }
       ],
       "description": "Override the resource name prefix"
     },
     "namespaceOverride": {
-      "description": "Override the deployment namespace",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Override the deployment namespace"
     },
     "networkPolicy": {
       "additionalProperties": false,
@@ -5492,9 +5238,7 @@
           "description": "project: myproject",
           "properties": {
             "except": {
-              "description": "A list of IP sub-ranges to be excluded from the allowlisted IP range",
-              "items": {},
-              "type": "array"
+              "description": "A list of IP sub-ranges to be excluded from the allowlisted IP range"
             },
             "ipCIDR": {
               "description": "The IP range from which external agents are allowed to connect to controller, i.e., 172.17.0.0/16"
@@ -5588,10 +5332,6 @@
           },
           "then": {
             "properties": {
-              "accessMode": {
-                "description": "The PVC access mode",
-                "type": "string"
-              },
               "annotations": {
                 "additionalProperties": {
                   "type": "string"
@@ -5610,67 +5350,6 @@
                 },
                 "description": "Labels for the PVC",
                 "type": "object"
-              },
-              "size": {
-                "description": "The size of the PVC",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "volumes": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "volumes"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "existingClaim": {
-                "description": "Provide the name of a PVC",
-                "type": [
-                  "string",
-                  "null"
-                ]
               }
             },
             "type": "object"
@@ -5724,8 +5403,7 @@
         "storageClass": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "type": "object"
+              "const": null
             },
             {
               "enum": [
@@ -5742,22 +5420,9 @@
           "description": "Storage class for the PVC"
         },
         "subPath": {
-          "description": "SubPath for jenkins-home mount",
-          "type": "null"
+          "description": "SubPath for jenkins-home mount"
         },
         "volumes": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Additional volumes\n- name: nothing\nemptyDir: {}"
         }
       },
@@ -5824,23 +5489,9 @@
           },
           "then": {
             "properties": {
-              "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Configures annotations for the ServiceAccount",
-                "type": "object"
-              },
               "automountServiceAccountToken": {
                 "description": "Auto-mount ServiceAccount token",
                 "type": "boolean"
-              },
-              "extraLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Configures extra labels for the ServiceAccount",
-                "type": "object"
               },
               "name": {
                 "description": "The name of the ServiceAccount to be used by access-controlled resources",
@@ -5898,9 +5549,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Configures annotations for the ServiceAccount",
-          "type": "object"
+          "description": "Configures annotations for the ServiceAccount"
         },
         "automountServiceAccountToken": {
           "description": "Auto-mount ServiceAccount token",
@@ -5911,13 +5560,10 @@
           "type": "boolean"
         },
         "extraLabels": {
-          "additionalProperties": {},
-          "description": "Configures extra labels for the ServiceAccount",
-          "type": "object"
+          "description": "Configures extra labels for the ServiceAccount"
         },
         "imagePullSecretName": {
-          "description": "Controller ServiceAccount image pull secret",
-          "type": "null"
+          "description": "Controller ServiceAccount image pull secret"
         },
         "name": {
           "description": "The name of the ServiceAccount to be used by access-controlled resources"
@@ -5942,23 +5588,9 @@
           },
           "then": {
             "properties": {
-              "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Configures annotations for the agent ServiceAccount",
-                "type": "object"
-              },
               "automountServiceAccountToken": {
                 "description": "Auto-mount ServiceAccount token",
                 "type": "boolean"
-              },
-              "extraLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Configures extra labels for the agent ServiceAccount",
-                "type": "object"
               },
               "name": {
                 "description": "The name of the agent ServiceAccount to be used by access-controlled resources",
@@ -5974,9 +5606,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Configures annotations for the agent ServiceAccount",
-          "type": "object"
+          "description": "Configures annotations for the agent ServiceAccount"
         },
         "automountServiceAccountToken": {
           "description": "Auto-mount ServiceAccount token"
@@ -5986,13 +5616,10 @@
           "type": "boolean"
         },
         "extraLabels": {
-          "additionalProperties": {},
-          "description": "Configures extra labels for the agent ServiceAccount",
-          "type": "object"
+          "description": "Configures extra labels for the agent ServiceAccount"
         },
         "imagePullSecretName": {
-          "description": "Agent ServiceAccount image pull secret",
-          "type": "null"
+          "description": "Agent ServiceAccount image pull secret"
         },
         "name": {
           "description": "The name of the agent ServiceAccount to be used by access-controlled resources"

@@ -27,7 +27,6 @@
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
   "allOf": [
     {
       "if": {
@@ -74,59 +73,6 @@
             },
             "type": "object"
           },
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "autoscaling": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "autoscaling"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "fullnameOverride": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "fullnameOverride"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
           "nameOverride": {
             "anyOf": [
               {
@@ -208,7 +154,7 @@
     },
     "fullnameOverride": {},
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "labels": {
           "additionalProperties": {},

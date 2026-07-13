@@ -106,3 +106,116 @@ fn helper_internal_nested_with_keeps_outer_if_condition() {
     "#};
     assert_fragment_dump(source, helpers, expected);
 }
+
+#[test]
+fn literal_dotted_index_and_get_keys_stay_single_path_segments() {
+    let source = indoc! {r#"
+        data:
+          direct: {{ index .Values "foo.bar" }}
+          selected: {{ (get .Values "foo.bar").baz }}
+    "#};
+    let expected = indoc! {r#"
+        when always:
+          mapping:
+            key "data":
+              when always:
+                mapping:
+                  key "direct":
+                    when always:
+                      splice foo\.bar scalar
+                  key "selected":
+                    when always:
+                      splice foo\.bar.baz scalar
+    "#};
+
+    assert_fragment_dump(source, "", expected);
+}
+
+#[test]
+fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
+    let source = indoc! {r#"
+        spec:
+        {{- with .Values.cfg }}
+          config:
+        {{- range $key, $value := . }}
+        {{- $key | nindent 4 }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+    "#};
+
+    let expected = indoc! {r#"
+        when always:
+          mapping:
+            key "spec":
+              when (with(cfg) && range(cfg)):
+                splice cfg fragment
+              when always:
+                mapping:
+                  key "config":
+                  key dynamic []:
+        reads:
+          cfg [with(cfg)]
+          cfg [range(cfg), with(cfg)]
+    "#};
+    assert_fragment_dump(source, "", expected);
+
+    let ir = SymbolicIrContext::new(&DefineIndex::new()).generate_contract_ir(source);
+    let finalized = ir.finalize();
+    assert!(
+        finalized.uses().iter().any(|use_| {
+            use_.source_expr == "cfg"
+                && use_.kind == helm_schema_ir::ValueKind::Fragment
+                && use_.path.0 == ["spec".to_string(), "config".to_string()]
+        }),
+        "the ranged map splice should project at spec.config: {finalized:#?}"
+    );
+}
+
+#[test]
+fn ranged_resource_with_bound_dynamic_entries_attach_below_literal_key() {
+    let source = indoc! {r#"
+        apiVersion: velero.io/v1
+        kind: BackupStorageLocation
+        spec:
+        {{- range .Values.configuration.backupStorageLocation }}
+          provider: {{ .provider }}
+          objectStorage:
+            bucket: {{ .bucket }}
+        {{- with .config }}
+          config:
+        {{- range $key, $value := . }}
+        {{- $key | nindent 4 }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    "#};
+
+    let ir = SymbolicIrContext::new(&DefineIndex::new()).generate_contract_ir(source);
+    let finalized = ir.finalize();
+    assert!(
+        finalized.uses().iter().any(|use_| {
+            use_.source_expr == "configuration.backupStorageLocation.*.config"
+                && use_.kind == helm_schema_ir::ValueKind::Fragment
+                && use_.path.0 == ["spec".to_string(), "config".to_string()]
+        }),
+        "the ranged resource map splice should project at spec.config: {finalized:#?}"
+    );
+}
+
+#[test]
+fn velero_backup_location_config_attaches_below_config_key() {
+    let source = test_util::read_testdata("charts/velero/templates/backupstoragelocation.yaml");
+    let context = SymbolicIrContext::new(&DefineIndex::new());
+    let fragment = context.eval_document_fragment(&source);
+    let ir = context.generate_contract_ir(&source);
+    let finalized = ir.finalize();
+    assert!(
+        finalized.uses().iter().any(|use_| {
+            use_.source_expr == "configuration.backupStorageLocation.*.config"
+                && use_.kind == helm_schema_ir::ValueKind::Fragment
+                && use_.path.0 == ["spec".to_string(), "config".to_string()]
+        }),
+        "Velero's config map splice should project at spec.config:\n{}",
+        dump_document(&fragment)
+    );
+}

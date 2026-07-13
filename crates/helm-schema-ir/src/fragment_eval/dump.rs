@@ -112,6 +112,7 @@ fn fmt_splice(splice: &Splice) -> String {
         ValueKind::Scalar => "scalar",
         ValueKind::PartialScalar => "partial",
         ValueKind::Fragment => "fragment",
+        ValueKind::Serialized => "serialized",
     };
     let mut rendered = format!("splice {} {kind}", splice.values_path);
     if splice.meta.defaulted {

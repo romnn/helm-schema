@@ -152,6 +152,9 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: false,
+            crd_catalog_cache_dir: Some(
+                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+            ),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()

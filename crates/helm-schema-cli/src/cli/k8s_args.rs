@@ -57,7 +57,7 @@ pub struct K8sArgs {
     #[arg(long = "no-cache")]
     pub no_cache: bool,
 
-    /// Suppress Feature B auto-fallback semantics. Conflicts only with
+    /// Suppress auto-fallback version semantics. Conflicts only with
     /// `--k8s-version-fallback`; orthogonal to `--k8s-schema-mirror`.
     #[arg(long = "strict-k8s-version")]
     pub strict_k8s_version: bool,

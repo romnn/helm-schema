@@ -536,9 +536,19 @@
       ],
       "properties": {
         "annotations": {
-          "description": "Optional custom annotations to add to Pods in the cluster",
-          "type": "object",
-          "x-kubernetes-preserve-unknown-fields": true
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "type": "object",
+              "x-kubernetes-preserve-unknown-fields": true
+            }
+          ],
+          "description": "Optional custom annotations to add to Pods in the cluster"
         },
         "auth": {
           "additionalProperties": false,
@@ -581,9 +591,19 @@
             },
             "repository": {},
             "resources": {
-              "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi",
-              "type": "object",
-              "x-kubernetes-preserve-unknown-fields": true
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "type": "object",
+                  "x-kubernetes-preserve-unknown-fields": true
+                }
+              ],
+              "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
             },
             "tag": {}
           },
@@ -623,9 +643,19 @@
           "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
         },
         "resources": {
-          "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi",
-          "type": "object",
-          "x-kubernetes-preserve-unknown-fields": true
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "type": "object",
+              "x-kubernetes-preserve-unknown-fields": true
+            }
+          ],
+          "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
         },
         "size": {
           "description": "Cluster Size"
@@ -738,29 +768,44 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "nodeSelector": {
       "additionalProperties": {},
       "type": "object"
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Pod annotations\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Pod annotations\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
     },
     "rbacEnabled": {
       "description": "Specify if RBAC authorization is enabled.\nref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/",

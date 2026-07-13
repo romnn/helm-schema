@@ -9,12 +9,9 @@ pub fn values_path_has_descendant(path: &str, sources: &BTreeSet<String>) -> boo
 }
 
 pub fn values_path_is_descendant(path: &str, ancestor: &str) -> bool {
-    if ancestor.trim().is_empty() {
-        return !path.trim().is_empty();
-    }
-
-    path.strip_prefix(ancestor)
-        .is_some_and(|rest| rest.starts_with('.'))
+    let path = crate::split_value_path(path);
+    let ancestor = crate::split_value_path(ancestor);
+    path.len() > ancestor.len() && path.starts_with(&ancestor)
 }
 
 pub fn append_relative_path(base: &YamlPath, relative: &YamlPath) -> YamlPath {

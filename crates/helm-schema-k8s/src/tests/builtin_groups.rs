@@ -49,9 +49,8 @@ fn third_party_crd_groups_are_not_builtin() {
     }
 }
 
-// Pins Finding 2 (round 2) — these are CRDs that happen to use a
-// `.k8s.io` suffix. A blanket `.ends_with(".k8s.io")` rule
-// (regressed in PR review round 1) treats them as built-in,
+// These are CRDs that happen to use a `.k8s.io` suffix. A blanket
+// `.ends_with(".k8s.io")` rule would treat them as built-in,
 // skipping their CRD-catalog lookup and producing spurious
 // MissingSchema diagnostics for the resources.
 #[test]

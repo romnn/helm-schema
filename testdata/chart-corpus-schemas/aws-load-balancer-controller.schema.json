@@ -405,6 +405,13 @@
           "ingressClassParams": {
             "description": "ingressClassParams specify the IngressCLassParams that enforce settings for a set of Ingresses when using with ingress Controller.",
             "properties": {
+              "name": {
+                "description": "The name of ingressClassParams resource will be referred in ingressClass",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "spec": {
                 "description": "Due to dependency issue, the validation webhook ignores this particular ingressClassParams resource.\nWe recommend creating ingressClassParams resources separately after installing this chart and the\ncontroller is functional.\nYou can set the specifications in the `helm install` command through `--set` or `--set-string`\nIf you do want to specify in the values.yaml, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'spec:'\nnamespaceSelector:\nmatchLabels:\ngroup:\nscheme:\nipAddressType:\ntags:\nloadBalancerAttributes:\n- key:\nvalue:",
                 "properties": {
@@ -771,15 +778,11 @@
             "description": "Overrideable variables when enableCertManager is set to true",
             "properties": {
               "duration": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Webhook serving certificate configuration\n1 year"
+                "description": "Webhook serving certificate configuration\n1 year",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "issuerRef": {
                 "additionalProperties": {},
@@ -803,7 +806,14 @@
             "type": "object"
           },
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "type": "object"
@@ -1047,6 +1057,112 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "enableServiceMutatorWebhook": {}
+              },
+              "required": [
+                "enableServiceMutatorWebhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "enableServiceMutatorWebhook": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableServiceMutatorWebhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "serviceMutatorWebhookConfig": {
+            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
+            "properties": {
+              "failurePolicy": {
+                "description": "whether or not to fail the service creation if the webhook fails",
+                "type": "string"
+              },
+              "namespaceSelectors": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "const": null
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "key: value\narray of namespace selectors for the service mutator webhook"
+              },
+              "objectSelector": {
+                "description": "limit webhook to only mutate services matching the objectSelector",
+                "properties": {
+                  "matchExpressions": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "matchLabels": {
+                    "additionalProperties": {},
+                    "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "operations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "anyOf": [
@@ -1092,140 +1208,6 @@
           {
             "not": {
               "properties": {
-                "fullnameOverride": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "fullnameOverride"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "enableServiceMutatorWebhook": {}
-              },
-              "required": [
-                "enableServiceMutatorWebhook"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "enableServiceMutatorWebhook": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableServiceMutatorWebhook"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          },
-          "serviceMutatorWebhookConfig": {
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
-            "properties": {
-              "failurePolicy": {
-                "description": "whether or not to fail the service creation if the webhook fails",
-                "type": "string"
-              },
-              "namespaceSelectors": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "key: value\narray of namespace selectors for the service mutator webhook"
-              },
-              "objectSelector": {
-                "description": "limit webhook to only mutate services matching the objectSelector",
-                "properties": {
-                  "matchExpressions": {
-                    "anyOf": [
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "matchLabels": {
-                    "additionalProperties": {},
-                    "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>",
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "operations": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
                 "enableCertManager": {
                   "$ref": "#/$defs/helm-truthy"
                 }
@@ -1262,7 +1244,14 @@
       "then": {
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "type": "object"
@@ -1336,249 +1325,54 @@
         },
         "type": "object"
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "cert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "cert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "key": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "key"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "enableCertManager": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "enableCertManager"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "webhookTLS": {
-            "description": "webhookTLS specifies TLS cert/key for the webhook",
-            "properties": {
-              "caCert": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "caCert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "caCert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "key": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "key"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "enableCertManager": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "enableCertManager"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "webhookTLS": {
-            "description": "webhookTLS specifies TLS cert/key for the webhook",
-            "properties": {
-              "cert": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "caCert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "caCert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "cert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "cert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "enableCertManager": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "enableCertManager"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "webhookTLS": {
-            "description": "webhookTLS specifies TLS cert/key for the webhook",
-            "properties": {
-              "key": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
     }
   ],
   "properties": {
     "additionalLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "additionalLabels -- Labels to add to each object of the chart.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "additionalLabels -- Labels to add to each object of the chart."
     },
     "affinity": {
-      "additionalProperties": {},
-      "description": "affinity specifies a custom affinity for the controller pods",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "affinity specifies a custom affinity for the controller pods"
     },
     "albGatewayMaxConcurrentReconciles": {
-      "description": "Maximum number of concurrently running reconcile loops for ALB gateways (default 3)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum number of concurrently running reconcile loops for ALB gateways (default 3)"
     },
     "annotations": {
       "additionalProperties": {},
@@ -1635,32 +1429,49 @@
       "type": "object"
     },
     "awsApiEndpoints": {
-      "description": "Custom AWS API Endpoints (serviceID1=URL1,serviceID2=URL2)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Custom AWS API Endpoints (serviceID1=URL1,serviceID2=URL2)"
     },
     "awsApiThrottle": {
-      "description": "awsApiThrottle specifies custom AWS API throttle settings (serviceID1:operationRegex1=rate:burst,serviceID2:operationRegex2=rate:burst)\nexample: --set awsApiThrottle=\"{Elastic Load Balancing v2:RegisterTargets|DeregisterTargets=4:20,Elastic Load Balancing v2:.*=10:40}\"",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "awsApiThrottle specifies custom AWS API throttle settings (serviceID1:operationRegex1=rate:burst,serviceID2:operationRegex2=rate:burst)\nexample: --set awsApiThrottle=\"{Elastic Load Balancing v2:RegisterTargets|DeregisterTargets=4:20,Elastic Load Balancing v2:.*=10:40}\""
     },
     "awsMaxRetries": {
-      "description": "Maximum retries for AWS APIs (default 10)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum retries for AWS APIs (default 10)"
     },
     "backendSecurityGroup": {
-      "description": "backendSecurityGroup specifies backend security group id (default controller auto create backend security group)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "backendSecurityGroup specifies backend security group id (default controller auto create backend security group)"
     },
     "certDiscovery": {
       "additionalProperties": false,
@@ -1702,19 +1513,13 @@
         "renewBefore": {
           "description": "30 days"
         },
-        "revisionHistoryLimit": {
-          "type": "null"
-        },
+        "revisionHistoryLimit": {},
         "rootCert": {
           "additionalProperties": false,
           "description": "Root CA certificate configuration",
           "properties": {
             "duration": {
-              "description": "5 years",
-              "type": [
-                "string",
-                "null"
-              ]
+              "description": "5 years"
             }
           },
           "type": "object"
@@ -1733,8 +1538,15 @@
       "type": "object"
     },
     "clusterName": {
-      "description": "The name of the Kubernetes cluster. A non-empty value is required",
-      "type": "string"
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The name of the Kubernetes cluster. A non-empty value is required"
     },
     "clusterSecretsPermissions": {
       "additionalProperties": false,
@@ -1756,7 +1568,7 @@
       "description": "controllerConfig specifies controller configuration",
       "properties": {
         "featureGates": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false",
           "properties": {
             "GlobalAcceleratorController": {}
@@ -1770,31 +1582,34 @@
       "description": "To use IngressClass resource instead of annotation, before you need to install the IngressClass resource pointing to controller.\nIf specified as true, the IngressClass resource will be created.",
       "type": "boolean"
     },
-    "creator": {
+    "creator": {},
+    "defaultLoadBalancerScheme": {
       "anyOf": [
         {
-          "enum": [
-            "helm"
-          ]
+          "const": null
+        },
+        {
+          "type": "null"
         },
         {
           "type": "string"
         }
-      ]
-    },
-    "defaultLoadBalancerScheme": {
-      "description": "Default load balancer scheme when not specifying \"alb.ingress.kubernetes.io/scheme\" or\n\"service.beta.kubernetes.io/aws-load-balancer-scheme\" annotations.\nPossible values are \"internal\" and \"internet-facing\" (default \"internal\")",
-      "type": [
-        "string",
-        "null"
-      ]
+      ],
+      "description": "Default load balancer scheme when not specifying \"alb.ingress.kubernetes.io/scheme\" or\n\"service.beta.kubernetes.io/aws-load-balancer-scheme\" annotations.\nPossible values are \"internal\" and \"internet-facing\" (default \"internal\")"
     },
     "defaultSSLPolicy": {
-      "description": "defaultSSLPolicy specifies the default SSL policy to use for TLS/HTTPS listeners",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "defaultSSLPolicy specifies the default SSL policy to use for TLS/HTTPS listeners"
     },
     "defaultTags": {
       "additionalProperties": {},
@@ -1806,97 +1621,73 @@
       "type": "string"
     },
     "deploymentAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "deploymentAnnotations contains annotations for the controller deployment",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "deploymentAnnotations contains annotations for the controller deployment"
     },
     "disableIngressClassAnnotation": {
-      "description": "disableIngressClassAnnotation disables the usage of kubernetes.io/ingress.class annotation, false by default",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "disableIngressClassAnnotation disables the usage of kubernetes.io/ingress.class annotation, false by default"
     },
     "disableIngressGroupNameAnnotation": {
-      "description": "disableIngressGroupNameAnnotation disables the usage of alb.ingress.kubernetes.io/group.name annotation, false by default",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "disableIngressGroupNameAnnotation disables the usage of alb.ingress.kubernetes.io/group.name annotation, false by default"
     },
     "disableRestrictedSecurityGroupRules": {
-      "description": "disableRestrictedSecurityGroupRules specifies whether to disable creating port-range restricted security group rules for traffic",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "disableRestrictedSecurityGroupRules specifies whether to disable creating port-range restricted security group rules for traffic"
     },
     "dnsPolicy": {
-      "description": "Specifies the dnsPolicy that should be used for pods in the deployment\nThis may need to be used to be changed given certain conditions. For instance, if one uses the cilium CNI\nwith certain settings, one may need to set `hostNetwork: true` and webhooks won't work unless `dnsPolicy`\nis set to `ClusterFirstWithHostNet`. See https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy",
-      "type": "null"
+      "description": "Specifies the dnsPolicy that should be used for pods in the deployment\nThis may need to be used to be changed given certain conditions. For instance, if one uses the cilium CNI\nwith certain settings, one may need to set `hostNetwork: true` and webhooks won't work unless `dnsPolicy`\nis set to `ClusterFirstWithHostNet`. See https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy"
     },
     "enableBackendSecurityGroup": {
-      "description": "enableBackendSecurityGroup enables shared security group for backend traffic (default true)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "enableBackendSecurityGroup enables shared security group for backend traffic (default true)"
     },
     "enableCertManager": {
       "description": "Enable cert-manager",
       "type": "boolean"
     },
     "enableEndpointSlices": {
-      "description": "enableEndpointSlices enables k8s EndpointSlices for IP targets instead of Endpoints (default true)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "enableEndpointSlices enables k8s EndpointSlices for IP targets instead of Endpoints (default true)"
     },
     "enableManageBackendSecurityGroupRules": {
-      "description": "enableManageBackendSecurityGroupRules enables controller manages security group rules (default false)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "enableManageBackendSecurityGroupRules enables controller manages security group rules (default false)"
     },
     "enablePodReadinessGateInject": {
-      "description": "If enabled, targetHealth readiness gate will get injected to the pod spec for the matching endpoint pods (default true)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "If enabled, targetHealth readiness gate will get injected to the pod spec for the matching endpoint pods (default true)"
     },
     "enableServiceMutatorWebhook": {
       "description": "enableServiceMutatorWebhook allows you enable the webhook which makes this controller the default for all new services of type LoadBalancer",
       "type": "boolean"
     },
     "enableShield": {
-      "description": "Enable Shield addon for ALB (default true)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Enable Shield addon for ALB (default true)"
     },
     "enableWaf": {
-      "description": "Enable WAF addon for ALB (default true)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Enable WAF addon for ALB (default true)"
     },
     "enableWafv2": {
-      "description": "Enable WAF V2 addon for ALB (default true)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Enable WAF V2 addon for ALB (default true)"
     },
     "env": {
-      "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\"",
-      "type": "null"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
     },
     "envFrom": {
       "additionalProperties": {},
@@ -1904,15 +1695,16 @@
     },
     "envSecretName": {},
     "externalManagedTags": {
-      "description": "externalManagedTags is the list of tag keys on AWS resources that will be managed externally",
-      "items": {},
-      "type": "array"
+      "description": "externalManagedTags is the list of tag keys on AWS resources that will be managed externally"
     },
     "extraVolumeMounts": {
       "anyOf": [
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "const": null
         },
         {
           "type": "null"
@@ -1927,6 +1719,9 @@
           "type": "object"
         },
         {
+          "const": null
+        },
+        {
           "type": "null"
         }
       ],
@@ -1939,18 +1734,32 @@
       ]
     },
     "globalAcceleratorMaxConcurrentReconciles": {
-      "description": "Maximum number of concurrently running reconcile loops for GlobalAccelerator objects",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum number of concurrently running reconcile loops for GlobalAccelerator objects"
     },
     "globalAcceleratorMaxExponentialBackoffDelay": {
-      "description": "Maximum duration of exponential backoff for GlobalAccelerator reconcile failures",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum duration of exponential backoff for GlobalAccelerator reconcile failures"
     },
     "hostNetwork": {
       "description": "Specifies if aws-load-balancer-controller should be started in hostNetwork mode.\nThis is required if using a custom CNI where the managed control plane nodes are unable to initiate\nnetwork connections to the pods, for example using Calico CNI plugin on EKS. This is not required or\nrecommended if using the Amazon VPC CNI plugin.",
@@ -2007,309 +1816,330 @@
           "type": "boolean"
         },
         "name": {
-          "description": "The name of ingressClassParams resource will be referred in ingressClass",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "The name of ingressClassParams resource will be referred in ingressClass"
         },
         "spec": {
-          "description": "Due to dependency issue, the validation webhook ignores this particular ingressClassParams resource.\nWe recommend creating ingressClassParams resources separately after installing this chart and the\ncontroller is functional.\nYou can set the specifications in the `helm install` command through `--set` or `--set-string`\nIf you do want to specify in the values.yaml, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'spec:'\nnamespaceSelector:\nmatchLabels:\ngroup:\nscheme:\nipAddressType:\ntags:\nloadBalancerAttributes:\n- key:\nvalue:",
-          "properties": {
-            "PrefixListsIDs": {
-              "description": "PrefixListsIDsLegacy defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.\nNot Recommended, Use PrefixListsIDs (prefixListsIDs in JSON) instead",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "certificateArn": {
-              "description": "CertificateArn specifies the ARN of the certificates for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "group": {
-              "description": "Group defines the IngressGroup for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "properties": {
-                "name": {
-                  "description": "Name is the name of IngressGroup.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "name"
-              ],
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
               "type": "object"
             },
-            "inboundCIDRs": {
-              "description": "InboundCIDRs specifies the CIDRs that are allowed to access the Ingresses that belong to IngressClass with this IngressClassParams.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "ipAddressType": {
-              "description": "IPAddressType defines the ip address type for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "enum": [
-                "ipv4",
-                "dualstack",
-                "dualstack-without-public-ipv4"
-              ],
-              "type": "string"
-            },
-            "ipamConfiguration": {
-              "description": "IPAMConfiguration defines the IPAM settings for a Load Balancer.",
+            {
+              "description": "IngressClassParamsSpec defines the desired state of IngressClassParams",
               "properties": {
-                "ipv4IPAMPoolId": {
-                  "description": "IPv4IPAMPoolId defines the IPAM pool ID used for IPv4 Addresses on the ALB.",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "listeners": {
-              "description": "Listeners define a list of listeners with their protocol, port and attributes.",
-              "items": {
-                "properties": {
-                  "listenerAttributes": {
-                    "description": "The attributes of the listener",
-                    "items": {
-                      "description": "Attributes defines custom attributes on resources.",
-                      "properties": {
-                        "key": {
-                          "description": "The key of the attribute.",
-                          "type": "string"
-                        },
-                        "value": {
-                          "description": "The value of the attribute.",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "value"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "port": {
-                    "description": "The port of the listener",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  "protocol": {
-                    "description": "The protocol of the listener",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "loadBalancerAttributes": {
-              "description": "LoadBalancerAttributes define the custom attributes to LoadBalancers for all Ingress that that belong to IngressClass with this IngressClassParams.",
-              "items": {
-                "description": "Attributes defines custom attributes on resources.",
-                "properties": {
-                  "key": {
-                    "description": "The key of the attribute.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The value of the attribute.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "key",
-                  "value"
-                ],
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "loadBalancerName": {
-              "description": "LoadBalancerName defines the name of the load balancer that will be created with this IngressClassParams.",
-              "type": "string"
-            },
-            "minimumLoadBalancerCapacity": {
-              "description": "MinimumLoadBalancerCapacity define the capacity reservation for LoadBalancers for all Ingress that belong to IngressClass with this IngressClassParams.",
-              "properties": {
-                "capacityUnits": {
-                  "description": "The Capacity Units Value.",
-                  "format": "int32",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "capacityUnits"
-              ],
-              "type": "object"
-            },
-            "namespaceSelector": {
-              "description": "NamespaceSelector restrict the namespaces of Ingresses that are allowed to specify the IngressClass with this IngressClassParams.\n* if absent or present but empty, it selects all namespaces.",
-              "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                "PrefixListsIDs": {
+                  "description": "PrefixListsIDsLegacy defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.\nNot Recommended, Use PrefixListsIDs (prefixListsIDs in JSON) instead",
                   "items": {
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "certificateArn": {
+                  "description": "CertificateArn specifies the ARN of the certificates for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "group": {
+                  "description": "Group defines the IngressGroup for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "properties": {
+                    "name": {
+                      "description": "Name is the name of IngressGroup.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "inboundCIDRs": {
+                  "description": "InboundCIDRs specifies the CIDRs that are allowed to access the Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ipAddressType": {
+                  "description": "IPAddressType defines the ip address type for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "enum": [
+                    "ipv4",
+                    "dualstack",
+                    "dualstack-without-public-ipv4"
+                  ],
+                  "type": "string"
+                },
+                "ipamConfiguration": {
+                  "description": "IPAMConfiguration defines the IPAM settings for a Load Balancer.",
+                  "properties": {
+                    "ipv4IPAMPoolId": {
+                      "description": "IPv4IPAMPoolId defines the IPAM pool ID used for IPv4 Addresses on the ALB.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "listeners": {
+                  "description": "Listeners define a list of listeners with their protocol, port and attributes.",
+                  "items": {
+                    "properties": {
+                      "listenerAttributes": {
+                        "description": "The attributes of the listener",
+                        "items": {
+                          "description": "Attributes defines custom attributes on resources.",
+                          "properties": {
+                            "key": {
+                              "description": "The key of the attribute.",
+                              "type": "string"
+                            },
+                            "value": {
+                              "description": "The value of the attribute.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "port": {
+                        "description": "The port of the listener",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      "protocol": {
+                        "description": "The protocol of the listener",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "loadBalancerAttributes": {
+                  "description": "LoadBalancerAttributes define the custom attributes to LoadBalancers for all Ingress that that belong to IngressClass with this IngressClassParams.",
+                  "items": {
+                    "description": "Attributes defines custom attributes on resources.",
                     "properties": {
                       "key": {
-                        "description": "key is the label key that the selector applies to.",
+                        "description": "The key of the attribute.",
                         "type": "string"
                       },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                      "value": {
+                        "description": "The value of the attribute.",
                         "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array",
-                        "x-kubernetes-list-type": "atomic"
                       }
                     },
                     "required": [
                       "key",
-                      "operator"
+                      "value"
                     ],
                     "type": "object"
                   },
-                  "type": "array",
-                  "x-kubernetes-list-type": "atomic"
+                  "type": "array"
                 },
-                "matchLabels": {
-                  "additionalProperties": {
+                "loadBalancerName": {
+                  "description": "LoadBalancerName defines the name of the load balancer that will be created with this IngressClassParams.",
+                  "type": "string"
+                },
+                "minimumLoadBalancerCapacity": {
+                  "description": "MinimumLoadBalancerCapacity define the capacity reservation for LoadBalancers for all Ingress that belong to IngressClass with this IngressClassParams.",
+                  "properties": {
+                    "capacityUnits": {
+                      "description": "The Capacity Units Value.",
+                      "format": "int32",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "capacityUnits"
+                  ],
+                  "type": "object"
+                },
+                "namespaceSelector": {
+                  "description": "NamespaceSelector restrict the namespaces of Ingresses that are allowed to specify the IngressClass with this IngressClassParams.\n* if absent or present but empty, it selects all namespaces.",
+                  "properties": {
+                    "matchExpressions": {
+                      "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                      "items": {
+                        "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                        "properties": {
+                          "key": {
+                            "description": "key is the label key that the selector applies to.",
+                            "type": "string"
+                          },
+                          "operator": {
+                            "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                            "type": "string"
+                          },
+                          "values": {
+                            "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "x-kubernetes-list-type": "atomic"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "operator"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array",
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "matchLabels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                      "type": "object"
+                    }
+                  },
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic"
+                },
+                "prefixListsIDs": {
+                  "description": "PrefixListsIDs defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "items": {
                     "type": "string"
                   },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": "array"
+                },
+                "scheme": {
+                  "description": "Scheme defines the scheme for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "enum": [
+                    "internal",
+                    "internet-facing"
+                  ],
+                  "type": "string"
+                },
+                "sslPolicy": {
+                  "description": "SSLPolicy specifies the SSL Policy for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "type": "string"
+                },
+                "sslRedirectPort": {
+                  "description": "SSLRedirectPort specifies the SSL Redirect Port for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "type": "string"
+                },
+                "subnets": {
+                  "description": "Subnets defines the subnets for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "properties": {
+                    "ids": {
+                      "description": "IDs specify the resource IDs of subnets. Exactly one of this or `tags` must be specified.",
+                      "items": {
+                        "description": "SubnetID specifies a subnet ID.",
+                        "pattern": "subnet-[0-9a-f]+",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "tags": {
+                      "additionalProperties": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "description": "Tags specifies subnets in the load balancer's VPC where each\ntag specified in the map key contains one of the values in the corresponding\nvalue list.\nExactly one of this or `ids` must be specified.",
+                      "type": "object"
+                    }
+                  },
                   "type": "object"
+                },
+                "tags": {
+                  "description": "Tags defines list of Tags on AWS resources provisioned for Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "items": {
+                    "description": "Tag defines a AWS Tag on resources.",
+                    "properties": {
+                      "key": {
+                        "description": "The key of the tag.",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "The value of the tag.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "targetType": {
+                  "description": "TargetType defines the target type of target groups for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                  "enum": [
+                    "instance",
+                    "ip"
+                  ],
+                  "type": "string"
+                },
+                "wafv2AclArn": {
+                  "description": "WAFv2ACLArn specifies ARN for the Amazon WAFv2 web ACL.",
+                  "type": "string"
+                },
+                "wafv2AclName": {
+                  "description": "WAFv2ACLName specifies name of the Amazon WAFv2 web ACL.",
+                  "type": "string"
                 }
               },
               "type": "object",
-              "x-kubernetes-map-type": "atomic"
-            },
-            "prefixListsIDs": {
-              "description": "PrefixListsIDs defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "scheme": {
-              "description": "Scheme defines the scheme for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "enum": [
-                "internal",
-                "internet-facing"
-              ],
-              "type": "string"
-            },
-            "sslPolicy": {
-              "description": "SSLPolicy specifies the SSL Policy for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "type": "string"
-            },
-            "sslRedirectPort": {
-              "description": "SSLRedirectPort specifies the SSL Redirect Port for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "type": "string"
-            },
-            "subnets": {
-              "description": "Subnets defines the subnets for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "properties": {
-                "ids": {
-                  "description": "IDs specify the resource IDs of subnets. Exactly one of this or `tags` must be specified.",
-                  "items": {
-                    "description": "SubnetID specifies a subnet ID.",
-                    "pattern": "subnet-[0-9a-f]+",
-                    "type": "string"
-                  },
-                  "minItems": 1,
-                  "type": "array"
-                },
-                "tags": {
-                  "additionalProperties": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "description": "Tags specifies subnets in the load balancer's VPC where each\ntag specified in the map key contains one of the values in the corresponding\nvalue list.\nExactly one of this or `ids` must be specified.",
-                  "type": "object"
+              "x-kubernetes-validations": [
+                {
+                  "message": "cannot specify both 'prefixListsIDs' and 'PrefixListsIDs' fields",
+                  "rule": "!(has(self.prefixListsIDs) && has(self.PrefixListsIDs))"
                 }
-              },
-              "type": "object"
-            },
-            "tags": {
-              "description": "Tags defines list of Tags on AWS resources provisioned for Ingresses that belong to IngressClass with this IngressClassParams.",
-              "items": {
-                "description": "Tag defines a AWS Tag on resources.",
-                "properties": {
-                  "key": {
-                    "description": "The key of the tag.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The value of the tag.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "key",
-                  "value"
-                ],
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "targetType": {
-              "description": "TargetType defines the target type of target groups for all Ingresses that belong to IngressClass with this IngressClassParams.",
-              "enum": [
-                "instance",
-                "ip"
-              ],
-              "type": "string"
-            },
-            "wafv2AclArn": {
-              "description": "WAFv2ACLArn specifies ARN for the Amazon WAFv2 web ACL.",
-              "type": "string"
-            },
-            "wafv2AclName": {
-              "description": "WAFv2ACLName specifies name of the Amazon WAFv2 web ACL.",
-              "type": "string"
+              ]
             }
-          },
-          "type": "object",
-          "x-kubernetes-validations": [
-            {
-              "message": "cannot specify both 'prefixListsIDs' and 'PrefixListsIDs' fields",
-              "rule": "!(has(self.prefixListsIDs) && has(self.PrefixListsIDs))"
-            }
-          ]
+          ],
+          "description": "Due to dependency issue, the validation webhook ignores this particular ingressClassParams resource.\nWe recommend creating ingressClassParams resources separately after installing this chart and the\ncontroller is functional.\nYou can set the specifications in the `helm install` command through `--set` or `--set-string`\nIf you do want to specify in the values.yaml, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'spec:'\nnamespaceSelector:\nmatchLabels:\ngroup:\nscheme:\nipAddressType:\ntags:\nloadBalancerAttributes:\n- key:\nvalue:"
         }
       },
       "type": "object"
     },
     "ingressMaxConcurrentReconciles": {
-      "description": "Maximum number of concurrently running reconcile loops for ingress (default 3)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum number of concurrently running reconcile loops for ingress (default 3)"
     },
     "keepTLSSecret": {
       "description": "keepTLSSecret specifies whether to reuse existing TLS secret for chart upgrade when cert-manager is not being used",
       "type": "boolean"
     },
     "lbStabilizationMonitorInterval": {
-      "description": "Interval at which the controller monitors the state of load balancer after creation for stabilization",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Interval at which the controller monitors the state of load balancer after creation for stabilization"
     },
     "livenessProbe": {
       "additionalProperties": {
@@ -2382,25 +2212,46 @@
       "type": "object"
     },
     "loadBalancerClass": {
-      "description": "Specifies the class of load balancer to use for services. This affects how services are provisioned if type LoadBalancer is used (default service.k8s.aws/nlb)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Specifies the class of load balancer to use for services. This affects how services are provisioned if type LoadBalancer is used (default service.k8s.aws/nlb)"
     },
     "logLevel": {
-      "description": "Set the controller log level - info(default), debug (default \"info\")",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Set the controller log level - info(default), debug (default \"info\")"
     },
     "maxTargetsPerTargetGroup": {
-      "description": "maxTargetsPerTargetGroup specifies the maximum number of targets that the controller will attempt to add to a given ELB instance",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "maxTargetsPerTargetGroup specifies the maximum number of targets that the controller will attempt to add to a given ELB instance"
     },
     "metricsBindAddr": {
       "description": "The address the metric endpoint binds to. (default \":8080\")",
@@ -2409,19 +2260,34 @@
         "null"
       ]
     },
-    "nameOverride": {
-      "type": "string"
-    },
+    "nameOverride": {},
     "nlbGatewayMaxConcurrentReconciles": {
-      "description": "Maximum number of concurrently running reconcile loops for NLB gateways (default 3)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum number of concurrently running reconcile loops for NLB gateways (default 3)"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
     },
     "objectSelector": {
       "additionalProperties": false,
@@ -2432,6 +2298,9 @@
             {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "const": null
             },
             {
               "type": "null"
@@ -2445,6 +2314,9 @@
               "type": "object"
             },
             {
+              "const": null
+            },
+            {
               "type": "null"
             }
           ],
@@ -2454,10 +2326,20 @@
       "type": "object"
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
     },
     "podDisruptionBudget": {
       "additionalProperties": {},
@@ -2465,10 +2347,20 @@
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
     },
     "podMutatorWebhookConfig": {
       "additionalProperties": false,
@@ -2491,11 +2383,7 @@
       "type": "object"
     },
     "priorityClassName": {
-      "description": "priorityClassName specifies the PriorityClass to indicate the importance of controller pods\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "priorityClassName specifies the PriorityClass to indicate the importance of controller pods\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass"
     },
     "rbac": {
       "additionalProperties": false,
@@ -2583,8 +2471,7 @@
     "region": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "type": "object"
+          "const": null
         },
         {
           "type": "null"
@@ -2658,13 +2545,6 @@
           },
           "then": {
             "properties": {
-              "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to add to the service account",
-                "type": "object"
-              },
               "automountServiceAccountToken": {
                 "description": "Automount API credentials for a Service Account.",
                 "type": "boolean"
@@ -2725,9 +2605,7 @@
       ],
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add to the service account",
-          "type": "object"
+          "description": "Annotations to add to the service account"
         },
         "automountServiceAccountToken": {
           "description": "Automount API credentials for a Service Account."
@@ -2755,18 +2633,35 @@
       "type": "object"
     },
     "serviceAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "serviceAnnotations contains annotations to be added to the provisioned webhook service resource",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "serviceAnnotations contains annotations to be added to the provisioned webhook service resource"
     },
     "serviceMaxConcurrentReconciles": {
-      "description": "Maximum number of concurrently running reconcile loops for service (default 3)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum number of concurrently running reconcile loops for service (default 3)"
     },
     "serviceMonitor": {
       "additionalProperties": false,
@@ -2793,88 +2688,17 @@
                 "type": "object"
               },
               "interval": {
-                "anyOf": [
-                  {
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Prometheus scrape interval"
+                "description": "Prometheus scrape interval",
+                "type": "string"
               },
               "metricRelabelings": {
                 "anyOf": [
                   {
-                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "const": null
                   },
                   {
                     "type": "null"
@@ -2892,87 +2716,17 @@
               "relabelings": {
                 "anyOf": [
                   {
-                    "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "const": null
                   },
                   {
                     "type": "null"
                   }
                 ],
                 "description": "Relabelings to apply to samples before ingestion"
-              },
-              "scrapeTimeout": {
-                "description": "Prometheus scrape timeout",
-                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                "type": [
-                  "string",
-                  "null"
-                ]
               }
             },
             "type": "object"
@@ -2995,8 +2749,8 @@
         "metricRelabelings": {
           "anyOf": [
             {
-              "items": {},
-              "type": "array"
+              "additionalProperties": {},
+              "type": "object"
             },
             {
               "type": "null"
@@ -3010,8 +2764,8 @@
         "relabelings": {
           "anyOf": [
             {
-              "items": {},
-              "type": "array"
+              "additionalProperties": {},
+              "type": "object"
             },
             {
               "type": "null"
@@ -3089,57 +2843,84 @@
       "type": "object"
     },
     "serviceTargetENISGTags": {
-      "description": "serviceTargetENISGTags specifies AWS tags, in addition to the cluster tags, for finding the target ENI SG to which to add inbound rules from NLBs.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "serviceTargetENISGTags specifies AWS tags, in addition to the cluster tags, for finding the target ENI SG to which to add inbound rules from NLBs."
     },
     "syncPeriod": {
-      "description": "Period at which the controller forces the repopulation of its local object stores. (default 10h0m0s)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Period at which the controller forces the repopulation of its local object stores. (default 10h0m0s)"
     },
     "targetgroupbindingMaxConcurrentReconciles": {
-      "description": "Maximum number of concurrently running reconcile loops for targetGroupBinding",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum number of concurrently running reconcile loops for targetGroupBinding"
     },
     "targetgroupbindingMaxExponentialBackoffDelay": {
-      "description": "Maximum duration of exponential backoff for targetGroupBinding reconcile failures",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Maximum duration of exponential backoff for targetGroupBinding reconcile failures"
     },
     "targetgroupbindingRequeueDuration": {
-      "description": "Duration after which TargetGroupBinding will be requeued for reconciliation when it's waiting for AWS resources to update.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Duration after which TargetGroupBinding will be requeued for reconciliation when it's waiting for AWS resources to update."
     },
     "terminationGracePeriodSeconds": {
       "description": "Time period for the controller pod to do a graceful shutdown",
       "type": "integer"
     },
     "tolerateNonExistentBackendAction": {
-      "description": "tolerateNonExistentBackendAction permits rules which specify backend actions that don't exist, true by default (When enabled, it will return 503 error if backend action not exist)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "tolerateNonExistentBackendAction permits rules which specify backend actions that don't exist, true by default (When enabled, it will return 503 error if backend action not exist)"
     },
     "tolerateNonExistentBackendService": {
-      "description": "tolerateNonExistentBackendService permits rules which specify backend services that don't exist, true by default (When enabled, it will return 503 error if backend service not exist)",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "tolerateNonExistentBackendService permits rules which specify backend services that don't exist, true by default (When enabled, it will return 503 error if backend service not exist)"
     },
     "tolerations": {
       "anyOf": [
@@ -3171,15 +2952,24 @@
       "description": "topologySpreadConstraints is a stable feature of k8s v1.19 which provides the ability to\ncontrol how Pods are spread across your cluster among failure-domains such as regions, zones,\nnodes, and other user-defined topology domains.\nmore details here: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/"
     },
     "updateStrategy": {
-      "additionalProperties": {},
-      "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 1",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 1"
     },
     "vpcId": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "type": "object"
+          "const": null
         },
         {
           "type": "null"
@@ -3196,18 +2986,32 @@
       "type": "object"
     },
     "watchNamespace": {
-      "description": "Namespace the controller watches for updates to Kubernetes objects, If empty, all namespaces are watched.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Namespace the controller watches for updates to Kubernetes objects, If empty, all namespaces are watched."
     },
     "webhookBindPort": {
-      "description": "The TCP port the Webhook server binds to. (default 9443)",
-      "type": [
-        "integer",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "const": null
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The TCP port the Webhook server binds to. (default 9443)"
     },
     "webhookConfig": {
       "additionalProperties": false,
@@ -3292,6 +3096,9 @@
                         "type": "object"
                       },
                       {
+                        "const": null
+                      },
+                      {
                         "type": "null"
                       }
                     ]
@@ -3301,6 +3108,9 @@
                       {
                         "additionalProperties": {},
                         "type": "object"
+                      },
+                      {
+                        "const": null
                       },
                       {
                         "type": "null"
@@ -3370,6 +3180,9 @@
                         "type": "object"
                       },
                       {
+                        "const": null
+                      },
+                      {
                         "type": "null"
                       }
                     ]
@@ -3379,6 +3192,9 @@
                       {
                         "additionalProperties": {},
                         "type": "object"
+                      },
+                      {
+                        "const": null
                       },
                       {
                         "type": "null"
@@ -3468,6 +3284,9 @@
           "type": "object"
         },
         {
+          "const": null
+        },
+        {
           "type": "null"
         }
       ],
@@ -3477,9 +3296,24 @@
       "additionalProperties": false,
       "description": "webhookTLS specifies TLS cert/key for the webhook",
       "properties": {
-        "caCert": {},
-        "cert": {},
-        "key": {}
+        "caCert": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cert": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "type": "object"
     }

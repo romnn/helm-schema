@@ -1761,75 +1761,6 @@
         "allOf": [
           {
             "properties": {
-              "esIndexCleaner": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esIndexCleaner"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "imageRegistry": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "imageRegistry"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "esIndexCleaner": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "registry": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
               "commonAnnotations": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -1982,75 +1913,6 @@
               "annotations": {
                 "additionalProperties": {
                   "type": "string"
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "esLookback": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esLookback"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "imageRegistry": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "imageRegistry"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "esLookback": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "registry": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
                 },
                 "type": "object"
               }
@@ -2247,75 +2109,6 @@
         "allOf": [
           {
             "properties": {
-              "esRollover": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esRollover"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "imageRegistry": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "imageRegistry"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "esRollover": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "registry": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
               "commonAnnotations": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -2419,301 +2212,6 @@
                   }
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esLookback": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esLookback"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "esLookback": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esLookback"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esRollover": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esRollover"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "esRollover": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esRollover"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "jaeger": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "jaeger"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "jaeger": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "jaeger"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "jaeger": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jaeger"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "spark": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "spark"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "spark": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "spark"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "global": {
-            "properties": {
-              "imageRegistry": {
-                "type": [
-                  "string",
-                  "null"
-                ]
               }
             },
             "type": "object"
@@ -2835,99 +2333,6 @@
         "allOf": [
           {
             "properties": {
-              "global": {
-                "properties": {
-                  "imageRegistry": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "imageRegistry"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "jaeger": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jaeger"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "jaeger": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jaeger"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "jaeger": {
-            "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
-            "properties": {
-              "image": {
-                "properties": {
-                  "registry": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
               "commonAnnotations": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -3022,6 +2427,125 @@
                     },
                     "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx",
                     "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "jaeger": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "jaeger"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "jaeger": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jaeger"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "jaeger": {
+            "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
+            "properties": {
+              "ingress": {
+                "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -3192,76 +2716,6 @@
               "annotations": {
                 "additionalProperties": {
                   "type": "string"
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "imageRegistry": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "imageRegistry"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "spark": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "spark"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "spark": {
-            "description": "https://github.com/jaegertracing/spark-dependencies",
-            "properties": {
-              "image": {
-                "properties": {
-                  "registry": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
                 },
                 "type": "object"
               }
@@ -3451,33 +2905,18 @@
                   "extraEnv": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Use existing secret (ignores previous password)\nexistingSecret:\nCassandra related env vars to be configured on the concerned components"
                   },
-                  "host": {
-                    "type": "string"
-                  },
                   "keyspace": {
                     "type": "string"
-                  },
-                  "port": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   },
                   "user": {
                     "type": "string"
@@ -3583,6 +3022,97 @@
                   "tls": {
                     "properties": {
                       "secretName": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "esRollover": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esRollover"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "storage": {
+                "properties": {
+                  "elasticsearch": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "elasticsearch"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storage"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "storage": {
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "elasticsearch": {
+                "description": "Elasticsearch connection settings\nNOTE: In Jaeger v2, Elasticsearch is configured directly in config.extensions.jaeger_storage\n(see the 'config' section at the top of this file). The settings below are only used by\nthe ES maintenance jobs (esIndexCleaner, esRollover, esLookback) via the elasticsearch.env helper.",
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "mountPath": {
+                        "type": "string"
+                      },
+                      "secretName": {
+                        "type": "string"
+                      },
+                      "subPath": {
                         "type": "string"
                       }
                     },
@@ -3925,119 +3455,12 @@
               "elasticsearch": {
                 "description": "Elasticsearch connection settings\nNOTE: In Jaeger v2, Elasticsearch is configured directly in config.extensions.jaeger_storage\n(see the 'config' section at the top of this file). The settings below are only used by\nthe ES maintenance jobs (esIndexCleaner, esRollover, esLookback) via the elasticsearch.env helper.",
                 "properties": {
-                  "password": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
                   "url": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "user: elastic\npassword: changeme"
-                  },
-                  "user": {
+                    "description": "user: elastic\npassword: changeme",
                     "type": [
                       "string",
                       "null"
                     ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "esRollover": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esRollover"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "storage": {
-                "properties": {
-                  "elasticsearch": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "elasticsearch"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storage"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "storage": {
-            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
-            "properties": {
-              "elasticsearch": {
-                "description": "Elasticsearch connection settings\nNOTE: In Jaeger v2, Elasticsearch is configured directly in config.extensions.jaeger_storage\n(see the 'config' section at the top of this file). The settings below are only used by\nthe ES maintenance jobs (esIndexCleaner, esRollover, esLookback) via the elasticsearch.env helper.",
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "mountPath": {
-                        "type": "string"
-                      },
-                      "secretName": {
-                        "type": "string"
-                      },
-                      "subPath": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -4074,11 +3497,21 @@
       "type": "object"
     },
     "commonLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Labels to add to all deployed resources",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Labels to add to all deployed resources"
     },
     "esIndexCleaner": {
       "additionalProperties": false,
@@ -4098,69 +3531,96 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "cmdlineParams": {
-                "additionalProperties": {},
                 "type": "object"
               },
               "concurrencyPolicy": {
                 "type": "string"
               },
-              "extraEnv": {
+              "extraConfigmapMounts": {
                 "anyOf": [
                   {
                     "items": {},
                     "type": "array"
                   },
                   {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
                   },
                   {
-                    "type": "string"
+                    "type": "object"
+                  }
+                ]
+              },
+              "extraEnv": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
                   }
                 ],
                 "description": "timeout: 30000"
+              },
+              "extraSecretMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "failedJobsHistoryLimit": {
                 "type": "integer"
               },
               "image": {
                 "properties": {
-                  "digest": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "pullPolicy": {
-                    "type": "string"
-                  },
-                  "repository": {
                     "type": "string"
                   }
                 },
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              "numberOfDays": {
                 "anyOf": [
                   {
-                    "type": "integer"
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
                   },
                   {
-                    "type": "string"
+                    "additionalProperties": {},
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
+                ]
               },
               "podAnnotations": {
                 "additionalProperties": {
@@ -4188,10 +3648,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "schedule": {
-                "description": "- name: ROLLOVER\nvalue: 'true'",
-                "type": "string"
-              },
               "securityContext": {
                 "additionalProperties": false,
                 "properties": {
@@ -4207,14 +3663,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               }
@@ -4394,20 +3848,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "extraConfigmapMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "configMap": {},
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraConfigmapMounts": {},
         "extraEnv": {
           "anyOf": [
             {
@@ -4423,20 +3864,7 @@
           ],
           "description": "timeout: 30000"
         },
-        "extraSecretMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "secretName": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
           "additionalProperties": false,
@@ -4447,15 +3875,6 @@
               "items": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
                     "type": "object"
                   },
                   {
@@ -4568,23 +3987,51 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "cmdlineParams": {
-                "additionalProperties": {},
                 "type": "object"
               },
               "concurrencyPolicy": {
                 "type": "string"
               },
+              "extraConfigmapMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
+                      "additionalProperties": false,
                       "properties": {
                         "name": {
                           "type": "string"
@@ -4596,12 +4043,23 @@
                       "type": "object"
                     },
                     "type": "array"
+                  }
+                ]
+              },
+              "extraSecretMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "type": "string"
+                    "type": "object"
                   }
                 ]
               },
@@ -4610,28 +4068,25 @@
               },
               "image": {
                 "properties": {
-                  "digest": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "pullPolicy": {
-                    "type": "string"
-                  },
-                  "repository": {
                     "type": "string"
                   }
                 },
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "podAnnotations": {
                 "additionalProperties": {
@@ -4659,9 +4114,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "schedule": {
-                "type": "string"
-              },
               "securityContext": {
                 "additionalProperties": {},
                 "type": "object"
@@ -4672,14 +4124,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               }
@@ -4861,20 +4311,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "extraConfigmapMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "configMap": {},
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraConfigmapMounts": {},
         "extraEnv": {
           "anyOf": [
             {
@@ -4889,20 +4326,7 @@
             }
           ]
         },
-        "extraSecretMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "secretName": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
           "additionalProperties": false,
@@ -4913,15 +4337,6 @@
               "items": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
                     "type": "object"
                   },
                   {
@@ -5025,23 +4440,51 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "cmdlineParams": {
-                "additionalProperties": {},
                 "type": "object"
               },
               "concurrencyPolicy": {
                 "type": "string"
               },
+              "extraConfigmapMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
+                      "additionalProperties": false,
                       "properties": {
                         "name": {
                           "type": "string"
@@ -5053,12 +4496,23 @@
                       "type": "object"
                     },
                     "type": "array"
+                  }
+                ]
+              },
+              "extraSecretMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "type": "string"
+                    "type": "object"
                   }
                 ]
               },
@@ -5067,20 +4521,7 @@
               },
               "image": {
                 "properties": {
-                  "digest": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "pullPolicy": {
-                    "type": "string"
-                  },
-                  "repository": {
                     "type": "string"
                   }
                 },
@@ -5092,14 +4533,12 @@
                   "extraEnv": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ]
                   },
@@ -5122,8 +4561,18 @@
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "podAnnotations": {
                 "additionalProperties": {
@@ -5151,9 +4600,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "schedule": {
-                "type": "string"
-              },
               "securityContext": {
                 "additionalProperties": {},
                 "type": "object"
@@ -5164,14 +4610,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               }
@@ -5354,20 +4798,7 @@
           "description": "This runs the es-rollover-hook that will fail if elasticsearch is not already up",
           "type": "boolean"
         },
-        "extraConfigmapMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "configMap": {},
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraConfigmapMounts": {},
         "extraEnv": {
           "anyOf": [
             {
@@ -5382,20 +4813,7 @@
             }
           ]
         },
-        "extraSecretMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "secretName": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
           "additionalProperties": false,
@@ -5406,15 +4824,6 @@
               "items": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
                     "type": "object"
                   },
                   {
@@ -5538,10 +4947,7 @@
     },
     "extraObjects": {
       "description": "Array with extra yaml objects to install alongside the chart. Values are evaluated as a template.",
-      "items": {
-        "additionalProperties": {},
-        "type": "object"
-      },
+      "items": {},
       "type": "array"
     },
     "fullnameOverride": {
@@ -5551,21 +4957,12 @@
       ]
     },
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "imagePullSecrets": {
           "items": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
                 "type": "object"
               },
               {
@@ -5615,31 +5012,45 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "extraEnv": {
+              "args": {
                 "anyOf": [
                   {
                     "items": {},
                     "type": "array"
                   },
                   {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
                   },
                   {
-                    "type": "string"
+                    "type": "object"
+                  }
+                ],
+                "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/"
+              },
+              "extraEnv": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
                   }
                 ]
               },
               "extraVolumeMounts": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "- name: badger-data\npersistentVolumeClaim:\nclaimName: jaeger-badger-data\n- name: badger-data\nmountPath: /badger"
@@ -5647,33 +5058,18 @@
               "extraVolumes": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
               "image": {
                 "properties": {
-                  "digest": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "pullPolicy": {
-                    "type": "string"
-                  },
-                  "repository": {
                     "type": "string"
                   }
                 },
@@ -5693,6 +5089,9 @@
               "podSecurityContext": {
                 "additionalProperties": {},
                 "type": "object"
+              },
+              "replicas": {
+                "type": "integer"
               },
               "resources": {
                 "additionalProperties": {},
@@ -5717,14 +5116,12 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -5790,21 +5187,6 @@
             "properties": {
               "httproute": {
                 "properties": {
-                  "additionalRules": {
-                    "anyOf": [
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "additionalRules (templated) prepends custom HTTPRoute rules"
-                  },
                   "apiVersion": {
                     "anyOf": [
                       {
@@ -5819,56 +5201,28 @@
                   "filters": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "filters applied to requests that match this rule"
                   },
-                  "hostnames": {
-                    "anyOf": [
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "hostnames matched against the HTTP Host header to select this route\nhostnames:\n- chart-example.local"
-                  },
                   "matches": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {
-                          "additionalProperties": {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "properties": {
-                              "type": {
-                                "type": "string"
-                              },
-                              "value": {
-                                "type": "string"
-                              }
-                            },
-                            "type": "object"
-                          },
+                          "additionalProperties": false,
                           "properties": {
                             "path": {
-                              "additionalProperties": {
-                                "type": "string"
-                              },
+                              "additionalProperties": false,
                               "properties": {
                                 "type": {
                                   "type": "string"
@@ -5883,12 +5237,6 @@
                           "type": "object"
                         },
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "matches define conditions used to match incoming requests against the rule.\nDefaults to a PathPrefix \"/\" match (mirrors the Ingress behavior above)."
@@ -5896,14 +5244,12 @@
                   "parentRefs": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "parentRefs reference the Gateway(s) this HTTPRoute is attached to\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: http"
@@ -5980,49 +5326,6 @@
             },
             "type": "object"
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/helm-truthy"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "replicas": {
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          }
         }
       ],
       "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
@@ -6032,9 +5335,7 @@
           "type": "object"
         },
         "args": {
-          "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/",
-          "items": {},
-          "type": "array"
+          "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/"
         },
         "enabled": {
           "type": "boolean"
@@ -6086,18 +5387,6 @@
           "additionalProperties": false,
           "properties": {
             "additionalRules": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "additionalRules (templated) prepends custom HTTPRoute rules"
             },
             "annotations": {
@@ -6127,18 +5416,6 @@
               "description": "filters applied to requests that match this rule"
             },
             "hostnames": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "hostnames matched against the HTTP Host header to select this route\nhostnames:\n- chart-example.local"
             },
             "matches": {
@@ -6183,15 +5460,6 @@
               "items": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
                     "type": "object"
                   },
                   {
@@ -6228,11 +5496,18 @@
               "type": "object"
             },
             "pathType": {
-              "description": "Used to create an Ingress record.\nhosts:\n- chart-example.local\nannotations:\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nlabels:\napp: jaeger\ntls:\nSecrets must be manually created in the namespace.\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-              "type": [
-                "string",
-                "null"
-              ]
+              "anyOf": [
+                {
+                  "const": null
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Used to create an Ingress record.\nhosts:\n- chart-example.local\nannotations:\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nlabels:\napp: jaeger\ntls:\nSecrets must be manually created in the namespace.\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
             },
             "tls": {
               "additionalProperties": {},
@@ -6295,10 +5570,20 @@
               "type": "array"
             },
             "labels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              ]
             },
             "loadBalancerSourceRanges": {
               "additionalProperties": {},
@@ -6353,12 +5638,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "networkPolicy": {
       "additionalProperties": false,
       "properties": {
@@ -6386,11 +5666,20 @@
           "then": {
             "properties": {
               "affinity": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "cmdlineParams": {
-                "additionalProperties": {},
                 "type": "object"
               },
               "concurrencyPolicy": {
@@ -6399,14 +5688,12 @@
               "extraEnv": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "spark env var values at\nhttps://github.com/jaegertracing/spark-dependencies/blob/main/jaeger-spark-dependencies-elasticsearch/src/main/java/io/jaegertracing/spark/dependencies/elastic/ElasticsearchDependenciesJob.java\nES_NODES, ES_USERNAME, ES_PASSWORD are set via elasticsearch.env helper which uses storage.elasticsearch"
@@ -6416,31 +5703,25 @@
               },
               "image": {
                 "properties": {
-                  "digest": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "pullPolicy": {
-                    "type": "string"
-                  },
-                  "repository": {
-                    "type": "string"
-                  },
-                  "tag": {
                     "type": "string"
                   }
                 },
                 "type": "object"
               },
               "nodeSelector": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ]
               },
               "podAnnotations": {
                 "additionalProperties": {
@@ -6463,10 +5744,6 @@
                 "additionalProperties": {},
                 "type": "object"
               },
-              "schedule": {
-                "description": "- name: ES_NODES_WAN_ONLY\nvalue: 'true'\n- name: ES_CLIENT_NODE_ONLY\nvalue: 'false'\n- name: ES_INDEX_PREFIX\nvalue: 'jaeger'\n- name: ES_INDEX_DATE_SEPARATOR\nvalue: '-'\n- name: ES_TIME_RANGE\nvalue: '24h'\n- name: ES_USE_ALIASES\nvalue: 'false'",
-                "type": "string"
-              },
               "securityContext": {
                 "additionalProperties": {},
                 "type": "object"
@@ -6477,14 +5754,94 @@
               "tolerations": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "extraConfigmapMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraConfigmapMounts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraSecretMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraSecretMounts"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "extraConfigmapMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "type": "string"
+                    "type": "object"
+                  }
+                ]
+              },
+              "extraSecretMounts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
                   }
                 ]
               }
@@ -6667,20 +6024,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "extraConfigmapMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "configMap": {},
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraConfigmapMounts": {},
         "extraEnv": {
           "anyOf": [
             {
@@ -6696,20 +6040,7 @@
           ],
           "description": "spark env var values at\nhttps://github.com/jaegertracing/spark-dependencies/blob/main/jaeger-spark-dependencies-elasticsearch/src/main/java/io/jaegertracing/spark/dependencies/elastic/ElasticsearchDependenciesJob.java\nES_NODES, ES_USERNAME, ES_PASSWORD are set via elasticsearch.env helper which uses storage.elasticsearch"
         },
-        "extraSecretMounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "mountPath": {},
-              "name": {},
-              "readOnly": {},
-              "secretName": {},
-              "subPath": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
           "additionalProperties": false,
@@ -6720,15 +6051,6 @@
               "items": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
                     "type": "object"
                   },
                   {
@@ -6822,7 +6144,10 @@
               "description": "- name: CASSANDRA_SERVERS\nvalue: cassandra\n- name: CASSANDRA_PORT\nvalue: \"9042\"\n- name: CASSANDRA_KEYSPACE\nvalue: jaeger_v1_test\n- name: CASSANDRA_TLS_ENABLED\nvalue: \"false\"\nCassandra related cmd line opts to be configured on the concerned components\ncassandra.servers: cassandra\ncassandra.port: 9042\ncassandra.keyspace: jaeger_v1_test\ncassandra.tls.enabled: \"false\"",
               "type": "object"
             },
-            "env": {},
+            "env": {
+              "additionalProperties": {},
+              "type": "object"
+            },
             "existingSecret": {},
             "extraEnv": {
               "anyOf": [
@@ -6898,14 +6223,16 @@
       "type": "string"
     },
     "uiconfig": {
-      "description": "User provided ui config: see https://www.jaegertracing.io/docs/latest/deployment/frontend-ui/#configuration for more examples and settings\n{\n\"dependencies\": {\n\"dagMaxNumServices\": 200,\n\"menuEnabled\": true\n},\n\"monitor\": {\n\"menuEnabled\": true\n},\n\"themes\": {\n\"enabled\": true\n},\n\"archiveEnabled\": true,\n\"tracking\": {\n\"gaID\": \"UA-000000-2\",\n\"trackErrors\": true\n},\n\"menu\": [\n{\n\"label\": \"About Jaeger\",\n\"items\": [\n{\n\"label\": \"GitHub\",\n\"url\": \"https://github.com/jaegertracing/jaeger\"\n},\n{\n\"label\": \"Docs\",\n\"url\": \"https://www.jaegertracing.io/docs/latest/\"\n}\n]\n}\n],\n\"search\": {\n\"maxLookback\": {\n\"label\": \"2 Days\",\n\"value\": \"2d\"\n},\n\"maxLimit\": 1500\n},\n\"linkPatterns\": [{\n\"type\": \"process\",\n\"key\": \"jaeger.version\",\n\"url\": \"https://github.com/jaegertracing/jaeger-client-java/releases/tag/#{jaeger.version}\",\n\"text\": \"Information about Jaeger release #{jaeger.version}\"\n},\n{\n\"type\": \"tags\",\n\"key\": \"uniqueId\",\n\"url\": \"https://mykibana.com/uniqueId=#{uniqueId}&traceId=#{trace.traceID}\",\n\"text\": \"Redirect to kibana to view log\"\n},\n{\n\"type\": \"traces\",\n\"url\": \"https://my-logs.server?from=#{startTime | add -60000000 | epoch_micros_to_date_iso}&to=#{endTime | add 60000000 | epoch_micros_to_date_iso}'\",\n\"text\": \"Redirect to kibana to view log with formatted dates\"\n}],\n\"traceIdDisplayLength\": 20,\n\"criticalPathEnabled\": true,\n\"topTagPrefixes\": [\"http.\", \"db.\"]\n}",
-      "type": "null"
+      "description": "User provided ui config: see https://www.jaegertracing.io/docs/latest/deployment/frontend-ui/#configuration for more examples and settings\n{\n\"dependencies\": {\n\"dagMaxNumServices\": 200,\n\"menuEnabled\": true\n},\n\"monitor\": {\n\"menuEnabled\": true\n},\n\"themes\": {\n\"enabled\": true\n},\n\"archiveEnabled\": true,\n\"tracking\": {\n\"gaID\": \"UA-000000-2\",\n\"trackErrors\": true\n},\n\"menu\": [\n{\n\"label\": \"About Jaeger\",\n\"items\": [\n{\n\"label\": \"GitHub\",\n\"url\": \"https://github.com/jaegertracing/jaeger\"\n},\n{\n\"label\": \"Docs\",\n\"url\": \"https://www.jaegertracing.io/docs/latest/\"\n}\n]\n}\n],\n\"search\": {\n\"maxLookback\": {\n\"label\": \"2 Days\",\n\"value\": \"2d\"\n},\n\"maxLimit\": 1500\n},\n\"linkPatterns\": [{\n\"type\": \"process\",\n\"key\": \"jaeger.version\",\n\"url\": \"https://github.com/jaegertracing/jaeger-client-java/releases/tag/#{jaeger.version}\",\n\"text\": \"Information about Jaeger release #{jaeger.version}\"\n},\n{\n\"type\": \"tags\",\n\"key\": \"uniqueId\",\n\"url\": \"https://mykibana.com/uniqueId=#{uniqueId}&traceId=#{trace.traceID}\",\n\"text\": \"Redirect to kibana to view log\"\n},\n{\n\"type\": \"traces\",\n\"url\": \"https://my-logs.server?from=#{startTime | add -60000000 | epoch_micros_to_date_iso}&to=#{endTime | add 60000000 | epoch_micros_to_date_iso}'\",\n\"text\": \"Redirect to kibana to view log with formatted dates\"\n}],\n\"traceIdDisplayLength\": 20,\n\"criticalPathEnabled\": true,\n\"topTagPrefixes\": [\"http.\", \"db.\"]\n}"
     },
     "userconfig": {
       "anyOf": [
         {
           "additionalProperties": {},
           "type": "object"
+        },
+        {
+          "const": null
         },
         {
           "type": "null"

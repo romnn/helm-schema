@@ -385,22 +385,12 @@
       ]
     },
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Generated from deployments/kubernetes/templates/chart/values.yaml.tmpl",
       "properties": {
         "imagePullSecrets": {
           "description": "imagePullSecrets:\n- name: my-pull-secret\nimagePullSecrets:\n- my-pull-secret",
-          "items": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "items": {},
           "type": "array"
         },
         "imageRegistry": {
@@ -436,9 +426,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": "string"
-    },
+    "nameOverride": {},
     "namespace": {
       "type": [
         "string",
@@ -450,32 +438,178 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "service": {
-                "$ref": "#/$defs/helm-truthy"
+            "anyOf": [
+              {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "affinity": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enableHA": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableHA"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
+            ]
           },
           "then": {
             "properties": {
               "deployment": {
                 "properties": {
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "An affinity stanza to be applied to the Deployment.\nExample:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: \"node-role.kubernetes.io/infra-worker\"\noperator: \"Exists\""
                   }
                 },
                 "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "volumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumeMounts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
               },
-              "matchLabels": {
-                "additionalProperties": {
-                  "type": "string"
+              {
+                "properties": {
+                  "readOnlyRootFileSystem": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "readOnlyRootFileSystem"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "volumeMounts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "readOnlyRootFileSystem": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "readOnlyRootFileSystem"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "volumes": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ]
+                  }
                 },
                 "type": "object"
               }
@@ -1114,231 +1248,6 @@
                   }
                 ],
                 "description": "Log level to use (trace, debug, info, warning, error, fatal and panic)"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "matchLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              "rbac": {
-                "properties": {
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "serviceAccount": {
-                "description": "Service account config for the agent pods",
-                "properties": {
-                  "name": {
-                    "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "matchLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              "serviceAccount": {
-                "description": "Service account config for the agent pods",
-                "properties": {
-                  "name": {
-                    "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
-                  "netpol": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "netpol"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "matchLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
               }
             },
             "type": "object"
@@ -2056,6 +1965,68 @@
         },
         {
           "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "serviceAccount": {
+                "description": "Service account config for the agent pods",
+                "properties": {
+                  "name": {
+                    "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "properties": {
@@ -2289,21 +2260,31 @@
           ]
         },
         "custom_annotations": {
-          "additionalProperties": false,
-          "description": "Optional flags to pass to the Reloader entrypoint\nExample:\ncustom_annotations:\nconfigmap: \"my.company.com/configmap\"\nsecret: \"my.company.com/secret\"\nignore: \"my.company.com/reloader-ignore\"",
-          "properties": {
-            "auto": {},
-            "configmap": {},
-            "configmap_auto": {},
-            "ignore": {},
-            "match": {},
-            "pausePeriod": {},
-            "pauseTime": {},
-            "search": {},
-            "secret": {},
-            "secret_auto": {}
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "auto": {},
+                "configmap": {},
+                "configmap_auto": {},
+                "ignore": {},
+                "match": {},
+                "pausePeriod": {},
+                "pauseTime": {},
+                "search": {},
+                "secret": {},
+                "secret_auto": {}
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Optional flags to pass to the Reloader entrypoint\nExample:\ncustom_annotations:\nconfigmap: \"my.company.com/configmap\"\nsecret: \"my.company.com/secret\"\nignore: \"my.company.com/reloader-ignore\""
         },
         "deployment": {
           "additionalProperties": false,
@@ -2313,37 +2294,85 @@
               "description": "An affinity stanza to be applied to the Deployment.\nExample:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: \"node-role.kubernetes.io/infra-worker\"\noperator: \"Exists\"",
               "type": "object"
             },
-            "annotations": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
+            "annotations": {},
             "automountServiceAccountToken": {},
             "containerSecurityContext": {
-              "additionalProperties": {},
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ]
             },
             "dnsConfig": {
-              "additionalProperties": {},
-              "description": "Specifies the deployment DNS configuration.\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\"",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ],
+              "description": "Specifies the deployment DNS configuration.\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\""
             },
             "env": {
               "additionalProperties": false,
               "description": "Support for extra environment variables.",
               "properties": {
                 "existing": {
-                  "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key",
-                  "type": "null"
+                  "anyOf": [
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ],
+                  "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key"
                 },
                 "field": {
-                  "description": "ALERT_ON_RELOAD: <\"true\"|\"false\">\nALERT_SINK: <\"slack\"> # By default it will be a raw text based webhook\nALERT_WEBHOOK_URL: <\"webhook_url\">\nALERT_ADDITIONAL_INFO: <\"Additional Info like Cluster Name if needed\">\nfield supports Key value pair as environment variables. It gets the values from other fields of pod.",
-                  "type": "null"
+                  "anyOf": [
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ],
+                  "description": "ALERT_ON_RELOAD: <\"true\"|\"false\">\nALERT_SINK: <\"slack\"> # By default it will be a raw text based webhook\nALERT_WEBHOOK_URL: <\"webhook_url\">\nALERT_ADDITIONAL_INFO: <\"Additional Info like Cluster Name if needed\">\nfield supports Key value pair as environment variables. It gets the values from other fields of pod."
                 },
                 "open": {
-                  "description": "Open supports Key value pair as environment variables.",
-                  "type": "null"
+                  "anyOf": [
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Open supports Key value pair as environment variables."
                 },
                 "secret": {
                   "anyOf": [
@@ -2394,6 +2423,13 @@
                       "type": "object"
                     },
                     {
+                      "const": null
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
                       "type": "null"
                     }
                   ],
@@ -2403,29 +2439,13 @@
               "type": "object"
             },
             "gomaxprocsOverride": {
-              "description": "Put \"0\" in either to have go runtime ignore the set value.\nOtherwise, see https://pkg.go.dev/runtime#hdr-Environment_Variables for GOMAXPROCS and GOMEMLIMIT",
-              "type": [
-                "string",
-                "null"
-              ]
+              "description": "Put \"0\" in either to have go runtime ignore the set value.\nOtherwise, see https://pkg.go.dev/runtime#hdr-Environment_Variables for GOMAXPROCS and GOMEMLIMIT"
             },
-            "gomemlimitOverride": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "hostUsers": {
-              "type": "null"
-            },
-            "labels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
+            "gomemlimitOverride": {},
+            "hostUsers": {},
+            "labels": {},
             "livenessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "Liveness and readiness probe timeout values.",
               "properties": {
                 "failureThreshold": {
@@ -2468,6 +2488,9 @@
                   "type": "object"
                 },
                 {
+                  "const": null
+                },
+                {
                   "type": "null"
                 }
               ],
@@ -2476,12 +2499,7 @@
             "pod": {
               "additionalProperties": false,
               "properties": {
-                "annotations": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
-                }
+                "annotations": {}
               },
               "type": "object"
             },
@@ -2493,7 +2511,7 @@
               ]
             },
             "readinessProbe": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "description": "timeoutSeconds: 5\nfailureThreshold: 5\nperiodSeconds: 10\nsuccessThreshold: 1\ntimeoutSeconds: 15\nfailureThreshold: 5\nperiodSeconds: 10\nsuccessThreshold: 1",
               "properties": {
                 "failureThreshold": {
@@ -2530,13 +2548,22 @@
               "type": "object"
             },
             "replicas": {
-              "description": "If you wish to run multiple replicas set reloader.enableHA = true",
-              "type": "integer"
+              "description": "If you wish to run multiple replicas set reloader.enableHA = true"
             },
             "resources": {
-              "additionalProperties": {},
-              "description": "Specify resource requests/limits for the deployment.\nExample:\nresources:\nlimits:\ncpu: \"100m\"\nmemory: \"512Mi\"\nrequests:\ncpu: \"10m\"\nmemory: \"128Mi\"",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ],
+              "description": "Specify resource requests/limits for the deployment.\nExample:\nresources:\nlimits:\ncpu: \"100m\"\nmemory: \"512Mi\"\nrequests:\ncpu: \"10m\"\nmemory: \"128Mi\""
             },
             "revisionHistoryLimit": {
               "type": "integer"
@@ -2710,12 +2737,7 @@
         "logLevel": {
           "description": "Log level to use (trace, debug, info, warning, error, fatal and panic)"
         },
-        "matchLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
+        "matchLabels": {},
         "namespaceSelector": {
           "description": "Comma separated list of k8s label selectors for namespaces selection"
         },
@@ -2739,28 +2761,24 @@
                   "from": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ]
                   },
                   "to": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "- podSelector:\nmatchLabels:\napp.kubernetes.io/name: prometheus"
@@ -2835,100 +2853,9 @@
               },
               "then": {
                 "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-                    "type": "object"
-                  },
                   "honorLabels": {
                     "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)",
                     "type": "boolean"
-                  },
-                  "interval": {
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-                    "type": "object"
-                  },
-                  "metricRelabelings": {
-                    "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
                   },
                   "namespace": {
                     "type": [
@@ -2937,273 +2864,32 @@
                     ]
                   },
                   "podTargetLabels": {
-                    "description": "podTargetLabels defines the labels which are transferred from the\nassociated Kubernetes `Pod` object onto the ingested metrics.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "relabelings": {
-                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "scheme": {
                     "anyOf": [
                       {
-                        "description": "scheme defines the HTTP scheme to use for scraping.",
-                        "enum": [
-                          "http",
-                          "https",
-                          "HTTP",
-                          "HTTPS"
-                        ],
-                        "type": "string"
+                        "additionalProperties": {},
+                        "type": "object"
                       },
                       {
-                        "type": "null"
+                        "items": {},
+                        "type": "array"
                       }
                     ]
                   },
-                  "timeout": {
-                    "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
+                  "relabelings": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
                   },
                   "tlsConfig": {
-                    "additionalProperties": false,
-                    "description": "tlsConfig defines the TLS configuration used by the client.",
-                    "properties": {
-                      "ca": {
-                        "additionalProperties": false,
-                        "description": "ca defines the Certificate authority used when verifying server certificates.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "cert": {
-                        "additionalProperties": false,
-                        "description": "cert defines the Client certificate to present when doing client-authentication.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "insecureSkipVerify": {
-                        "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                        "type": "boolean"
-                      },
-                      "keySecret": {
-                        "additionalProperties": false,
-                        "description": "keySecret defines the Secret containing the client key file for the targets.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "maxVersion": {
-                        "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "minVersion": {
-                        "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "serverName": {
-                        "description": "serverName is used to verify the hostname for the targets.",
-                        "type": "string"
-                      }
-                    },
+                    "additionalProperties": {},
                     "type": "object"
                   }
                 },
@@ -3213,9 +2899,7 @@
           ],
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-              "type": "object"
+              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
             },
             "bearerTokenSecret": {},
             "enabled": {
@@ -3227,325 +2911,45 @@
             },
             "interval": {},
             "labels": {
-              "additionalProperties": {},
-              "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-              "type": "object"
+              "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
             },
             "metricRelabelings": {
-              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
+              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
             },
             "namespace": {},
             "podTargetLabels": {
-              "description": "podTargetLabels defines the labels which are transferred from the\nassociated Kubernetes `Pod` object onto the ingested metrics.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "relabelings": {
-              "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
             },
             "scheme": {},
             "timeout": {},
             "tlsConfig": {
-              "additionalProperties": false,
-              "description": "tlsConfig defines the TLS configuration used by the client.",
-              "properties": {
-                "ca": {
-                  "additionalProperties": false,
-                  "description": "ca defines the Certificate authority used when verifying server certificates.",
-                  "properties": {
-                    "configMap": {
-                      "additionalProperties": false,
-                      "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key to select.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the ConfigMap or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    },
-                    "secret": {
-                      "additionalProperties": false,
-                      "description": "secret defines the Secret containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key of the secret to select from.  Must be a valid secret key.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the Secret or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    }
-                  },
-                  "type": "object"
-                },
-                "cert": {
-                  "additionalProperties": false,
-                  "description": "cert defines the Client certificate to present when doing client-authentication.",
-                  "properties": {
-                    "configMap": {
-                      "additionalProperties": false,
-                      "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key to select.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the ConfigMap or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    },
-                    "secret": {
-                      "additionalProperties": false,
-                      "description": "secret defines the Secret containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key of the secret to select from.  Must be a valid secret key.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the Secret or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    }
-                  },
-                  "type": "object"
-                },
-                "insecureSkipVerify": {
-                  "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                  "type": "boolean"
-                },
-                "keySecret": {
-                  "additionalProperties": false,
-                  "description": "keySecret defines the Secret containing the client key file for the targets.",
-                  "properties": {
-                    "key": {
-                      "description": "The key of the secret to select from.  Must be a valid secret key.",
-                      "type": "string"
-                    },
-                    "name": {
-                      "default": "",
-                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                      "type": "string"
-                    },
-                    "optional": {
-                      "description": "Specify whether the Secret or its key must be defined",
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "key"
-                  ],
-                  "type": "object",
-                  "x-kubernetes-map-type": "atomic"
-                },
-                "maxVersion": {
-                  "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                  "enum": [
-                    "TLS10",
-                    "TLS11",
-                    "TLS12",
-                    "TLS13"
-                  ],
-                  "type": "string"
-                },
-                "minVersion": {
-                  "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                  "enum": [
-                    "TLS10",
-                    "TLS11",
-                    "TLS12",
-                    "TLS13"
-                  ],
-                  "type": "string"
-                },
-                "serverName": {
-                  "description": "serverName is used to verify the hostname for the targets.",
-                  "type": "string"
-                }
-              },
+              "additionalProperties": {},
               "type": "object"
             }
           },
@@ -3556,55 +2960,11 @@
         },
         "rbac": {
           "additionalProperties": false,
-          "allOf": [
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          ],
           "properties": {
             "enabled": {
               "type": "boolean"
             },
-            "labels": {
-              "additionalProperties": {},
-              "type": "object"
-            }
+            "labels": {}
           },
           "type": "object"
         },
@@ -3662,128 +3022,29 @@
           "description": "Comma separated list of k8s label selectors for configmap/secret selection"
         },
         "service": {
-          "additionalProperties": false,
-          "allOf": [
+          "anyOf": [
             {
-              "if": {
-                "$ref": "#/$defs/helm-truthy"
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {},
+                "labels": {},
+                "port": {}
               },
-              "then": {
-                "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
+              "type": "object"
             }
-          ],
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "labels": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "port": {}
-          },
-          "type": "object"
+          ]
         },
         "serviceAccount": {
           "additionalProperties": false,
           "allOf": [
             {
-              "if": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "name": {
-                    "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "create": {}
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "create": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
+              "if": {},
               "then": {
                 "properties": {
                   "name": {
@@ -3800,19 +3061,13 @@
           ],
           "description": "Service account config for the agent pods",
           "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "type": "object"
-            },
+            "annotations": {},
             "automountServiceAccountToken": {},
             "create": {
               "description": "Specifies whether a ServiceAccount should be created",
               "type": "boolean"
             },
-            "labels": {
-              "additionalProperties": {},
-              "type": "object"
-            },
+            "labels": {},
             "name": {
               "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
             }
@@ -3836,107 +3091,9 @@
               },
               "then": {
                 "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-                    "type": "object"
-                  },
-                  "bearerTokenFile": {
-                    "description": "bearerTokenFile defines the file to read bearer token for scraping the target.\n\nDeprecated: use `authorization` instead.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
                   "honorLabels": {
                     "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)",
                     "type": "boolean"
-                  },
-                  "interval": {
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-                    "type": "object"
-                  },
-                  "metricRelabelings": {
-                    "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
                   },
                   "namespace": {
                     "type": [
@@ -3945,285 +3102,32 @@
                     ]
                   },
                   "relabelings": {
-                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "scheme": {
                     "anyOf": [
                       {
-                        "description": "scheme defines the HTTP scheme to use when scraping the metrics.",
-                        "enum": [
-                          "http",
-                          "https",
-                          "HTTP",
-                          "HTTPS"
-                        ],
-                        "type": "string"
+                        "additionalProperties": {},
+                        "type": "object"
                       },
                       {
-                        "type": "null"
+                        "items": {},
+                        "type": "array"
                       }
-                    ]
+                    ],
+                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
                   },
                   "targetLabels": {
-                    "description": "targetLabels defines the labels which are transferred from the\nassociated Kubernetes `Service` object onto the ingested metrics.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "timeout": {
-                    "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": [
-                      "string",
-                      "null"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
                     ]
                   },
                   "tlsConfig": {
-                    "additionalProperties": false,
-                    "description": "tlsConfig defines TLS configuration used by the client.",
-                    "properties": {
-                      "ca": {
-                        "additionalProperties": false,
-                        "description": "ca defines the Certificate authority used when verifying server certificates.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "caFile": {
-                        "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
-                        "type": "string"
-                      },
-                      "cert": {
-                        "additionalProperties": false,
-                        "description": "cert defines the Client certificate to present when doing client-authentication.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "certFile": {
-                        "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
-                        "type": "string"
-                      },
-                      "insecureSkipVerify": {
-                        "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                        "type": "boolean"
-                      },
-                      "keyFile": {
-                        "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
-                        "type": "string"
-                      },
-                      "keySecret": {
-                        "additionalProperties": false,
-                        "description": "keySecret defines the Secret containing the client key file for the targets.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "maxVersion": {
-                        "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "minVersion": {
-                        "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "serverName": {
-                        "description": "serverName is used to verify the hostname for the targets.",
-                        "type": "string"
-                      }
-                    },
+                    "additionalProperties": {},
                     "type": "object"
                   }
                 },
@@ -4233,9 +3137,7 @@
           ],
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-              "type": "object"
+              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
             },
             "bearerTokenFile": {},
             "enabled": {
@@ -4247,337 +3149,45 @@
             },
             "interval": {},
             "labels": {
-              "additionalProperties": {},
-              "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-              "type": "object"
+              "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
             },
             "metricRelabelings": {
-              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
+              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
             },
             "namespace": {},
             "relabelings": {
-              "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
             },
             "scheme": {},
             "targetLabels": {
-              "description": "targetLabels defines the labels which are transferred from the\nassociated Kubernetes `Service` object onto the ingested metrics.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "timeout": {},
             "tlsConfig": {
-              "additionalProperties": false,
-              "description": "tlsConfig defines TLS configuration used by the client.",
-              "properties": {
-                "ca": {
-                  "additionalProperties": false,
-                  "description": "ca defines the Certificate authority used when verifying server certificates.",
-                  "properties": {
-                    "configMap": {
-                      "additionalProperties": false,
-                      "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key to select.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the ConfigMap or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    },
-                    "secret": {
-                      "additionalProperties": false,
-                      "description": "secret defines the Secret containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key of the secret to select from.  Must be a valid secret key.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the Secret or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    }
-                  },
-                  "type": "object"
-                },
-                "caFile": {
-                  "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
-                  "type": "string"
-                },
-                "cert": {
-                  "additionalProperties": false,
-                  "description": "cert defines the Client certificate to present when doing client-authentication.",
-                  "properties": {
-                    "configMap": {
-                      "additionalProperties": false,
-                      "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key to select.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the ConfigMap or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    },
-                    "secret": {
-                      "additionalProperties": false,
-                      "description": "secret defines the Secret containing data to use for the targets.",
-                      "properties": {
-                        "key": {
-                          "description": "The key of the secret to select from.  Must be a valid secret key.",
-                          "type": "string"
-                        },
-                        "name": {
-                          "default": "",
-                          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                          "type": "string"
-                        },
-                        "optional": {
-                          "description": "Specify whether the Secret or its key must be defined",
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "key"
-                      ],
-                      "type": "object",
-                      "x-kubernetes-map-type": "atomic"
-                    }
-                  },
-                  "type": "object"
-                },
-                "certFile": {
-                  "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
-                  "type": "string"
-                },
-                "insecureSkipVerify": {
-                  "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                  "type": "boolean"
-                },
-                "keyFile": {
-                  "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
-                  "type": "string"
-                },
-                "keySecret": {
-                  "additionalProperties": false,
-                  "description": "keySecret defines the Secret containing the client key file for the targets.",
-                  "properties": {
-                    "key": {
-                      "description": "The key of the secret to select from.  Must be a valid secret key.",
-                      "type": "string"
-                    },
-                    "name": {
-                      "default": "",
-                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                      "type": "string"
-                    },
-                    "optional": {
-                      "description": "Specify whether the Secret or its key must be defined",
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "key"
-                  ],
-                  "type": "object",
-                  "x-kubernetes-map-type": "atomic"
-                },
-                "maxVersion": {
-                  "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                  "enum": [
-                    "TLS10",
-                    "TLS11",
-                    "TLS12",
-                    "TLS13"
-                  ],
-                  "type": "string"
-                },
-                "minVersion": {
-                  "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                  "enum": [
-                    "TLS10",
-                    "TLS11",
-                    "TLS12",
-                    "TLS13"
-                  ],
-                  "type": "string"
-                },
-                "serverName": {
-                  "description": "serverName is used to verify the hostname for the targets.",
-                  "type": "string"
-                }
-              },
+              "additionalProperties": {},
               "type": "object"
             }
           },
@@ -4616,127 +3226,57 @@
               "then": {
                 "properties": {
                   "controlledResources": {
-                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits",
-                    "items": {
-                      "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "controlledValues": {
                     "anyOf": [
                       {
-                        "description": "Specifies which resource values should be controlled. The default is \"RequestsAndLimits\".",
-                        "enum": [
-                          "RequestsAndLimits",
-                          "RequestsOnly"
-                        ],
-                        "type": "string"
+                        "additionalProperties": {},
+                        "type": "object"
                       },
                       {
-                        "type": "null"
+                        "items": {},
+                        "type": "array"
                       }
-                    ]
+                    ],
+                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
                   },
                   "maxAllowed": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "x-kubernetes-int-or-string": true
-                    },
-                    "description": "Define the max allowed resources for the pod",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Define the max allowed resources for the pod"
                   },
                   "minAllowed": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "x-kubernetes-int-or-string": true
-                    },
-                    "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
                   },
                   "recommenders": {
-                    "description": "Recommender responsible for generating recommendation for this object. List should be empty (then the default recommender will generate the recommendation) or contain exactly one recommender.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "VerticalPodAutoscalerRecommenderSelector points to a specific Vertical Pod Autoscaler recommender. In the future it might pass parameters to the recommender.",
-                      "properties": {
-                        "name": {
-                          "description": "Name of the recommender responsible for generating recommendation for this object.",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
+                    "additionalProperties": {},
+                    "type": "object"
                   },
                   "updatePolicy": {
                     "additionalProperties": false,
-                    "description": "Describes the rules on how changes are applied to the pods. If not specified, all fields in the `PodUpdatePolicy` are set to their default values.",
                     "properties": {
-                      "evictionRequirements": {
-                        "description": "EvictionRequirements is a list of EvictionRequirements that need to evaluate to true in order for a Pod to be evicted. If more than one EvictionRequirement is specified, all of them need to be fulfilled to allow eviction.",
-                        "items": {
-                          "additionalProperties": false,
-                          "description": "EvictionRequirement defines a single condition which needs to be true in order to evict a Pod",
-                          "properties": {
-                            "changeRequirement": {
-                              "description": "EvictionChangeRequirement refers to the relationship between the new target recommendation for a Pod and its current requests, what kind of change is necessary for the Pod to be evicted",
-                              "enum": [
-                                "TargetHigherThanRequests",
-                                "TargetLowerThanRequests"
-                              ],
-                              "type": "string"
-                            },
-                            "resources": {
-                              "description": "Resources is a list of one or more resources that the condition applies to. If more than one resource is given, the EvictionRequirement is fulfilled if at least one resource meets `changeRequirement`.",
-                              "items": {
-                                "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "changeRequirement",
-                            "resources"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "minReplicas": {
-                        "description": "Minimal number of replicas which need to be alive for Updater to attempt pod eviction (pending other checks like PDB). Only positive values are allowed. Overrides global '--min-replicas' flag.",
-                        "format": "int32",
-                        "type": "integer"
-                      },
                       "updateMode": {
                         "description": "Specifies minimal number of replicas which need to be alive for VPA Updater to attempt pod eviction\nminReplicas: 1\nSpecifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
-                        "enum": [
-                          "Off",
-                          "Initial",
-                          "Recreate",
-                          "InPlaceOrRecreate",
-                          "Auto"
-                        ],
                         "type": "string"
                       }
                     },
@@ -4750,116 +3290,43 @@
           "description": "Enable vertical pod autoscaler",
           "properties": {
             "controlledResources": {
-              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits",
-              "items": {
-                "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                "type": "string"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
             },
             "controlledValues": {},
             "enabled": {
               "type": "boolean"
             },
             "maxAllowed": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "x-kubernetes-int-or-string": true
-              },
+              "additionalProperties": {},
               "description": "Define the max allowed resources for the pod",
               "type": "object"
             },
             "minAllowed": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "x-kubernetes-int-or-string": true
-              },
+              "additionalProperties": {},
               "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
               "type": "object"
             },
             "recommenders": {
-              "description": "Recommender responsible for generating recommendation for this object. List should be empty (then the default recommender will generate the recommendation) or contain exactly one recommender.",
-              "items": {
-                "additionalProperties": false,
-                "description": "VerticalPodAutoscalerRecommenderSelector points to a specific Vertical Pod Autoscaler recommender. In the future it might pass parameters to the recommender.",
-                "properties": {
-                  "name": {
-                    "description": "Name of the recommender responsible for generating recommendation for this object.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              },
-              "type": "array"
+              "additionalProperties": {},
+              "type": "object"
             },
             "updatePolicy": {
-              "additionalProperties": false,
-              "description": "Describes the rules on how changes are applied to the pods. If not specified, all fields in the `PodUpdatePolicy` are set to their default values.",
+              "additionalProperties": {},
               "properties": {
-                "evictionRequirements": {
-                  "description": "EvictionRequirements is a list of EvictionRequirements that need to evaluate to true in order for a Pod to be evicted. If more than one EvictionRequirement is specified, all of them need to be fulfilled to allow eviction.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "EvictionRequirement defines a single condition which needs to be true in order to evict a Pod",
-                    "properties": {
-                      "changeRequirement": {
-                        "description": "EvictionChangeRequirement refers to the relationship between the new target recommendation for a Pod and its current requests, what kind of change is necessary for the Pod to be evicted",
-                        "enum": [
-                          "TargetHigherThanRequests",
-                          "TargetLowerThanRequests"
-                        ],
-                        "type": "string"
-                      },
-                      "resources": {
-                        "description": "Resources is a list of one or more resources that the condition applies to. If more than one resource is given, the EvictionRequirement is fulfilled if at least one resource meets `changeRequirement`.",
-                        "items": {
-                          "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "changeRequirement",
-                      "resources"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "minReplicas": {
-                  "description": "Minimal number of replicas which need to be alive for Updater to attempt pod eviction (pending other checks like PDB). Only positive values are allowed. Overrides global '--min-replicas' flag.",
-                  "format": "int32",
-                  "type": "integer"
-                },
                 "updateMode": {
                   "description": "Specifies minimal number of replicas which need to be alive for VPA Updater to attempt pod eviction\nminReplicas: 1\nSpecifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
-                  "enum": [
-                    "Off",
-                    "Initial",
-                    "Recreate",
-                    "InPlaceOrRecreate",
-                    "Auto"
-                  ],
                   "type": "string"
                 }
               },

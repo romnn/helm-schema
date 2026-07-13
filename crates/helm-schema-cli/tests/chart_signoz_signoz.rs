@@ -314,17 +314,32 @@ fn signoz_signoz_schema_semantics_hold() -> color_eyre::eyre::Result<()> {
         "disabled otelCollector ingress annotations should not be constrained by guarded-only metadata evidence: {schema}"
     );
     for field in ["pullPolicy", "repository", "tag"] {
-        assert!(
-            clickhouse_operator_image_field_has_conditional_string_schema(&schema, field),
-            "clickhouseOperator.image.{field} should carry string evidence in a clickhouse-enabled branch: {schema}"
+        if field == "pullPolicy" {
+            // pullPolicy is spliced plainly into `imagePullPolicy:`, so it
+            // keeps its string typing in the clickhouse-enabled branch.
+            assert!(
+                clickhouse_operator_image_field_has_conditional_string_schema(&schema, field),
+                "clickhouseOperator.image.{field} should carry string evidence in a clickhouse-enabled branch: {schema}"
+            );
+        }
+        // tag flows through `toString` and repository through a `printf`
+        // data argument — total stringifications, so their slots stay
+        // deliberately untyped and any scalar validates.
+        let accepts_number = schema_validates_instance(
+            &schema,
+            &clickhouse_operator_image_field_instance(field, serde_json::json!(7), None),
         );
-        assert!(
-            !schema_validates_instance(
-                &schema,
-                &clickhouse_operator_image_field_instance(field, serde_json::json!(7), None),
-            ),
-            "clickhouseOperator.image.{field} must stay string-like while clickhouse renders: {schema}"
-        );
+        if field == "pullPolicy" {
+            assert!(
+                !accepts_number,
+                "clickhouseOperator.image.{field} must stay string-like while clickhouse renders: {schema}"
+            );
+        } else {
+            assert!(
+                accepts_number,
+                "clickhouseOperator.image.{field} renders through a total stringification and must accept scalars: {schema}"
+            );
+        }
         assert!(
             schema_validates_instance(
                 &schema,
@@ -398,7 +413,7 @@ fn signoz_signoz_schema_semantics_hold() -> color_eyre::eyre::Result<()> {
         "signoz-otel-gateway.serviceAccount.name uses Helm default and must accept null when create is true: {schema}"
     );
     assert!(
-        !schema_validates_instance(
+        schema_validates_instance(
             &schema,
             &serde_json::json!({
                 "signoz-otel-gateway": {
@@ -413,7 +428,7 @@ fn signoz_signoz_schema_semantics_hold() -> color_eyre::eyre::Result<()> {
                 }
             })
         ),
-        "postgresql.auth.replicationUsername must stay string-like when replication renders: {schema}"
+        "postgresql.auth.replicationUsername is explicitly stringified by the replication helper: {schema}"
     );
     assert!(
         !schema_validates_instance(

@@ -106,7 +106,7 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
 }
 
 #[test]
-fn signoz_clickhouse_operator_image_helper_type_hints_flow_into_contract_schema_signals()
+fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract()
 -> color_eyre::eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
@@ -123,11 +123,14 @@ fn signoz_clickhouse_operator_image_helper_type_hints_flow_into_contract_schema_
     )?;
     let path = "clickhouse.clickhouseOperator.image.repository";
 
+    // The operator image helper renders the repository only through printf,
+    // which stringifies any argument: the evidence must exist for the
+    // scoped path but must not carry a string input contract.
     assert!(
         contract_schema_signals!(collection)
             .evidence_for(path)
-            .is_some_and(|evidence| evidence.type_hints.contains("string")),
-        "expected structural contract type hint for {path}; contract_hints={:?}",
+            .is_some_and(|evidence| !evidence.type_hints.contains("string")),
+        "printf must not bind a string contract on {path}; contract_hints={:?}",
         contract_schema_signals!(collection).schema_evidence_by_value_path(),
     );
 

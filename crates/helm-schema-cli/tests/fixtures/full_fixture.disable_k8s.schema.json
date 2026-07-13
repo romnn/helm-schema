@@ -33,9 +33,7 @@
       "additionalProperties": {},
       "type": "object"
     },
-    "configChecksum": {
-      "type": "string"
-    },
+    "configChecksum": {},
     "containerPort": {
       "type": "integer"
     },
@@ -46,9 +44,7 @@
           "name": {
             "type": "string"
           },
-          "value": {
-            "type": "string"
-          }
+          "value": {}
         },
         "type": "object"
       },
@@ -107,8 +103,25 @@
                 },
                 "type": "object"
               },
-              "className": {
-                "type": "string"
+              "hosts": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -124,33 +137,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "hosts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "host": {
-                "type": "string"
-              },
-              "paths": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "path": {
-                      "type": "string"
-                    },
-                    "pathType": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "hosts": {},
         "tls": {
           "items": {},
           "type": "array"

@@ -4,7 +4,25 @@ use crate::{
 };
 use test_util::prelude::sim_assert_eq;
 
-use super::{canonicalize_contract_uses, normalize_contract_uses};
+use super::{canonicalize_contract_uses, expand_condition_disjuncts, normalize_contract_uses};
+
+#[test]
+fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
+    let use_ = ContractUse::new(
+        "feature.enabled".to_string(),
+        YamlPath(vec!["spec".to_string(), "enabled".to_string()]),
+        ValueKind::Scalar,
+        vec![Guard::Truthy {
+            path: "feature.enabled".to_string(),
+        }],
+        None,
+    );
+    let mut uses = vec![use_.clone(), use_];
+
+    expand_condition_disjuncts(&mut uses);
+
+    sim_assert_eq!(have: uses.len(), want: 1);
+}
 
 #[test]
 fn canonicalization_merges_provenance_for_semantically_identical_uses() {
@@ -20,6 +38,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 SourceSpan::new(10, 20),
                 Vec::new(),
             )],
+            has_string_contract: false,
         },
         ContractUse {
             source_expr: "image.tag".to_string(),
@@ -32,6 +51,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 SourceSpan::new(30, 40),
                 vec!["helper.render".to_string()],
             )],
+            has_string_contract: false,
         },
     ];
 
@@ -175,4 +195,50 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
             .iter()
             .any(|guard| { matches!(guard, Guard::Truthy { path } if path == "auth.password") })
     );
+}
+
+#[test]
+fn normalization_keeps_truthy_branches_from_distinct_provenance_sites() {
+    let resource = Some(ResourceRef::concrete(
+        "v1".to_string(),
+        "Secret".to_string(),
+    ));
+    let base_guards = vec![Guard::NotEq {
+        path: "auth.username".to_string(),
+        value: GuardValue::string("postgres"),
+    }];
+    let mut self_truthy_guards = base_guards.clone();
+    self_truthy_guards.push(Guard::Truthy {
+        path: "auth.password".to_string(),
+    });
+    let mut uses = vec![
+        ContractUse::with_provenances(
+            "auth.password".to_string(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            base_guards,
+            resource.clone(),
+            vec![ContractProvenance::new(
+                "templates/first.yaml",
+                SourceSpan::new(10, 20),
+                Vec::new(),
+            )],
+        ),
+        ContractUse::with_provenances(
+            "auth.password".to_string(),
+            YamlPath(Vec::new()),
+            ValueKind::Scalar,
+            self_truthy_guards,
+            resource,
+            vec![ContractProvenance::new(
+                "templates/second.yaml",
+                SourceSpan::new(30, 40),
+                Vec::new(),
+            )],
+        ),
+    ];
+
+    normalize_contract_uses(&mut uses);
+
+    sim_assert_eq!(have: uses.len(), want: 2);
 }

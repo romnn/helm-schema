@@ -478,7 +478,12 @@ impl SchemaNode {
             }
             Self::Array { items, min_items } => {
                 let mut object = type_map(JsonSchemaType::Array);
-                if let Some(items) = items {
+                // The `Foreign(Null)` placeholder means "no items opinion":
+                // an unfilled array slot must not serialize `items: null`,
+                // which is not a schema.
+                if let Some(items) = items
+                    && !matches!(items.as_ref(), Self::Foreign(Value::Null))
+                {
                     object.insert("items".to_string(), items.into_value());
                 }
                 if let Some(min_items) = min_items {

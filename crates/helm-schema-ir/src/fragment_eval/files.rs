@@ -94,6 +94,15 @@ impl<'a> Interpreter<'a> {
         for (path, hints) in nested.type_hints {
             self.type_hints.entry(path).or_default().extend(hints);
         }
+        for (path, hints) in nested.guarded_type_hints {
+            self.guarded_type_hints
+                .entry(path)
+                .or_default()
+                .extend(hints);
+        }
+        self.shape_erased_paths.extend(nested.shape_erased_paths);
+        self.string_contract_paths
+            .extend(nested.string_contract_paths);
         contributions.assemble()
     }
 }

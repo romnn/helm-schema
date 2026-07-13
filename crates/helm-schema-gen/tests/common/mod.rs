@@ -191,6 +191,9 @@ pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: 
 
 pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) {
     let actual = render_schema_case(case);
+    if std::env::var("SCHEMA_DUMP").is_ok() {
+        return;
+    }
     let expected: Value =
         serde_json::from_str(case.expected_fixture).expect("expected schema json");
     sim_assert_eq!(

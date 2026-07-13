@@ -35,6 +35,7 @@ fn contract_document_serializes_stable_guard_shape() {
             "ConfigMap".to_string(),
         )),
         provenance: Vec::new(),
+        has_string_contract: false,
     };
     let earlier_use = ContractUse {
         source_expr: "alpha.enabled".to_string(),
@@ -43,6 +44,7 @@ fn contract_document_serializes_stable_guard_shape() {
         condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: None,
         provenance: Vec::new(),
+        has_string_contract: false,
     };
     let document = ContractDocument::from_contract_uses(vec![value_use, earlier_use]);
 

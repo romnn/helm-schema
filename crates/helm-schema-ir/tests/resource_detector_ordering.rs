@@ -129,8 +129,8 @@ fn detector_resets_at_doc_separator_and_reorders() {
     );
 }
 
-// Pins Finding (round 3) #1 — a templated `apiVersion` (`{{ … }}`)
-// MUST stay unknown, not get captured as a literal string. The
+// A templated `apiVersion` (`{{ … }}`) MUST stay unknown, not get
+// captured as a literal string. The
 // detector deliberately treats expressions as "we don't know" because
 // they're not statically resolvable.
 #[test]
@@ -184,11 +184,10 @@ fn detector_does_not_capture_templated_kind() {
     }
 }
 
-// Pins Finding (round 4) #2 — the chart shape that's still failing in
-// the real Temporal acceptance run: `kind:` first, then an `{{- if … }}`-
-// wrapped `apiVersion:`. The previous detector treated the `{{- if`
-// line as "non-header content" and prematurely set header_done=true,
-// dropping every apiVersion that appeared after it.
+// Temporal's chart shape: `kind:` first, then an `{{- if … }}`-wrapped
+// `apiVersion:`. An `{{- if` line between header fields is control
+// flow, not "non-header content": it must not set header_done=true,
+// or every apiVersion appearing after it is dropped.
 #[test]
 fn detector_collects_api_version_inside_if_after_kind() {
     let template = indoc! {r#"
@@ -230,9 +229,9 @@ fn detector_collects_api_version_inside_if_after_kind() {
     );
 }
 
-// Pins Finding (round 4) #2 — apiVersion-first variant: `apiVersion:`
-// then if/else-wrapped kind would also break the same way (kind
-// trapped inside an `{{- if }}` after header_done flips). Less common
+// The apiVersion-first variant: `apiVersion:` then if/else-wrapped
+// kind breaks the same way (kind trapped inside an `{{- if }}` after
+// header_done flips). Less common
 // in practice but the same root cause.
 #[test]
 fn detector_collects_kind_inside_if_after_api_version() {
@@ -264,7 +263,7 @@ fn detector_collects_kind_inside_if_after_api_version() {
     );
 }
 
-// Pins Finding (round 4) #2 — loop-wrapped manifest. A single template
+// Loop-wrapped manifest. A single template
 // file that emits N copies of the same resource through `{{- range … }}`
 // declares the header inside the loop body. The detector must not let
 // the `{{- range }}` line consume header_done.
@@ -294,7 +293,7 @@ fn detector_handles_loop_wrapped_manifest() {
     sim_assert_eq!(have: r.api_version, want: "v1");
 }
 
-// Pins Finding (round 4) #2 — multi-document with `---` AND template
+// Multi-document with `---` AND template
 // actions between header lines. The detector must reset on `---` and
 // then re-collect both header fields in the second doc, even when an
 // `{{- if … }}` separates them.
@@ -353,7 +352,7 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
     );
 }
 
-// Pins Finding (round 5) #1 — helper-returned apiVersion. This is the
+// Helper-returned apiVersion. This is the
 // exact shape used by vendored prometheus/grafana charts:
 //   apiVersion: {{ template "prometheus.deployment.apiVersion" . }}
 // The detector must statically resolve the helper to its literal
@@ -397,7 +396,7 @@ fn detector_resolves_helper_returned_api_version() {
     );
 }
 
-// Pins Finding (round 5) #1 — if/else helper resolves to both branches.
+// An if/else helper resolves to both branches.
 // The `rbac.apiVersion` helper in vendored prometheus emits either
 // `rbac.authorization.k8s.io/v1` or `rbac.authorization.k8s.io/v1beta1`
 // depending on cluster capabilities. The detector must collect BOTH
@@ -488,7 +487,7 @@ fn detector_resolves_include_returned_api_version() {
     sim_assert_eq!(have: r.api_version_branches.len(), want: 2);
 }
 
-// Pins Finding (round 5) #2 — source-order primary, NOT stability rank.
+// Source-order picks the primary apiVersion, NOT stability rank.
 // PSP-style: chart writes `policy/v1beta1` (the version where PSP
 // actually exists) first; a generic stability ranker would have
 // flipped this to `policy/v1` and produced
@@ -517,7 +516,7 @@ fn detector_primary_is_source_order_not_stability_rank() {
     );
 }
 
-// Pins Finding (round 5) #2 — multi-branch source-order primary.
+// Multi-branch source-order primary.
 // When both `policy/v1` and `policy/v1beta1` appear, the FIRST seen
 // is primary (preserves authorial intent), the other is a candidate.
 // Old detector picked `policy/v1` regardless of source order via
@@ -553,7 +552,7 @@ fn detector_multi_branch_primary_is_first_seen_in_source() {
     );
 }
 
-// Pins Finding (round 4) #2 — comment lines (`#`) and other non-header
+// Comment lines (`#`) and other non-header
 // content must not advance header_done before kind is captured.
 // Bare YAML comment isn't a template directive, but it's an edge case
 // often near the document head and easy to regress.

@@ -18,15 +18,14 @@ use super::candidate::{ApiVersionCandidate, InferenceSource};
 /// `configured_source_ids` is the set of source-id directory names the
 /// caller currently has configured (e.g. `default` + any mirror id from
 /// `--k8s-schema-mirror`). Stale source dirs left behind by a
-/// previously configured mirror MUST NOT influence live inference
-/// (Finding 2, round 1).
+/// previously configured mirror MUST NOT influence live inference.
 ///
 /// `inference_versions` is the set of `<version_dir>` names eligible
 /// for inference — typically the user-EXPLICIT versions only, NOT the
 /// auto-fallback escape valves. Including auto-fallback dirs would
 /// surface historical apiVersions (`policy/v1beta1`, etc.) for kinds
 /// whose modern version lives at the primary, producing spurious
-/// `AmbiguousApiVersion` diagnostics (Finding 4, round 2).
+/// `AmbiguousApiVersion` diagnostics.
 #[must_use]
 pub(crate) fn scan_k8s_cache(
     root: &Path,

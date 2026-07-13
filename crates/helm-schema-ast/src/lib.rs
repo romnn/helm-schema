@@ -12,15 +12,17 @@ mod values_comments;
 pub use capability_branch::{decode_guard, decode_guard_expr};
 pub use expr::{Literal, TemplateExpr, parse_action_expressions};
 pub use expr_function_catalog::{
-    is_merge_function, is_provenance_preserving_function, is_string_transform_function,
-    type_is_schema_type,
+    go_type_schema_type, is_merge_function, is_provenance_preserving_function,
+    is_string_predicate_function, is_string_transform_function, is_total_numeric_cast_function,
+    is_total_stringification_function, type_is_schema_type,
 };
 pub(crate) use helm_schema_syntax::structural_mapping_colon;
 pub use helm_schema_syntax::{parse_yaml_key, unquote_yaml_scalar};
 pub use literal_schema_type::expression_schema_type;
 pub use printf_eval::{literal_printf_format, render_printf_string_sets};
 pub use range_structure::{
-    range_has_destructured_variable_definition, range_header_from_source, range_variable_name_expr,
+    range_destructured_value_variable, range_has_destructured_variable_definition,
+    range_header_from_source, range_variable_name_expr,
 };
 pub use resource_span::ResourceSpan;
 pub use template_action::contains_template_action;

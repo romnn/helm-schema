@@ -779,10 +779,12 @@
                       "tolerations": {
                         "anyOf": [
                           {
+                            "additionalProperties": {},
+                            "type": "object"
+                          },
+                          {
                             "items": {
-                              "additionalProperties": {
-                                "type": "string"
-                              },
+                              "additionalProperties": false,
                               "properties": {
                                 "effect": {
                                   "type": "string"
@@ -800,12 +802,6 @@
                               "type": "object"
                             },
                             "type": "array"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
                           }
                         ],
                         "description": "Toleration for Linux nodes that can run user-deployed Longhorn components."
@@ -925,17 +921,6 @@
               "imageRegistry": {
                 "description": "Global override for container image registry.",
                 "type": "string"
-              },
-              "timezone": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container timezone (TZ env) for all Longhorn workloads. Leave empty to use container default."
               }
             },
             "type": "object"
@@ -967,22 +952,6 @@
               "pullPolicy": {
                 "description": "Image pull policy that applies to all user-deployed Longhorn components, such as Longhorn Manager, Longhorn driver, and Longhorn UI.",
                 "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "longhornManager": {
-            "properties": {
-              "distro": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Optional distro identifier used for upgrade responder reporting."
               }
             },
             "type": "object"
@@ -2084,6 +2053,992 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornDriver": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornDriver"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornDriver": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornDriver"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "nodeSelector": {
+                "additionalProperties": {},
+                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "longhornDriver": {
+            "properties": {
+              "nodeSelector": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ],
+                "description": "Node selector for Longhorn Driver. Specify the nodes allowed to run Longhorn Driver."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornManager": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornManager": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornManager"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "nodeSelector": {
+                "additionalProperties": {},
+                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "longhornManager": {
+            "properties": {
+              "nodeSelector": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ],
+                "description": "Node selector for Longhorn Manager. Specify the nodes allowed to run Longhorn Manager.\nIf you want to set node selector for Longhorn Manager DaemonSet, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornUI": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornUI"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornUI": {
+                    "properties": {
+                      "nodeSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornUI"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "nodeSelector": {
+                "additionalProperties": {},
+                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "longhornUI": {
+            "description": "If you want to set node selector for Longhorn Driver Deployer Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+            "properties": {
+              "nodeSelector": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                ],
+                "description": "Node selector for Longhorn UI. Specify the nodes allowed to run Longhorn UI."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornDriver": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornDriver"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornDriver": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornDriver"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
+              }
+            },
+            "type": "object"
+          },
+          "longhornDriver": {
+            "properties": {
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Toleration for Longhorn Driver on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Driver Deployer Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornManager": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornManager": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornManager"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
+              }
+            },
+            "type": "object"
+          },
+          "longhornManager": {
+            "properties": {
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Toleration for Longhorn Manager on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Manager DaemonSet, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornUI": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornUI"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "longhornUI": {
+                    "properties": {
+                      "tolerations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tolerations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "longhornUI"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
+              }
+            },
+            "type": "object"
+          },
+          "longhornUI": {
+            "description": "If you want to set node selector for Longhorn Driver Deployer Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+            "properties": {
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "Toleration for Longhorn UI on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn UI Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "properties": {
               "openshift": {
                 "properties": {
@@ -2197,50 +3152,42 @@
   ],
   "properties": {
     "annotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotation for the Longhorn Manager DaemonSet pods. This setting is optional.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Annotation for the Longhorn Manager DaemonSet pods. This setting is optional."
     },
     "csi": {
       "additionalProperties": false,
       "properties": {
         "attacherReplicaCount": {
-          "description": "Replica count of the CSI Attacher. When unspecified, Longhorn uses the default value (\"3\").",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Replica count of the CSI Attacher. When unspecified, Longhorn uses the default value (\"3\")."
         },
         "kubeletRootDir": {
-          "description": "kubelet root directory. When unspecified, Longhorn uses the default value.",
-          "type": "null"
+          "description": "kubelet root directory. When unspecified, Longhorn uses the default value."
         },
         "podAntiAffinityPreset": {
-          "description": "Configures Pod anti-affinity to prevent multiple instances on the same node. Use soft (tries to separate) or hard (must separate). When unspecified, Longhorn uses the default value (\"soft\").",
-          "type": "null"
+          "description": "Configures Pod anti-affinity to prevent multiple instances on the same node. Use soft (tries to separate) or hard (must separate). When unspecified, Longhorn uses the default value (\"soft\")."
         },
         "provisionerReplicaCount": {
-          "description": "Replica count of the CSI Provisioner. When unspecified, Longhorn uses the default value (\"3\").",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Replica count of the CSI Provisioner. When unspecified, Longhorn uses the default value (\"3\")."
         },
         "resizerReplicaCount": {
-          "description": "Replica count of the CSI Resizer. When unspecified, Longhorn uses the default value (\"3\").",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Replica count of the CSI Resizer. When unspecified, Longhorn uses the default value (\"3\")."
         },
         "snapshotterReplicaCount": {
-          "description": "Replica count of the CSI Snapshotter. When unspecified, Longhorn uses the default value (\"3\").",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Replica count of the CSI Snapshotter. When unspecified, Longhorn uses the default value (\"3\")."
         }
       },
       "type": "object"
@@ -2298,164 +3245,76 @@
           "description": "Setting that allows Longhorn to automatically salvage volumes when all replicas become faulty (for example, when the network connection is interrupted). Longhorn determines which replicas are usable and then uses these replicas for the volume. This setting is enabled by default."
         },
         "backingImageCleanupWaitInterval": {
-          "description": "Number of minutes that Longhorn waits before cleaning up the backing image file when no replicas in the disk are using it.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Number of minutes that Longhorn waits before cleaning up the backing image file when no replicas in the disk are using it."
         },
         "backingImageRecoveryWaitInterval": {
-          "description": "Number of seconds that Longhorn waits before downloading a backing image file again when the status of all image disk files changes to \"failed\" or \"unknown\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Number of seconds that Longhorn waits before downloading a backing image file again when the status of all image disk files changes to \"failed\" or \"unknown\"."
         },
         "backupCompressionMethod": {
-          "description": "Setting that allows you to specify a backup compression method.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that allows you to specify a backup compression method."
         },
         "backupConcurrentLimit": {
-          "description": "Maximum number of worker threads that can concurrently run for each backup.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of worker threads that can concurrently run for each backup."
         },
         "backupExecutionTimeout": {
-          "description": "Number of minutes that Longhorn allows for the backup execution. The default value is \"1\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Number of minutes that Longhorn allows for the backup execution. The default value is \"1\"."
         },
         "blacklistForAutoDeletePodWhenVolumeDetachedUnexpectedly": {
           "description": "Blacklist of controller api/kind values for the setting Automatically Delete Workload Pod when the Volume Is Detached Unexpectedly. If a workload pod is managed by a controller whose api/kind is listed in this blacklist, Longhorn will not automatically delete the pod when its volume is unexpectedly detached. Multiple controller api/kind entries can be specified, separated by semicolons. For example: `apps/StatefulSet;apps/DaemonSet`. Note that the controller api/kind is case sensitive and must exactly match the api/kind in the workload pod's owner reference."
         },
         "concurrentAutomaticEngineUpgradePerNodeLimit": {
-          "description": "Maximum number of engines that are allowed to concurrently upgrade on each node after Longhorn Manager is upgraded. When the value is \"0\", Longhorn does not automatically upgrade volume engines to the new default engine image version.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of engines that are allowed to concurrently upgrade on each node after Longhorn Manager is upgraded. When the value is \"0\", Longhorn does not automatically upgrade volume engines to the new default engine image version."
         },
         "concurrentReplicaRebuildPerNodeLimit": {
-          "description": "Maximum number of replicas that can be concurrently rebuilt on each node.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of replicas that can be concurrently rebuilt on each node."
         },
         "concurrentVolumeBackupRestorePerNodeLimit": {
-          "description": "Maximum number of volumes that can be concurrently restored on each node using a backup. When the value is \"0\", restoration of volumes using a backup is disabled.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of volumes that can be concurrently restored on each node using a backup. When the value is \"0\", restoration of volumes using a backup is disabled."
         },
         "createDefaultDiskLabeledNodes": {
           "description": "Setting that allows Longhorn to automatically create a default disk only on nodes with the label \"node.longhorn.io/create-default-disk=true\" (if no other disks exist). When this setting is disabled, Longhorn creates a default disk on each node that is added to the cluster."
         },
         "csiAllowedTopologyKeys": {
-          "description": "Comma-separated list of topology keys that the Longhorn CSI driver is allowed to pass through. When empty (default), no topology keys are passed through, and PVs will have no nodeAffinity. When configured (e.g., \"topology.kubernetes.io/zone,topology.kubernetes.io/region\"), only the specified keys are kept in topology segments. All other keys are filtered out from both CreateVolumeResponse.AccessibleTopology and NodeGetInfo topology.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Comma-separated list of topology keys that the Longhorn CSI driver is allowed to pass through. When empty (default), no topology keys are passed through, and PVs will have no nodeAffinity. When configured (e.g., \"topology.kubernetes.io/zone,topology.kubernetes.io/region\"), only the specified keys are kept in topology segments. All other keys are filtered out from both CreateVolumeResponse.AccessibleTopology and NodeGetInfo topology."
         },
         "csiStorageCapacityTracking": {
-          "description": "Setting that controls CSI storage capacity tracking, which allows the kube-scheduler to filter nodes that cannot fit the requested volume.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that controls CSI storage capacity tracking, which allows the kube-scheduler to filter nodes that cannot fit the requested volume."
         },
         "dataEngineCPUMask": {
-          "description": "Applies only to the V2 Data Engine. Specifies the CPU cores on which the Storage Performance Development Kit (SPDK) target daemon runs. The daemon is deployed in each Instance Manager pod. Ensure that the assigned CPU cores do not exceed the guaranteed CPUs allocated to the V2 Data Engine Instance Manager. A minimum of 2 CPU cores is recommended. SPDK uses a busy-polling reactor model where the master reactor handles both I/O polling and management RPCs. When only a single core is assigned, heavy I/O workloads can delay or starve RPC processing, resulting in increased latency, timeout events, and operational instability. Assigning 2 or more cores allows I/O and management tasks to run on separate reactors, improving responsiveness and operational stability. Accepts either hexadecimal CPU masks (for example, 0x3 or 0xff) or CPU list format (for example, 0-1,2,5). CPU lists are automatically converted to hexadecimal masks. The default value is 0x3.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Applies only to the V2 Data Engine. Specifies the CPU cores on which the Storage Performance Development Kit (SPDK) target daemon runs. The daemon is deployed in each Instance Manager pod. Ensure that the assigned CPU cores do not exceed the guaranteed CPUs allocated to the V2 Data Engine Instance Manager. A minimum of 2 CPU cores is recommended. SPDK uses a busy-polling reactor model where the master reactor handles both I/O polling and management RPCs. When only a single core is assigned, heavy I/O workloads can delay or starve RPC processing, resulting in increased latency, timeout events, and operational instability. Assigning 2 or more cores allows I/O and management tasks to run on separate reactors, improving responsiveness and operational stability. Accepts either hexadecimal CPU masks (for example, 0x3 or 0xff) or CPU list format (for example, 0-1,2,5). CPU lists are automatically converted to hexadecimal masks. The default value is 0x3."
         },
         "dataEngineHugepageEnabled": {
-          "description": "Applies only to the V2 Data Engine. Enables hugepages for the Storage Performance Development Kit (SPDK) target daemon. If disabled, legacy memory is used. Allocation size is set via the Data Engine Memory Size setting.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Applies only to the V2 Data Engine. Enables hugepages for the Storage Performance Development Kit (SPDK) target daemon. If disabled, legacy memory is used. Allocation size is set via the Data Engine Memory Size setting."
         },
         "dataEngineLogFlags": {
-          "description": "Applies only to the V2 Data Engine. Specifies the log flags for the Storage Performance Development Kit (SPDK) target daemon.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Applies only to the V2 Data Engine. Specifies the log flags for the Storage Performance Development Kit (SPDK) target daemon."
         },
         "dataEngineLogLevel": {
-          "description": "Applies only to the V2 Data Engine. Specifies the log level for the Storage Performance Development Kit (SPDK) target daemon. Supported values are: Error, Warning, Notice, Info, and Debug. The default is Notice.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Applies only to the V2 Data Engine. Specifies the log level for the Storage Performance Development Kit (SPDK) target daemon. Supported values are: Error, Warning, Notice, Info, and Debug. The default is Notice."
         },
         "dataEngineMemorySize": {
-          "description": "Applies only to the V2 Data Engine. Specifies the hugepage size, in MiB, for the Storage Performance Development Kit (SPDK) target daemon. The default value is \"{\"v2\":\"2048\"}\"",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Applies only to the V2 Data Engine. Specifies the hugepage size, in MiB, for the Storage Performance Development Kit (SPDK) target daemon. The default value is \"{\"v2\":\"2048\"}\""
         },
         "defaultBackupBlockSize": {
-          "description": "Specifies the default backup block size, in MiB, used when creating a new volume. Supported values are 2 or 16.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Specifies the default backup block size, in MiB, used when creating a new volume. Supported values are 2 or 16."
         },
         "defaultDataLocality": {
-          "description": "Default data locality. A Longhorn volume has data locality if a local replica of the volume exists on the same node as the pod that is using the volume.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Default data locality. A Longhorn volume has data locality if a local replica of the volume exists on the same node as the pod that is using the volume."
         },
         "defaultDataPath": {
-          "description": "Default path to use for storing data on a host. An absolute directory path indicates a filesystem-type disk used by the V1 Data Engine, while a path to a block device indicates a block-type disk used by the V2 Data Engine. The default value is \"/var/lib/longhorn/\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Default path to use for storing data on a host. An absolute directory path indicates a filesystem-type disk used by the V1 Data Engine, while a path to a block device indicates a block-type disk used by the V2 Data Engine. The default value is \"/var/lib/longhorn/\"."
         },
         "defaultLonghornStaticStorageClass": {
-          "description": "Default name of Longhorn static StorageClass. \"storageClassName\" is assigned to PVs and PVCs that are created for an existing Longhorn volume. \"storageClassName\" can also be used as a label, so it is possible to use a Longhorn StorageClass to bind a workload to an existing PV without creating a Kubernetes StorageClass object. \"storageClassName\" needs to be an existing StorageClass. The default value is \"longhorn-static\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Default name of Longhorn static StorageClass. \"storageClassName\" is assigned to PVs and PVCs that are created for an existing Longhorn volume. \"storageClassName\" can also be used as a label, so it is possible to use a Longhorn StorageClass to bind a workload to an existing PV without creating a Kubernetes StorageClass object. \"storageClassName\" needs to be an existing StorageClass. The default value is \"longhorn-static\"."
         },
         "defaultReplicaCount": {
-          "description": "Default number of replicas for volumes created using the Longhorn UI. For Kubernetes configuration, modify the `numberOfReplicas` field in the StorageClass. The default value is \"{\"v1\":\"3\",\"v2\":\"3\"}\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Default number of replicas for volumes created using the Longhorn UI. For Kubernetes configuration, modify the `numberOfReplicas` field in the StorageClass. The default value is \"{\"v1\":\"3\",\"v2\":\"3\"}\"."
         },
         "defaultUblkNumberOfQueue": {
-          "description": "This setting specifies the default the number of queues for ublk frontend. This setting applies to volumes using the V2 Data Engine with Ublk front end. Individual volumes can override this setting by specifying their own number of queues for ublk.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "This setting specifies the default the number of queues for ublk frontend. This setting applies to volumes using the V2 Data Engine with Ublk front end. Individual volumes can override this setting by specifying their own number of queues for ublk."
         },
         "defaultUblkQueueDepth": {
-          "description": "This setting specifies the default depth of each queue for Ublk frontend. This setting applies to volumes using the V2 Data Engine with Ublk front end. Individual volumes can override this setting by specifying their own Ublk queue depth.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "This setting specifies the default depth of each queue for Ublk frontend. This setting applies to volumes using the V2 Data Engine with Ublk front end. Individual volumes can override this setting by specifying their own Ublk queue depth."
         },
         "deletingConfirmationFlag": {
           "description": "Flag that prevents accidental uninstallation of Longhorn."
@@ -2464,8 +3323,7 @@
           "description": "Setting that allows automatic detaching of manually-attached volumes when a node is cordoned."
         },
         "disableRevisionCounter": {
-          "description": "Setting that disables the revision counter and thereby prevents Longhorn from tracking all write operations to a volume. When salvaging a volume, Longhorn uses properties of the \"volume-head-xxx.img\" file (the last file size and the last time the file was modified) to select the replica to be used for volume recovery. This setting applies only to volumes created using the Longhorn UI.",
-          "type": "string"
+          "description": "Setting that disables the revision counter and thereby prevents Longhorn from tracking all write operations to a volume. When salvaging a volume, Longhorn uses properties of the \"volume-head-xxx.img\" file (the last file size and the last time the file was modified) to select the replica to be used for volume recovery. This setting applies only to volumes created using the Longhorn UI."
         },
         "disableSchedulingOnCordonedNode": {
           "description": "Setting that prevents Longhorn Manager from scheduling replicas on a cordoned Kubernetes node. This setting is enabled by default."
@@ -2474,74 +3332,34 @@
           "description": "Setting that temporarily prevents all attempts to purge volume snapshots."
         },
         "endpointNetworkForRWXVolume": {
-          "description": "Specifies a dedicated network for mounting RWX (ReadWriteMany) volumes. Leave this blank to use the default Kubernetes cluster network. **Caution**: This setting should change after all RWX volumes are detached because some Longhorn component pods must be recreated to apply the setting. You cannot modify this setting while RWX volumes are still attached.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Specifies a dedicated network for mounting RWX (ReadWriteMany) volumes. Leave this blank to use the default Kubernetes cluster network. **Caution**: This setting should change after all RWX volumes are detached because some Longhorn component pods must be recreated to apply the setting. You cannot modify this setting while RWX volumes are still attached."
         },
         "engineImagePodLivenessProbeFailureThreshold": {
-          "description": "The setting specifies the number of consecutive failed liveness probes before an engine image pod is restarted. The default value is 3.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "The setting specifies the number of consecutive failed liveness probes before an engine image pod is restarted. The default value is 3."
         },
         "engineImagePodLivenessProbePeriod": {
-          "description": "In seconds. The setting specifies the interval between liveness probes for engine image pods. The default value is 5 seconds.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "In seconds. The setting specifies the interval between liveness probes for engine image pods. The default value is 5 seconds."
         },
         "engineImagePodLivenessProbeTimeout": {
-          "description": "In seconds. The setting specifies the timeout for the engine image pod liveness probe. The default value is 4 seconds.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "In seconds. The setting specifies the timeout for the engine image pod liveness probe. The default value is 4 seconds."
         },
         "engineReplicaTimeout": {
-          "description": "Timeout between the Longhorn Engine and replicas. Specify a value between \"8\" and \"30\" seconds. The default value is \"8\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Timeout between the Longhorn Engine and replicas. Specify a value between \"8\" and \"30\" seconds. The default value is \"8\"."
         },
         "failedBackupTTL": {
-          "description": "Number of minutes that Longhorn keeps a failed backup resource. When the value is \"0\", automatic deletion is disabled.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Number of minutes that Longhorn keeps a failed backup resource. When the value is \"0\", automatic deletion is disabled."
         },
         "fastReplicaRebuildEnabled": {
-          "description": "Setting that allows fast rebuilding of replicas using the checksum of snapshot disk files. Before enabling this setting, you must set the snapshot-data-integrity value to \"enable\" or \"fast-check\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that allows fast rebuilding of replicas using the checksum of snapshot disk files. Before enabling this setting, you must set the snapshot-data-integrity value to \"enable\" or \"fast-check\"."
         },
         "freezeFilesystemForSnapshot": {
-          "description": "Setting that freezes the filesystem on the root partition before a snapshot is created.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that freezes the filesystem on the root partition before a snapshot is created."
         },
         "guaranteedInstanceManagerCPU": {
-          "description": "Percentage of the total allocatable CPU resources on each node to be reserved for each instance manager pod. The default value is {\"v1\":\"12\",\"v2\":\"12\"}.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Percentage of the total allocatable CPU resources on each node to be reserved for each instance manager pod. The default value is {\"v1\":\"12\",\"v2\":\"12\"}."
         },
         "instanceManagerPodLivenessProbeTimeout": {
-          "description": "In seconds. The setting specifies the timeout for the instance manager pod liveness probe. The default value is 10 seconds.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "In seconds. The setting specifies the timeout for the instance manager pod liveness probe. The default value is 10 seconds."
         },
         "kubernetesClusterAutoscalerEnabled": {
           "description": "Setting that notifies Longhorn that the cluster is using the Kubernetes Cluster Autoscaler."
@@ -2550,136 +3368,67 @@
           "description": "Setting that allows Longhorn to query the Kubernetes Metrics Server ('metrics.k8s.io') for pod and node resource usage."
         },
         "logLevel": {
-          "description": "Log levels that indicate the type and severity of logs in Longhorn Manager. The default value is \"Info\". (Options: \"Panic\", \"Fatal\", \"Error\", \"Warn\", \"Info\", \"Debug\", \"Trace\")",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Log levels that indicate the type and severity of logs in Longhorn Manager. The default value is \"Info\". (Options: \"Panic\", \"Fatal\", \"Error\", \"Warn\", \"Info\", \"Debug\", \"Trace\")"
         },
         "logPath": {
-          "description": "Specifies the directory on the host where Longhorn stores log files for the instance manager pod. Currently, it is only used for instance manager pods in the v2 data engine.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Specifies the directory on the host where Longhorn stores log files for the instance manager pod. Currently, it is only used for instance manager pods in the v2 data engine."
         },
         "longGRPCTimeOut": {
-          "description": "Number of seconds that Longhorn allows for the completion of replica rebuilding and snapshot cloning operations.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Number of seconds that Longhorn allows for the completion of replica rebuilding and snapshot cloning operations."
         },
         "managerUrl": {
-          "description": "URL prefix embedded in Longhorn Manager API response links (the \"actions\" and \"links\" fields). When set, internal components such as longhorn-driver-deployer and longhorn-csi-plugin will follow links using this URL, so it must be reachable from within the cluster without authentication. Setting this to an externally-facing URL that is protected by auth middleware (e.g. OAuth2 proxy, ingress auth) will cause internal components to receive an HTML redirect instead of JSON, resulting in \"invalid character '<'\" errors and CSI driver deployment failure. Use this setting only when the URL is accessible unauthenticated from inside the cluster. Format: scheme://host[:port] (for example, http://longhorn.example.com). Leave empty to use the default behavior (internal pod IP). Note: this value is persisted in the manager-url Setting CR; removing it from Helm values does not automatically clear the CR. To reset, manually set the manager-url Setting CR value to empty via the Longhorn UI or kubectl.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "URL prefix embedded in Longhorn Manager API response links (the \"actions\" and \"links\" fields). When set, internal components such as longhorn-driver-deployer and longhorn-csi-plugin will follow links using this URL, so it must be reachable from within the cluster without authentication. Setting this to an externally-facing URL that is protected by auth middleware (e.g. OAuth2 proxy, ingress auth) will cause internal components to receive an HTML redirect instead of JSON, resulting in \"invalid character '<'\" errors and CSI driver deployment failure. Use this setting only when the URL is accessible unauthenticated from inside the cluster. Format: scheme://host[:port] (for example, http://longhorn.example.com). Leave empty to use the default behavior (internal pod IP). Note: this value is persisted in the manager-url Setting CR; removing it from Helm values does not automatically clear the CR. To reset, manually set the manager-url Setting CR value to empty via the Longhorn UI or kubectl."
         },
         "nodeDiskHealthMonitoring": {
           "description": "Controls whether Longhorn monitors and records health information for node disks. When disabled, disk health checks and status updates are skipped."
         },
         "nodeDownPodDeletionPolicy": {
-          "description": "Policy that defines the action Longhorn takes when a volume is stuck with a StatefulSet or Deployment pod on a node that failed.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Policy that defines the action Longhorn takes when a volume is stuck with a StatefulSet or Deployment pod on a node that failed."
         },
         "nodeDrainPolicy": {
-          "description": "Policy that defines the action Longhorn takes when a node with the last healthy replica of a volume is drained.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Policy that defines the action Longhorn takes when a node with the last healthy replica of a volume is drained."
         },
         "offlineReplicaRebuilding": {
-          "description": "Enables automatic rebuilding of degraded replicas while the volume is detached. This setting only takes effect if the individual volume setting is set to `ignored` or `enabled`.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Enables automatic rebuilding of degraded replicas while the volume is detached. This setting only takes effect if the individual volume setting is set to `ignored` or `enabled`."
         },
         "orphanResourceAutoDeletion": {
-          "description": "Enables Longhorn to automatically delete orphaned resources and their associated data or processes (e.g., stale replicas). Orphaned resources on failed or unknown nodes are not automatically cleaned up.\nYou need to specify the resource types to be deleted using a semicolon-separated list (e.g., `replica-data;instance`). Available items are: `replica-data`, `instance`.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Enables Longhorn to automatically delete orphaned resources and their associated data or processes (e.g., stale replicas). Orphaned resources on failed or unknown nodes are not automatically cleaned up.\nYou need to specify the resource types to be deleted using a semicolon-separated list (e.g., `replica-data;instance`). Available items are: `replica-data`, `instance`."
         },
         "orphanResourceAutoDeletionGracePeriod": {
-          "description": "Specifies the wait time, in seconds, before Longhorn automatically deletes an orphaned Custom Resource (CR) and its associated resources.\nNote that if a user manually deletes an orphaned CR, the deletion occurs immediately and does not respect this grace period.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Specifies the wait time, in seconds, before Longhorn automatically deletes an orphaned Custom Resource (CR) and its associated resources.\nNote that if a user manually deletes an orphaned CR, the deletion occurs immediately and does not respect this grace period."
         },
         "priorityClass": {
-          "description": "PriorityClass for system-managed Longhorn components.\nThis setting can help prevent Longhorn components from being evicted under Node Pressure.\nNotice that this will be applied to Longhorn user-deployed components by default if there are no priority class values set yet, such as `longhornManager.priorityClass`.",
-          "type": "string"
+          "description": "PriorityClass for system-managed Longhorn components.\nThis setting can help prevent Longhorn components from being evicted under Node Pressure.\nNotice that this will be applied to Longhorn user-deployed components by default if there are no priority class values set yet, such as `longhornManager.priorityClass`."
         },
         "rebuildConcurrentSyncLimit": {
-          "description": "Maximum number of file synchronization operations that can run concurrently during a single replica rebuild. Right now, it's for v1 data engine only.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of file synchronization operations that can run concurrently during a single replica rebuild. Right now, it's for v1 data engine only."
         },
         "recurringFailedJobsHistoryLimit": {
-          "description": "Maximum number of failed recurring backup and snapshot jobs to be retained. When the value is \"0\", a history of failed recurring jobs is not retained.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of failed recurring backup and snapshot jobs to be retained. When the value is \"0\", a history of failed recurring jobs is not retained."
         },
         "recurringJobMaxRetention": {
-          "description": "Maximum number of snapshots or backups to be retained.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of snapshots or backups to be retained."
         },
         "recurringSuccessfulJobsHistoryLimit": {
-          "description": "Maximum number of successful recurring backup and snapshot jobs to be retained. When the value is \"0\", a history of successful recurring jobs is not retained.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of successful recurring backup and snapshot jobs to be retained. When the value is \"0\", a history of successful recurring jobs is not retained."
         },
         "removeSnapshotsDuringFilesystemTrim": {
           "description": "Setting that allows Longhorn to automatically mark the latest snapshot and its parent files as removed during a filesystem trim. Longhorn does not remove snapshots containing multiple child files."
         },
         "replicaAutoBalance": {
-          "description": "Setting that automatically rebalances replicas when an available node is discovered.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that automatically rebalances replicas when an available node is discovered."
         },
         "replicaDiskSoftAntiAffinity": {
           "description": "Setting that allows scheduling on disks with existing healthy replicas of the same volume. This setting is enabled by default."
         },
         "replicaFileSyncHttpClientTimeout": {
-          "description": "Number of seconds that an HTTP client waits for a response from a File Sync server before considering the connection to have failed.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Number of seconds that an HTTP client waits for a response from a File Sync server before considering the connection to have failed."
         },
         "replicaRebuildingBandwidthLimit": {
-          "description": "This setting specifies the default write bandwidth limit (in megabytes per second) for volume replica rebuilding when using the v2 data engine (SPDK). If this value is set to 0, there will be no write bandwidth limitation. Individual volumes can override this setting by specifying their own rebuilding bandwidth limit.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "This setting specifies the default write bandwidth limit (in megabytes per second) for volume replica rebuilding when using the v2 data engine (SPDK). If this value is set to 0, there will be no write bandwidth limitation. Individual volumes can override this setting by specifying their own rebuilding bandwidth limit."
         },
         "replicaReplenishmentWaitInterval": {
-          "description": "Number of seconds that Longhorn waits before reusing existing data on a failed replica instead of creating a new replica of a degraded volume.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Number of seconds that Longhorn waits before reusing existing data on a failed replica instead of creating a new replica of a degraded volume."
         },
         "replicaSoftAntiAffinity": {
           "description": "Setting that allows scheduling on nodes with healthy replicas of the same volume. This setting is disabled by default."
@@ -2688,11 +3437,7 @@
           "description": "Setting that allows Longhorn to schedule new replicas of a volume to nodes in the same zone as existing healthy replicas. Nodes that do not belong to any zone are treated as existing in the zone that contains healthy replicas. When identifying zones, Longhorn relies on the label \"topology.kubernetes.io/zone=<Zone name of the node>\" in the Kubernetes node object."
         },
         "restoreConcurrentLimit": {
-          "description": "Maximum number of worker threads that can concurrently run for each restore operation.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of worker threads that can concurrently run for each restore operation."
         },
         "restoreVolumeRecurringJobs": {
           "description": "Setting that restores recurring jobs from a backup volume on a backup target and creates recurring jobs if none exist during backup restoration."
@@ -2701,98 +3446,46 @@
           "description": "Setting that allows Longhorn to detect node failure and immediately migrate affected RWX volumes."
         },
         "snapshotCountWarningThreshold": {
-          "description": "Warning threshold for the count-based TooManySnapshots volume condition. The value should be between 2 to 250. Default is 100.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Warning threshold for the count-based TooManySnapshots volume condition. The value should be between 2 to 250. Default is 100."
         },
         "snapshotDataIntegrity": {
-          "description": "Setting that allows you to enable and disable snapshot hashing and data integrity checks.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that allows you to enable and disable snapshot hashing and data integrity checks."
         },
         "snapshotDataIntegrityCronjob": {
-          "description": "Setting that defines when Longhorn checks the integrity of data in snapshot disk files. You must use the Unix cron expression format.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that defines when Longhorn checks the integrity of data in snapshot disk files. You must use the Unix cron expression format."
         },
         "snapshotDataIntegrityImmediateCheckAfterSnapshotCreation": {
-          "description": "Setting that allows disabling of snapshot hashing after snapshot creation to minimize impact on system performance.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that allows disabling of snapshot hashing after snapshot creation to minimize impact on system performance."
         },
         "snapshotHeavyTaskConcurrentLimit": {
-          "description": "Setting that controls how many snapshot heavy task operations (such as purge and clone) can run concurrently per node. This is a best-effort mechanism: due to the distributed nature of the system, temporary oversubscription may occur. The limiter reduces worst-case overload but does not guarantee perfect enforcement.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Setting that controls how many snapshot heavy task operations (such as purge and clone) can run concurrently per node. This is a best-effort mechanism: due to the distributed nature of the system, temporary oversubscription may occur. The limiter reduces worst-case overload but does not guarantee perfect enforcement."
         },
         "snapshotMaxCount": {
-          "description": "Maximum snapshot count for a volume. The value should be between 2 to 250",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum snapshot count for a volume. The value should be between 2 to 250"
         },
         "storageMinimalAvailablePercentage": {
-          "description": "Percentage of minimum available disk capacity. When the minimum available capacity exceeds the total available capacity, the disk becomes unschedulable until more space is made available for use. The default value is \"25\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Percentage of minimum available disk capacity. When the minimum available capacity exceeds the total available capacity, the disk becomes unschedulable until more space is made available for use. The default value is \"25\"."
         },
         "storageNetwork": {
-          "description": "Storage network for in-cluster traffic. When unspecified, Longhorn uses the Kubernetes cluster network.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Storage network for in-cluster traffic. When unspecified, Longhorn uses the Kubernetes cluster network."
         },
         "storageOverProvisioningPercentage": {
-          "description": "Percentage of storage that can be allocated relative to hard drive capacity. The default value is \"100\".",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Percentage of storage that can be allocated relative to hard drive capacity. The default value is \"100\"."
         },
         "storageReservedPercentageForDefaultDisk": {
-          "description": "Percentage of disk space that is not allocated to the default disk on each new Longhorn node.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Percentage of disk space that is not allocated to the default disk on each new Longhorn node."
         },
         "supportBundleFailedHistoryLimit": {
-          "description": "Maximum number of failed support bundles that can exist in the cluster. When the value is \"0\", Longhorn automatically purges all failed support bundles.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Maximum number of failed support bundles that can exist in the cluster. When the value is \"0\", Longhorn automatically purges all failed support bundles."
         },
         "systemManagedCSIComponentsResourceLimits": {
-          "description": "Resource limits for system-managed CSI components.\nThis setting allows you to configure CPU and memory requests/limits for CSI attacher, provisioner, resizer, snapshotter, and plugin components.\nSupported components: csi-attacher, csi-provisioner, csi-resizer, csi-snapshotter, longhorn-csi-plugin, node-driver-registrar, longhorn-liveness-probe.\nNotice that changing resource limits will cause CSI components to restart, which may temporarily affect volume provisioning and attach/detach operations until the components are ready. The value should be a JSON object with component names as keys and ResourceRequirements as values.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Resource limits for system-managed CSI components.\nThis setting allows you to configure CPU and memory requests/limits for CSI attacher, provisioner, resizer, snapshotter, and plugin components.\nSupported components: csi-attacher, csi-provisioner, csi-resizer, csi-snapshotter, longhorn-csi-plugin, node-driver-registrar, longhorn-liveness-probe.\nNotice that changing resource limits will cause CSI components to restart, which may temporarily affect volume provisioning and attach/detach operations until the components are ready. The value should be a JSON object with component names as keys and ResourceRequirements as values."
         },
         "systemManagedComponentsNodeSelector": {
           "description": "Node selector for system-managed Longhorn components."
         },
         "systemManagedPodsImagePullPolicy": {
-          "description": "Image pull policy for system-managed pods, such as Instance Manager, engine images, and CSI Driver. Changes to the image pull policy are applied only after the system-managed pods restart.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Image pull policy for system-managed pods, such as Instance Manager, engine images, and CSI Driver. Changes to the image pull policy are applied only after the system-managed pods restart."
         },
         "taintToleration": {
           "description": "Taint or toleration for system-managed Longhorn components.\nSpecify values using a semicolon-separated list in `kubectl taint` syntax (Example: key1=value1:effect; key2=value2:effect)."
@@ -2801,11 +3494,7 @@
           "description": "Upgrade Checker that periodically checks for new Longhorn versions. When a new version is available, a notification appears on the Longhorn UI. This setting is enabled by default"
         },
         "upgradeResponderURL": {
-          "description": "The Upgrade Responder sends a notification whenever a new Longhorn version that you can upgrade to becomes available. The default value is https://longhorn-upgrade-responder.rancher.io/v1/checkupgrade.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "The Upgrade Responder sends a notification whenever a new Longhorn version that you can upgrade to becomes available. The default value is https://longhorn-upgrade-responder.rancher.io/v1/checkupgrade."
         },
         "v1DataEngine": {
           "description": "Setting that allows you to enable the V1 Data Engine."
@@ -2826,14 +3515,11 @@
     },
     "extraObjects": {
       "description": "Add extra objects manifests",
-      "items": {
-        "additionalProperties": {},
-        "type": "object"
-      },
+      "items": {},
       "type": "array"
     },
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
       "properties": {
         "cattle": {
@@ -2896,9 +3582,7 @@
           "type": "object"
         },
         "imagePullSecrets": {
-          "description": "Global override for image pull secrets for container registry.",
-          "items": {},
-          "type": "array"
+          "description": "Global override for image pull secrets for container registry."
         },
         "imageRegistry": {
           "description": "Global override for container image registry.",
@@ -2910,11 +3594,7 @@
           "type": "object"
         },
         "timezone": {
-          "description": "Set container timezone (TZ env) for all Longhorn workloads. Leave empty to use container default.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Set container timezone (TZ env) for all Longhorn workloads. Leave empty to use container default."
         },
         "tolerations": {
           "anyOf": [
@@ -2958,6 +3638,42 @@
                 "description": "Annotations for the HTTPRoute resource in the form of key-value pairs.\nExample:\nannotation-key1: \"annotation-value1\"",
                 "type": "object"
               },
+              "hostnames": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "List of hostnames for the HTTPRoute. Multiple hostnames are supported.\nExample:\n- longhorn.example.com\n- longhorn.example.org"
+              },
+              "parentRefs": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener"
+              },
               "path": {
                 "anyOf": [
                   {
@@ -2997,36 +3713,10 @@
           "type": "boolean"
         },
         "hostnames": {
-          "description": "List of hostnames for the HTTPRoute. Multiple hostnames are supported.\nExample:\n- longhorn.example.com\n- longhorn.example.org",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "List of hostnames for the HTTPRoute. Multiple hostnames are supported.\nExample:\n- longhorn.example.com\n- longhorn.example.org"
         },
         "parentRefs": {
-          "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "group": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "kind": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "name": {},
-              "namespace": {},
-              "sectionName": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
+          "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener"
         },
         "path": {
           "description": "Default path for HTTPRoute. You can access the Longhorn UI by following the full path."
@@ -4243,6 +4933,83 @@
       "allOf": [
         {
           "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true"
+              },
+              "extraHosts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local"
+              },
+              "host": {
+                "description": "Hostname of the Layer 7 load balancer.",
+                "type": "string"
+              },
+              "secrets": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses."
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "properties": {
@@ -4270,6 +5037,24 @@
           },
           "then": {
             "properties": {
+              "extraHosts": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local"
+              },
               "host": {
                 "description": "Hostname of the Layer 7 load balancer.",
                 "type": "string"
@@ -4281,36 +5066,12 @@
             },
             "type": "object"
           }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "host": {
-                "description": "Hostname of the Layer 7 load balancer.",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
         }
       ],
       "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": {},
           "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true",
           "type": "object"
         },
@@ -4319,16 +5080,13 @@
           "type": "boolean"
         },
         "extraHosts": {
-          "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local",
-          "items": {},
-          "type": "array"
+          "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local"
         },
         "host": {
           "description": "Hostname of the Layer 7 load balancer."
         },
         "ingressClassName": {
-          "description": "IngressClass resource that contains ingress configuration, including the name of the Ingress controller.\ningressClassName can replace the kubernetes.io/ingress.class annotation used in earlier Kubernetes releases.",
-          "type": "null"
+          "description": "IngressClass resource that contains ingress configuration, including the name of the Ingress controller.\ningressClassName can replace the kubernetes.io/ingress.class annotation used in earlier Kubernetes releases."
         },
         "path": {
           "description": "Default ingress path. You can access the Longhorn UI by following the full ingress path {{host}}+{{path}}.",
@@ -4345,29 +5103,6 @@
           ]
         },
         "secrets": {
-          "anyOf": [
-            {
-              "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "certificate": {
-                    "type": "string"
-                  },
-                  "key": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses."
         },
         "secureBackends": {
@@ -4412,11 +5147,7 @@
           "type": "object"
         },
         "priorityClass": {
-          "description": "PriorityClass for Longhorn Driver.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "PriorityClass for Longhorn Driver."
         },
         "tolerations": {
           "anyOf": [
@@ -4440,11 +5171,7 @@
       "additionalProperties": false,
       "properties": {
         "distro": {
-          "description": "Optional distro identifier used for upgrade responder reporting.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Optional distro identifier used for upgrade responder reporting."
         },
         "log": {
           "additionalProperties": false,
@@ -4471,11 +5198,7 @@
           "type": "object"
         },
         "priorityClass": {
-          "description": "PriorityClass for Longhorn Manager.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "PriorityClass for Longhorn Manager."
         },
         "resources": {
           "anyOf": [
@@ -4484,24 +5207,47 @@
               "type": "object"
             },
             {
+              "const": null
+            },
+            {
               "type": "null"
             }
           ],
           "description": "Resource requests and limits for Longhorn Manager pods."
         },
         "serviceAnnotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Annotation for the Longhorn Manager service.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Annotation for the Longhorn Manager service."
         },
         "serviceLabels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "If you want to set annotations for the Longhorn Manager service, delete the `{}` in the line above\nand uncomment this example block\nannotation-key1: \"annotation-value1\"\nannotation-key2: \"annotation-value2\"",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "If you want to set annotations for the Longhorn Manager service, delete the `{}` in the line above\nand uncomment this example block\nannotation-key1: \"annotation-value1\"\nannotation-key2: \"annotation-value2\""
         },
         "tolerations": {
           "anyOf": [
@@ -5903,11 +6649,7 @@
           "type": "object"
         },
         "priorityClass": {
-          "description": "PriorityClass for Longhorn UI.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "PriorityClass for Longhorn UI."
         },
         "replicas": {
           "description": "Replica count for Longhorn UI.",
@@ -5966,181 +6708,42 @@
                     "type": "object"
                   },
                   "interval": {
-                    "anyOf": [
-                      {
-                        "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Interval at which Prometheus scrapes the metrics from the target."
+                    "description": "Interval at which Prometheus scrapes the metrics from the target.",
+                    "type": "string"
                   },
                   "metricRelabelings": {
-                    "description": "Configures the relabeling rules to apply to the samples before ingestion. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
                       },
-                      "type": "object"
-                    },
-                    "type": "array"
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Configures the relabeling rules to apply to the samples before ingestion. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
                   },
                   "relabelings": {
-                    "description": "Configures the relabeling rules to apply the target’s metadata labels. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                      "properties": {
-                        "action": {
-                          "default": "replace",
-                          "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                          "enum": [
-                            "replace",
-                            "Replace",
-                            "keep",
-                            "Keep",
-                            "drop",
-                            "Drop",
-                            "hashmod",
-                            "HashMod",
-                            "labelmap",
-                            "LabelMap",
-                            "labeldrop",
-                            "LabelDrop",
-                            "labelkeep",
-                            "LabelKeep",
-                            "lowercase",
-                            "Lowercase",
-                            "uppercase",
-                            "Uppercase",
-                            "keepequal",
-                            "KeepEqual",
-                            "dropequal",
-                            "DropEqual"
-                          ],
-                          "type": "string"
-                        },
-                        "modulus": {
-                          "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                          "format": "int64",
-                          "type": "integer"
-                        },
-                        "regex": {
-                          "description": "regex defines the regular expression against which the extracted value is matched.",
-                          "type": "string"
-                        },
-                        "replacement": {
-                          "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        },
-                        "separator": {
-                          "description": "separator defines the string between concatenated SourceLabels.",
-                          "type": "string"
-                        },
-                        "sourceLabels": {
-                          "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                          "items": {
-                            "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "targetLabel": {
-                          "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                          "type": "string"
-                        }
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
                       },
-                      "type": "object"
-                    },
-                    "type": "array"
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Configures the relabeling rules to apply the target’s metadata labels. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
                   },
                   "sampleLimit": {
-                    "anyOf": [
-                      {
-                        "description": "sampleLimit defines a per-scrape limit on the number of scraped samples\nthat will be accepted.",
-                        "format": "int64",
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Per-scrape sample limit. A value of 0 (default) omits sampleLimit."
+                    "description": "Per-scrape sample limit. A value of 0 (default) omits sampleLimit.",
+                    "type": "integer"
                   },
                   "scrapeTimeout": {
-                    "anyOf": [
-                      {
-                        "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Timeout after which Prometheus considers the scrape to be failed."
+                    "description": "Timeout after which Prometheus considers the scrape to be failed.",
+                    "type": "string"
                   }
                 },
                 "type": "object"
@@ -6166,142 +6769,34 @@
               "description": "Interval at which Prometheus scrapes the metrics from the target."
             },
             "metricRelabelings": {
-              "description": "Configures the relabeling rules to apply to the samples before ingestion. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details.",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Configures the relabeling rules to apply to the samples before ingestion. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
             },
             "relabelings": {
-              "description": "Configures the relabeling rules to apply the target’s metadata labels. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details.",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Configures the relabeling rules to apply the target’s metadata labels. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
             },
             "sampleLimit": {
               "description": "Per-scrape sample limit. A value of 0 (default) omits sampleLimit."
@@ -6557,14 +7052,6 @@
           "type": "string"
         },
         "defaultClass": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Setting that allows you to specify the default Longhorn StorageClass."
         },
         "defaultClassReplicaCount": {
@@ -6572,8 +7059,7 @@
           "type": "integer"
         },
         "defaultDataLocality": {
-          "description": "Data locality of the default Longhorn StorageClass. (Options: \"disabled\", \"best-effort\")",
-          "type": "string"
+          "description": "Data locality of the default Longhorn StorageClass. (Options: \"disabled\", \"best-effort\")"
         },
         "defaultDiskSelector": {
           "additionalProperties": false,
@@ -6730,17 +7216,16 @@
           },
           "then": {
             "properties": {
-              "registryPasswd": {
-                "description": "Password for authenticating with a private registry.",
-                "type": "string"
-              },
-              "registryUrl": {
-                "description": "URL of a private registry. When unspecified, Longhorn uses the default system registry.",
-                "type": "string"
-              },
-              "registryUser": {
-                "description": "User account used for authenticating with a private registry.",
-                "type": "string"
+              "registrySecret": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "If create a new private registry secret is true, create a Kubernetes secret with this name; else use the existing secret of this name. Use it to pull images from your private registry."
               }
             },
             "type": "object"
@@ -6780,11 +7265,7 @@
           "description": "Password for authenticating with a private registry."
         },
         "registrySecret": {
-          "description": "If create a new private registry secret is true, create a Kubernetes secret with this name; else use the existing secret of this name. Use it to pull images from your private registry.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "If create a new private registry secret is true, create a Kubernetes secret with this name; else use the existing secret of this name. Use it to pull images from your private registry."
         },
         "registryUrl": {
           "description": "URL of a private registry. When unspecified, Longhorn uses the default system registry."
@@ -6850,18 +7331,38 @@
           ],
           "properties": {
             "annotations": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "Annotation for the Longhorn UI service.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              ],
+              "description": "Annotation for the Longhorn UI service."
             },
             "labels": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "If you want to set annotations for the Longhorn UI service, delete the `{}` in the line above\nand uncomment this example block\nannotation-key1: \"annotation-value1\"\nannotation-key2: \"annotation-value2\"",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              ],
+              "description": "If you want to set annotations for the Longhorn UI service, delete the `{}` in the line above\nand uncomment this example block\nannotation-key1: \"annotation-value1\"\nannotation-key2: \"annotation-value2\""
             },
             "loadBalancerClass": {
               "description": "Class of a load balancer implementation"
@@ -6872,8 +7373,7 @@
               "type": "object"
             },
             "nodePort": {
-              "description": "NodePort port number for Longhorn UI. When unspecified, Longhorn selects a free port between 30000 and 32767.",
-              "type": "null"
+              "description": "NodePort port number for Longhorn UI. When unspecified, Longhorn selects a free port between 30000 and 32767."
             },
             "type": {
               "anyOf": [
@@ -6903,11 +7403,21 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Annotations to add to the service account",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Annotations to add to the service account"
         }
       },
       "type": "object"

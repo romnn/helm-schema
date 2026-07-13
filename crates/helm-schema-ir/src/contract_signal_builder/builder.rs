@@ -2,20 +2,28 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
 use helm_schema_core::{
-    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractFailImplication,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
-    ContractValuePathFacts, MetadataFieldKind, Predicate,
+    ContractValuePathFacts, FailValueRequirement, MetadataFieldKind, Predicate,
 };
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     type_hints: &BTreeMap<String, BTreeSet<String>>,
+    guarded_type_hints: &BTreeMap<String, BTreeSet<String>>,
+    shape_erased_value_paths: &BTreeSet<String>,
+    string_contract_value_paths: &BTreeSet<String>,
+    direct_range_source_paths: &BTreeSet<String>,
+    fail_conditions: &[crate::eval_effect::FailCapture],
     dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
     for contract_use in uses {
-        record_contract_use(&mut paths, contract_use);
+        record_contract_use(&mut paths, contract_use, direct_range_source_paths);
+    }
+    for capture in fail_conditions {
+        record_fail_conjunction(&mut paths, capture, direct_range_source_paths);
     }
     for value_path in dependency_values_root_fragments {
         if !value_path.trim().is_empty() {
@@ -27,6 +35,26 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
                 ..ContractValuePathFacts::default()
             });
         }
+    }
+    // A path the chart consumes through a total stringification tolerates
+    // any input type, even when the flow is too indirect for a placed row
+    // (vault's `set . "csiEnabled" (eq (.Values.csi.enabled | toString)
+    // "true")`); the fact carries the same serialized dominance a
+    // stringified render does.
+    for value_path in shape_erased_value_paths {
+        if value_path.trim().is_empty() {
+            continue;
+        }
+        let acc = path_accumulator(&mut paths, value_path);
+        acc.referenced = true;
+        acc.facts.facts.used_as_serialized = true;
+    }
+    for value_path in string_contract_value_paths {
+        if value_path.trim().is_empty() {
+            continue;
+        }
+        let acc = path_accumulator(&mut paths, value_path);
+        acc.facts.facts.has_string_contract = true;
     }
     for (value_path, schema_types) in type_hints {
         let schema_types = schema_types
@@ -40,6 +68,20 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             acc.type_hints.extend(schema_types);
         }
     }
+    // Guarded hints hold only where their branches render: they type the
+    // path's conditional overlays but never the unconditional base.
+    for (value_path, schema_types) in guarded_type_hints {
+        let schema_types = schema_types
+            .iter()
+            .filter(|schema_type| !schema_type.trim().is_empty())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        if !value_path.trim().is_empty() && !schema_types.is_empty() {
+            let acc = path_accumulator(&mut paths, value_path);
+            acc.referenced = true;
+            acc.guarded_type_hints.extend(schema_types);
+        }
+    }
     finish_schema_signals(paths)
 }
 
@@ -49,10 +91,18 @@ struct ContractPathAccumulator {
     guard_predicates: Vec<ConditionalGuard>,
     facts: PathSchemaFactsAccumulator,
     requiredness: ContractRequirednessEvidence,
+    /// Sink typing from guarded rows: binds at the path level only while no
+    /// serialized use proves the wider contract (the overlay branches keep
+    /// their own copies either way).
+    guarded_provider_schema_uses: Vec<ProviderSchemaUse>,
+    guarded_metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     type_hints: BTreeSet<String>,
+    /// Hints observed only under branch predicates: overlay typing only.
+    guarded_type_hints: BTreeSet<String>,
     conditional_overlay_branches: BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
     has_unconditional_overlay_peer: bool,
     saw_unsupported_overlay: bool,
+    fail_implications: Vec<ContractFailImplication>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -90,6 +140,8 @@ impl PathSchemaFactsAccumulator {
 
     fn record_facts(&mut self, facts: ContractValuePathFacts) {
         self.facts.used_as_fragment |= facts.used_as_fragment;
+        self.facts.used_as_serialized |= facts.used_as_serialized;
+        self.facts.has_string_contract |= facts.has_string_contract;
         self.facts.used_as_pathless_fragment |= facts.used_as_pathless_fragment;
         self.facts.accepted_values_root_fragment |= facts.accepted_values_root_fragment;
         self.facts.accepted_dependency_values_root_fragment |=
@@ -115,9 +167,16 @@ impl PathSchemaFactsAccumulator {
         self.all_uses_nullable &= other.all_uses_nullable;
     }
 
-    fn facts(&self, has_referenced_descendants: bool) -> ContractValuePathFacts {
+    fn facts(
+        &self,
+        has_referenced_descendants: bool,
+        has_item_descendants: bool,
+        has_structured_item_descendants: bool,
+    ) -> ContractValuePathFacts {
         let mut facts = self.facts;
         facts.has_referenced_descendants = has_referenced_descendants;
+        facts.has_item_descendants = has_item_descendants;
+        facts.has_structured_item_descendants = has_structured_item_descendants;
         facts.is_nullable &= self.all_uses_nullable;
         facts
     }
@@ -127,7 +186,18 @@ impl PathSchemaFactsAccumulator {
         global_facts: ContractValuePathFacts,
         type_hints: BTreeSet<String>,
     ) -> ConditionalOverlayEvidence {
-        let facts = self.facts(global_facts.has_referenced_descendants);
+        let facts = self.facts(
+            global_facts.has_referenced_descendants,
+            global_facts.has_item_descendants,
+            global_facts.has_structured_item_descendants,
+        );
+        // A runtime string contract recorded by this branch's own rows
+        // types the branch; mutually exclusive branches that render the
+        // path without the contract stay unaffected.
+        let mut type_hints = type_hints;
+        if facts.has_string_contract {
+            type_hints.insert("string".to_string());
+        }
         ConditionalOverlayEvidence {
             facts,
             metadata_field_kinds: self.metadata_field_kinds,
@@ -140,6 +210,7 @@ impl PathSchemaFactsAccumulator {
 fn record_contract_use(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
+    direct_range_source_paths: &BTreeSet<String>,
 ) {
     let conjunctions = contract_use
         .condition
@@ -148,7 +219,12 @@ fn record_contract_use(
         .map(|conjunction| conjunction.iter().cloned().collect::<Vec<_>>())
         .collect::<Vec<_>>();
     for predicates in conjunctions {
-        record_contract_use_conjunction(paths, contract_use, &predicates);
+        record_contract_use_conjunction(
+            paths,
+            contract_use,
+            &predicates,
+            direct_range_source_paths,
+        );
     }
 }
 
@@ -156,6 +232,7 @@ fn record_contract_use_conjunction(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
     predicates: &[Predicate],
+    direct_range_source_paths: &BTreeSet<String>,
 ) {
     let has_source = !contract_use.source_expr.trim().is_empty();
     let path_is_empty = contract_use.path.0.is_empty();
@@ -175,9 +252,21 @@ fn record_contract_use_conjunction(
             matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
         });
 
+    // A row dispatched by a type test on its own path belongs to a
+    // type-switch (`if eq (typeOf .Values.x) "string" … else …`): values of
+    // unmatched types render nothing, which is valid, so the dispatch arms
+    // must not close the path to the union of their tested types, and an
+    // arm's sink typing holds only for its tested type, never path-wide.
+    let type_dispatched = has_source
+        && predicates
+            .iter()
+            .any(|predicate| predicate_tests_source_type(predicate, &contract_use.source_expr));
+
     if has_source {
         let mut facts = ContractValuePathFacts {
             used_as_fragment: contract_use.kind == ValueKind::Fragment,
+            used_as_serialized: contract_use.kind == ValueKind::Serialized || type_dispatched,
+            has_string_contract: contract_use.has_string_contract && !type_dispatched,
             used_as_pathless_fragment: contract_use.kind == ValueKind::Fragment && path_is_empty,
             is_partial_scalar_value_path: contract_use.kind == ValueKind::PartialScalar
                 && !path_is_empty,
@@ -198,14 +287,28 @@ fn record_contract_use_conjunction(
             && predicates.iter().all(|predicate| {
                 predicate_is_positive_header(predicate, &contract_use.source_expr)
             });
-        let metadata_field_kind = metadata_field_kind_from_yaml_path(&contract_use.path.0);
+        // A serialized splice renders text the sink cannot type back onto
+        // the input, so it contributes no metadata field kind either.
+        let metadata_field_kind = if contract_use.kind == ValueKind::Serialized || type_dispatched {
+            None
+        } else {
+            metadata_field_kind_from_yaml_path(&contract_use.path.0)
+        };
         let acc = path_accumulator(paths, &contract_use.source_expr);
         acc.requiredness.is_positive_header |= positive_header;
+        // An UNCONDITIONAL string-contract row types the path itself;
+        // a conditional one types only its own overlay branch (the branch
+        // facts carry it there).
+        if contract_use.has_string_contract && predicates.is_empty() {
+            acc.type_hints.insert("string".to_string());
+        }
         acc.record_source_use(
             facts,
             path_is_empty || has_matching_self_guard,
             lowerable_conditional_guard_set(contract_use, predicates),
-            provider_schema_use(contract_use, self_range_guarded),
+            (!type_dispatched)
+                .then(|| provider_schema_use(contract_use, self_range_guarded))
+                .flatten(),
             metadata_field_kind,
         );
     }
@@ -258,7 +361,267 @@ fn record_contract_use_conjunction(
                 ..ContractValuePathFacts::default()
             };
             path_accumulator(paths, &path).facts.record_facts(facts);
+            if direct_range_source_paths.contains(&path) {
+                record_guarded_range_read(paths, &path, predicates);
+            }
         }
+    }
+}
+
+/// A `range` read under foreign conditions bounds an ITERABLE requirement
+/// to those conditions: Go's `range` iterates collections and skips nil but
+/// fails template rendering on scalars, so inside the guarded branch the
+/// ranged path must be a collection. The branch stays render-free; overlay
+/// lowering recognizes that shape and emits the iterable domain.
+/// Unconditional ranges keep their pre-existing unconstrained lowering.
+fn record_guarded_range_read(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    ranged_path: &str,
+    predicates: &[Predicate],
+) {
+    if path_contains_wildcard(ranged_path) {
+        return;
+    }
+    let mut guards = Vec::new();
+    for predicate in predicates {
+        if matches!(
+            predicate,
+            Predicate::Guard(Guard::Range { path }) if path == ranged_path
+        ) {
+            continue;
+        }
+        // A range nested inside the path's own type dispatch
+        // (`if typeIs "[]interface {}" .Values.x` around `range .Values.x`)
+        // iterates only when the test matches, so the test stays IN the
+        // branch key: unmatched types skip the arm entirely while matched
+        // collections still receive the branch's item typing.
+        if predicate_is_self_type_partition(predicate, ranged_path) {
+            let Some(guard) = predicate_to_guard(predicate, None) else {
+                return;
+            };
+            guards.push(guard);
+            continue;
+        }
+        if extend_lowerable_predicate(predicate, ranged_path, &mut guards).is_none() {
+            return;
+        }
+    }
+    guards.sort();
+    guards.dedup();
+    if guards.is_empty() {
+        return;
+    }
+    let branch = path_accumulator(paths, ranged_path)
+        .conditional_overlay_branches
+        .entry(guards)
+        .or_default();
+    branch.facts.is_nullable = true;
+    branch.record_facts(ContractValuePathFacts {
+        is_ranged_source: true,
+        is_nullable: true,
+        ..ContractValuePathFacts::default()
+    });
+}
+
+/// Lower one `fail` conjunction into a path requirement: rendering aborts
+/// whenever the conjunction holds, so valid inputs must falsify the failing
+/// TEST wherever the OUTER guards hold. Conjunctions whose test cannot be
+/// negated structurally are skipped (truthy-fallback predicates approximate
+/// undecodable conditions and must never be negated).
+fn record_fail_conjunction(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+    direct_range_source_paths: &BTreeSet<String>,
+) {
+    let conjunction = &capture.conjunction;
+    let ranged: Vec<&str> = conjunction
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::Range { path }) => Some(path.as_str()),
+            _ => None,
+        })
+        .collect();
+    if ranged.len() > 1 {
+        return;
+    }
+    let ranged = ranged.first().copied();
+    // A range over a DERIVED iterable (`range until (int .Values.n)`) has
+    // no member identity on the underlying path; only direct ranges carry
+    // per-member requirements. Helper-scope directness rides the capture.
+    if let Some(path) = ranged
+        && !direct_range_source_paths.contains(path)
+        && !capture.direct_ranged_paths.contains(path)
+    {
+        return;
+    }
+    let member_scope = ranged.map(|path| format!("{path}.*"));
+
+    let mut outer_guards = Vec::new();
+    let mut requirements = Vec::new();
+    let mut test_paths: BTreeSet<String> = BTreeSet::new();
+    for predicate in conjunction {
+        if matches!(predicate, Predicate::Guard(Guard::Range { .. })) {
+            continue;
+        }
+        let paths_of = predicate.value_paths();
+        // A conjunct is part of the failing TEST when it scopes to the
+        // ranged member (or, without a range, to a single path) AND its
+        // negation states an enforceable requirement; everything else is
+        // an outer condition of the arm.
+        let test_scope = match &member_scope {
+            Some(scope) => (!paths_of.is_empty()
+                && paths_of
+                    .iter()
+                    .all(|path| path == scope || path.starts_with(&format!("{scope}."))))
+            .then(|| scope.clone()),
+            None => (paths_of.len() == 1 && predicate_is_negatable_test(predicate))
+                .then(|| paths_of.iter().next().cloned().unwrap_or_default()),
+        };
+        let required = test_scope
+            .as_ref()
+            .and_then(|scope| requirements_from_negation(predicate, scope))
+            .filter(|required| !required.is_empty());
+        match (test_scope, required) {
+            (Some(scope), Some(mut required)) => {
+                requirements.append(&mut required);
+                test_paths.insert(scope);
+            }
+            // A member-scoped conjunct whose negation cannot be stated
+            // poisons the member test: the requirement would be missing a
+            // dimension of the real condition.
+            (Some(_), None) if member_scope.is_some() => return,
+            _ => {
+                // The residue outside the failing test: lower what encodes
+                // and keep the requirement for the rest (a validator's
+                // strictness survives an unencodable outer guard as a
+                // bounded approximation; rendering truly aborts inside it).
+                if let Some(guard) = predicate_to_guard(predicate, None) {
+                    outer_guards.push(guard);
+                }
+            }
+        }
+    }
+    if requirements.is_empty() || test_paths.len() != 1 {
+        return;
+    }
+    let target = match ranged {
+        Some(path) => path.to_string(),
+        None => {
+            let Some(path) = test_paths.into_iter().next() else {
+                return;
+            };
+            path
+        }
+    };
+    if path_contains_wildcard(&target) {
+        return;
+    }
+    // An approximately-lowered enclosing condition that touches the tested
+    // path itself partitions the very domain being negated (kyverno's
+    // `eq (int .replicas) 0` inner check): negating without it would
+    // manufacture requirements. Foreign approximations only widen where
+    // the requirement applies, the bounded direction validators accept.
+    if capture.approximate_condition_paths.iter().any(|path| {
+        path == &target
+            || helm_schema_core::values_path_is_descendant(path, &target)
+            || helm_schema_core::values_path_is_descendant(&target, path)
+    }) {
+        return;
+    }
+    requirements.sort();
+    requirements.dedup();
+    outer_guards.sort();
+    outer_guards.dedup();
+    let implication = ContractFailImplication {
+        outer_guards,
+        per_member: ranged.is_some(),
+        requirements,
+    };
+    let acc = path_accumulator(paths, &target);
+    acc.referenced = true;
+    if !acc.fail_implications.contains(&implication) {
+        acc.fail_implications.push(implication);
+    }
+}
+
+/// Whether a conjunct is a structurally negatable failing test. Positive
+/// truthiness is excluded: the condition lowering falls back to truthy
+/// approximations for conditions it cannot decode, and negating an
+/// approximation would manufacture requirements the chart never stated.
+fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
+    match predicate {
+        Predicate::Not(inner) => !matches!(inner.as_ref(), Predicate::Guard(Guard::Range { .. })),
+        Predicate::Guard(Guard::TypeIs { .. } | Guard::Absent { .. }) => true,
+        Predicate::Or(items) => items.iter().all(predicate_is_negatable_test),
+        _ => false,
+    }
+}
+
+/// Requirements implied by the NEGATION of a failing test: the negation
+/// must hold for the value at `scope` (a member scope `p.*` or the path
+/// itself).
+fn requirements_from_negation(
+    predicate: &Predicate,
+    scope: &str,
+) -> Option<Vec<FailValueRequirement>> {
+    match predicate {
+        Predicate::Not(inner) => requirements_from_holding(inner, scope),
+        // Negating a disjunction: every arm's negation must hold.
+        Predicate::Or(items) => {
+            let mut requirements = Vec::new();
+            for item in items {
+                requirements.append(&mut requirements_from_negation(item, scope)?);
+            }
+            Some(requirements)
+        }
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) if path == scope => {
+            Some(vec![FailValueRequirement::NotSchemaType(
+                schema_type.clone(),
+            )])
+        }
+        Predicate::Guard(Guard::Absent { path }) => {
+            let member = path.strip_prefix(&format!("{scope}."))?;
+            (!member.contains('.'))
+                .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+        }
+        _ => None,
+    }
+}
+
+/// Requirements implied by a predicate HOLDING for the value at `scope`.
+fn requirements_from_holding(
+    predicate: &Predicate,
+    scope: &str,
+) -> Option<Vec<FailValueRequirement>> {
+    match predicate {
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) if path == scope => {
+            Some(vec![FailValueRequirement::SchemaType(schema_type.clone())])
+        }
+        // The tested value's own truthiness (`and $v (kindIs "string" $v)`):
+        // the type requirement carries the substance; truthiness (rejecting
+        // "" or 0) stays unmodeled as a bounded approximation.
+        Predicate::Guard(Guard::Truthy { path }) if path == scope => Some(Vec::new()),
+        Predicate::Guard(Guard::Truthy { path }) => {
+            let member = path.strip_prefix(&format!("{scope}."))?;
+            (!member.contains('.'))
+                .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+        }
+        Predicate::And(items) => {
+            let mut requirements = Vec::new();
+            for item in items {
+                requirements.append(&mut requirements_from_holding(item, scope)?);
+            }
+            Some(requirements)
+        }
+        Predicate::Not(inner) => match inner.as_ref() {
+            Predicate::Guard(Guard::Absent { path }) => {
+                let member = path.strip_prefix(&format!("{scope}."))?;
+                (!member.contains('.'))
+                    .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+            }
+            _ => requirements_from_negation(inner, scope),
+        },
+        _ => None,
     }
 }
 
@@ -269,7 +632,11 @@ fn finish_schema_signals(
         .iter()
         .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))
         .collect();
-    let paths_with_referenced_descendants = collect_paths_with_descendants(&referenced_paths);
+    let (
+        paths_with_referenced_descendants,
+        paths_with_item_descendants,
+        paths_with_structured_item_descendants,
+    ) = collect_paths_with_descendants(&referenced_paths);
     for path in &paths_with_referenced_descendants {
         path_accumulator(&mut paths, path);
     }
@@ -278,7 +645,15 @@ fn finish_schema_signals(
         .into_iter()
         .map(|(value_path, acc)| {
             let has_descendants = paths_with_referenced_descendants.contains(&value_path);
-            let evidence = acc.into_schema_evidence(value_path.clone(), has_descendants);
+            let has_item_descendants = paths_with_item_descendants.contains(&value_path);
+            let has_structured_item_descendants =
+                paths_with_structured_item_descendants.contains(&value_path);
+            let evidence = acc.into_schema_evidence(
+                value_path.clone(),
+                has_descendants,
+                has_item_descendants,
+                has_structured_item_descendants,
+            );
             (value_path, evidence)
         })
         .collect();
@@ -301,12 +676,27 @@ impl ContractPathAccumulator {
         provider_schema_use: Option<ProviderSchemaUse>,
         metadata_field_kind: Option<MetadataFieldKind>,
     ) {
-        if let Some(provider_use) = provider_schema_use.clone() {
-            self.facts.record_provider_schema_use(provider_use);
-        }
         self.referenced = true;
-        self.facts.record_metadata_field_kind(metadata_field_kind);
         self.facts.record_facts(facts);
+        let row_forms_overlay_branch = facts.has_render_use
+            && !facts.has_unconditional_render_use
+            && lowerable_guards.is_some();
+        if row_forms_overlay_branch {
+            // A guarded row's sink typing rides its overlay branch; whether
+            // it also binds at the path level is decided once the path's
+            // serialized uses are known (see `into_schema_evidence`).
+            if let Some(provider_use) = provider_schema_use.clone() {
+                self.guarded_provider_schema_uses.push(provider_use);
+            }
+            if let Some(field_kind) = metadata_field_kind {
+                self.guarded_metadata_field_kinds.insert(field_kind);
+            }
+        } else {
+            if let Some(provider_use) = provider_schema_use.clone() {
+                self.facts.record_provider_schema_use(provider_use);
+            }
+            self.facts.record_metadata_field_kind(metadata_field_kind);
+        }
         if facts.has_render_use {
             if facts.has_unconditional_render_use {
                 self.has_unconditional_overlay_peer = true;
@@ -331,18 +721,41 @@ impl ContractPathAccumulator {
         self,
         value_path: String,
         has_referenced_descendants: bool,
+        has_item_descendants: bool,
+        has_structured_item_descendants: bool,
     ) -> ContractPathSchemaEvidence {
-        let facts = self.facts.facts(has_referenced_descendants);
+        let facts = self.facts.facts(
+            has_referenced_descendants,
+            has_item_descendants,
+            has_structured_item_descendants,
+        );
         let ContractPathAccumulator {
             referenced,
             guard_predicates,
-            facts: path_facts,
+            facts: mut path_facts,
             requiredness,
             type_hints,
+            guarded_type_hints,
+            guarded_provider_schema_uses,
+            guarded_metadata_field_kinds,
             conditional_overlay_branches,
             mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
+            mut fail_implications,
         } = self;
+        if !facts.used_as_serialized {
+            for provider_use in guarded_provider_schema_uses {
+                path_facts.record_provider_schema_use(provider_use);
+            }
+            path_facts
+                .metadata_field_kinds
+                .extend(guarded_metadata_field_kinds);
+        }
+        let overlay_type_hints: BTreeSet<String> = type_hints
+            .iter()
+            .chain(guarded_type_hints.iter())
+            .cloned()
+            .collect();
         let mut evidence_groups: Vec<(PathSchemaFactsAccumulator, Vec<Vec<ConditionalGuard>>)> =
             Vec::new();
         for (guards, branch) in conditional_overlay_branches {
@@ -387,11 +800,26 @@ impl ContractPathAccumulator {
                 .into_iter()
                 .map(|(guards, branch)| ConditionalPathOverlay {
                     guards,
-                    evidence: branch.conditional_overlay_evidence(facts, type_hints.clone()),
+                    evidence: branch
+                        .conditional_overlay_evidence(facts, overlay_type_hints.clone()),
                     preserve_base_schema: has_unconditional_overlay_peer,
                 })
                 .collect()
         };
+        // Branch-scoped hints ride the overlays' evidence copies. When no
+        // overlay can host them (none lowered, or an unsupported guard
+        // poisoned them), dropping them would lose the evidence entirely,
+        // so they degrade to path-level typing instead.
+        let (type_hints, guarded_type_hints) = if conditional_overlays.is_empty() {
+            (
+                type_hints.union(&guarded_type_hints).cloned().collect(),
+                BTreeSet::new(),
+            )
+        } else {
+            (type_hints, guarded_type_hints)
+        };
+        fail_implications.sort();
+        fail_implications.dedup();
         ContractPathSchemaEvidence {
             value_path,
             is_referenced_value_path: referenced,
@@ -399,9 +827,11 @@ impl ContractPathAccumulator {
             guard_predicates,
             metadata_field_kinds: path_facts.metadata_field_kinds,
             type_hints,
+            guarded_type_hints,
             provider_schema_uses: path_facts.provider_schema_uses,
             requiredness,
             conditional_overlays,
+            fail_implications,
         }
     }
 }
@@ -439,6 +869,16 @@ fn lowerable_conditional_guard_set(
 
     let mut guards = Vec::new();
     for predicate in predicates {
+        // The row's own iteration (`range .Values.x` around a render of
+        // `.Values.x` itself) is how the row fires, not a foreign
+        // condition; the overlay keys on the residual conjuncts. A range
+        // over a DIFFERENT path stays unlowerable.
+        if matches!(
+            predicate,
+            Predicate::Guard(Guard::Range { path }) if path == &contract_use.source_expr
+        ) {
+            continue;
+        }
         extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut guards)?;
     }
     guards.sort();
@@ -451,7 +891,10 @@ fn provider_schema_use(
     self_range_guarded: bool,
 ) -> Option<ProviderSchemaUse> {
     if contract_use.source_expr.trim().is_empty()
-        || contract_use.kind == ValueKind::PartialScalar
+        || matches!(
+            contract_use.kind,
+            ValueKind::PartialScalar | ValueKind::Serialized
+        )
         || contract_use.path.0.is_empty()
     {
         return None;
@@ -497,10 +940,21 @@ fn predicate_to_guard(
             }
         }
         Predicate::Or(predicates) => {
+            // Inside a disjunction a guard on the target itself is
+            // load-bearing (`or .Values.other (and .Values.self .flag)`),
+            // unlike a top-level self conjunct (the row's own firing
+            // condition), so arms encode their paths literally.
             let mut guards = predicates
                 .iter()
-                .map(|predicate| predicate_to_guard(predicate, target_value_path))
+                .map(|predicate| predicate_to_guard(predicate, None))
                 .collect::<Option<Vec<_>>>()?;
+            if guards
+                .iter()
+                .flat_map(ConditionalGuard::value_paths)
+                .any(|path| path_contains_wildcard(&path))
+            {
+                return None;
+            }
             guards.sort();
             guards.dedup();
             (target_value_path.is_some() || !guards.is_empty())
@@ -539,6 +993,11 @@ fn extend_lowerable_predicate(
                 inner.as_ref(),
                 Predicate::Guard(Guard::Truthy { path }) if path == target_value_path
             ) => {}
+        // A type test on the row's own path (also negated or a disjunction
+        // of such tests) partitions its domain (a type-switch arm), not a
+        // condition over other paths; the overlay keys on the residual
+        // conjuncts.
+        other if predicate_is_self_type_partition(other, target_value_path) => {}
         other => {
             out.push(predicate_to_guard(other, Some(target_value_path))?);
         }
@@ -610,6 +1069,36 @@ fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool 
     )
 }
 
+/// Whether a conjunct tests the TYPE of `source_expr`, positively or under
+/// negation.
+fn predicate_tests_source_type(predicate: &Predicate, source_expr: &str) -> bool {
+    match predicate {
+        Predicate::Guard(Guard::TypeIs { path, .. }) => path == source_expr,
+        Predicate::Not(inner) => predicate_tests_source_type(inner, source_expr),
+        Predicate::And(items) | Predicate::Or(items) => items
+            .iter()
+            .any(|item| predicate_tests_source_type(item, source_expr)),
+        Predicate::True | Predicate::False | Predicate::Guard(_) => false,
+    }
+}
+
+/// Whether every leaf of `predicate` is a type test on `target_value_path`
+/// itself: such a predicate partitions the row's own domain instead of
+/// conditioning it on other paths.
+fn predicate_is_self_type_partition(predicate: &Predicate, target_value_path: &str) -> bool {
+    match predicate {
+        Predicate::Guard(Guard::TypeIs { path, .. }) => path == target_value_path,
+        Predicate::Not(inner) => predicate_is_self_type_partition(inner, target_value_path),
+        Predicate::And(items) | Predicate::Or(items) => {
+            !items.is_empty()
+                && items
+                    .iter()
+                    .all(|item| predicate_is_self_type_partition(item, target_value_path))
+        }
+        Predicate::True | Predicate::False | Predicate::Guard(_) => false,
+    }
+}
+
 fn predicate_is_positive_header(predicate: &Predicate, source_expr: &str) -> bool {
     matches!(
         predicate,
@@ -624,20 +1113,35 @@ fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {
 }
 
 fn path_contains_wildcard(path: &str) -> bool {
-    path.split('.').any(|segment| segment == "*")
+    helm_schema_core::split_value_path(path)
+        .iter()
+        .any(|segment| segment == "*")
 }
 
-fn collect_paths_with_descendants(paths: &BTreeSet<String>) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
+/// All strict ancestors of the referenced paths, the subset whose
+/// descendant continues through a `*` item segment (a ranged collection's
+/// element rows, as opposed to a literal member read), and the subset
+/// whose `*` descendant continues INTO element structure (`p.*.field`) —
+/// a bare `p.*` value row proves no LIST shape, since `range` iterates
+/// maps too.
+fn collect_paths_with_descendants(
+    paths: &BTreeSet<String>,
+) -> (BTreeSet<String>, BTreeSet<String>, BTreeSet<String>) {
+    let mut ancestors = BTreeSet::new();
+    let mut item_ancestors = BTreeSet::new();
+    let mut structured_item_ancestors = BTreeSet::new();
     for path in paths {
-        let mut segments: Vec<&str> = path
-            .split('.')
-            .filter(|segment| !segment.is_empty())
-            .collect();
-        while segments.len() > 1 {
-            segments.pop();
-            out.insert(segments.join("."));
+        let segments = helm_schema_core::split_value_path(path);
+        for prefix_len in 1..segments.len() {
+            let ancestor = helm_schema_core::join_value_path(&segments[..prefix_len]);
+            if segments[prefix_len] == "*" {
+                item_ancestors.insert(ancestor.clone());
+                if prefix_len + 1 < segments.len() {
+                    structured_item_ancestors.insert(ancestor.clone());
+                }
+            }
+            ancestors.insert(ancestor);
         }
     }
-    out
+    (ancestors, item_ancestors, structured_item_ancestors)
 }

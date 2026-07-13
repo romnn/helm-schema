@@ -13,7 +13,7 @@ use super::provider_schema_fragment::ProviderSchemaFragment;
 pub enum ProviderLookupResult {
     /// Provider owns the resource AND resolved the requested path.
     /// `resolved_k8s_version` is `Some(...)` when the K8s provider
-    /// answered via a non-primary version (Feature B); the chain uses
+    /// answered via a non-primary (fallback) version; the chain uses
     /// it to emit `ResolvedFromFallbackVersion`.
     Found {
         schema: ProviderSchemaFragment,

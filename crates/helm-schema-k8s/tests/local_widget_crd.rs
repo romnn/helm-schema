@@ -204,10 +204,9 @@ fn returns_none_for_missing_schema() {
     assert!(materialize_schema_for_resource(&provider, &r).is_none());
 }
 
-// Pins Finding (round 3) #4 — `LocalSchemaProvider` (a.k.a. the
-// `--crd-override-dir` layer) is general-purpose by design: it accepts
-// schemas for ANY grouped resource, including built-in K8s ones. The
-// docs were corrected to match this behavior. If anyone later tries
+// `LocalSchemaProvider` (a.k.a. the `--crd-override-dir` layer) is
+// general-purpose by design: it accepts schemas for ANY grouped
+// resource, including built-in K8s ones. If anyone later tries
 // to restrict the override layer to "CRD-only" (e.g. by adding an
 // `is_k8s_builtin_group` guard), this test will fail and force them
 // to read the README's explicit power-user contract first.

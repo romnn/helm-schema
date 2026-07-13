@@ -31,6 +31,22 @@ pub fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -
     destructured_range_variables(node).len() >= 2
 }
 
+/// The VALUE variable of a destructured range header
+/// (`range $k, $v := …` binds each member's value to `$v`).
+pub fn range_destructured_value_variable(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+) -> Option<String> {
+    let variables = destructured_range_variables(node);
+    if variables.len() < 2 {
+        return None;
+    }
+    variables
+        .last()
+        .and_then(|variable| variable.utf8_text(source.as_bytes()).ok())
+        .map(|name| name.trim().trim_start_matches('$').to_string())
+}
+
 fn destructured_range_variables(node: tree_sitter::Node<'_>) -> Vec<tree_sitter::Node<'_>> {
     let mut walker = node.walk();
     let Some(definition) = node

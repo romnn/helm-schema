@@ -1,11 +1,11 @@
-/// Configuration for the in-provider K8s version chain (Feature A + B).
+/// Configuration for the in-provider K8s version chain.
 #[derive(Debug, Clone)]
 pub struct K8sVersionChain {
     /// User-supplied versions in their literal CLI order. The first is
     /// the primary, the rest are explicit fallbacks.
     pub explicit: Vec<String>,
-    /// Auto-extension policy: `None` = no auto-fallback (Feature B
-    /// disabled); `Some(n)` = append `n` minors below the smallest
+    /// Auto-extension policy: `None` = no auto-fallback;
+    /// `Some(n)` = append `n` minors below the smallest
     /// explicit version, monotonically descending.
     pub auto_fallback_window: Option<u32>,
 }

@@ -52,6 +52,7 @@ use helm_schema_syntax::{
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
+use crate::eval_effect::FailCapture;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::control_header;
@@ -75,8 +76,25 @@ pub struct EvaluatedDocument {
     /// `.Values` reads that never render: condition reads, assignment
     /// right-hand sides, helper-internal guard reads, and range headers.
     pub reads: Vec<ValueRead>,
-    /// Declared input-type hints observed at rendered holes.
+    /// Declared input-type hints observed at unconditional rendered holes.
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints observed only under branch predicates: they hold
+    /// where those branches render, never at the unconditional base.
+    pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Paths consumed through total stringifications (`quote`, `toString`,
+    /// `join`, `printf`) anywhere in the source: the chart tolerates any
+    /// input type at them even when no placed row exists.
+    pub(crate) shape_erased_paths: BTreeSet<String>,
+    /// Paths carrying a real runtime string contract (`trunc`, `b64enc`,
+    /// `fromYaml`, a dynamic `printf` format) somewhere in the source.
+    pub(crate) string_contract_paths: BTreeSet<String>,
+    /// Paths a `range` iterates DIRECTLY (`range .Values.x`), as opposed to
+    /// ranging a derived expression over them: only these carry an iterable
+    /// input domain.
+    pub(crate) direct_range_source_paths: BTreeSet<String>,
+    /// `fail` captures (see [`FailCapture`]): no valid values document may
+    /// satisfy one of these conjunctions.
+    pub(crate) fail_conditions: Vec<FailCapture>,
 }
 
 /// One pathless `.Values` read with the guards active at the read site.
@@ -117,6 +135,11 @@ pub(crate) fn eval_document(
         root: contributions.assemble(),
         reads: interpreter.reads,
         type_hints: interpreter.type_hints,
+        guarded_type_hints: interpreter.guarded_type_hints,
+        shape_erased_paths: interpreter.shape_erased_paths,
+        string_contract_paths: interpreter.string_contract_paths,
+        direct_range_source_paths: interpreter.direct_range_source_paths,
+        fail_conditions: interpreter.fail_conditions,
     }
 }
 
@@ -126,6 +149,9 @@ pub(crate) fn eval_document(
 pub(crate) struct ControlFacts {
     pub(super) header: Option<TemplateHeader>,
     pub(super) range_destructured: bool,
+    /// The VALUE variable of a destructured range header (`$v` in
+    /// `range $k, $v := …`).
+    pub(super) range_value_variable: Option<String>,
     /// The whole region's end byte (through `{{ end }}`), for regions that
     /// only surface as holes (block-scalar bodies).
     pub(super) region_end: usize,
@@ -167,6 +193,7 @@ fn collect_control_facts(
                 ControlFacts {
                     header: control_header(source, node),
                     range_destructured: false,
+                    range_value_variable: None,
                     region_end: node.end_byte(),
                 },
             );
@@ -177,6 +204,9 @@ fn collect_control_facts(
                 ControlFacts {
                     header: range_header_from_source(node, source),
                     range_destructured: range_has_destructured_variable_definition(node),
+                    range_value_variable: helm_schema_ast::range_destructured_value_variable(
+                        node, source,
+                    ),
                     region_end: node.end_byte(),
                 },
             );
@@ -393,6 +423,7 @@ pub(super) enum ArmSpec {
     Range {
         header: Option<TemplateHeader>,
         destructured: bool,
+        value_variable: Option<String>,
     },
     Else,
 }
@@ -428,6 +459,39 @@ pub(super) struct Interpreter<'a> {
     /// Dedup shadow of `reads` (order lives in the vec).
     reads_seen: HashSet<ValueRead>,
     pub(super) type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Paths consumed as serialized YAML by `fromYaml`; document-scope
+    /// helper conditions import this narrow input contract without importing
+    /// unrelated helper-body output transformations.
+    pub(super) parsed_yaml_input_paths: BTreeSet<String>,
+    /// Paths whose helper output was serialized with `toYaml`; callers use
+    /// this to recognize a matching `fromYaml` as a structural round trip.
+    pub(super) yaml_serialized_paths: BTreeSet<String>,
+    /// Input-type hints observed while branch predicates were active: they
+    /// hold only where those branches render, so they may type conditional
+    /// overlays but never the unconditional base.
+    pub(super) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Paths consumed only through total stringifications (`quote`,
+    /// `toString`, `join`, `printf`): the chart tolerates any input type at
+    /// them even when no placed row exists.
+    pub(super) shape_erased_paths: BTreeSet<String>,
+    /// Paths on which a string-consuming transform bound a real runtime
+    /// string contract somewhere in the source.
+    pub(super) string_contract_paths: BTreeSet<String>,
+    /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
+    /// carry an iterable input domain.
+    pub(super) direct_range_source_paths: BTreeSet<String>,
+    /// `fail` captures (see [`FailCapture`]): no valid values document may
+    /// satisfy one of these conjunctions.
+    pub(super) fail_conditions: Vec<FailCapture>,
+    /// Values paths of enclosing conditions whose lowering is APPROXIMATE
+    /// (truthy fallbacks, dropped conjuncts), stacked with the region walk.
+    /// Rows tolerate wider conditions; fail NEGATION abstains when the
+    /// imprecision touches the tested path, so captures snapshot this.
+    pub(super) approximate_condition_paths: Vec<String>,
+    /// Directly ranged paths active on the walk. Helper-scope ranges mark
+    /// membership with truthy predicates (the summary lane's flavor), so
+    /// fail capture re-adds the range facts from here.
+    pub(super) active_direct_ranged_paths: Vec<String>,
     /// Predicate paths severed by index-call narrowing anywhere in this
     /// source: guard reads of their strict ancestors are dropped from the
     /// summary (the narrowing proves the ancestor probe was a traversal
@@ -488,6 +552,15 @@ impl<'a> Interpreter<'a> {
             reads: Vec::new(),
             reads_seen: HashSet::new(),
             type_hints: BTreeMap::new(),
+            parsed_yaml_input_paths: BTreeSet::new(),
+            yaml_serialized_paths: BTreeSet::new(),
+            guarded_type_hints: BTreeMap::new(),
+            shape_erased_paths: BTreeSet::new(),
+            string_contract_paths: BTreeSet::new(),
+            direct_range_source_paths: BTreeSet::new(),
+            fail_conditions: Vec::new(),
+            approximate_condition_paths: Vec::new(),
+            active_direct_ranged_paths: Vec::new(),
             suppress_predicate_paths: BTreeSet::new(),
             chart_defaults_observed: BTreeSet::new(),
             current_site: None,
@@ -620,17 +693,64 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(super) fn value_path_context(&self) -> ValuePathContext<'_> {
+        // Member bindings resolve for conditions and assignments; explicit
+        // fragment values shadow them where both exist.
+        let mut template_bindings = self.locals.range_member_values.clone();
+        template_bindings.extend(
+            self.locals
+                .fragment_values
+                .iter()
+                .map(|(name, value)| (name.clone(), value.clone())),
+        );
         ValuePathContext {
             root_bindings: &self.root_bindings,
-            template_bindings: &self.locals.fragment_values,
+            template_bindings,
             range_domains: &self.locals.range_domains,
             get_bindings: &self.locals.get_bindings,
             template_default_paths: &self.locals.default_paths,
             template_output_meta: &self.locals.output_meta,
+            typeof_bindings: &self.locals.typeof_sources,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment: self.current_dot_fragment(),
             current_dot_binding: self.current_value_dot(),
         }
+    }
+
+    /// Record that rendering FAILS unconditionally under the currently
+    /// active predicates (`fail` calls): no valid values document may
+    /// satisfy them. The RAW predicates are kept — the guard-DNF
+    /// conversion drops conjuncts it cannot represent, which negation
+    /// cannot tolerate.
+    pub(super) fn record_fail_condition(&mut self) {
+        let capture = FailCapture {
+            conjunction: self.fail_capture_conjunction(Vec::new()),
+            approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
+            direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
+        };
+        if capture
+            .conjunction
+            .iter()
+            .any(|p| matches!(p, Predicate::False))
+        {
+            return;
+        }
+        if !self.fail_conditions.contains(&capture) {
+            self.fail_conditions.push(capture);
+        }
+    }
+
+    /// The ambient predicates plus `tail`, with the active direct range
+    /// facts re-added (helper-scope ranges push truthy flavors only).
+    fn fail_capture_conjunction(&self, tail: Vec<Predicate>) -> Vec<Predicate> {
+        let mut conjunction = self.active_predicates.clone();
+        for path in &self.active_direct_ranged_paths {
+            let range = Predicate::from(Guard::Range { path: path.clone() });
+            if !conjunction.contains(&range) {
+                conjunction.push(range);
+            }
+        }
+        conjunction.extend(tail);
+        conjunction
     }
 
     pub(super) fn ambient_condition(&self) -> GuardDnf {
@@ -826,6 +946,35 @@ impl<'a> Interpreter<'a> {
     /// site's provenance leads the read's helper-body sites. Helper-internal
     /// reads carry no resource of their own, so site-less rows stay
     /// resource-free exactly like the summary lane always was.
+    /// Absorb called-helper fail conjunctions: the body recorded its
+    /// internal predicates; the call site prepends its ambient predicates,
+    /// the same scoping helper reads get.
+    pub(super) fn absorb_helper_fails(&mut self, fails: &[FailCapture]) {
+        for body_capture in fails {
+            let mut approximate: BTreeSet<String> =
+                self.approximate_condition_paths.iter().cloned().collect();
+            approximate.extend(body_capture.approximate_condition_paths.iter().cloned());
+            let mut direct_ranged: BTreeSet<String> =
+                self.active_direct_ranged_paths.iter().cloned().collect();
+            direct_ranged.extend(body_capture.direct_ranged_paths.iter().cloned());
+            let capture = FailCapture {
+                conjunction: self.fail_capture_conjunction(body_capture.conjunction.clone()),
+                approximate_condition_paths: approximate,
+                direct_ranged_paths: direct_ranged,
+            };
+            if capture
+                .conjunction
+                .iter()
+                .any(|p| matches!(p, Predicate::False))
+            {
+                continue;
+            }
+            if !self.fail_conditions.contains(&capture) {
+                self.fail_conditions.push(capture);
+            }
+        }
+    }
+
     pub(super) fn absorb_helper_reads_with_suppression(
         &mut self,
         reads: &[ValueRead],

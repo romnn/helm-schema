@@ -24,6 +24,7 @@ impl ValuePathContext<'_> {
             defaults,
             type_hints,
             encoded_paths: effects.encoded_paths,
+            shape_erased_paths: effects.shape_erased_paths,
             local_output_meta: effects.local_output_meta,
             ..Effects::default()
         }
@@ -64,7 +65,7 @@ impl ValuePathContext<'_> {
             .output_value_paths()
     }
 
-    pub(super) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+    pub(crate) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
         self.resolved_values_paths_from_expr(expr)
     }
 
@@ -79,7 +80,7 @@ impl ValuePathContext<'_> {
         fragment_context_value(
             expr,
             self.root_bindings,
-            self.template_bindings,
+            &self.template_bindings,
             self.fragment_context,
             self.current_dot_fragment.as_ref(),
         )

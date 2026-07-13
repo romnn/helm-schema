@@ -105,18 +105,11 @@
           "description": "IMPORTANT: While operator chart and UI chart are independent, this is the interface between\nUI and operator API. Insert the service name of the operator API here!",
           "type": "string"
         },
-        "operatorApiUrl": {
-          "type": "string"
-        },
-        "operatorClusterNameLabel": {
-          "type": "string"
-        },
-        "resourcesVisible": {
-          "type": "string"
-        },
+        "operatorApiUrl": {},
+        "operatorClusterNameLabel": {},
+        "resourcesVisible": {},
         "targetNamespace": {
-          "description": "Set to \"*\" to allow viewing/creation of clusters in all namespaces",
-          "type": "string"
+          "description": "Set to \"*\" to allow viewing/creation of clusters in all namespaces"
         },
         "teams": {
           "items": {
@@ -194,9 +187,47 @@
                 },
                 "type": "object"
               },
+              "hosts": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
               "ingressClassName": {
                 "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
                 "type": "string"
+              },
+              "tls": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org"
               }
             },
             "type": "object"
@@ -212,64 +243,38 @@
         "enabled": {
           "type": "boolean"
         },
-        "hosts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "host": {
-                "type": "string"
-              },
-              "paths": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
+        "hosts": {},
         "ingressClassName": {
           "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
         },
         "tls": {
-          "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "hosts": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "secretName": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
+          "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org"
         }
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "nodeSelector": {
       "additionalProperties": {},
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
       "type": "object"
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Extra pod annotations",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ],
+      "description": "Extra pod annotations"
     },
     "priorityClassName": {
       "description": "priority class for operator-ui pod",
@@ -344,11 +349,21 @@
       "description": "configure UI service",
       "properties": {
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521"
         },
         "nodePort": {},
         "port": {
@@ -419,11 +434,18 @@
           "type": "boolean"
         },
         "name": {
-          "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       },
       "type": "object"

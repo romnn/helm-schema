@@ -27,7 +27,6 @@
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
   "allOf": [
     {
       "if": {
@@ -160,6 +159,7 @@
   ],
   "properties": {
     "affinity": {
+      "additionalProperties": {},
       "description": "Affinity is a group of affinity scheduling rules.",
       "properties": {
         "nodeAffinity": {
@@ -915,7 +915,6 @@
       "type": "object"
     },
     "configLoggingRestApi": {
-      "additionalProperties": false,
       "properties": {
         "api_port": {}
       },
@@ -1171,13 +1170,7 @@
       "x-kubernetes-patch-merge-key": "name",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "nameOverride": {
-      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "nodeSelector": {
       "additionalProperties": {
         "type": "string"
@@ -1187,20 +1180,40 @@
       "x-kubernetes-map-type": "atomic"
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-      "properties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "properties": {},
+          "type": "object"
+        }
+      ]
     },
     "podLabels": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-      "properties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "properties": {},
+          "type": "object"
+        }
+      ]
     },
     "priorityClassName": {
       "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -1469,13 +1482,19 @@
       "type": "object"
     },
     "serviceAccount": {
-      "additionalProperties": false,
       "properties": {
         "name": {
-          "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },

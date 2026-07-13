@@ -108,25 +108,55 @@
       "description": "additionalVolumes are the additional volumes to add"
     },
     "affinity": {
-      "additionalProperties": {},
-      "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "automountServiceAccountToken": {},
     "containerSecurityContext": {
-      "additionalProperties": {},
-      "description": "Configure a container security context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\ncontainerSecurityContext:\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Configure a container security context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\ncontainerSecurityContext:\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true"
     },
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "labels": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "global labels will be applied to all resources deployed by the chart",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "global labels will be applied to all resources deployed by the chart"
         }
       },
       "type": "object"
@@ -171,29 +201,7 @@
           "type": "boolean"
         },
         "image": {
-          "additionalProperties": false,
-          "properties": {
-            "pullPolicy": {
-              "description": "registry: docker.io",
-              "type": "string"
-            },
-            "registry": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "repository": {
-              "type": "string"
-            },
-            "tag": {
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "type": "object"
+          "additionalProperties": {}
         },
         "klogLevel": {
           "type": [
@@ -206,7 +214,7 @@
           "description": "NATS URL",
           "properties": {
             "credentials": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "secret": {
                   "additionalProperties": false,
@@ -222,7 +230,7 @@
               "type": "object"
             },
             "nkey": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "properties": {
                 "secret": {
                   "additionalProperties": false,
@@ -238,9 +246,16 @@
               "type": "object"
             },
             "url": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "const": null
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           },
@@ -311,8 +326,7 @@
               "type": "boolean"
             },
             "secretName": {
-              "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS",
-              "type": "null"
+              "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
             },
             "settings": {
               "additionalProperties": false,
@@ -351,29 +365,42 @@
       "type": "boolean"
     },
     "nodeSelector": {
-      "additionalProperties": {},
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "podAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
     },
     "priorityClassName": {
-      "description": "Pod priority class name\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Pod priority class name\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass"
     },
     "rbacRules": {
       "description": "Rules to be applied to ClusterRole or Role\nSet as a string so that it can be templated to allow further customization",
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "readOnly": {
       "description": "Toggle to prevent the controller making changes to NATS streams/consumers.",
@@ -383,14 +410,34 @@
       ]
     },
     "resources": {
-      "additionalProperties": {},
-      "description": "Resource requests and limits for primary nack container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Resource requests and limits for primary nack container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
     },
     "securityContext": {
-      "additionalProperties": {},
-      "description": "Toggle whether to use setup a Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/\nsecurityContext:\nfsGroup: 1000\nrunAsUser: 1000\nrunAsNonRoot: true",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ],
+      "description": "Toggle whether to use setup a Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/\nsecurityContext:\nfsGroup: 1000\nrunAsUser: 1000\nrunAsNonRoot: true"
     },
     "serviceAccountName": {
       "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true",

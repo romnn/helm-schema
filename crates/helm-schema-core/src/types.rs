@@ -6,12 +6,15 @@ use crate::HelperBranch;
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct YamlPath(pub Vec<String>);
 
-/// Whether a value use produces a full scalar, part of a scalar, or a YAML fragment.
+/// How a value contributes to rendered YAML.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ValueKind {
     Scalar = 0,
     PartialScalar = 1,
     Fragment = 2,
+    /// A serialization transform preserves dependency provenance without
+    /// exposing input shape.
+    Serialized = 3,
 }
 
 /// Detected Kubernetes resource type (apiVersion + kind).

@@ -31,6 +31,333 @@
   "allOf": [
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "daemonset": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "daemonset"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "daemonset": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "daemonset"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity configuration for pods",
+            "type": "object"
+          },
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Annotations for the DaemonSet",
+            "type": "object"
+          },
+          "automountServiceAccountToken": {
+            "description": "Automatically mount API credentials for a particular Pod",
+            "type": "boolean"
+          },
+          "config": {
+            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
+            "properties": {
+              "serverPort": {
+                "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "containerSecurityContext": {
+            "additionalProperties": {},
+            "description": "The security context for containers",
+            "type": "object"
+          },
+          "defaultVolumeMounts": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "mountPath": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "readOnly": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Default volume mounts. Corresponds to `volumes`."
+          },
+          "defaultVolumes": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "hostPath": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Default volumes that are mounted into pods. In most cases, these should not be changed.\nUse `extraVolumes`/`extraVolumeMounts` for additional custom volumes."
+          },
+          "extraArgs": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              }
+            ],
+            "description": "Extra args for the Promtail container."
+          },
+          "extraEnv": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              }
+            ],
+            "description": "Extra environment variables. Set up tracing enviroment variables here if .Values.config.enableTracing is true.\nTracing currently only support configure via environment variables. See:\nhttps://grafana.com/docs/loki/latest/clients/promtail/configuration/#tracing_config\nhttps://www.jaegertracing.io/docs/1.16/client-features/"
+          },
+          "extraEnvFrom": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              }
+            ],
+            "description": "Extra environment variables from secrets or configmaps"
+          },
+          "extraPorts": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+          },
+          "extraVolumeMounts": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              }
+            ],
+            "description": "Extra volume mounts together. Corresponds to `extraVolumes`."
+          },
+          "global": {
+            "properties": {
+              "imageRegistry": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Allow parent charts to override registry hostname"
+              }
+            },
+            "type": "object"
+          },
+          "hostAliases": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              }
+            ],
+            "description": "hostAliases to add\n- ip: 1.2.3.4\nhostnames:\n- domain.tld"
+          },
+          "image": {
+            "properties": {
+              "pullPolicy": {
+                "description": "Docker image pull policy",
+                "type": "string"
+              },
+              "registry": {
+                "description": "The Docker registry",
+                "type": "string"
+              },
+              "repository": {
+                "description": "Docker image repository",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "nodeSelector": {
+            "additionalProperties": {},
+            "description": "Node selector for pods",
+            "type": "object"
+          },
+          "podAnnotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\"",
+            "type": "object"
+          },
+          "podLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Pod labels",
+            "type": "object"
+          },
+          "podSecurityContext": {
+            "additionalProperties": {},
+            "description": "The security context for pods",
+            "type": "object"
+          },
+          "resources": {
+            "additionalProperties": {},
+            "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
+            "type": "object"
+          },
+          "serviceAccount": {
+            "properties": {
+              "name": {
+                "description": "The name of the ServiceAccount to use.\nIf not set and `create` is true, a name is generated using the fullname template",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "tolerations": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "effect": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "operator": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Tolerations for pods. By default, pods will be scheduled on master/control-plane nodes."
+          },
+          "updateStrategy": {
+            "additionalProperties": {},
+            "description": "The update strategy for the DaemonSet",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "deployment": {
             "properties": {
@@ -52,9 +379,19 @@
       "then": {
         "properties": {
           "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity configuration for pods",
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "additionalProperties": {},
+                "type": "object"
+              }
+            ],
+            "description": "Affinity configuration for pods"
           },
           "annotations": {
             "additionalProperties": {
@@ -133,17 +470,12 @@
           "defaultVolumeMounts": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
+                  "additionalProperties": false,
                   "properties": {
                     "mountPath": {
                       "type": "string"
@@ -158,12 +490,6 @@
                   "type": "object"
                 },
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Default volume mounts. Corresponds to `volumes`."
@@ -171,30 +497,15 @@
           "defaultVolumes": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "path": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
+                  "additionalProperties": false,
                   "properties": {
                     "hostPath": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
+                      "additionalProperties": false,
                       "properties": {
                         "path": {
                           "type": "string"
@@ -209,12 +520,6 @@
                   "type": "object"
                 },
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Default volumes that are mounted into pods. In most cases, these should not be changed.\nUse `extraVolumes`/`extraVolumeMounts` for additional custom volumes."
@@ -222,14 +527,12 @@
           "extraArgs": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Extra args for the Promtail container."
@@ -237,14 +540,12 @@
           "extraEnv": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Extra environment variables. Set up tracing enviroment variables here if .Values.config.enableTracing is true.\nTracing currently only support configure via environment variables. See:\nhttps://grafana.com/docs/loki/latest/clients/promtail/configuration/#tracing_config\nhttps://www.jaegertracing.io/docs/1.16/client-features/"
@@ -252,47 +553,52 @@
           "extraEnvFrom": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Extra environment variables from secrets or configmaps"
           },
+          "extraPorts": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+          },
           "extraVolumeMounts": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Extra volume mounts together. Corresponds to `extraVolumes`."
-          },
-          "extraVolumes": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra volumes to be added in addition to those specified under `defaultVolumes`."
           },
           "global": {
             "properties": {
@@ -313,14 +619,12 @@
           "hostAliases": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "hostAliases to add\n- ip: 1.2.3.4\nhostnames:\n- domain.tld"
@@ -342,29 +646,20 @@
             },
             "type": "object"
           },
-          "initContainer": {
+          "nodeSelector": {
             "anyOf": [
               {
-                "items": {},
-                "type": "array"
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
               },
               {
-                "type": "null"
-              },
-              {
-                "type": "string"
+                "additionalProperties": {},
+                "type": "object"
               }
-            ]
-          },
-          "livenessProbe": {
-            "additionalProperties": {},
-            "description": "Liveness probe",
-            "type": "object"
-          },
-          "nodeSelector": {
-            "additionalProperties": {},
-            "description": "Node selector for pods",
-            "type": "object"
+            ],
+            "description": "Node selector for pods"
           },
           "podAnnotations": {
             "additionalProperties": {
@@ -393,66 +688,20 @@
             },
             "type": "object"
           },
-          "readinessProbe": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "path": {
-                      "type": "string"
-                    },
-                    "port": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "description": "Readiness probe",
-            "properties": {
-              "failureThreshold": {
-                "type": "integer"
-              },
-              "httpGet": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "properties": {
-                  "path": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "string"
-                  }
-                },
+          "resources": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
                 "type": "object"
               },
-              "initialDelaySeconds": {
-                "type": "integer"
-              },
-              "periodSeconds": {
-                "type": "integer"
-              },
-              "successThreshold": {
-                "type": "integer"
-              },
-              "timeoutSeconds": {
-                "type": "integer"
+              {
+                "additionalProperties": {},
+                "type": "object"
               }
-            },
-            "type": "object"
-          },
-          "resources": {
-            "additionalProperties": {},
-            "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-            "type": "object"
+            ],
+            "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
           },
           "serviceAccount": {
             "properties": {
@@ -469,398 +718,12 @@
           "tolerations": {
             "anyOf": [
               {
-                "items": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "effect": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": "string"
-                    },
-                    "operator": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Tolerations for pods. By default, pods will be scheduled on master/control-plane nodes."
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "daemonset": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "daemonset"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "daemonset": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
+                "additionalProperties": {},
                 "type": "object"
-              }
-            },
-            "required": [
-              "daemonset"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity configuration for pods",
-            "type": "object"
-          },
-          "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Annotations for the DaemonSet",
-            "type": "object"
-          },
-          "automountServiceAccountToken": {
-            "description": "Automatically mount API credentials for a particular Pod",
-            "type": "boolean"
-          },
-          "config": {
-            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
-            "properties": {
-              "serverPort": {
-                "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`",
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          },
-          "containerSecurityContext": {
-            "additionalProperties": {},
-            "description": "The security context for containers",
-            "type": "object"
-          },
-          "defaultVolumeMounts": {
-            "anyOf": [
+              },
               {
                 "items": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "mountPath": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "readOnly": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Default volume mounts. Corresponds to `volumes`."
-          },
-          "defaultVolumes": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "path": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "properties": {
-                    "hostPath": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "name": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Default volumes that are mounted into pods. In most cases, these should not be changed.\nUse `extraVolumes`/`extraVolumeMounts` for additional custom volumes."
-          },
-          "extraArgs": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra args for the Promtail container."
-          },
-          "extraEnv": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra environment variables. Set up tracing enviroment variables here if .Values.config.enableTracing is true.\nTracing currently only support configure via environment variables. See:\nhttps://grafana.com/docs/loki/latest/clients/promtail/configuration/#tracing_config\nhttps://www.jaegertracing.io/docs/1.16/client-features/"
-          },
-          "extraEnvFrom": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra environment variables from secrets or configmaps"
-          },
-          "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra volume mounts together. Corresponds to `extraVolumes`."
-          },
-          "extraVolumes": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra volumes to be added in addition to those specified under `defaultVolumes`."
-          },
-          "global": {
-            "properties": {
-              "imageRegistry": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Allow parent charts to override registry hostname"
-              }
-            },
-            "type": "object"
-          },
-          "hostAliases": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "hostAliases to add\n- ip: 1.2.3.4\nhostnames:\n- domain.tld"
-          },
-          "image": {
-            "properties": {
-              "pullPolicy": {
-                "description": "Docker image pull policy",
-                "type": "string"
-              },
-              "registry": {
-                "description": "The Docker registry",
-                "type": "string"
-              },
-              "repository": {
-                "description": "Docker image repository",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "initContainer": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "livenessProbe": {
-            "additionalProperties": {},
-            "description": "Liveness probe",
-            "type": "object"
-          },
-          "nodeSelector": {
-            "additionalProperties": {},
-            "description": "Node selector for pods",
-            "type": "object"
-          },
-          "podAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Pod annotations\nprometheus.io/scrape: \"true\"\nprometheus.io/port: \"http-metrics\"",
-            "type": "object"
-          },
-          "podLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Pod labels",
-            "type": "object"
-          },
-          "podSecurityContext": {
-            "additionalProperties": {},
-            "description": "The security context for pods",
-            "type": "object"
-          },
-          "readinessProbe": {
-            "additionalProperties": {},
-            "description": "Readiness probe",
-            "type": "object"
-          },
-          "resources": {
-            "additionalProperties": {},
-            "description": "Resource requests and limits\nlimits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and `create` is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          },
-          "tolerations": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+                  "additionalProperties": false,
                   "properties": {
                     "effect": {
                       "type": "string"
@@ -875,20 +738,9 @@
                   "type": "object"
                 },
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Tolerations for pods. By default, pods will be scheduled on master/control-plane nodes."
-          },
-          "updateStrategy": {
-            "additionalProperties": {},
-            "description": "The update strategy for the DaemonSet",
-            "type": "object"
           }
         },
         "type": "object"
@@ -1033,10 +885,7 @@
             "properties": {
               "file": {
                 "description": "Config file contents for Promtail.\nMust be configured as string.\nIt is templated so it can be assembled from reusable snippets in order to avoid redundancy.",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               }
             },
             "type": "object"
@@ -1274,14 +1123,12 @@
                   "extraEnv": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Extra environment variables for sidecar config-reloader"
@@ -1289,14 +1136,12 @@
                   "extraEnvFrom": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Extra environment variables from secrets or configmaps for sidecar config-reloader"
@@ -1322,20 +1167,20 @@
                     },
                     "type": "object"
                   },
-                  "livenessProbe": {
-                    "additionalProperties": {},
-                    "description": "Liveness probe for sidecar config-reloader",
-                    "type": "object"
-                  },
-                  "readinessProbe": {
-                    "additionalProperties": {},
-                    "description": "Readiness probe for sidecar config-reloader",
-                    "type": "object"
-                  },
                   "resources": {
-                    "additionalProperties": {},
-                    "description": "Resource requests and limits for sidecar config-reloader",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Resource requests and limits for sidecar config-reloader"
                   }
                 },
                 "type": "object"
@@ -1420,6 +1265,99 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "image": {
+                "properties": {
+                  "tag": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tag"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "nameOverride": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "nameOverride"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "fullnameOverride": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "extraPorts": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
           }
         },
         "type": "object"
@@ -1528,58 +1466,18 @@
               "imagePullSecrets": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Allow parent charts to override registry credentials"
               }
             },
             "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "serviceMonitor": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceMonitor"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "httpPathPrefix": {
-            "anyOf": [
-              {
-                "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Base path to server all API routes fro"
           }
         },
         "type": "object"
@@ -1702,14 +1600,12 @@
           "imagePullSecrets": {
             "anyOf": [
               {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Image pull secrets for Docker images"
@@ -2228,130 +2124,54 @@
               "autoscaling": {
                 "properties": {
                   "controlledResources": {
-                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory",
-                    "items": {
-                      "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "controlledValues": {
                     "anyOf": [
                       {
-                        "description": "Specifies which resource values should be controlled. The default is \"RequestsAndLimits\".",
-                        "enum": [
-                          "RequestsAndLimits",
-                          "RequestsOnly"
-                        ],
-                        "type": "string"
+                        "additionalProperties": {},
+                        "type": "object"
                       },
                       {
-                        "type": "null"
+                        "items": {},
+                        "type": "array"
                       }
-                    ]
+                    ],
+                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory"
                   },
                   "maxAllowed": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "x-kubernetes-int-or-string": true
-                    },
-                    "description": "Defines the max allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Defines the max allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
                   },
                   "minAllowed": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "x-kubernetes-int-or-string": true
-                    },
-                    "description": "Defines the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Defines the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
                   },
                   "recommenders": {
-                    "description": "Recommender responsible for generating recommendation for this object. List should be empty (then the default recommender will generate the recommendation) or contain exactly one recommender.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "VerticalPodAutoscalerRecommenderSelector points to a specific Vertical Pod Autoscaler recommender. In the future it might pass parameters to the recommender.",
-                      "properties": {
-                        "name": {
-                          "description": "Name of the recommender responsible for generating recommendation for this object.",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
+                    "additionalProperties": {},
+                    "type": "object"
                   },
                   "updatePolicy": {
-                    "additionalProperties": false,
-                    "description": "Describes the rules on how changes are applied to the pods. If not specified, all fields in the `PodUpdatePolicy` are set to their default values.",
-                    "properties": {
-                      "evictionRequirements": {
-                        "description": "EvictionRequirements is a list of EvictionRequirements that need to evaluate to true in order for a Pod to be evicted. If more than one EvictionRequirement is specified, all of them need to be fulfilled to allow eviction.",
-                        "items": {
-                          "additionalProperties": false,
-                          "description": "EvictionRequirement defines a single condition which needs to be true in order to evict a Pod",
-                          "properties": {
-                            "changeRequirement": {
-                              "description": "EvictionChangeRequirement refers to the relationship between the new target recommendation for a Pod and its current requests, what kind of change is necessary for the Pod to be evicted",
-                              "enum": [
-                                "TargetHigherThanRequests",
-                                "TargetLowerThanRequests"
-                              ],
-                              "type": "string"
-                            },
-                            "resources": {
-                              "description": "Resources is a list of one or more resources that the condition applies to. If more than one resource is given, the EvictionRequirement is fulfilled if at least one resource meets `changeRequirement`.",
-                              "items": {
-                                "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "changeRequirement",
-                            "resources"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "minReplicas": {
-                        "description": "Minimal number of replicas which need to be alive for Updater to attempt pod eviction (pending other checks like PDB). Only positive values are allowed. Overrides global '--min-replicas' flag.",
-                        "format": "int32",
-                        "type": "integer"
-                      },
-                      "updateMode": {
-                        "description": "Controls when autoscaler applies changes to the pod resources. The default is 'Auto'.",
-                        "enum": [
-                          "Off",
-                          "Initial",
-                          "Recreate",
-                          "InPlaceOrRecreate",
-                          "Auto"
-                        ],
-                        "type": "string"
-                      }
-                    },
+                    "additionalProperties": {},
                     "type": "object"
                   }
                 },
@@ -2367,12 +2187,19 @@
           "additionalProperties": false,
           "properties": {
             "controlledResources": {
-              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory",
-              "items": {
-                "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                "type": "string"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory"
             },
             "controlledValues": {},
             "enabled": {
@@ -2380,107 +2207,21 @@
               "type": "boolean"
             },
             "maxAllowed": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "x-kubernetes-int-or-string": true
-              },
+              "additionalProperties": {},
               "description": "Defines the max allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
               "type": "object"
             },
             "minAllowed": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "x-kubernetes-int-or-string": true
-              },
+              "additionalProperties": {},
               "description": "Defines the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
               "type": "object"
             },
             "recommenders": {
-              "description": "Recommender responsible for generating recommendation for this object. List should be empty (then the default recommender will generate the recommendation) or contain exactly one recommender.",
-              "items": {
-                "additionalProperties": false,
-                "description": "VerticalPodAutoscalerRecommenderSelector points to a specific Vertical Pod Autoscaler recommender. In the future it might pass parameters to the recommender.",
-                "properties": {
-                  "name": {
-                    "description": "Name of the recommender responsible for generating recommendation for this object.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              },
-              "type": "array"
+              "additionalProperties": {},
+              "type": "object"
             },
             "updatePolicy": {
-              "additionalProperties": false,
-              "description": "Describes the rules on how changes are applied to the pods. If not specified, all fields in the `PodUpdatePolicy` are set to their default values.",
-              "properties": {
-                "evictionRequirements": {
-                  "description": "EvictionRequirements is a list of EvictionRequirements that need to evaluate to true in order for a Pod to be evicted. If more than one EvictionRequirement is specified, all of them need to be fulfilled to allow eviction.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "EvictionRequirement defines a single condition which needs to be true in order to evict a Pod",
-                    "properties": {
-                      "changeRequirement": {
-                        "description": "EvictionChangeRequirement refers to the relationship between the new target recommendation for a Pod and its current requests, what kind of change is necessary for the Pod to be evicted",
-                        "enum": [
-                          "TargetHigherThanRequests",
-                          "TargetLowerThanRequests"
-                        ],
-                        "type": "string"
-                      },
-                      "resources": {
-                        "description": "Resources is a list of one or more resources that the condition applies to. If more than one resource is given, the EvictionRequirement is fulfilled if at least one resource meets `changeRequirement`.",
-                        "items": {
-                          "description": "ResourceName is the name identifying various resources in a ResourceList.",
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "changeRequirement",
-                      "resources"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                "minReplicas": {
-                  "description": "Minimal number of replicas which need to be alive for Updater to attempt pod eviction (pending other checks like PDB). Only positive values are allowed. Overrides global '--min-replicas' flag.",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                "updateMode": {
-                  "description": "Controls when autoscaler applies changes to the pod resources. The default is 'Auto'.",
-                  "enum": [
-                    "Off",
-                    "Initial",
-                    "Recreate",
-                    "InPlaceOrRecreate",
-                    "Auto"
-                  ],
-                  "type": "string"
-                }
-              },
+              "additionalProperties": {},
               "type": "object"
             }
           },
@@ -2646,16 +2387,14 @@
           "then": {
             "properties": {
               "strategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
+                "additionalProperties": false,
+                "description": "Set deployment object update strategy",
+                "properties": {
+                  "type": {
                     "type": "string"
                   }
-                ],
-                "description": "Set deployment object update strategy"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -2678,8 +2417,7 @@
             "minReplicas": {},
             "targetCPUUtilizationPercentage": {},
             "targetMemoryUtilizationPercentage": {
-              "description": "behavior: {}",
-              "type": "null"
+              "description": "behavior: {}"
             }
           },
           "type": "object"
@@ -2690,23 +2428,20 @@
         },
         "replicaCount": {},
         "strategy": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
+          "additionalProperties": {},
+          "description": "Set deployment object update strategy",
+          "properties": {
+            "type": {
               "type": "string"
             }
-          ],
-          "description": "Set deployment object update strategy"
+          },
+          "type": "object"
         }
       },
       "type": "object"
     },
     "enableServiceLinks": {
-      "description": "Configure enableServiceLinks in pod",
-      "type": "boolean"
+      "description": "Configure enableServiceLinks in pod"
     },
     "extraArgs": {
       "anyOf": [
@@ -2760,72 +2495,10 @@
     },
     "extraObjects": {
       "description": "Extra K8s manifests to deploy\n- apiVersion: \"kubernetes-client.io/v1\"\nkind: ExternalSecret\nmetadata:\nname: promtail-secrets\nspec:\nbackendType: gcpSecretsManager\ndata:\n- key: promtail-oauth2-creds\nname: client_secret",
-      "items": {
-        "additionalProperties": {},
-        "type": "object"
-      },
+      "items": {},
       "type": "array"
     },
     "extraPorts": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              "ingress": {
-                "additionalProperties": false,
-                "properties": {
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "hosts": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "ingressClassName": {},
-                  "tls": {
-                    "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "hosts": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              },
-              "name": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
-        }
-      ],
       "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
     },
     "extraVolumeMounts": {
@@ -2844,10 +2517,12 @@
       "description": "Extra volume mounts together. Corresponds to `extraVolumes`."
     },
     "extraVolumes": {
+      "description": "Extra volumes to be added in addition to those specified under `defaultVolumes`."
+    },
+    "fullnameOverride": {
       "anyOf": [
         {
-          "items": {},
-          "type": "array"
+          "const": null
         },
         {
           "type": "null"
@@ -2856,18 +2531,10 @@
           "type": "string"
         }
       ],
-      "description": "Extra volumes to be added in addition to those specified under `defaultVolumes`."
-    },
-    "fullnameOverride": {
-      "description": "Overrides the chart's computed fullname",
-      "minLength": 1,
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Overrides the chart's computed fullname"
     },
     "global": {
-      "additionalProperties": false,
+      "additionalProperties": {},
       "properties": {
         "imagePullSecrets": {
           "anyOf": [
@@ -2906,8 +2573,7 @@
       "description": "hostAliases to add\n- ip: 1.2.3.4\nhostnames:\n- domain.tld"
     },
     "hostNetwork": {
-      "description": "Controls whether the pod has the `hostNetwork` flag set.",
-      "type": "null"
+      "description": "Controls whether the pod has the `hostNetwork` flag set."
     },
     "httpPathPrefix": {
       "description": "Base path to server all API routes fro"
@@ -2949,11 +2615,17 @@
       ],
       "description": "Image pull secrets for Docker images"
     },
-    "initContainer": {
+    "initContainer": {},
+    "livenessProbe": {
+      "description": "Liveness probe"
+    },
+    "nameOverride": {
+      "description": "Overrides the chart's name"
+    },
+    "namespace": {
       "anyOf": [
         {
-          "items": {},
-          "type": "array"
+          "const": null
         },
         {
           "type": "null"
@@ -2961,27 +2633,8 @@
         {
           "type": "string"
         }
-      ]
-    },
-    "livenessProbe": {
-      "additionalProperties": {},
-      "description": "Liveness probe",
-      "type": "object"
-    },
-    "nameOverride": {
-      "description": "Overrides the chart's name",
-      "minLength": 1,
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "namespace": {
-      "description": "The name of the Namespace to deploy\nIf not set, `.Release.Namespace` is used",
-      "type": [
-        "string",
-        "null"
-      ]
+      ],
+      "description": "The name of the Namespace to deploy\nIf not set, `.Release.Namespace` is used"
     },
     "networkPolicy": {
       "additionalProperties": false,
@@ -3053,9 +2706,19 @@
               "metrics": {
                 "properties": {
                   "namespaceSelector": {
-                    "additionalProperties": {},
-                    "description": "Specifies the namespaces which are allowed to access the metrics port",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Specifies the namespaces which are allowed to access the metrics port"
                   }
                 },
                 "type": "object"
@@ -3123,9 +2786,19 @@
               "metrics": {
                 "properties": {
                   "podSelector": {
-                    "additionalProperties": {},
-                    "description": "Specifies the Pods which are allowed to access the metrics port.\nAs this is cross-namespace communication, you also neeed the namespaceSelector.",
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "maxProperties": 0,
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Specifies the Pods which are allowed to access the metrics port.\nAs this is cross-namespace communication, you also neeed the namespaceSelector."
                   }
                 },
                 "type": "object"
@@ -3212,8 +2885,7 @@
       "type": "object"
     },
     "priorityClassName": {
-      "description": "The name of the PriorityClass",
-      "type": "null"
+      "description": "The name of the PriorityClass"
     },
     "rbac": {
       "additionalProperties": false,
@@ -3230,9 +2902,7 @@
       "type": "object"
     },
     "readinessProbe": {
-      "additionalProperties": {},
-      "description": "Readiness probe",
-      "type": "object"
+      "description": "Readiness probe"
     },
     "resources": {
       "additionalProperties": {},
@@ -3321,14 +2991,12 @@
               "imagePullSecrets": {
                 "anyOf": [
                   {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Image pull secrets for the service account"
@@ -3403,14 +3071,6 @@
                 "description": "ServiceMonitor annotations",
                 "type": "object"
               },
-              "interval": {
-                "description": "ServiceMonitor scrape interval",
-                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
               "labels": {
                 "additionalProperties": {
                   "type": "string"
@@ -3419,73 +3079,17 @@
                 "type": "object"
               },
               "metricRelabelings": {
-                "description": "ServiceMonitor relabel configs to apply to samples as the last\nstep before ingestion\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `metric_relabel_configs`)",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
                   },
-                  "type": "object"
-                },
-                "type": "array"
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "ServiceMonitor relabel configs to apply to samples as the last\nstep before ingestion\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `metric_relabel_configs`)"
               },
               "namespace": {
                 "description": "Alternative namespace for ServiceMonitor resources",
@@ -3495,307 +3099,58 @@
                 ]
               },
               "namespaceSelector": {
-                "additionalProperties": false,
-                "description": "Namespace selector for ServiceMonitor resources",
-                "properties": {
-                  "any": {
-                    "description": "any defines the boolean describing whether all namespaces are selected in contrast to a\nlist restricting them.",
-                    "type": "boolean"
-                  },
-                  "matchNames": {
-                    "description": "matchNames defines the list of namespace names to select from.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              },
-              "relabelings": {
-                "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `relabel_configs`)",
-                "items": {
-                  "additionalProperties": false,
-                  "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                  "properties": {
-                    "action": {
-                      "default": "replace",
-                      "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                      "enum": [
-                        "replace",
-                        "Replace",
-                        "keep",
-                        "Keep",
-                        "drop",
-                        "Drop",
-                        "hashmod",
-                        "HashMod",
-                        "labelmap",
-                        "LabelMap",
-                        "labeldrop",
-                        "LabelDrop",
-                        "labelkeep",
-                        "LabelKeep",
-                        "lowercase",
-                        "Lowercase",
-                        "uppercase",
-                        "Uppercase",
-                        "keepequal",
-                        "KeepEqual",
-                        "dropequal",
-                        "DropEqual"
-                      ],
-                      "type": "string"
-                    },
-                    "modulus": {
-                      "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                      "format": "int64",
-                      "type": "integer"
-                    },
-                    "regex": {
-                      "description": "regex defines the regular expression against which the extracted value is matched.",
-                      "type": "string"
-                    },
-                    "replacement": {
-                      "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    },
-                    "separator": {
-                      "description": "separator defines the string between concatenated SourceLabels.",
-                      "type": "string"
-                    },
-                    "sourceLabels": {
-                      "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                      "items": {
-                        "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "targetLabel": {
-                      "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "scheme": {
                 "anyOf": [
                   {
-                    "description": "scheme defines the HTTP scheme to use when scraping the metrics.",
-                    "enum": [
-                      "http",
-                      "https",
-                      "HTTP",
-                      "HTTPS"
-                    ],
-                    "type": "string"
+                    "additionalProperties": false,
+                    "maxProperties": 0,
+                    "properties": {},
+                    "type": "object"
                   },
                   {
-                    "type": "null"
+                    "additionalProperties": {},
+                    "type": "object"
                   }
                 ],
-                "description": "ServiceMonitor will use http by default, but you can pick https as well"
+                "description": "Namespace selector for ServiceMonitor resources"
               },
-              "scrapeTimeout": {
-                "description": "ServiceMonitor scrape timeout in Go duration format (e.g. 15s)",
-                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                "type": [
-                  "string",
-                  "null"
-                ]
+              "relabelings": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `relabel_configs`)"
+              },
+              "scheme": {
+                "description": "ServiceMonitor will use http by default, but you can pick https as well",
+                "type": "string"
               },
               "targetLabels": {
-                "description": "ServiceMonitor will add labels from the service to the Prometheus metric\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitorspec",
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ],
+                "description": "ServiceMonitor will add labels from the service to the Prometheus metric\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitorspec"
               },
               "tlsConfig": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "description": "tlsConfig defines TLS configuration used by the client.",
-                    "properties": {
-                      "ca": {
-                        "additionalProperties": false,
-                        "description": "ca defines the Certificate authority used when verifying server certificates.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "caFile": {
-                        "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
-                        "type": "string"
-                      },
-                      "cert": {
-                        "additionalProperties": false,
-                        "description": "cert defines the Client certificate to present when doing client-authentication.",
-                        "properties": {
-                          "configMap": {
-                            "additionalProperties": false,
-                            "description": "configMap defines the ConfigMap containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key to select.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the ConfigMap or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          },
-                          "secret": {
-                            "additionalProperties": false,
-                            "description": "secret defines the Secret containing data to use for the targets.",
-                            "properties": {
-                              "key": {
-                                "description": "The key of the secret to select from.  Must be a valid secret key.",
-                                "type": "string"
-                              },
-                              "name": {
-                                "default": "",
-                                "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                                "type": "string"
-                              },
-                              "optional": {
-                                "description": "Specify whether the Secret or its key must be defined",
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "key"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-map-type": "atomic"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "certFile": {
-                        "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
-                        "type": "string"
-                      },
-                      "insecureSkipVerify": {
-                        "description": "insecureSkipVerify defines how to disable target certificate validation.",
-                        "type": "boolean"
-                      },
-                      "keyFile": {
-                        "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
-                        "type": "string"
-                      },
-                      "keySecret": {
-                        "additionalProperties": false,
-                        "description": "keySecret defines the Secret containing the client key file for the targets.",
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "default": "",
-                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "maxVersion": {
-                        "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "minVersion": {
-                        "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
-                        "enum": [
-                          "TLS10",
-                          "TLS11",
-                          "TLS12",
-                          "TLS13"
-                        ],
-                        "type": "string"
-                      },
-                      "serverName": {
-                        "description": "serverName is used to verify the hostname for the targets.",
-                        "type": "string"
-                      }
-                    },
+                    "additionalProperties": {},
                     "type": "object"
+                  },
+                  {
+                    "const": null
                   },
                   {
                     "type": "null"
@@ -3853,70 +3208,18 @@
                     },
                     "type": "object"
                   },
-                  "namespace": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
                   "rules": {
-                    "description": "namespace:\n- alert: PromtailRequestErrors\nexpr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~\"5..|failed\"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10\nfor: 5m\nlabels:\nseverity: critical\nannotations:\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }} errors.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}\nsummary: Promtail request errors (instance {{ $labels.instance }})\n- alert: PromtailRequestLatency\nexpr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1\nfor: 5m\nlabels:\nseverity: critical\nannotations:\nsummary: Promtail request latency (instance {{ $labels.instance }})\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }}s 99th percentile latency.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                      "properties": {
-                        "alert": {
-                          "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
-                          "type": "string"
-                        },
-                        "annotations": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                          "type": "object"
-                        },
-                        "expr": {
-                          "anyOf": [
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ],
-                          "description": "PromQL expression to evaluate.",
-                          "x-kubernetes-int-or-string": true
-                        },
-                        "for": {
-                          "description": "Alerts are considered firing once they have been returned for this long.",
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "keep_firing_for": {
-                          "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                          "minLength": 1,
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "labels": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Labels to add or overwrite.",
-                          "type": "object"
-                        },
-                        "record": {
-                          "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                          "type": "string"
-                        }
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
                       },
-                      "required": [
-                        "expr"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ],
+                    "description": "namespace:\n- alert: PromtailRequestErrors\nexpr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~\"5..|failed\"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10\nfor: 5m\nlabels:\nseverity: critical\nannotations:\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }} errors.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}\nsummary: Promtail request errors (instance {{ $labels.instance }})\n- alert: PromtailRequestLatency\nexpr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1\nfor: 5m\nlabels:\nseverity: critical\nannotations:\nsummary: Promtail request latency (instance {{ $labels.instance }})\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }}s 99th percentile latency.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}"
                   }
                 },
                 "type": "object"
@@ -3946,93 +3249,26 @@
           "type": "object"
         },
         "metricRelabelings": {
-          "description": "ServiceMonitor relabel configs to apply to samples as the last\nstep before ingestion\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `metric_relabel_configs`)",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "ServiceMonitor relabel configs to apply to samples as the last\nstep before ingestion\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `metric_relabel_configs`)"
         },
         "namespace": {
           "description": "Alternative namespace for ServiceMonitor resources"
         },
         "namespaceSelector": {
-          "additionalProperties": false,
+          "additionalProperties": {},
           "description": "Namespace selector for ServiceMonitor resources",
-          "properties": {
-            "any": {
-              "description": "any defines the boolean describing whether all namespaces are selected in contrast to a\nlist restricting them.",
-              "type": "boolean"
-            },
-            "matchNames": {
-              "description": "matchNames defines the list of namespace names to select from.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
           "type": "object"
         },
         "prometheusRule": {
@@ -4048,135 +3284,37 @@
             },
             "namespace": {},
             "rules": {
-              "description": "namespace:\n- alert: PromtailRequestErrors\nexpr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~\"5..|failed\"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10\nfor: 5m\nlabels:\nseverity: critical\nannotations:\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }} errors.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}\nsummary: Promtail request errors (instance {{ $labels.instance }})\n- alert: PromtailRequestLatency\nexpr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1\nfor: 5m\nlabels:\nseverity: critical\nannotations:\nsummary: Promtail request latency (instance {{ $labels.instance }})\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }}s 99th percentile latency.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}",
-              "items": {
-                "additionalProperties": false,
-                "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                "properties": {
-                  "alert": {
-                    "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
-                    "type": "string"
-                  },
-                  "annotations": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                    "type": "object"
-                  },
-                  "expr": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "PromQL expression to evaluate.",
-                    "x-kubernetes-int-or-string": true
-                  },
-                  "for": {
-                    "description": "Alerts are considered firing once they have been returned for this long.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "keep_firing_for": {
-                    "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                    "minLength": 1,
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  "labels": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Labels to add or overwrite.",
-                    "type": "object"
-                  },
-                  "record": {
-                    "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                    "type": "string"
-                  }
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
                 },
-                "required": [
-                  "expr"
-                ],
-                "type": "object"
-              },
-              "type": "array"
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "namespace:\n- alert: PromtailRequestErrors\nexpr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~\"5..|failed\"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10\nfor: 5m\nlabels:\nseverity: critical\nannotations:\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }} errors.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}\nsummary: Promtail request errors (instance {{ $labels.instance }})\n- alert: PromtailRequestLatency\nexpr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1\nfor: 5m\nlabels:\nseverity: critical\nannotations:\nsummary: Promtail request latency (instance {{ $labels.instance }})\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }}s 99th percentile latency.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}"
             }
           },
           "type": "object"
         },
         "relabelings": {
-          "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `relabel_configs`)",
-          "items": {
-            "additionalProperties": false,
-            "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-            "properties": {
-              "action": {
-                "default": "replace",
-                "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                "enum": [
-                  "replace",
-                  "Replace",
-                  "keep",
-                  "Keep",
-                  "drop",
-                  "Drop",
-                  "hashmod",
-                  "HashMod",
-                  "labelmap",
-                  "LabelMap",
-                  "labeldrop",
-                  "LabelDrop",
-                  "labelkeep",
-                  "LabelKeep",
-                  "lowercase",
-                  "Lowercase",
-                  "uppercase",
-                  "Uppercase",
-                  "keepequal",
-                  "KeepEqual",
-                  "dropequal",
-                  "DropEqual"
-                ],
-                "type": "string"
-              },
-              "modulus": {
-                "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                "format": "int64",
-                "type": "integer"
-              },
-              "regex": {
-                "description": "regex defines the regular expression against which the extracted value is matched.",
-                "type": "string"
-              },
-              "replacement": {
-                "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                "type": "string"
-              },
-              "separator": {
-                "description": "separator defines the string between concatenated SourceLabels.",
-                "type": "string"
-              },
-              "sourceLabels": {
-                "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                "items": {
-                  "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "targetLabel": {
-                "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                "type": "string"
-              }
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
             },
-            "type": "object"
-          },
-          "type": "array"
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `relabel_configs`)"
         },
         "scheme": {
           "description": "ServiceMonitor will use http by default, but you can pick https as well"
@@ -4185,11 +3323,19 @@
           "description": "ServiceMonitor scrape timeout in Go duration format (e.g. 15s)"
         },
         "targetLabels": {
-          "description": "ServiceMonitor will add labels from the service to the Prometheus metric\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitorspec",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "ServiceMonitor will add labels from the service to the Prometheus metric\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitorspec"
         },
         "tlsConfig": {
           "anyOf": [
@@ -4282,14 +3428,10 @@
               "type": "object"
             },
             "livenessProbe": {
-              "additionalProperties": {},
-              "description": "Liveness probe for sidecar config-reloader",
-              "type": "object"
+              "description": "Liveness probe for sidecar config-reloader"
             },
             "readinessProbe": {
-              "additionalProperties": {},
-              "description": "Readiness probe for sidecar config-reloader",
-              "type": "object"
+              "description": "Readiness probe for sidecar config-reloader"
             },
             "resources": {
               "additionalProperties": {},

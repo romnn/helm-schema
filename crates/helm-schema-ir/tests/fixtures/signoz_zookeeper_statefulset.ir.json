@@ -88,7 +88,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -148,7 +148,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -299,7 +299,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -364,7 +364,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -425,7 +425,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -468,6 +468,7 @@
     },
     {
       "condition": [
+        [],
         [
           {
             "path": "auth.client.enabled",
@@ -581,7 +582,36 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
       "source_expr": "auth.client.existingSecret"
     },
     {
@@ -597,7 +627,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -661,7 +691,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -704,6 +734,21 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.enabled",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "path": "auth.quorum.enabled",
@@ -822,6 +867,62 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.existingSecret",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "auth.quorum.existingSecret"
+    },
+    {
+      "condition": [
         [
           {
             "path": "auth.quorum.enabled",
@@ -833,7 +934,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -897,7 +998,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -947,7 +1048,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -992,7 +1093,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -1037,7 +1138,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -1266,7 +1367,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -1331,7 +1432,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -1471,7 +1572,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "metadata",
         "annotations"
@@ -1529,7 +1630,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "metadata",
         "annotations"
@@ -1666,7 +1767,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "metadata",
         "labels"
@@ -1724,7 +1825,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "metadata",
         "labels"
@@ -1775,6 +1876,13 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "configuration",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "paths": [
@@ -1823,7 +1931,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -2087,7 +2195,7 @@
           }
         ]
       ],
-      "kind": "PartialScalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -2220,7 +2328,7 @@
           }
         ]
       ],
-      "kind": "PartialScalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -2315,7 +2423,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -2910,7 +3018,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -2975,7 +3083,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -3127,7 +3235,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -3192,7 +3300,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -3344,7 +3452,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -3409,7 +3517,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -3546,7 +3654,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -3740,7 +3848,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -3801,7 +3909,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -3898,7 +4006,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -3959,7 +4067,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -4140,6 +4248,17 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "configuration",
+            "type": "truthy"
+          },
+          {
+            "path": "existingConfigmap",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "paths": [
@@ -4200,7 +4319,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -4341,7 +4460,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -4402,7 +4521,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -4572,7 +4691,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -4642,7 +4761,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -4814,7 +4933,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -4884,7 +5003,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -5026,7 +5145,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -5087,7 +5206,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -5227,7 +5346,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -5287,7 +5406,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -5342,7 +5461,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -5881,6 +6000,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -5939,6 +6059,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6001,7 +6122,74 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "PartialScalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "env[*]",
+        "value"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 778,
+            "start": 718
+          },
+          "template_path": "<inline:6>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "replicaCount",
+            "type": "range"
+          }
+        ]
+      ],
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -6071,6 +6259,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6153,6 +6342,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6265,6 +6455,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6377,6 +6568,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6455,6 +6647,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6536,6 +6729,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6608,6 +6802,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6678,6 +6873,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -6758,6 +6954,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -7461,7 +7658,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -7547,7 +7744,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -7634,7 +7831,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -7947,7 +8144,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -8002,7 +8199,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -8131,7 +8328,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -8191,7 +8388,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -8384,7 +8581,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -8455,7 +8652,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -8541,7 +8738,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -8619,7 +8816,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -8685,7 +8882,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -8737,7 +8934,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9069,7 +9266,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9151,7 +9348,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9226,7 +9423,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9292,7 +9489,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9374,7 +9571,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9448,7 +9645,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9523,7 +9720,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9589,7 +9786,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9671,7 +9868,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9745,7 +9942,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9895,7 +10092,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -9955,7 +10152,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10010,7 +10207,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10103,7 +10300,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10258,7 +10455,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -10319,7 +10516,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10477,7 +10674,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -10546,7 +10743,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10760,7 +10957,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10805,7 +11002,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10850,7 +11047,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -10900,7 +11097,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -11203,6 +11400,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -11280,7 +11478,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "metadata",
         "name"
@@ -11338,6 +11536,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11416,7 +11615,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "serviceName"
@@ -11474,6 +11673,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11554,6 +11754,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11664,6 +11865,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11768,6 +11970,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11878,6 +12081,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11985,7 +12189,7 @@
           }
         ]
       ],
-      "kind": "PartialScalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12063,7 +12267,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12153,7 +12357,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12281,7 +12485,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12409,7 +12613,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12495,7 +12699,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12584,7 +12788,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12664,7 +12868,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12742,7 +12946,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -12830,7 +13034,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -13456,7 +13660,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -13545,7 +13749,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -13699,7 +13903,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -13759,7 +13963,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -13919,7 +14123,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14134,7 +14338,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14220,7 +14424,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14341,7 +14545,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -14506,7 +14710,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14578,7 +14782,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14646,7 +14850,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14816,7 +15020,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -15033,7 +15237,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15119,7 +15323,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15282,7 +15486,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15350,7 +15554,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15414,7 +15618,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15622,7 +15826,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15808,7 +16012,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -15868,7 +16072,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -16054,7 +16258,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -16114,7 +16318,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -16366,7 +16570,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -16559,7 +16763,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -16628,7 +16832,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -17212,7 +17416,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "serviceName"
@@ -17759,7 +17963,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -17819,7 +18023,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -17874,7 +18078,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -17976,7 +18180,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -18045,7 +18249,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18152,7 +18356,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18197,7 +18401,7 @@
       "condition": [
         []
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18247,7 +18451,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18290,6 +18494,13 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "path": "tls.client.enabled",
@@ -18355,6 +18566,29 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "path": "livenessProbe.enabled",
@@ -18397,6 +18631,16 @@
           {
             "path": "tls.client.enabled",
             "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
           }
         ],
         [
@@ -18471,7 +18715,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18544,6 +18788,58 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.existingSecret",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "tls.client.existingSecret"
+    },
+    {
+      "condition": [
         [
           {
             "path": "tls.client.enabled",
@@ -18555,7 +18851,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18668,7 +18964,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18793,7 +19089,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18868,7 +19164,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19023,6 +19319,32 @@
       "condition": [
         [
           {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.passwordsSecretName",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
             "path": "tls.client.enabled",
             "type": "truthy"
           },
@@ -19205,7 +19527,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19276,7 +19598,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19415,7 +19737,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19490,7 +19812,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19605,7 +19927,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19655,7 +19977,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19698,6 +20020,25 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.autoGenerated",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "path": "tls.quorum.enabled",
@@ -19763,6 +20104,59 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.passwordsSecretName",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "path": "tls.quorum.enabled",
@@ -19835,7 +20229,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19908,6 +20302,70 @@
     },
     {
       "condition": [
+        [],
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.existingSecret",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "tls.quorum.existingSecret"
+    },
+    {
+      "condition": [
         [
           {
             "path": "tls.quorum.enabled",
@@ -19919,7 +20377,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20032,7 +20490,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20157,7 +20615,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20232,7 +20690,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20387,6 +20845,40 @@
       "condition": [
         [
           {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.existingSecret",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.passwordsSecretName",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.passwordsSecretName",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
             "path": "tls.quorum.enabled",
             "type": "truthy"
           },
@@ -20569,7 +21061,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20640,7 +21132,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20779,7 +21271,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20854,7 +21346,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -20969,7 +21461,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -21204,7 +21696,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -21264,7 +21756,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -21403,7 +21895,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Scalar",
       "path": [
         "spec",
         "template",
@@ -21463,7 +21955,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -21854,7 +22346,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -21933,7 +22425,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -22012,7 +22504,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -22268,7 +22760,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -22351,7 +22843,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -22426,7 +22918,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -22509,7 +23001,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -22584,7 +23076,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
