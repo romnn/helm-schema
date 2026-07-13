@@ -92,6 +92,9 @@ pub struct EvaluatedDocument {
     /// ranging a derived expression over them: only these carry an iterable
     /// input domain.
     pub(crate) direct_range_source_paths: BTreeSet<String>,
+    /// The subset of direct range sources iterated with TWO variables:
+    /// integers iterate single-variable ranges only.
+    pub(crate) destructured_range_source_paths: BTreeSet<String>,
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(crate) fail_conditions: Vec<FailCapture>,
@@ -139,6 +142,7 @@ pub(crate) fn eval_document(
         shape_erased_paths: interpreter.shape_erased_paths,
         string_contract_paths: interpreter.string_contract_paths,
         direct_range_source_paths: interpreter.direct_range_source_paths,
+        destructured_range_source_paths: interpreter.destructured_range_source_paths,
         fail_conditions: interpreter.fail_conditions,
     }
 }
@@ -480,6 +484,10 @@ pub(super) struct Interpreter<'a> {
     /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
     /// carry an iterable input domain.
     pub(super) direct_range_source_paths: BTreeSet<String>,
+    /// The subset of direct range sources iterated with TWO variables
+    /// (`range $k, $v := …`): integers iterate single-variable ranges only
+    /// ("can't use 2 to iterate over more than one variable").
+    pub(super) destructured_range_source_paths: BTreeSet<String>,
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(super) fail_conditions: Vec<FailCapture>,
@@ -558,6 +566,7 @@ impl<'a> Interpreter<'a> {
             shape_erased_paths: BTreeSet::new(),
             string_contract_paths: BTreeSet::new(),
             direct_range_source_paths: BTreeSet::new(),
+            destructured_range_source_paths: BTreeSet::new(),
             fail_conditions: Vec::new(),
             approximate_condition_paths: Vec::new(),
             active_direct_ranged_paths: Vec::new(),
@@ -724,6 +733,40 @@ impl<'a> Interpreter<'a> {
     pub(super) fn record_fail_condition(&mut self) {
         let capture = FailCapture {
             conjunction: self.fail_capture_conjunction(Vec::new()),
+            approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
+            direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
+        };
+        if capture
+            .conjunction
+            .iter()
+            .any(|p| matches!(p, Predicate::False))
+        {
+            return;
+        }
+        if !self.fail_conditions.contains(&capture) {
+            self.fail_conditions.push(capture);
+        }
+    }
+
+    /// Record a `required(message, subject)` guardrail: rendering fails
+    /// under the ambient predicates whenever the subject is Helm-empty
+    /// (absent, null, or the empty string).
+    pub(super) fn record_required_condition(&mut self, subject_path: &str) {
+        let empty = Predicate::Or(vec![
+            Predicate::from(Guard::Absent {
+                path: subject_path.to_string(),
+            }),
+            Predicate::from(Guard::Eq {
+                path: subject_path.to_string(),
+                value: helm_schema_core::GuardValue::Null,
+            }),
+            Predicate::from(Guard::Eq {
+                path: subject_path.to_string(),
+                value: helm_schema_core::GuardValue::string(""),
+            }),
+        ]);
+        let capture = FailCapture {
+            conjunction: self.fail_capture_conjunction(vec![empty]),
             approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
             direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
         };

@@ -6,7 +6,9 @@ use helm_schema_core::{
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
-use crate::condition_encoding::{build_condition_clauses, evaluate_guard_set_on_values};
+use crate::condition_encoding::{
+    build_condition_clauses, evaluate_guard_set_on_values, guard_encodes_fully,
+};
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::conditional_target_schema;
@@ -24,6 +26,11 @@ pub(crate) struct ConditionalResolvedSchema {
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
     pub(crate) preserve_base_schema: bool,
     pub(crate) target_is_fragment: bool,
+    /// The conditional is a pure `allOf` arm (fail implication): it adds a
+    /// requirement without owning the path's shape, so base classification
+    /// must ignore it entirely — an implication must never flip an
+    /// overlay-owned base to the resolved schema nor empty a resolved one.
+    pub(crate) arm_only: bool,
 }
 
 #[tracing::instrument(skip_all)]
@@ -44,18 +51,20 @@ pub(crate) fn collect_conditional_schemas(
             continue;
         };
 
-        // Guarded `fail` implications: wherever the outer guards hold, the
-        // failing test's negation must hold. Runtime-hard, so the arm
-        // carries the requirement directly.
+        // `fail` implications: wherever the outer guards hold, the failing
+        // test's negation must hold. Runtime-hard, so the requirement
+        // rides an `allOf` arm — property-level union lanes (declared
+        // defaults, range alternatives, carrier variants) must never
+        // bypass it. An empty guard set means the requirement is
+        // unconditional and the arm's condition is trivially true.
         for implication in &evidence.fail_implications {
-            if implication.outer_guards.is_empty() {
-                continue;
-            }
-            if !guards_supported_for_conditional_lowering(
-                &implication.outer_guards,
-                &resolved_by_path,
-                values_yaml_doc,
-            ) {
+            if !implication.outer_guards.is_empty()
+                && !implication_guards_supported(
+                    &implication.outer_guards,
+                    target_value_path,
+                    &resolved_by_path,
+                )
+            {
                 continue;
             }
             let target_schema =
@@ -64,8 +73,14 @@ pub(crate) fn collect_conditional_schemas(
                 continue;
             }
             let target_segments = split_value_path(target_value_path);
-            let ancestor_segments =
+            let mut ancestor_segments =
                 conditional_ancestor_segments(&target_segments, &implication.outer_guards);
+            // Anchor at a STRICT ancestor: an arm appended at the target
+            // node itself lands inside one union alternative, letting the
+            // other alternatives bypass the requirement.
+            if ancestor_segments.len() == target_segments.len() {
+                ancestor_segments.pop();
+            }
             conditionals.push(ConditionalResolvedSchema {
                 target_value_path: target_value_path.clone(),
                 relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
@@ -75,6 +90,7 @@ pub(crate) fn collect_conditional_schemas(
                 provider_schema_candidate: None,
                 preserve_base_schema: true,
                 target_is_fragment: false,
+                arm_only: true,
             });
         }
 
@@ -102,24 +118,17 @@ pub(crate) fn collect_conditional_schemas(
                 resolved_target.schema.clone(),
                 active_by_defaults,
             );
-            // A branch that RANGES the path binds an iterable requirement
-            // on top of whatever else it claims: Go's `range` iterates
-            // arrays, maps, and integer counts (Helm's `--set` channel
-            // delivers int64, which iterates; JSON Schema cannot separate
-            // that from a values-file integer, so the wider channel wins)
-            // and skips nil, but fails rendering on strings and
-            // non-integral numbers.
+            // A branch that RANGES the path binds the runtime iterable
+            // domain on top of whatever else it claims; integer counts
+            // drop out when the loop body reads member structure the
+            // int64 iteration values cannot provide.
             let target_schema = if overlay.evidence.facts.is_ranged_source {
                 crate::merge::merge_schema_list(vec![
                     target_schema,
-                    serde_json::json!({
-                        "anyOf": [
-                            { "type": "array" },
-                            { "type": "object" },
-                            { "type": "integer" },
-                            { "type": "null" },
-                        ]
-                    }),
+                    crate::runtime_iterable_schema(
+                        !overlay.evidence.facts.has_structured_item_descendants
+                            && !overlay.evidence.facts.has_destructured_range_use,
+                    ),
                 ])
             } else {
                 target_schema
@@ -143,6 +152,7 @@ pub(crate) fn collect_conditional_schemas(
                         provider_schema_candidate: None,
                         preserve_base_schema: overlay.preserve_base_schema,
                         target_is_fragment: overlay.evidence.facts.used_as_fragment,
+                        arm_only: false,
                     });
                 }
                 continue;
@@ -160,6 +170,7 @@ pub(crate) fn collect_conditional_schemas(
                 provider_schema_candidate,
                 preserve_base_schema: overlay.preserve_base_schema,
                 target_is_fragment: overlay.evidence.facts.used_as_fragment,
+                arm_only: false,
             });
         }
     }
@@ -195,6 +206,51 @@ fn guards_supported_for_conditional_lowering(
     resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
     values_yaml_doc: &YamlValue,
 ) -> bool {
+    guards_supported_with_self_path(guards, None, resolved_by_path, values_yaml_doc)
+}
+
+/// Fail-implication guard support is more permissive than overlay guard
+/// support on TWO axes, both bounded by the arm-only shape (an implication
+/// adds an `if guards then requirement` arm and never contributes rows or
+/// base structure, so a guard that never fires costs nothing):
+/// - a truthy guard over the implication's OWN target path is the
+///   capture's structurally derived test subject (`if truthy(x) then x is
+///   a string`), not a decoded ambient condition, so the fabricated-path
+///   concern does not apply to it even when the chart never declares it;
+/// - truthy guards over other undeclared-but-resolved paths lower
+///   type-generically: the requirement is a hard render failure, and a
+///   fabricated guard path merely leaves the arm inactive.
+fn implication_guards_supported(
+    guards: &[ConditionalGuard],
+    target_value_path: &str,
+    resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
+) -> bool {
+    !guards.is_empty()
+        && guards.iter().all(|guard| match guard {
+            ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
+                path == target_value_path || resolved_by_path.contains_key(path.as_str())
+            }
+            ConditionalGuard::Eq { .. }
+            | ConditionalGuard::NotEq { .. }
+            | ConditionalGuard::Absent { .. }
+            | ConditionalGuard::TypeIs { .. } => true,
+            ConditionalGuard::Not(inner) => implication_guards_supported(
+                std::slice::from_ref(inner),
+                target_value_path,
+                resolved_by_path,
+            ),
+            ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
+                implication_guards_supported(guards, target_value_path, resolved_by_path)
+            }
+        })
+}
+
+fn guards_supported_with_self_path(
+    guards: &[ConditionalGuard],
+    self_path: Option<&str>,
+    resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
+    values_yaml_doc: &YamlValue,
+) -> bool {
     !guards.is_empty()
         && guards.iter().all(|guard| match guard {
             // The truthiness condition encoding is type-generic (const true,
@@ -204,7 +260,8 @@ fn guards_supported_for_conditional_lowering(
             // gets an accumulator entry, so mere resolution would also admit
             // paths fabricated by imprecise lookups (`index $vals $a $b`).
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
-                yaml_value_at_path(values_yaml_doc, path).is_some()
+                self_path == Some(path.as_str())
+                    || yaml_value_at_path(values_yaml_doc, path).is_some()
                     || resolved_by_path
                         .get(path.as_str())
                         .is_some_and(|resolved| schema_is_boolean_like(&resolved.schema))
@@ -213,13 +270,19 @@ fn guards_supported_for_conditional_lowering(
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. } => true,
-            ConditionalGuard::Not(inner) => guards_supported_for_conditional_lowering(
+            ConditionalGuard::Not(inner) => guards_supported_with_self_path(
                 std::slice::from_ref(inner),
+                self_path,
                 resolved_by_path,
                 values_yaml_doc,
             ),
             ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
-                guards_supported_for_conditional_lowering(guards, resolved_by_path, values_yaml_doc)
+                guards_supported_with_self_path(
+                    guards,
+                    self_path,
+                    resolved_by_path,
+                    values_yaml_doc,
+                )
             }
         })
 }
@@ -234,6 +297,59 @@ fn schema_is_boolean_like(schema: &Value) -> bool {
 }
 
 #[tracing::instrument(skip_all)]
+/// Lower terminating validator formulas: for each clause, no valid values
+/// document satisfies ALL its guards, so the document gets
+/// `if <guards> then false` at the guards' shared ancestor. Clauses with
+/// any unencodable guard are skipped whole — a partially encoded `if`
+/// would reject documents the validator never terminates.
+pub(crate) fn append_terminal_clauses(
+    root_schema: &mut SchemaDocument,
+    clauses: &[Vec<ConditionalGuard>],
+    values_yaml_doc: &YamlValue,
+) {
+    for guards in clauses {
+        let ancestor_segments = shared_guard_ancestor_segments(guards);
+        if !guards
+            .iter()
+            .all(|guard| guard_encodes_fully(guard, &ancestor_segments, values_yaml_doc))
+        {
+            continue;
+        }
+        let condition = SchemaNode::all_of(build_condition_clauses(
+            guards,
+            &ancestor_segments,
+            values_yaml_doc,
+        ));
+        root_schema.append_conditional(
+            &ancestor_segments,
+            condition,
+            SchemaNode::foreign(Value::Bool(false)),
+        );
+    }
+}
+
+/// The longest common prefix of the PARENTS of every path the guards
+/// reference. Presence tests (`required`/`Absent` encodings) need the
+/// tested segment to stay relative, so a single-path clause anchors at the
+/// path's parent rather than the path itself.
+fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
+    let mut shared: Option<Vec<String>> = None;
+    for guard in guards {
+        for guard_path in guard.value_paths() {
+            let mut segments = split_value_path(&guard_path);
+            segments.pop();
+            shared = Some(match shared {
+                None => segments,
+                Some(prefix) => {
+                    let len = common_prefix_len(&prefix, &segments);
+                    prefix[..len].to_vec()
+                }
+            });
+        }
+    }
+    shared.unwrap_or_default()
+}
+
 pub(crate) fn append_conditional_schemas(
     root_schema: &mut SchemaDocument,
     conditionals: Vec<ConditionalResolvedSchema>,
@@ -301,6 +417,16 @@ pub(crate) fn append_conditional_schemas(
         }
     }
     for ((ancestor_segments, _), group) in by_content {
+        // An empty guard set is trivially true: the fragment applies
+        // unconditionally (an unguarded fail implication).
+        if group.guard_sets.iter().any(Vec::is_empty) {
+            root_schema.append_conditional(
+                &ancestor_segments,
+                SchemaNode::empty(),
+                SchemaNode::foreign(group.fragment),
+            );
+            continue;
+        }
         let mut conditions: Vec<SchemaNode> =
             helm_schema_core::GuardDnf::normalize_conditional_guard_disjunction(group.guard_sets)
                 .into_iter()

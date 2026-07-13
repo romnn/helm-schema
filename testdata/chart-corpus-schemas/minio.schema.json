@@ -81,6 +81,7 @@
           "environment": {
             "anyOf": [
               {
+                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
@@ -266,6 +267,7 @@
           "environment": {
             "anyOf": [
               {
+                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
@@ -1830,6 +1832,35 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Provide a name to substitute for the full names of resources"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -2980,6 +3011,35 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Provide a name in place of minio for `app:` labels"
           }
         },
         "type": "object"
@@ -4847,9 +4907,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   },
                   {
@@ -4963,6 +5020,12 @@
             {
               "items": {},
               "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
             },
             {
               "type": "object"
@@ -5252,9 +5315,6 @@
                   {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -5807,6 +5867,9 @@
           "type": "array"
         },
         {
+          "type": "array"
+        },
+        {
           "type": "null"
         },
         {
@@ -5998,6 +6061,12 @@
             {
               "items": {},
               "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
             },
             {
               "type": "object"

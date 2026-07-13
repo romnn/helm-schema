@@ -2089,7 +2089,14 @@
                   "master": {
                     "properties": {
                       "updateStrategy": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -13475,14 +13482,6 @@
               "authClients": {
                 "description": "Require clients to authenticate",
                 "type": "boolean"
-              },
-              "certFilename": {
-                "description": "Certificate filename",
-                "type": "string"
-              },
-              "certKeyFilename": {
-                "description": "Certificate Key filename",
-                "type": "string"
               }
             },
             "type": "object"
@@ -13870,9 +13869,25 @@
       "description": "The name of an existing ConfigMap with your custom configuration for Redis(R) nodes"
     },
     "extraDeploy": {
-      "description": "Array of extra objects to deploy with the release",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Array of extra objects to deploy with the release"
     },
     "fullnameOverride": {
       "description": "String to fully override common.names.fullname",
@@ -14769,9 +14784,6 @@
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
                       },
                       {
@@ -15245,9 +15257,6 @@
                       {
                         "items": {},
                         "type": "array"
-                      },
-                      {
-                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -16062,14 +16071,36 @@
           "type": "array"
         },
         "ingressNSMatchLabels": {
-          "additionalProperties": {},
-          "description": "Labels to match to allow traffic from other namespaces",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Labels to match to allow traffic from other namespaces"
         },
         "ingressNSPodMatchLabels": {
-          "additionalProperties": {},
-          "description": "Pod labels to match to allow traffic from other namespaces",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Pod labels to match to allow traffic from other namespaces"
         },
         "metrics": {
           "additionalProperties": false,
@@ -16079,14 +16110,36 @@
               "type": "boolean"
             },
             "ingressNSMatchLabels": {
-              "additionalProperties": {},
-              "description": "Labels to match to allow traffic from other namespaces to metrics endpoint",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Labels to match to allow traffic from other namespaces to metrics endpoint"
             },
             "ingressNSPodMatchLabels": {
-              "additionalProperties": {},
-              "description": "Pod labels to match to allow traffic from other namespaces to metrics endpoint",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pod labels to match to allow traffic from other namespaces to metrics endpoint"
             }
           },
           "type": "object"

@@ -316,6 +316,34 @@
     {
       "if": {
         "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
           "controller": {
             "properties": {
               "kind": {
@@ -3715,6 +3743,63 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "namespaceOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Override the deployment namespace; defaults to .Release.Namespace"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -5935,9 +6020,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   },
                   {
@@ -6815,15 +6897,32 @@
                 ]
               },
               {
-                "not": {
-                  "properties": {
-                    "maxUnavailable": {}
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "maxUnavailable": {}
+                      },
+                      "required": [
+                        "maxUnavailable"
+                      ],
+                      "type": "object"
+                    }
                   },
-                  "required": [
-                    "maxUnavailable"
-                  ],
-                  "type": "object"
-                }
+                  {
+                    "properties": {
+                      "maxUnavailable": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "maxUnavailable"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
@@ -9765,6 +9864,15 @@
               "additionalProperties": {},
               "properties": {},
               "type": "object"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
             }
           ],
           "description": "Global configuration passed to the ConfigMap consumed by the controller. Values may contain Helm templates.\nRef.: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/"
@@ -10804,9 +10912,20 @@
           "type": "object"
         },
         "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations to be added to controller pods",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to be added to controller pods"
         },
         "podLabels": {
           "additionalProperties": {},
@@ -11905,9 +12024,20 @@
           "properties": {
             "allocateLoadBalancerNodePorts": {},
             "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations to be added to the external controller service. See `controller.service.internal.annotations` for annotations to be added to the internal controller service.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Annotations to be added to the external controller service. See `controller.service.internal.annotations` for annotations to be added to the internal controller service."
             },
             "appProtocol": {
               "description": "Declare the app protocol of the external HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol",
@@ -11982,9 +12112,20 @@
               "properties": {
                 "allocateLoadBalancerNodePorts": {},
                 "annotations": {
-                  "additionalProperties": {},
-                  "description": "Annotations to be added to the internal controller service. Mandatory for the internal controller service to be created. Varies with the cloud service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Annotations to be added to the internal controller service. Mandatory for the internal controller service to be created. Varies with the cloud service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer"
                 },
                 "appProtocol": {
                   "description": "Declare the app protocol of the internal HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol",
@@ -12475,9 +12616,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   },
                   {
@@ -12881,15 +13019,32 @@
                 ]
               },
               {
-                "not": {
-                  "properties": {
-                    "maxUnavailable": {}
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "maxUnavailable": {}
+                      },
+                      "required": [
+                        "maxUnavailable"
+                      ],
+                      "type": "object"
+                    }
                   },
-                  "required": [
-                    "maxUnavailable"
-                  ],
-                  "type": "object"
-                }
+                  {
+                    "properties": {
+                      "maxUnavailable": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "maxUnavailable"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },

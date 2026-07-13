@@ -821,6 +821,66 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "privateRegistry": {
+                "properties": {
+                  "registrySecret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "registrySecret"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "privateRegistry"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "imagePullSecrets": {
+                "description": "Global override for image pull secrets for container registry.",
+                "items": {},
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -913,11 +973,6 @@
           "global": {
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
-              "imagePullSecrets": {
-                "description": "Global override for image pull secrets for container registry.",
-                "items": {},
-                "type": "array"
-              },
               "imageRegistry": {
                 "description": "Global override for container image registry.",
                 "type": "string"
@@ -3148,6 +3203,34 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -3514,9 +3597,25 @@
       "type": "boolean"
     },
     "extraObjects": {
-      "description": "Add extra objects manifests",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Add extra objects manifests"
     },
     "global": {
       "additionalProperties": {},
@@ -3661,9 +3760,6 @@
                   {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -4996,9 +5092,6 @@
                     "type": "object"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   }
                 ],
@@ -5071,9 +5164,20 @@
       "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true"
         },
         "enabled": {
           "description": "Setting that allows Longhorn to generate ingress records for the Longhorn UI service.",

@@ -152,6 +152,9 @@ impl ConditionalTargetIndex {
     pub(crate) fn from_conditionals(conditionals: &[ConditionalResolvedSchema]) -> Self {
         let mut targets = BTreeMap::new();
         for conditional in conditionals {
+            if conditional.arm_only {
+                continue;
+            }
             let entry = targets
                 .entry(conditional.target_value_path.clone())
                 .or_insert(ConditionalTargetSummary {

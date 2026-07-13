@@ -51,6 +51,7 @@ impl<'a> PathSchemaResolver<'a> {
             values_yaml_doc,
             contract_signals.referenced_value_paths(),
             contract_signals.pruned_parent_value_paths(),
+            contract_signals.direct_ranged_value_paths(),
         );
         Self {
             schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
@@ -230,12 +231,6 @@ fn build_path_schema_inputs(
             ),
             type_hint_schema: type_hint_schema(&evidence.type_hints),
             guarded_type_hint_schema: type_hint_schema(&evidence.guarded_type_hints),
-            fail_requirement_schema: fail_requirement_schema(
-                evidence
-                    .fail_implications
-                    .iter()
-                    .filter(|implication| implication.outer_guards.is_empty()),
-            ),
         },
         provider_schema_candidate,
     )
@@ -361,6 +356,9 @@ fn fail_value_requirement_schema(
             }
             FailValueRequirement::HasMember(member) => {
                 required_members.push(member);
+            }
+            FailValueRequirement::Iterable { allow_integer } => {
+                parts.push(crate::runtime_iterable_schema(*allow_integer));
             }
         }
     }

@@ -64,6 +64,7 @@ pub(crate) fn build_values_yaml_path_info(
     values_yaml_doc: &YamlValue,
     referenced_value_paths: &BTreeSet<String>,
     pruned_parent_value_paths: &BTreeSet<String>,
+    direct_ranged_value_paths: &BTreeSet<String>,
 ) -> BTreeMap<String, ValuesYamlPathInfo> {
     referenced_value_paths
         .iter()
@@ -76,6 +77,17 @@ pub(crate) fn build_values_yaml_path_info(
                             &mut path_info.schema,
                             path,
                             referenced_value_paths,
+                        );
+                    } else {
+                        // Even under fragment parents (whose subtree
+                        // schemas otherwise stay whole), a directly
+                        // ranged member's declared shape must yield to
+                        // its own resolution: the runtime iterable
+                        // domain is wider than any declared default.
+                        prune_referenced_descendant_schemas(
+                            &mut path_info.schema,
+                            path,
+                            direct_ranged_value_paths,
                         );
                     }
                     path_info

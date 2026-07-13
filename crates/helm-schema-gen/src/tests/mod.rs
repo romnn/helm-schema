@@ -959,6 +959,19 @@ fn any_of_variant_matching<'a, F: Fn(&'a Value) -> bool>(
         .and_then(|variants| variants.iter().find(|variant| predicate(variant)))
 }
 
+/// The union arm of a directly ranged node with the given `type`. Ranged
+/// paths accept the runtime iterable domain, so their declared shape lives
+/// in one arm beside the runtime alternatives (or stands alone when no
+/// range widened the node).
+fn ranged_arm_of_type<'a>(schema: &'a Value, ty: &str) -> Option<&'a Value> {
+    if schema.get("type").and_then(Value::as_str) == Some(ty) {
+        return Some(schema);
+    }
+    any_of_variant_matching(schema, |variant| {
+        variant.get("type").and_then(Value::as_str) == Some(ty)
+    })
+}
+
 fn object_variant_with_property<'a>(schema: &'a Value, property: &str) -> Option<&'a Value> {
     if schema.pointer(&format!("/properties/{property}")).is_some() {
         return Some(schema);
@@ -1179,7 +1192,10 @@ fn tpl_context_does_not_type_the_templated_value_as_an_object() {
           - name: example
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    let Some(name) = schema.pointer("/properties/items/items/properties/name") else {
+    let items = schema.pointer("/properties/items").expect("items present");
+    let array_arm = ranged_arm_of_type(items, "array")
+        .unwrap_or_else(|| panic!("items array arm missing, got {items}"));
+    let Some(name) = array_arm.pointer("/items/properties/name") else {
         panic!("ranged item name missing from {schema}");
     };
 
@@ -1416,7 +1432,6 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         guard_predicate_schema: serde_json::json!({}),
         type_hint_schema: serde_json::json!({}),
         guarded_type_hint_schema: serde_json::json!({}),
-        fail_requirement_schema: serde_json::json!({}),
     });
 
     assert!(
@@ -2039,6 +2054,228 @@ fn approximate_fail_guards_abstain() {
         schema_accepts_instance(&schema, &serde_json::json!({ "replicas": 3 })),
         "a normal replica count renders; the undecodable zero-check must not manufacture a requirement: {schema}"
     );
+}
+
+/// Helm's `required(message, subject)` terminates rendering when the
+/// subject is Helm-empty (absent, null, or ""): a direct subject binds a
+/// document-level requirement under the ambient guards, and a ranged
+/// member subject requires the member on every entry.
+#[test]
+fn required_subjects_bind_nonempty_requirements() {
+    let src = indoc! {r#"
+        apiVersion: example.com/v1
+        kind: Probe
+        metadata:
+          name: {{ required "a cluster name is required" .Values.clusterName }}
+        spec:
+          {{- range $name, $item := .Values.envSecrets }}
+          - name: {{ $name }}
+            key: {{ required "key is required" $item.key }}
+          {{- end }}
+          {{- if .Values.gate.enabled }}
+          - name: guarded
+            key: {{ required "target required when gated" .Values.gate.target }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        clusterName: \"\"
+        envSecrets: {}
+        gate:
+          enabled: false
+          target: \"\"
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "clusterName": "" }),
+            false,
+            "empty subject fails",
+        ),
+        (
+            serde_json::json!({ "clusterName": null }),
+            false,
+            "null subject fails",
+        ),
+        (
+            serde_json::json!({ "clusterName": "prod" }),
+            true,
+            "nonempty renders",
+        ),
+        (
+            serde_json::json!({ "clusterName": "prod", "envSecrets": { "A": { "name": "s" } } }),
+            false,
+            "ranged member missing key fails",
+        ),
+        (
+            serde_json::json!({ "clusterName": "prod", "envSecrets": { "A": { "key": "k" } } }),
+            true,
+            "ranged member with key renders",
+        ),
+        (
+            serde_json::json!({ "clusterName": "prod", "gate": { "enabled": true, "target": "" } }),
+            false,
+            "guarded empty subject fails when the guard holds",
+        ),
+        (
+            serde_json::json!({ "clusterName": "prod", "gate": { "enabled": false, "target": "" } }),
+            true,
+            "guarded subject stays free when the guard is off",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A terminating validator over SEVERAL paths (mutual exclusion,
+/// conditional requirements) lowers as a whole formula: no valid document
+/// may satisfy all of its guards (external-dns forbids txtPrefix+txtSuffix
+/// together; coredns requires dnsConfig when dnsPolicy is "None").
+#[test]
+fn cross_path_fail_formulas_lower_as_terminal_clauses() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          {{- if and .Values.txtPrefix .Values.txtSuffix }}
+          {{- fail "'txtPrefix' and 'txtSuffix' are mutually exclusive" }}
+          {{- end }}
+          {{- if and (eq .Values.dnsPolicy "None") (not .Values.dnsConfig) }}
+          {{- fail "dnsConfig is required when dnsPolicy is set to None" }}
+          {{- end }}
+          ok: "true"
+    "#};
+    let values_yaml = indoc! {"
+        txtPrefix: \"\"
+        txtSuffix: \"\"
+        dnsPolicy: ClusterFirst
+        dnsConfig: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "txtPrefix": "a", "txtSuffix": "b" }),
+            false,
+            "mutually exclusive pair fails",
+        ),
+        (
+            serde_json::json!({ "txtPrefix": "a" }),
+            true,
+            "one of the pair renders",
+        ),
+        (
+            serde_json::json!({ "dnsPolicy": "None" }),
+            false,
+            "None without dnsConfig fails",
+        ),
+        (
+            serde_json::json!({ "dnsPolicy": "None", "dnsConfig": { "nameservers": ["1.1.1.1"] } }),
+            true,
+            "None with dnsConfig renders",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Range domains compose with their consumers: a single-variable direct
+/// range admits integer counts, a loop body reading item members removes
+/// them, a nested range over each member value requires rangeable members,
+/// and literal member reads elsewhere make a truthy value an object.
+#[test]
+fn range_domains_compose_with_body_and_sibling_contracts() {
+    let src = indoc! {r#"
+        apiVersion: example.com/v1
+        kind: Probe
+        metadata:
+          name: probe
+        spec:
+          plain:
+          {{- range .Values.plain }}
+          - {{ . | quote }}
+          {{- end }}
+          structured:
+          {{- range .Values.structured }}
+          - name: {{ .name }}
+          {{- end }}
+          nested:
+          {{- range $group, $members := .Values.nested }}
+          {{- range $name, $key := $members }}
+          - {{ $group }}/{{ $name }}: {{ $key }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.lookup }}
+          lookup: {{ .Values.lookup.TARGET }}
+          {{- end }}
+          also-ranged:
+          {{- range $k, $v := .Values.lookup }}
+          - {{ $k }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        plain: []
+        structured: []
+        nested: {}
+        lookup: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "plain": 2 }),
+            true,
+            "single-variable ranges iterate integer counts",
+        ),
+        (
+            serde_json::json!({ "structured": 2 }),
+            false,
+            "item member reads exclude integer iteration",
+        ),
+        (
+            serde_json::json!({ "structured": [{ "name": "a" }] }),
+            true,
+            "structured items render",
+        ),
+        (
+            serde_json::json!({ "nested": { "g": "x" } }),
+            false,
+            "nested ranges need rangeable members",
+        ),
+        (
+            serde_json::json!({ "nested": { "g": { "a": "k" } } }),
+            true,
+            "rangeable members render",
+        ),
+        (
+            serde_json::json!({ "lookup": ["x"] }),
+            false,
+            "a truthy value with literal member reads must be an object",
+        ),
+        (
+            serde_json::json!({ "lookup": [] }),
+            true,
+            "an empty (falsy) collection skips the member template",
+        ),
+        (
+            serde_json::json!({ "lookup": { "TARGET": "v" } }),
+            true,
+            "object lookups render",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// A total stringification is neutral evidence about its own input; an
@@ -3844,21 +4081,21 @@ fn destructured_range_map_input_does_not_become_output_array() {
     let environment = schema
         .pointer("/properties/environment")
         .expect("environment present");
+    let map_arm = ranged_arm_of_type(environment, "object")
+        .unwrap_or_else(|| panic!("environment object arm missing, got {environment}"));
     sim_assert_eq!(
-        have: environment.get("type").and_then(Value::as_str),
-        want: Some("object"),
-        "environment should stay an object-valued input, got {environment}"
-    );
-    sim_assert_eq!(
-        have: environment
+        have: map_arm
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
         want: Some("string"),
         "environment should generalize to an open string map when the chart ranges over its entries, got {environment}"
     );
+    // Two-variable ranges cannot iterate integers ("can't use 2 to
+    // iterate over more than one variable"), so the runtime widening
+    // stays integer-free here.
     assert!(
-        environment.get("anyOf").is_none(),
-        "environment should not widen to object-or-array, got {environment}"
+        ranged_arm_of_type(environment, "integer").is_none(),
+        "a destructured range must not admit integer counts, got {environment}"
     );
 }
 
@@ -3888,8 +4125,10 @@ fn destructured_range_map_with_len_guard_generalizes_to_open_string_map() {
     let environment = schema
         .pointer("/properties/environment")
         .expect("environment present");
+    let map_arm = ranged_arm_of_type(environment, "object")
+        .unwrap_or_else(|| panic!("environment object arm missing, got {environment}"));
     sim_assert_eq!(
-        have: environment
+        have: map_arm
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
         want: Some("string"),
@@ -3922,25 +4161,25 @@ fn scalar_item_range_keeps_provider_array_metadata() {
     let access_modes = schema
         .pointer("/properties/accessModes")
         .expect("accessModes present");
+    let array_arm = any_of_variant_matching(access_modes, |variant| {
+        variant.get("type").and_then(Value::as_str) == Some("array")
+            && variant.get("description").is_some()
+    })
+    .unwrap_or_else(|| panic!("provider array arm missing, got {access_modes}"));
     sim_assert_eq!(
-        have: access_modes.get("type").and_then(Value::as_str),
-        want: Some("array"),
-        "accessModes should be an array, got {access_modes}"
-    );
-    sim_assert_eq!(
-        have: access_modes.get("items"),
+        have: array_arm.get("items"),
         want: Some(&serde_json::json!({})),
         "quoted items render any input through strval, so the provider string typing must not flow back, got {access_modes}"
     );
     assert!(
-        access_modes
+        array_arm
             .pointer("/description")
             .and_then(Value::as_str)
             .is_some(),
         "accessModes should keep the provider description, got {access_modes}"
     );
     sim_assert_eq!(
-        have: access_modes
+        have: array_arm
             .pointer("/x-kubernetes-list-type")
             .and_then(Value::as_str),
         want: Some("atomic"),
@@ -3983,15 +4222,15 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    let host_paths = schema
-        .pointer("/properties/hosts/items/properties/paths")
+    let hosts = schema.pointer("/properties/hosts").expect("hosts present");
+    let hosts_arm = ranged_arm_of_type(hosts, "array")
+        .unwrap_or_else(|| panic!("hosts array arm missing, got {hosts}"));
+    let host_paths = hosts_arm
+        .pointer("/items/properties/paths")
         .expect("hosts[].paths present");
-    sim_assert_eq!(
-        have: host_paths.get("type").and_then(Value::as_str),
-        want: Some("array"),
-        "hosts[].paths should stay an array input, got {host_paths}"
-    );
-    let path_items = host_paths.get("items").expect("hosts[].paths items");
+    let paths_arm = ranged_arm_of_type(host_paths, "array")
+        .unwrap_or_else(|| panic!("hosts[].paths array arm missing, got {host_paths}"));
+    let path_items = paths_arm.get("items").expect("hosts[].paths items");
     assert!(
         schema_contains_type(path_items, "string"),
         "hosts[].paths items should retain the provider string branch, got {host_paths}"
@@ -4037,18 +4276,15 @@ fn scalar_range_with_root_helper_stays_scalar_array() {
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     let hosts = schema.pointer("/properties/hosts").expect("hosts present");
+    let array_arm = ranged_arm_of_type(hosts, "array")
+        .unwrap_or_else(|| panic!("hosts array arm missing, got {hosts}"));
     sim_assert_eq!(
-        have: hosts.get("type").and_then(Value::as_str),
-        want: Some("array"),
-        "hosts should stay an array, got {hosts}"
-    );
-    sim_assert_eq!(
-        have: hosts.pointer("/items/type").and_then(Value::as_str),
+        have: array_arm.pointer("/items/type").and_then(Value::as_str),
         want: Some("string"),
         "hosts items should stay strings, got {hosts}"
     );
     assert!(
-        hosts.pointer("/items/properties/Chart").is_none(),
+        array_arm.pointer("/items/properties/Chart").is_none(),
         "root helper fields must not be projected onto range items, got {hosts}"
     );
 }
@@ -5069,8 +5305,10 @@ fn with_bound_range_dot_annotations_stay_string_map() {
     let annotations = schema
         .pointer("/properties/annotations")
         .expect("annotations present");
+    let map_arm = ranged_arm_of_type(annotations, "object")
+        .unwrap_or_else(|| panic!("annotations object arm missing, got {annotations}"));
     sim_assert_eq!(
-        have: annotations
+        have: map_arm
             .pointer("/additionalProperties/type")
             .and_then(Value::as_str),
         want: Some("string"),

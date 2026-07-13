@@ -45,7 +45,14 @@
           {
             "properties": {
               "readinessProbe": {
-                "$ref": "#/$defs/helm-truthy"
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
               }
             },
             "required": [
@@ -71,6 +78,34 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -150,6 +185,34 @@
             "type": [
               "string",
               "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -1227,7 +1290,14 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/helm-truthy"
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            ]
           },
           "then": {
             "properties": {

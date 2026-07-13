@@ -50,6 +50,45 @@ enum RenderedDemotion {
     Dependency,
 }
 
+/// The subject expressions of every `required(message, subject)` call in
+/// an expression, including the piped form (`subject | required "msg"`,
+/// where the piped value arrives as the trailing argument).
+fn required_call_subjects(expr: &TemplateExpr) -> Vec<&TemplateExpr> {
+    let mut subjects = Vec::new();
+    collect_required_subjects(expr, &mut subjects);
+    subjects
+}
+
+fn collect_required_subjects<'e>(expr: &'e TemplateExpr, out: &mut Vec<&'e TemplateExpr>) {
+    match expr {
+        TemplateExpr::Call { function, args } => {
+            if function == "required" && args.len() == 2 {
+                out.push(&args[1]);
+            }
+            for arg in args {
+                collect_required_subjects(arg, out);
+            }
+        }
+        TemplateExpr::Pipeline(stages) => {
+            for (index, stage) in stages.iter().enumerate() {
+                if let TemplateExpr::Call { function, args } = stage
+                    && function == "required"
+                    && args.len() == 1
+                    && index > 0
+                {
+                    out.push(&stages[index - 1]);
+                }
+                collect_required_subjects(stage, out);
+            }
+        }
+        TemplateExpr::Parenthesized(inner) => collect_required_subjects(inner, out),
+        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
+            collect_required_subjects(value, out)
+        }
+        _ => {}
+    }
+}
+
 /// Whether an expression invokes `fail` anywhere: evaluating it terminates
 /// template rendering unconditionally.
 fn expr_contains_fail_call(expr: &TemplateExpr) -> bool {
@@ -98,6 +137,29 @@ impl Interpreter<'_> {
     /// over helper calls).
     pub(super) fn eval_hole_exprs_for_condition(&mut self, expr: &TemplateExpr) -> HoleEval {
         self.eval_hole_exprs(std::slice::from_ref(expr))
+    }
+
+    /// Record every `required(message, subject)` guardrail in the
+    /// expressions: rendering fails under the ambient predicates whenever a
+    /// subject resolving to exactly one values path is Helm-empty. Member
+    /// bindings resolve here (the value-path context sees them), so ranged
+    /// subjects attach per-member requirements.
+    pub(super) fn record_required_subjects(&mut self, exprs: &[TemplateExpr]) {
+        let mut subject_paths = Vec::new();
+        {
+            let context = self.value_path_context();
+            for expr in exprs {
+                for subject in required_call_subjects(expr) {
+                    let paths = context.paths_for_expr(subject);
+                    if paths.len() == 1 {
+                        subject_paths.extend(paths);
+                    }
+                }
+            }
+        }
+        for path in subject_paths {
+            self.record_required_condition(&path);
+        }
     }
 
     /// Evaluate the expressions of one output hole through the shared value
@@ -240,6 +302,17 @@ impl Interpreter<'_> {
             .extend(effects.shape_erased_paths.iter().cloned());
         self.string_contract_paths
             .extend(effects.string_contract_paths.iter().cloned());
+        // Under ambient predicates the row lanes only hint (and hints
+        // about a path under its OWN guard stay row-anchored); the
+        // truthy⇒string capture carries the enforceable conditional arm
+        // through the fail machinery (ambient guards join at absorption).
+        // Predicate-free sites stay row-only: the unconditional row typing
+        // already states the requirement. Only DIRECT consumer subjects
+        // qualify — a called helper's contract flags lost their
+        // body-internal guards (its own fail lane carries the captures).
+        if !self.active_predicates.is_empty() {
+            self.absorb_condition_string_captures(&effects.direct_string_consumer_paths.clone());
+        }
 
         let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
         for path in bound_reads {
@@ -361,6 +434,7 @@ impl Interpreter<'_> {
             self.restore_site(previous_site);
             return (Guarded::empty(), None);
         }
+        self.record_required_subjects(&exprs);
         let inlined = self.inline_static_file_fragments(&exprs);
         let width = exprs
             .iter()
@@ -524,6 +598,7 @@ impl Interpreter<'_> {
             self.restore_site(previous_site);
             return Vec::new();
         }
+        self.record_required_subjects(&exprs);
         // Fragment-rendering holes (`toYaml … | nindent`) keep fragment
         // evidence even inside scalar text; everything else is a partial
         // scalar contribution.
@@ -920,6 +995,9 @@ impl Interpreter<'_> {
             let paths = self
                 .value_path_context()
                 .resolved_values_paths_from_expr(header.expr());
+            if paths.is_empty() {
+                self.approximate_condition_paths.push(String::new());
+            }
             self.approximate_condition_paths.extend(paths);
         }
         let guards = predicate.contract_guards();
@@ -965,6 +1043,7 @@ impl Interpreter<'_> {
                     self.record_fail_condition();
                     return Vec::new();
                 }
+                self.record_required_subjects(&exprs);
                 let hole = self.eval_hole_exprs(&exprs);
                 self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
                 let defaulted = hole.effects.default_paths_with_local();
@@ -1091,6 +1170,7 @@ impl Interpreter<'_> {
         }
         if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
+            self.record_required_subjects(rhs);
             let output_effects = self.value_path_context().expression_output_effects(rhs);
             let hole = self.eval_hole_exprs(rhs);
             // The binding is the hole value without widened members (an

@@ -117,14 +117,7 @@
             ]
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "namespaceOverride": {
             "anyOf": [
@@ -242,14 +235,7 @@
             ]
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "namespaceOverride": {
             "anyOf": [
@@ -328,14 +314,7 @@
             ]
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "namespaceOverride": {
             "type": "string"
@@ -429,14 +408,7 @@
             "type": "object"
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "namespaceOverride": {
             "type": "string"
@@ -510,14 +482,7 @@
             "type": "object"
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           }
         },
         "type": "object"
@@ -630,6 +595,62 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -690,14 +711,7 @@
       "then": {
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "namespaceOverride": {
             "type": "string"
@@ -870,9 +884,25 @@
   ],
   "properties": {
     "additionalArgs": {
-      "description": "Additional arguments to be added to the operator's args list.",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Additional arguments to be added to the operator's args list."
     },
     "additionalEnv": {
       "description": "Array containing extra environment variables which can be templated.\nFor example:\n- name: RELEASE_NAME\nvalue: \"{{ .Release.Name }}\"\n- name: MY_VAR\nvalue: \"mySpecialKey\""
@@ -1252,15 +1282,17 @@
                     "type": "object"
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
+                    "properties": {
+                      "create": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
                   }
                 ]
               },
@@ -1354,15 +1386,17 @@
                   {
                     "allOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "properties": {
+                          "create": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
                       },
                       {
                         "anyOf": [

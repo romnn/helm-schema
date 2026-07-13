@@ -215,7 +215,7 @@ fn opaque_taint_and_inline_region_arms() {
                 mapping:
                   key "name":
                     when always:
-                      opaque taint={nameOverride}
+                      splice nameOverride scalar
                   key "kind":
                     when truthy(experimental):
                       scalar [text{"Alpha"}]

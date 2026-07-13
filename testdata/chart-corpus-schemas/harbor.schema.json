@@ -280,9 +280,6 @@
                 "type": "object"
               },
               {
-                "const": null
-              },
-              {
                 "type": "null"
               }
             ],
@@ -356,9 +353,6 @@
               {
                 "additionalProperties": {},
                 "type": "object"
-              },
-              {
-                "const": null
               },
               {
                 "type": "null"
@@ -467,9 +461,6 @@
                 "type": "object"
               },
               {
-                "const": null
-              },
-              {
                 "type": "null"
               }
             ],
@@ -565,9 +556,6 @@
               {
                 "additionalProperties": {},
                 "type": "object"
-              },
-              {
-                "const": null
               },
               {
                 "type": "null"
@@ -1150,6 +1138,34 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -3190,7 +3206,14 @@
               {
                 "properties": {
                   "redis": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -3477,6 +3500,66 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "harborAdminPassword": {}
+                  },
+                  "required": [
+                    "harborAdminPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "harborAdminPassword": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "harborAdminPassword"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "existingSecretAdminPassword": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "existingSecretAdminPassword"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "harborAdminPassword": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "not": {
           "properties": {
             "existingSecretAdminPassword": {
@@ -3493,6 +3576,149 @@
         "properties": {
           "harborAdminPassword": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "crt": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "crt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "internalTLS": {
+            "description": "The internal TLS used for harbor components secure communicating. In order to enable https\nin each component tls cert files need to provided in advance.",
+            "properties": {
+              "trivy": {
+                "description": "trivy related cert configuration",
+                "properties": {
+                  "crt": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of trivy's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -3600,6 +3826,149 @@
                   "key": {
                     "description": "Content of trivy's TLS key file, only available when `certSource` is \"manual\"",
                     "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "key": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "internalTLS": {
+            "description": "The internal TLS used for harbor components secure communicating. In order to enable https\nin each component tls cert files need to provided in advance.",
+            "properties": {
+              "trivy": {
+                "description": "trivy related cert configuration",
+                "properties": {
+                  "key": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of trivy's TLS key file, only available when `certSource` is \"manual\""
                   }
                 },
                 "type": "object"
@@ -3870,6 +4239,163 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "trustCa": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "trustCa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "internalTLS": {
+            "description": "The internal TLS used for harbor components secure communicating. In order to enable https\nin each component tls cert files need to provided in advance.",
+            "properties": {
+              "trustCa": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The content of trust ca, only available when `certSource` is \"manual\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -4615,6 +5141,668 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "secretKey": {}
+                  },
+                  "required": [
+                    "secretKey"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "secretKey": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "secretKey"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "existingSecretSecretKey": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "existingSecretSecretKey"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "secretKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The secret key used for encryption. Must be a string of 16 chars."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "internalTLS": {
+                          "properties": {
+                            "trivy": {
+                              "properties": {
+                                "crt": {}
+                              },
+                              "required": [
+                                "crt"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "trivy"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "internalTLS"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "internalTLS": {
+                        "properties": {
+                          "trivy": {
+                            "properties": {
+                              "crt": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "crt"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "trivy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "internalTLS"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "internalTLS": {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "internalTLS"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "internalTLS": {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "internalTLS"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "internalTLS": {
+                          "properties": {
+                            "trivy": {
+                              "properties": {
+                                "key": {}
+                              },
+                              "required": [
+                                "key"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "trivy"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "internalTLS"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "internalTLS": {
+                        "properties": {
+                          "trivy": {
+                            "properties": {
+                              "key": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "trivy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "internalTLS"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "internalTLS": {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "internalTLS"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "internalTLS": {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "internalTLS"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "internalTLS": {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "internalTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "internalTLS": {
+                          "properties": {
+                            "trustCa": {}
+                          },
+                          "required": [
+                            "trustCa"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "internalTLS"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "internalTLS": {
+                        "properties": {
+                          "trustCa": {
+                            "enum": [
+                              ""
+                            ]
+                          }
+                        },
+                        "required": [
+                          "trustCa"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "internalTLS"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "internalTLS": {
+                    "properties": {
+                      "trustCa": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "trustCa"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "internalTLS"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "internalTLS": {
+                    "properties": {
+                      "trustCa": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "trustCa"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "internalTLS"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -4743,6 +5931,35 @@
         {
           "if": {
             "properties": {
+              "configureUserSettings": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "configureUserSettings"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "configureUserSettings": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Example:\n- name: wait\nimage: busybox\ncommand: [ 'sh', '-c', \"sleep 20\" ]\nUser settings configuration json string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
               "existingXsrfSecret": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -4828,27 +6045,42 @@
         },
         {
           "if": {
-            "not": {
-              "properties": {
-                "existingSecret": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+            "allOf": [
+              {
+                "properties": {
+                  "secret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "secret"
+                ],
+                "type": "object"
               },
-              "required": [
-                "existingSecret"
-              ],
-              "type": "object"
-            }
+              {
+                "not": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           "then": {
             "properties": {
               "secret": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "type": "string"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "Secret is used when core server communicates with other components.\nIf a secret key is not specified, Helm will generate one. Alternatively set existingSecret to use an existing secret\nMust be a string of 16 chars."
@@ -4859,38 +6091,88 @@
         },
         {
           "if": {
-            "not": {
-              "properties": {
-                "secretName": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+            "allOf": [
+              {
+                "properties": {
+                  "tokenCert": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tokenCert"
+                ],
+                "type": "object"
               },
-              "required": [
-                "secretName"
-              ],
-              "type": "object"
-            }
+              {
+                "not": {
+                  "properties": {
+                    "secretName": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "secretName"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           "then": {
             "properties": {
               "tokenCert": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "type": "string"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "If tokenKey is set, the value of tokenCert must be set as a PEM-encoded certificate signed by tokenKey, and supplied as a multiline string, indented one more than tokenCert on the following line."
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "tokenKey": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tokenKey"
+                ],
+                "type": "object"
               },
+              {
+                "not": {
+                  "properties": {
+                    "secretName": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "secretName"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
               "tokenKey": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "type": "string"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "If not specifying a preexisting secret, a secret can be created from tokenKey and tokenCert and used instead.\nIf none of secretName, tokenKey, and tokenCert are specified, an ephemeral key and certificate will be autogenerated.\ntokenKey and tokenCert must BOTH be set or BOTH unset.\nThe tokenKey value is formatted as a multiline string containing a PEM-encoded RSA key, indented one more than tokenKey on the following line."
@@ -4901,27 +6183,42 @@
         },
         {
           "if": {
-            "not": {
-              "properties": {
-                "existingXsrfSecret": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+            "allOf": [
+              {
+                "properties": {
+                  "xsrfKey": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "xsrfKey"
+                ],
+                "type": "object"
               },
-              "required": [
-                "existingXsrfSecret"
-              ],
-              "type": "object"
-            }
+              {
+                "not": {
+                  "properties": {
+                    "existingXsrfSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingXsrfSecret"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           "then": {
             "properties": {
               "xsrfKey": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "type": "string"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "The XSRF key. Will be generated automatically if it isn't specified\nWhile you specified, Please make sure it is 32 characters, otherwise would have validation issue at the harbor-core runtime\nhttps://github.com/goharbor/harbor/pull/21154"
@@ -5284,12 +6581,25 @@
           ]
         },
         "topologySpreadConstraints": {
-          "description": "Spread Pods across failure-domains like regions, availability zones or nodes",
-          "items": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Spread Pods across failure-domains like regions, availability zones or nodes"
         },
         "xsrfKey": {
           "description": "The XSRF key. Will be generated automatically if it isn't specified\nWhile you specified, Please make sure it is 32 characters, otherwise would have validation issue at the harbor-core runtime\nhttps://github.com/goharbor/harbor/pull/21154"
@@ -7598,6 +8908,11 @@
               "anyOf": [
                 {
                   "enum": [
+                    "auto"
+                  ]
+                },
+                {
+                  "enum": [
                     "none"
                   ]
                 },
@@ -7701,6 +9016,77 @@
             "allOf": [
               {
                 "properties": {
+                  "core": {
+                    "properties": {
+                      "crt": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "crt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "core"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "core": {
+                "description": "core related cert configuration",
+                "properties": {
+                  "crt": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of core's TLS cert file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -7796,6 +9182,77 @@
             "allOf": [
               {
                 "properties": {
+                  "core": {
+                    "properties": {
+                      "key": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "core"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "core": {
+                "description": "core related cert configuration",
+                "properties": {
+                  "key": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of core's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -7865,6 +9322,1546 @@
             },
             "type": "object"
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "jobservice": {
+                    "properties": {
+                      "crt": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "crt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jobservice"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "jobservice": {
+                "description": "jobservice related cert configuration",
+                "properties": {
+                  "crt": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of jobservice's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "jobservice": {
+                    "properties": {
+                      "key": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jobservice"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "jobservice": {
+                "description": "jobservice related cert configuration",
+                "properties": {
+                  "key": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of jobservice's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "portal": {
+                    "properties": {
+                      "crt": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "crt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "portal"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "portal": {
+                "description": "portal related cert configuration",
+                "properties": {
+                  "crt": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of portal's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "portal": {
+                    "properties": {
+                      "key": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "portal"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "portal": {
+                "description": "portal related cert configuration",
+                "properties": {
+                  "key": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of portal's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "registry": {
+                    "properties": {
+                      "crt": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "crt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "registry"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "registry": {
+                "description": "registry related cert configuration",
+                "properties": {
+                  "crt": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of registry's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "registry": {
+                    "properties": {
+                      "key": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "registry"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "registry": {
+                "description": "registry related cert configuration",
+                "properties": {
+                  "key": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Content of registry's TLS key file, only available when `certSource` is \"manual\""
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "trustCa": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "trustCa"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "trustCa": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The content of trust ca, only available when `certSource` is \"manual\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "core": {
+                              "properties": {
+                                "crt": {}
+                              },
+                              "required": [
+                                "crt"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "core"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "core": {
+                            "properties": {
+                              "crt": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "crt"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "core"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "core": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "core"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "core": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "core"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "core": {
+                              "properties": {
+                                "key": {}
+                              },
+                              "required": [
+                                "key"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "core"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "core": {
+                            "properties": {
+                              "key": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "core"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "core": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "core"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "core": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "core"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "jobservice": {
+                              "properties": {
+                                "crt": {}
+                              },
+                              "required": [
+                                "crt"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jobservice"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "jobservice": {
+                            "properties": {
+                              "crt": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "crt"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jobservice"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "jobservice": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jobservice"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "jobservice": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jobservice"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "jobservice": {
+                              "properties": {
+                                "key": {}
+                              },
+                              "required": [
+                                "key"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jobservice"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "jobservice": {
+                            "properties": {
+                              "key": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jobservice"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "jobservice": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jobservice"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "jobservice": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jobservice"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "portal": {
+                              "properties": {
+                                "crt": {}
+                              },
+                              "required": [
+                                "crt"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "portal"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "portal": {
+                            "properties": {
+                              "crt": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "crt"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "portal"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "portal": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "portal"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "portal": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "portal"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "portal": {
+                              "properties": {
+                                "key": {}
+                              },
+                              "required": [
+                                "key"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "portal"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "portal": {
+                            "properties": {
+                              "key": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "portal"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "portal": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "portal"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "portal": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "portal"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "registry": {
+                              "properties": {
+                                "crt": {}
+                              },
+                              "required": [
+                                "crt"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "registry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "registry": {
+                            "properties": {
+                              "crt": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "crt"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "registry"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "registry": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "registry": {
+                        "properties": {
+                          "crt": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crt"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "registry": {
+                              "properties": {
+                                "key": {}
+                              },
+                              "required": [
+                                "key"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "registry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "registry": {
+                            "properties": {
+                              "key": {
+                                "enum": [
+                                  ""
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "registry"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "registry": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "registry": {
+                        "properties": {
+                          "key": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "certSource": {
+                    "enum": [
+                      "manual"
+                    ]
+                  }
+                },
+                "required": [
+                  "certSource"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "trustCa": {}
+                          },
+                          "required": [
+                            "trustCa"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "trustCa": {
+                            "enum": [
+                              ""
+                            ]
+                          }
+                        },
+                        "required": [
+                          "trustCa"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "trustCa": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "trustCa"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "trustCa": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "trustCa"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "description": "The internal TLS used for harbor components secure communicating. In order to enable https\nin each component tls cert files need to provided in advance.",
@@ -8125,27 +11122,42 @@
         },
         {
           "if": {
-            "not": {
-              "properties": {
-                "existingSecret": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+            "allOf": [
+              {
+                "properties": {
+                  "secret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "secret"
+                ],
+                "type": "object"
               },
-              "required": [
-                "existingSecret"
-              ],
-              "type": "object"
-            }
+              {
+                "not": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           "then": {
             "properties": {
               "secret": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "type": "string"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "Secret is used when job service communicates with other components.\nIf a secret key is not specified, Helm will generate one.\nMust be a string of 16 chars."
@@ -8416,14 +11428,20 @@
         "topologySpreadConstraints": {
           "anyOf": [
             {
-              "const": null
-            },
-            {
               "items": {
                 "additionalProperties": {},
                 "type": "object"
               },
               "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
             }
           ],
           "description": "Spread Pods across failure-domains like regions, availability zones or nodes"
@@ -9191,6 +12209,109 @@
               "if": {
                 "allOf": [
                   {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "azure": {
+                              "properties": {
+                                "accountkey": {}
+                              },
+                              "required": [
+                                "accountkey"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "azure"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "azure": {
+                            "properties": {
+                              "accountkey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "accountkey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "azure"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "azure"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "azure": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "azure"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "azure": {
+                    "description": "maxthreads: 100",
+                    "properties": {
+                      "accountkey": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
                     "properties": {
                       "type": {
                         "enum": [
@@ -9233,6 +12354,269 @@
                     "properties": {
                       "accountkey": {
                         "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "oss": {
+                              "properties": {
+                                "accesskeysecret": {}
+                              },
+                              "required": [
+                                "accesskeysecret"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "oss"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "oss": {
+                            "properties": {
+                              "accesskeysecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "accesskeysecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "oss"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "oss"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "oss": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "oss"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "s3"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "azure"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "azure": {
+                                "properties": {
+                                  "existingSecret": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "existingSecret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "azure"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "swift"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "swift": {
+                                "properties": {
+                                  "existingSecret": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "existingSecret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "swift"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "gcs": {
+                                "properties": {
+                                  "useWorkloadIdentity": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "useWorkloadIdentity"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "gcs"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "gcs"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "not": {
+                                "properties": {
+                                  "gcs": {
+                                    "properties": {
+                                      "existingSecret": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "existingSecret"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "gcs"
+                                ],
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "oss": {
+                    "description": "region: fr\ntenant: tenantname\ntenantid: tenantid\ndomain: domainname\ndomainid: domainid\ntrustid: trustid\ninsecureskipverify: false\nchunksize: 5M\nprefix:\nsecretkey: secretkey\naccesskey: accesskey\nauthversion: 3\nendpointtype: public\ntempurlcontainerkey: false\ntempurlmethods:",
+                    "properties": {
+                      "accesskeysecret": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "type": "object"
@@ -9330,6 +12714,574 @@
                 "allOf": [
                   {
                     "properties": {
+                      "s3": {
+                        "properties": {
+                          "accesskey": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "accesskey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "s3"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "s3"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "s3": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "s3"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "azure"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "azure": {
+                                "properties": {
+                                  "existingSecret": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "existingSecret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "azure"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "gcs": {
+                                "properties": {
+                                  "useWorkloadIdentity": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "useWorkloadIdentity"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "gcs"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "gcs"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "not": {
+                                "properties": {
+                                  "gcs": {
+                                    "properties": {
+                                      "existingSecret": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "existingSecret"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "gcs"
+                                ],
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "s3": {
+                    "properties": {
+                      "accesskey": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "s3": {
+                        "properties": {
+                          "secretkey": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "secretkey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "s3"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "s3"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "s3": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "s3"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "azure"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "azure": {
+                                "properties": {
+                                  "existingSecret": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "existingSecret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "azure"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "gcs": {
+                                "properties": {
+                                  "useWorkloadIdentity": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "useWorkloadIdentity"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "gcs"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "gcs"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "not": {
+                                "properties": {
+                                  "gcs": {
+                                    "properties": {
+                                      "existingSecret": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "existingSecret"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "gcs"
+                                ],
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "s3": {
+                    "properties": {
+                      "secretkey": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "swift": {
+                        "properties": {
+                          "accesskey": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "accesskey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "swift"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "swift"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "swift": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "swift"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "s3"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "azure"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "azure": {
+                                "properties": {
+                                  "existingSecret": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "existingSecret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "azure"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "gcs": {
+                                "properties": {
+                                  "useWorkloadIdentity": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "useWorkloadIdentity"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "gcs"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "gcs"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "not": {
+                                "properties": {
+                                  "gcs": {
+                                    "properties": {
+                                      "existingSecret": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "existingSecret"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "gcs"
+                                ],
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "swift": {
+                    "description": "accesskey: awsaccesskey\nsecretkey: awssecretkey\nregionendpoint: http://myobjects.local\nencrypt: false\nkeyid: mykeyid\nsecure: true\nskipverify: false\nv4auth: true\nchunksize: \"5242880\"\nrootdirectory: /s3/object/name/prefix\nstorageclass: STANDARD\nmultipartcopychunksize: \"33554432\"\nmultipartcopymaxconcurrency: 100\nmultipartcopythresholdsize: \"33554432\"",
+                    "properties": {
+                      "accesskey": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
                       "type": {
                         "enum": [
                           "swift"
@@ -9412,6 +13364,429 @@
                         "type": [
                           "string",
                           "null"
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "swift": {
+                              "properties": {
+                                "password": {}
+                              },
+                              "required": [
+                                "password"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "swift"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "swift": {
+                            "properties": {
+                              "password": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "password"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "swift"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "swift"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "swift": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "swift"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "s3"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "azure"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "azure": {
+                                "properties": {
+                                  "existingSecret": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "existingSecret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "azure"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "gcs": {
+                                "properties": {
+                                  "useWorkloadIdentity": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "useWorkloadIdentity"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "gcs"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "gcs"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "not": {
+                                "properties": {
+                                  "gcs": {
+                                    "properties": {
+                                      "existingSecret": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "existingSecret"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "gcs"
+                                ],
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "swift": {
+                    "description": "accesskey: awsaccesskey\nsecretkey: awssecretkey\nregionendpoint: http://myobjects.local\nencrypt: false\nkeyid: mykeyid\nsecure: true\nskipverify: false\nv4auth: true\nchunksize: \"5242880\"\nrootdirectory: /s3/object/name/prefix\nstorageclass: STANDARD\nmultipartcopychunksize: \"33554432\"\nmultipartcopymaxconcurrency: 100\nmultipartcopythresholdsize: \"33554432\"",
+                    "properties": {
+                      "password": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "swift": {
+                        "properties": {
+                          "secretkey": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "secretkey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "swift"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "swift"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "swift": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "swift"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "s3"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "azure"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "azure": {
+                                "properties": {
+                                  "existingSecret": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "existingSecret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "azure"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "gcs": {
+                                "properties": {
+                                  "useWorkloadIdentity": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "useWorkloadIdentity"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "gcs"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "gcs"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "not": {
+                                "properties": {
+                                  "gcs": {
+                                    "properties": {
+                                      "existingSecret": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "existingSecret"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "gcs"
+                                ],
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "swift": {
+                    "description": "accesskey: awsaccesskey\nsecretkey: awssecretkey\nregionendpoint: http://myobjects.local\nencrypt: false\nkeyid: mykeyid\nsecure: true\nskipverify: false\nv4auth: true\nchunksize: \"5242880\"\nrootdirectory: /s3/object/name/prefix\nstorageclass: STANDARD\nmultipartcopychunksize: \"33554432\"\nmultipartcopymaxconcurrency: 100\nmultipartcopythresholdsize: \"33554432\"",
+                    "properties": {
+                      "secretkey": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
                         ]
                       }
                     },
@@ -9638,8 +14013,19 @@
               "properties": {
                 "accessMode": {},
                 "annotations": {
-                  "additionalProperties": {},
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "existingClaim": {},
                 "size": {},
@@ -9670,8 +14056,19 @@
                   "properties": {
                     "accessMode": {},
                     "annotations": {
-                      "additionalProperties": {},
-                      "type": "object"
+                      "anyOf": [
+                        {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        {
+                          "items": {},
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "existingClaim": {},
                     "size": {},
@@ -9705,8 +14102,19 @@
               "properties": {
                 "accessMode": {},
                 "annotations": {
-                  "additionalProperties": {},
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "existingClaim": {},
                 "size": {},
@@ -9734,8 +14142,19 @@
               "properties": {
                 "accessMode": {},
                 "annotations": {
-                  "additionalProperties": {},
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "existingClaim": {
                   "description": "Use the existing PVC which must be created manually before bound,\nand specify the \"subPath\" if the PVC is shared with other components"
@@ -9768,8 +14187,19 @@
               "properties": {
                 "accessMode": {},
                 "annotations": {
-                  "additionalProperties": {},
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "existingClaim": {
                   "type": [
@@ -10102,12 +14532,25 @@
           ]
         },
         "topologySpreadConstraints": {
-          "description": "Spread Pods across failure-domains like regions, availability zones or nodes",
-          "items": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Spread Pods across failure-domains like regions, availability zones or nodes"
         }
       },
       "type": "object"
@@ -10133,7 +14576,14 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/helm-truthy"
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            ]
           },
           "then": {
             "properties": {
@@ -10583,27 +15033,42 @@
         },
         {
           "if": {
-            "not": {
-              "properties": {
-                "existingSecret": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+            "allOf": [
+              {
+                "properties": {
+                  "secret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "secret"
+                ],
+                "type": "object"
               },
-              "required": [
-                "existingSecret"
-              ],
-              "type": "object"
-            }
+              {
+                "not": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           "then": {
             "properties": {
               "secret": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "type": "string"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "Example:\n- name: wait\nimage: busybox\ncommand: [ 'sh', '-c', \"sleep 20\" ]\nSecret is used to secure the upload state from client\nand registry storage backend.\nSee: https://github.com/distribution/distribution/blob/release/2.8/docs/configuration.md#http\nIf a secret key is not specified, Helm will generate one.\nMust be a string of 16 chars."
@@ -10748,6 +15213,112 @@
                   },
                   "password": {
                     "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "htpasswdString": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "htpasswdString"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "existingSecret": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingSecret"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "htpasswdString": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Login and password in htpasswd string format. Excludes `registry.credentials.username`  and `registry.credentials.password`. May come in handy when integrating with tools like argocd or flux. This allows the same line to be generated each time the template is rendered, instead of the `htpasswd` function from helm, which generates different lines each time because of the salt.\nhtpasswdString: \"harbor_registry_user:$2a$05$IPnI.TSgP8ek1/ESjkULVemA.A3nSXPdN80ljsmcun7FtE3ViSYUq\" # example string, bcrypt is the only accepted hashing algorithm in htpasswd here."
+                  }
+                },
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "password": {}
+                          },
+                          "required": [
+                            "password"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "password": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "password"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "existingSecret": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingSecret"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": {
+                "properties": {
+                  "password": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -11120,12 +15691,25 @@
           ]
         },
         "topologySpreadConstraints": {
-          "description": "Spread Pods across failure-domains like regions, availability zones or nodes",
-          "items": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Spread Pods across failure-domains like regions, availability zones or nodes"
         },
         "upload_purging": {
           "additionalProperties": false,
@@ -11214,6 +15798,91 @@
                     "type": [
                       "string",
                       "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "password": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "password"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "provider": {}
+                      },
+                      "required": [
+                        "provider"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "enum": [
+                          "jaeger"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "jaeger": {
+                "description": "namespace used to differentiate different harbor services\nnamespace:\nattributes is a key value dict contains user defined attributes used to initialize trace provider\nattributes:\napplication: harbor",
+                "properties": {
+                  "password": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   }
                 },
@@ -11421,15 +16090,11 @@
                 ]
               },
               "gitHubToken": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "gitHubToken the GitHub access token to download Trivy DB\nTrivy DB contains vulnerability information from NVD, Red Hat, and many other upstream vulnerability databases.\nIt is downloaded by Trivy from the GitHub release page https://github.com/aquasecurity/trivy-db/releases and cached\nin the local file system (`/home/scanner/.cache/trivy/db/trivy.db`). In addition, the database contains the update\ntimestamp so Trivy can detect whether it should download a newer version from the Internet or use the cached one.\nCurrently, the database is updated every 12 hours and published as a new release to GitHub.\nAnonymous downloads from GitHub are subject to the limit of 60 requests per hour. Normally such rate limit is enough\nfor production operations. If, for any reason, it's not enough, you could increase the rate limit to 5000\nrequests per hour by specifying the GitHub access token. For more details on GitHub rate limiting please consult\nhttps://developer.github.com/v3/#rate-limiting\nYou can create a GitHub token by following the instructions in\nhttps://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line"
+                "description": "gitHubToken the GitHub access token to download Trivy DB\nTrivy DB contains vulnerability information from NVD, Red Hat, and many other upstream vulnerability databases.\nIt is downloaded by Trivy from the GitHub release page https://github.com/aquasecurity/trivy-db/releases and cached\nin the local file system (`/home/scanner/.cache/trivy/db/trivy.db`). In addition, the database contains the update\ntimestamp so Trivy can detect whether it should download a newer version from the Internet or use the cached one.\nCurrently, the database is updated every 12 hours and published as a new release to GitHub.\nAnonymous downloads from GitHub are subject to the limit of 60 requests per hour. Normally such rate limit is enough\nfor production operations. If, for any reason, it's not enough, you could increase the rate limit to 5000\nrequests per hour by specifying the GitHub access token. For more details on GitHub rate limiting please consult\nhttps://developer.github.com/v3/#rate-limiting\nYou can create a GitHub token by following the instructions in\nhttps://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "ignoreUnfixed": {
                 "description": "ignoreUnfixed the flag to display only fixed vulnerabilities",
@@ -11593,6 +16258,65 @@
                   }
                 ],
                 "description": "Spread Pods across failure-domains like regions, availability zones or nodes"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "gitHubToken": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "gitHubToken"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "gitHubToken": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "gitHubToken the GitHub access token to download Trivy DB\nTrivy DB contains vulnerability information from NVD, Red Hat, and many other upstream vulnerability databases.\nIt is downloaded by Trivy from the GitHub release page https://github.com/aquasecurity/trivy-db/releases and cached\nin the local file system (`/home/scanner/.cache/trivy/db/trivy.db`). In addition, the database contains the update\ntimestamp so Trivy can detect whether it should download a newer version from the Internet or use the cached one.\nCurrently, the database is updated every 12 hours and published as a new release to GitHub.\nAnonymous downloads from GitHub are subject to the limit of 60 requests per hour. Normally such rate limit is enough\nfor production operations. If, for any reason, it's not enough, you could increase the rate limit to 5000\nrequests per hour by specifying the GitHub access token. For more details on GitHub rate limiting please consult\nhttps://developer.github.com/v3/#rate-limiting\nYou can create a GitHub token by following the instructions in\nhttps://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line"
               }
             },
             "type": "object"

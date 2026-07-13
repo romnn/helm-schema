@@ -68,8 +68,15 @@ pub fn is_total_numeric_cast_function(function: &str) -> bool {
 pub fn is_string_predicate_function(function: &str) -> bool {
     matches!(
         function,
-        "regexMatch" | "mustRegexMatch" | "contains" | "hasPrefix" | "hasSuffix"
+        "regexMatch" | "mustRegexMatch" | "contains" | "hasPrefix" | "hasSuffix" | "semverCompare"
     )
+}
+
+/// Returns whether a function consumes a Go `string` subject as its LAST
+/// parameter but produces NON-STRING output (a list, a boolean): the input
+/// contract is real, while the output carries no string provenance.
+pub fn is_string_splitting_function(function: &str) -> bool {
+    matches!(function, "splitList" | "split" | "splitn" | "regexSplit")
 }
 
 pub fn is_provenance_preserving_function(function: &str) -> bool {

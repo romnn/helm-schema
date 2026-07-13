@@ -2792,15 +2792,6 @@
           },
           "serviceAccount": {
             "properties": {
-              "operator": {
-                "properties": {
-                  "name": {
-                    "description": "The name of the service account to use.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
               "webhooks": {
                 "properties": {
                   "name": {
@@ -3251,7 +3242,14 @@
                         "podSecurityContext": {
                           "properties": {
                             "metricServer": {
-                              "$ref": "#/$defs/helm-truthy"
+                              "anyOf": [
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -3341,7 +3339,14 @@
                         "podSecurityContext": {
                           "properties": {
                             "webhooks": {
-                              "$ref": "#/$defs/helm-truthy"
+                              "anyOf": [
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -5899,7 +5904,14 @@
                         "resources": {
                           "properties": {
                             "metricServer": {
-                              "$ref": "#/$defs/helm-truthy"
+                              "anyOf": [
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -5989,7 +6001,14 @@
                         "resources": {
                           "properties": {
                             "webhooks": {
-                              "$ref": "#/$defs/helm-truthy"
+                              "anyOf": [
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -6371,7 +6390,14 @@
                         "securityContext": {
                           "properties": {
                             "metricServer": {
-                              "$ref": "#/$defs/helm-truthy"
+                              "anyOf": [
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -6461,7 +6487,14 @@
                         "securityContext": {
                           "properties": {
                             "webhooks": {
-                              "$ref": "#/$defs/helm-truthy"
+                              "anyOf": [
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -7311,42 +7344,57 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "create": {}
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "create"
+                    "rbac"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
+              {
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "create"
+                  "rbac"
                 ],
                 "type": "object"
               }
+            ]
+          },
+          {
+            "properties": {
+              "watchNamespace": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             "required": [
-              "rbac"
+              "watchNamespace"
             ],
             "type": "object"
           }
@@ -7354,19 +7402,16 @@
       },
       "then": {
         "properties": {
-          "serviceAccount": {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "name": {
-                    "description": "The name of the service account to use.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+          "watchNamespace": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
-            },
-            "type": "object"
+            ],
+            "description": "Defines Kubernetes namespaces to watch to scale their workloads. Default watches all namespaces"
           }
         },
         "type": "object"
@@ -7592,11 +7637,24 @@
   ],
   "properties": {
     "additionalAnnotations": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Custom annotations to add into metadata",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Custom annotations to add into metadata"
     },
     "additionalLabels": {
       "anyOf": [
@@ -7925,10 +7983,23 @@
                   "type": "object"
                 },
                 "caDirs": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
                 }
               },
               "type": "object"
@@ -8006,6 +8077,12 @@
               "type": "object"
             },
             {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
               "type": "object"
             }
           ],
@@ -8019,9 +8096,25 @@
       "type": "object"
     },
     "extraObjects": {
-      "description": "Array of extra K8s manifests to deploy\n- apiVersion: keda.sh/v1alpha1\nkind: ClusterTriggerAuthentication\nmetadata:\nname: aws-credentials\nnamespace: keda\nspec:\npodIdentity:\nprovider: aws-eks",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Array of extra K8s manifests to deploy\n- apiVersion: keda.sh/v1alpha1\nkind: ClusterTriggerAuthentication\nmetadata:\nname: aws-credentials\nnamespace: keda\nspec:\npodIdentity:\nprovider: aws-eks"
     },
     "global": {
       "additionalProperties": {},
@@ -9179,7 +9272,14 @@
                 {
                   "properties": {
                     "operator": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "anyOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -9346,9 +9446,20 @@
               "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
                 "additionalLabels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels to add for metric server using podMonitor crd (prometheus operator)",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Additional labels to add for metric server using podMonitor crd (prometheus operator)"
                 },
                 "enabled": {
                   "description": "Enables PodMonitor creation for the Prometheus Operator",
@@ -9407,9 +9518,20 @@
               "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
               "properties": {
                 "additionalLabels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
                 },
                 "enabled": {
                   "description": "Enables ServiceMonitor creation for the Prometheus Operator",
@@ -10009,9 +10131,20 @@
               "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
                 "additionalLabels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels to add for KEDA Operator using podMonitor crd (prometheus operator)",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Additional labels to add for KEDA Operator using podMonitor crd (prometheus operator)"
                 },
                 "enabled": {
                   "description": "Enables PodMonitor creation for the Prometheus Operator",
@@ -10066,9 +10199,20 @@
               "additionalProperties": false,
               "properties": {
                 "additionalLabels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels to add for KEDA Operator using prometheusRules crd (prometheus operator)",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Additional labels to add for KEDA Operator using prometheusRules crd (prometheus operator)"
                 },
                 "alerts": {
                   "anyOf": [
@@ -10100,9 +10244,20 @@
               "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
               "properties": {
                 "additionalLabels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
                 },
                 "enabled": {
                   "description": "Enables ServiceMonitor creation for the Prometheus Operator",
@@ -10230,9 +10385,20 @@
               "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
                 "additionalLabels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Additional labels to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
                 },
                 "alerts": {
                   "anyOf": [
@@ -10264,9 +10430,20 @@
               "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
               "properties": {
                 "additionalLabels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
                 },
                 "enabled": {
                   "description": "Enables ServiceMonitor creation for the Prometheus webhooks",
@@ -10452,9 +10629,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   },
                   {
@@ -10511,7 +10685,14 @@
                 {
                   "properties": {
                     "operator": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "anyOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -10828,7 +11009,14 @@
                 {
                   "properties": {
                     "operator": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "anyOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -11148,9 +11336,20 @@
       "additionalProperties": false,
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add the KEDA Metric Server service",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Annotations to add the KEDA Metric Server service"
         },
         "minTlsVersion": {
           "description": "The minimum TLS version to use when KEDA components provide a TLS-enabled service.",

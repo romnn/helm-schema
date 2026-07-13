@@ -30,6 +30,9 @@ pub struct ContractIr {
     /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
     /// carry an iterable input domain.
     direct_range_source_paths: BTreeSet<String>,
+    /// The subset of direct range sources iterated with TWO variables:
+    /// integers iterate single-variable ranges only.
+    destructured_range_source_paths: BTreeSet<String>,
     /// `fail` captures: no valid values document may satisfy one of these
     /// conjunctions.
     fail_conditions: Vec<crate::eval_effect::FailCapture>,
@@ -102,6 +105,8 @@ impl ContractIr {
             .append(&mut other.string_contract_value_paths);
         self.direct_range_source_paths
             .append(&mut other.direct_range_source_paths);
+        self.destructured_range_source_paths
+            .append(&mut other.destructured_range_source_paths);
         for condition in std::mem::take(&mut other.fail_conditions) {
             if !self.fail_conditions.contains(&condition) {
                 self.fail_conditions.push(condition);
@@ -119,6 +124,18 @@ impl ContractIr {
             contract_use.condition = contract_use
                 .condition
                 .conjoined_with_guards(guards.iter().cloned());
+        }
+        // Fail captures are claims too: a `fail` inside a dependency gated
+        // off by `condition:` / `tags:` cannot abort rendering, so its
+        // conjunction must carry the activation predicate like every row.
+        for capture in &mut self.fail_conditions {
+            capture.conjunction.splice(
+                0..0,
+                guards
+                    .iter()
+                    .cloned()
+                    .map(helm_schema_core::Predicate::from),
+            );
         }
     }
 
@@ -167,6 +184,11 @@ impl ContractIr {
             .into_iter()
             .map(|path| map(&path))
             .collect();
+        self.destructured_range_source_paths =
+            std::mem::take(&mut self.destructured_range_source_paths)
+                .into_iter()
+                .map(|path| map(&path))
+                .collect();
         self.fail_conditions = std::mem::take(&mut self.fail_conditions)
             .into_iter()
             .map(|mut capture| {
@@ -270,6 +292,14 @@ impl ContractIr {
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
+    pub(crate) fn extend_destructured_range_source_paths(
+        &mut self,
+        paths: impl IntoIterator<Item = String>,
+    ) {
+        self.destructured_range_source_paths
+            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
     pub(crate) fn extend_fail_conditions(
         &mut self,
         conditions: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
@@ -294,6 +324,7 @@ impl ContractIr {
             shape_erased_value_paths,
             string_contract_value_paths,
             direct_range_source_paths,
+            destructured_range_source_paths,
             mut fail_conditions,
             dependency_values_root_fragments,
         } = self;
@@ -322,6 +353,7 @@ impl ContractIr {
             shape_erased_value_paths,
             string_contract_value_paths,
             direct_range_source_paths,
+            destructured_range_source_paths,
             fail_conditions,
             dependency_values_root_fragments,
         )

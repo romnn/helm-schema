@@ -31,6 +31,34 @@
   "allOf": [
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -87,12 +115,6 @@
             "description": "Additional labels for any resource created",
             "type": "object"
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "serviceAccount": {
             "properties": {
               "name": {
@@ -143,12 +165,6 @@
             },
             "description": "Additional labels for any resource created",
             "type": "object"
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
           },
           "storageClass": {
             "description": "For creating the StorageClass automatically:",
@@ -263,12 +279,6 @@
             },
             "description": "Additional labels for any resource created",
             "type": "object"
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
         "type": "object"
@@ -496,12 +506,6 @@
             "description": "Additional labels for any resource created",
             "type": "object"
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "nfs": {
             "properties": {
               "mountOptions": {
@@ -522,6 +526,34 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -646,7 +678,22 @@
         }
       ],
       "properties": {
-        "mountOptions": {},
+        "mountOptions": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "path": {
           "type": "string"
         },

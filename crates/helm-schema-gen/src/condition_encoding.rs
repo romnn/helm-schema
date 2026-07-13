@@ -27,11 +27,27 @@ fn build_single_condition_fragment(
 ) -> Option<SchemaNode> {
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
+            let declared = yaml_value_at_path(values_yaml_doc, path);
+            // Helm COALESCES mapping values with a declared mapping default
+            // instead of replacing it: under a non-empty mapping default,
+            // any object the user writes (even `{}`) merges into that
+            // default and renders truthy. The document-level test must
+            // accept every object then, or its negation would reject
+            // documents the chart renders fine. (Explicitly nulling out
+            // every default key still merges to an empty — falsy — mapping;
+            // that residue stays unmodeled, in the permissive direction.)
+            let default_is_nonempty_mapping =
+                matches!(declared, Some(YamlValue::Mapping(mapping)) if !mapping.is_empty());
+            let truthy = if default_is_nonempty_mapping {
+                SchemaNode::any_of(vec![SchemaNode::object(), helm_truthy_condition_schema()])
+            } else {
+                helm_truthy_condition_schema()
+            };
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
-                helm_truthy_condition_schema(),
-                yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy),
+                truthy,
+                declared.is_some_and(yaml_value_is_truthy),
             )
         }
         ConditionalGuard::Eq { path, value } => build_default_aware_leaf_condition_fragment(
@@ -50,10 +66,26 @@ fn build_single_condition_fragment(
             let segments = split_value_path(path);
             let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
             if relative_segments.is_empty() {
-                None
+                return None;
+            }
+            // Render-time absence after coalescing with declared defaults:
+            // an explicit `null` deletes the key (helm null-deletion), and
+            // a missing key stays absent only when the chart declares no
+            // (non-null) default to fill it.
+            let explicit_null = build_required_condition_fragment(
+                &relative_segments,
+                SchemaNode::enum_values(vec![Value::Null]),
+            )?;
+            let declared_default_fills = yaml_value_at_path(values_yaml_doc, path)
+                .is_some_and(|value| !matches!(value, YamlValue::Null));
+            if declared_default_fills {
+                Some(explicit_null)
             } else {
-                build_required_condition_fragment(&relative_segments, SchemaNode::empty())
-                    .map(SchemaNode::not)
+                let missing = SchemaNode::not(build_required_condition_fragment(
+                    &relative_segments,
+                    SchemaNode::empty(),
+                )?);
+                Some(SchemaNode::any_of(vec![missing, explicit_null]))
             }
         }
         ConditionalGuard::TypeIs { path, schema_type } => {
@@ -77,6 +109,32 @@ fn build_single_condition_fragment(
         ConditionalGuard::AnyOf(guards) => {
             let clauses = build_condition_clauses(guards, ancestor_segments, values_yaml_doc);
             (!clauses.is_empty()).then(|| SchemaNode::any_of(clauses))
+        }
+    }
+}
+
+/// Whether a guard (and every nested guard) produces a condition fragment.
+/// `build_condition_clauses` silently FILTERS unencodable guards, which is
+/// safe for `if/then` arms (a narrower `if` applies the arm less often) but
+/// unsound for terminal `then: false` clauses, where a dropped conjunct
+/// widens the rejected set. Mirrors `build_single_condition_fragment`.
+pub(crate) fn guard_encodes_fully(
+    guard: &ConditionalGuard,
+    ancestor_segments: &[String],
+    values_yaml_doc: &YamlValue,
+) -> bool {
+    match guard {
+        ConditionalGuard::Not(inner) => {
+            guard_encodes_fully(inner, ancestor_segments, values_yaml_doc)
+        }
+        ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
+            !guards.is_empty()
+                && guards
+                    .iter()
+                    .all(|guard| guard_encodes_fully(guard, ancestor_segments, values_yaml_doc))
+        }
+        other => {
+            build_single_condition_fragment(other, ancestor_segments, values_yaml_doc).is_some()
         }
     }
 }

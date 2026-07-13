@@ -154,6 +154,9 @@ pub enum FailValueRequirement {
     NotSchemaType(String),
     /// The value must be an object containing this member.
     HasMember(String),
+    /// The value is iterated by `range`: collections and nil render, and
+    /// integer counts iterate when the loop body has no member structure.
+    Iterable { allow_integer: bool },
 }
 
 impl ContractPathSchemaEvidence {
@@ -177,12 +180,19 @@ pub struct ContractSchemaSignals {
     schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
     referenced_value_paths: BTreeSet<String>,
     pruned_parent_value_paths: BTreeSet<String>,
+    direct_ranged_value_paths: BTreeSet<String>,
+    /// Terminating validator formulas spanning several paths: rendering
+    /// aborts whenever ALL guards of one clause hold, so no valid values
+    /// document may satisfy them (`fail`/`required` under fully lowerable
+    /// cross-path conditions).
+    terminal_clauses: Vec<Vec<ConditionalGuard>>,
 }
 
 impl ContractSchemaSignals {
     #[must_use]
     pub fn new(
         schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
+        terminal_clauses: Vec<Vec<ConditionalGuard>>,
     ) -> Self {
         let referenced_value_paths = schema_evidence_by_value_path
             .iter()
@@ -196,11 +206,33 @@ impl ContractSchemaSignals {
             })
             .map(|(path, _)| path.clone())
             .collect();
+        let direct_ranged_value_paths = schema_evidence_by_value_path
+            .iter()
+            .filter(|(_, evidence)| evidence.facts.is_direct_ranged_source)
+            .map(|(path, _)| path.clone())
+            .collect();
         Self {
             schema_evidence_by_value_path,
             referenced_value_paths,
             pruned_parent_value_paths,
+            direct_ranged_value_paths,
+            terminal_clauses,
         }
+    }
+
+    /// Paths the chart ranges DIRECTLY: their runtime iterable domain is
+    /// wider than any declared shape, so ancestor subtree schemas must not
+    /// shadow their own resolutions.
+    #[must_use]
+    pub fn direct_ranged_value_paths(&self) -> &BTreeSet<String> {
+        &self.direct_ranged_value_paths
+    }
+
+    /// Terminating validator formulas: no valid values document satisfies
+    /// all guards of one clause.
+    #[must_use]
+    pub fn terminal_clauses(&self) -> &[Vec<ConditionalGuard>] {
+        &self.terminal_clauses
     }
 
     #[must_use]
@@ -258,6 +290,13 @@ pub struct ContractValuePathFacts {
     pub accepted_values_root_fragment: bool,
     pub accepted_dependency_values_root_fragment: bool,
     pub is_ranged_source: bool,
+    /// The chart ranges this path DIRECTLY (`range .Values.x`), so the
+    /// runtime iterable domain applies to the path's own value.
+    pub is_direct_ranged_source: bool,
+    /// Some direct range over this path uses TWO variables
+    /// (`range $k, $v := …`): integers iterate single-variable ranges only
+    /// ("can't use 2 to iterate over more than one variable").
+    pub has_destructured_range_use: bool,
     pub is_partial_scalar_value_path: bool,
     pub has_render_use: bool,
     pub has_unconditional_render_use: bool,

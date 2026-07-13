@@ -468,7 +468,6 @@
     },
     {
       "condition": [
-        [],
         [
           {
             "path": "auth.client.enabled",
@@ -478,6 +477,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createSecret"
+          ],
+          "span": {
+            "end": 2506,
+            "start": 2392
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -554,6 +565,36 @@
         "kind": "StatefulSet"
       },
       "source_expr": "auth.client.enabled"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createSecret"
+          ],
+          "span": {
+            "end": 2506,
+            "start": 2392
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "auth.client.existingSecret"
     },
     {
       "condition": [
@@ -734,7 +775,6 @@
     },
     {
       "condition": [
-        [],
         [
           {
             "path": "auth.client.enabled",
@@ -748,7 +788,44 @@
             "path": "auth.quorum.enabled",
             "type": "truthy"
           }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
         ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "auth.quorum.enabled"
+    },
+    {
+      "condition": [
         [
           {
             "path": "auth.quorum.enabled",
@@ -758,6 +835,18 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createSecret"
+          ],
+          "span": {
+            "end": 2791,
+            "start": 2677
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -858,6 +947,36 @@
           "span": {
             "end": 2221,
             "start": 2012
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "auth.quorum.existingSecret"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "auth.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.quorum.existingSecret",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createSecret"
+          ],
+          "span": {
+            "end": 2791,
+            "start": 2677
           },
           "template_path": "<inline:0>"
         }
@@ -1876,13 +1995,6 @@
     },
     {
       "condition": [
-        [],
-        [
-          {
-            "path": "configuration",
-            "type": "truthy"
-          }
-        ],
         [
           {
             "paths": [
@@ -1895,6 +2007,61 @@
       ],
       "kind": "Scalar",
       "path": [],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "configuration"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "configuration",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.createConfigmap"
+          ],
+          "span": {
+            "end": 3745,
+            "start": 3649
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -4239,6 +4406,32 @@
           "span": {
             "end": 3502,
             "start": 3323
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "existingConfigmap"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "existingConfigmap",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.createConfigmap"
+          ],
+          "span": {
+            "end": 3745,
+            "start": 3649
           },
           "template_path": "<inline:0>"
         }
@@ -7052,6 +7245,26 @@
         },
         {
           "helper_chain": [
+            "common.capabilities.kubeVersion"
+          ],
+          "span": {
+            "end": 439,
+            "start": 135
+          },
+          "template_path": "<inline:12>"
+        },
+        {
+          "helper_chain": [
+            "common.capabilities.statefulset.apiVersion"
+          ],
+          "span": {
+            "end": 2226,
+            "start": 2068
+          },
+          "template_path": "<inline:12>"
+        },
+        {
+          "helper_chain": [
             "common.images.image"
           ],
           "span": {
@@ -7892,6 +8105,46 @@
         "kind": "StatefulSet"
       },
       "source_expr": "global.imageRegistry"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
+            "path": "global.kubeVersion",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.capabilities.kubeVersion"
+          ],
+          "span": {
+            "end": 345,
+            "start": 164
+          },
+          "template_path": "<inline:12>"
+        },
+        {
+          "helper_chain": [
+            "common.capabilities.statefulset.apiVersion"
+          ],
+          "span": {
+            "end": 2226,
+            "start": 2068
+          },
+          "template_path": "<inline:12>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "global.kubeVersion"
     },
     {
       "condition": [
@@ -11400,7 +11653,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -11536,7 +11788,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11673,7 +11924,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11754,7 +12004,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11865,7 +12114,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11970,7 +12218,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -12081,7 +12328,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -18494,6 +18740,36 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsSecret"
+          ],
+          "span": {
+            "end": 5357,
+            "start": 5215
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "tls.client.autoGenerated"
+    },
+    {
+      "condition": [
         [],
         [
           {
@@ -18566,7 +18842,6 @@
     },
     {
       "condition": [
-        [],
         [
           {
             "path": "auth.client.enabled",
@@ -18642,13 +18917,109 @@
             "path": "tls.client.enabled",
             "type": "truthy"
           }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
         ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "tls.client.enabled"
+    },
+    {
+      "condition": [
         [
           {
             "path": "tls.client.enabled",
             "type": "truthy"
           }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsSecret"
+          ],
+          "span": {
+            "end": 5357,
+            "start": 5215
+          },
+          "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7559,
+            "start": 7445
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
         ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "tls.client.enabled"
+    },
+    {
+      "condition": [
         [
           {
             "path": "tls.client.enabled",
@@ -18661,19 +19032,22 @@
             ],
             "type": "or"
           }
-        ],
-        [
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
         ]
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7559,
+            "start": 7445
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -18755,6 +19129,40 @@
         "kind": "StatefulSet"
       },
       "source_expr": "tls.client.enabled"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.existingSecret",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsSecret"
+          ],
+          "span": {
+            "end": 5357,
+            "start": 5215
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "tls.client.existingSecret"
     },
     {
       "condition": [
@@ -19218,6 +19626,53 @@
         "kind": "StatefulSet"
       },
       "source_expr": "tls.client.passwordsSecretKeystoreKey"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.passwordsSecretName",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.passwordsSecretName",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7559,
+            "start": 7445
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "tls.client.passwordsSecretName"
     },
     {
       "condition": [
@@ -20020,6 +20475,36 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "tls.quorum.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createTlsSecret"
+          ],
+          "span": {
+            "end": 4028,
+            "start": 3886
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "tls.quorum.autoGenerated"
+    },
+    {
+      "condition": [
         [],
         [
           {
@@ -20104,7 +20589,6 @@
     },
     {
       "condition": [
-        [],
         [
           {
             "path": "auth.client.enabled",
@@ -20156,13 +20640,109 @@
             "path": "tls.quorum.enabled",
             "type": "truthy"
           }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
         ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "tls.quorum.enabled"
+    },
+    {
+      "condition": [
         [
           {
             "path": "tls.quorum.enabled",
             "type": "truthy"
           }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createTlsSecret"
+          ],
+          "span": {
+            "end": 4028,
+            "start": 3886
+          },
+          "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 4690,
+            "start": 4576
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
         ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "tls.quorum.enabled"
+    },
+    {
+      "condition": [
         [
           {
             "path": "tls.quorum.enabled",
@@ -20175,19 +20755,22 @@
             ],
             "type": "or"
           }
-        ],
-        [
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
         ]
       ],
       "kind": "Scalar",
       "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 4690,
+            "start": 4576
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -20269,6 +20852,40 @@
         "kind": "StatefulSet"
       },
       "source_expr": "tls.quorum.enabled"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "tls.quorum.autoGenerated",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.existingSecret",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createTlsSecret"
+          ],
+          "span": {
+            "end": 4028,
+            "start": 3886
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "tls.quorum.existingSecret"
     },
     {
       "condition": [
@@ -20744,6 +21361,53 @@
         "kind": "StatefulSet"
       },
       "source_expr": "tls.quorum.passwordsSecretKeystoreKey"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.passwordsSecretName",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.passwordsSecretName",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.quorum.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 4690,
+            "start": 4576
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "tls.quorum.passwordsSecretName"
     },
     {
       "condition": [

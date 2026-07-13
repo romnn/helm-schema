@@ -33,11 +33,22 @@ mod values_validation;
 use color_eyre::eyre::WrapErr as _;
 use serde_json::Value;
 
-/// Charts whose shipped `values.yaml` currently fails validation against
-/// the schema we generate for them. Keep this empty: a new entry means a
-/// new generator defect, and it should only be added together with a
-/// written analysis of that defect.
-const KNOWN_VALUES_REJECTIONS: &[&str] = &[];
+/// Charts whose shipped `values.yaml` fails validation against the schema
+/// we generate for them. Keep this empty unless the CHART's own defaults
+/// genuinely fail `helm template`: a new entry otherwise means a new
+/// generator defect, and it should only be added together with a written
+/// analysis.
+///
+/// - aws-load-balancer-controller: `clusterName` defaults to `""` and the
+///   deployment calls `required` on it; `helm template` with defaults
+///   fails with "Chart cannot be installed without a valid clusterName!".
+/// - karpenter: `settings.clusterName` defaults to `""` with the same
+///   `required` termination in its deployment.
+// loki: `helm template` genuinely fails on pure defaults ("Please define
+// loki.storage.bucketNames.chunks"): `loki.schemaConfig` defaults to `{}`
+// (falsy) and `useTestSchema` to false, so validate.yaml's schema-config
+// `fail` plus the bucketNames `required` chain reject the shipped values.
+const KNOWN_VALUES_REJECTIONS: &[&str] = &["aws-load-balancer-controller", "karpenter", "loki"];
 
 fn assert_chart_schema_fixture(chart: &str) -> color_eyre::eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;

@@ -109,10 +109,6 @@ pub(crate) struct ValuePathSchemaInputs {
     /// (add accepted alternatives), never stand alone as its typing —
     /// `allOf` branches can narrow but never re-widen a base.
     pub(crate) guarded_type_hint_schema: Value,
-    /// Requirements from unconditional `fail` branches: rendering aborts
-    /// for violating values, so this merges into the base unsuppressed
-    /// (serialized dominance and widening lanes never relax it).
-    pub(crate) fail_requirement_schema: Value,
 }
 
 impl ResolvePolicy {
@@ -179,7 +175,6 @@ impl ResolvePolicy {
             guard_predicate_schema,
             type_hint_schema,
             guarded_type_hint_schema,
-            fail_requirement_schema,
         } = input;
         // A serialized or totally-stringified render accepts any input
         // type, so the chart provably tolerates anything at this path in
@@ -236,7 +231,6 @@ impl ResolvePolicy {
                 guard_predicate_schema,
                 type_hint_schema,
                 guarded_type_hint_schema: empty_schema(),
-                fail_requirement_schema: empty_schema(),
             },
             preserve_empty_string_fallback,
         );
@@ -294,18 +288,30 @@ impl ResolvePolicy {
         } else {
             merged
         };
-        // A `fail` branch's requirement is runtime-hard: rendering aborts
-        // for violating values, so it CONJOINS after every union lane —
-        // no declared-default preservation or placeholder alternative may
-        // bypass it. An explicit `allOf` keeps the conjunction:
-        // `merge_two_schemas` falls back to a union for incompatible
-        // shapes, which would make the requirement bypassable.
-        if is_empty_schema(&fail_requirement_schema) {
-            resolved
-        } else if is_empty_schema(&resolved) {
-            fail_requirement_schema
+        // A directly ranged path accepts the whole runtime iterable
+        // domain: `range` renders collections, nil, and (without member
+        // structure in the loop body) integer counts, regardless of the
+        // declared default's shape. Guarded member implications below
+        // still narrow the live states.
+        if facts.contract.is_direct_ranged_source && !facts.contract.used_as_serialized {
+            // A serialized sibling use (`join "," x | quote`) renders ANY
+            // input, so the iterable domain must not close the base for
+            // states where the range's branch never runs.
+            let iterable = crate::runtime_iterable_schema(
+                !facts.contract.has_structured_item_descendants
+                    && !facts.contract.has_destructured_range_use,
+            );
+            if is_empty_schema(&resolved) {
+                // The direct range is the only evidence: its runtime
+                // domain is the path's whole domain (a non-empty base
+                // also keeps the carrier's item rows from re-typing the
+                // slot as a bare array).
+                iterable
+            } else {
+                union_schema_list(vec![resolved, iterable])
+            }
         } else {
-            serde_json::json!({ "allOf": [resolved, fail_requirement_schema] })
+            resolved
         }
     }
 
@@ -438,7 +444,16 @@ impl ResolvePolicy {
         };
 
         let base = merge_two_schemas(base, input.type_hint_schema);
-        merge_two_schemas(base, input.guard_predicate_schema)
+        // Condition guards are MAY-BE dispatch evidence (`kindIs "map" x`
+        // arms prove the chart handles maps), never a requirement: a
+        // declared default shape must not erase a structurally handled
+        // alternative, so the guard domain unions with the base instead of
+        // intersecting it.
+        if is_empty_schema(&base) || is_empty_schema(&input.guard_predicate_schema) {
+            merge_two_schemas(base, input.guard_predicate_schema)
+        } else {
+            union_schema_list(vec![base, input.guard_predicate_schema])
+        }
     }
 }
 
@@ -502,6 +517,14 @@ pub(crate) fn conditional_target_schema(
         declared_default.as_ref().map_or_else(
             || branch_schema.clone(),
             |default_value| {
+                // An explicitly DECLARED null default must stay accepted
+                // when every use in the branch tolerates null (self-guarded
+                // rows: a null is falsy, or deleted by helm, so it never
+                // reaches the consumer). A branch that places the raw value
+                // keeps its strict typing.
+                if default_value.is_null() && overlay.evidence.facts.is_nullable {
+                    return union_schema_list(vec![branch_schema.clone(), type_schema("null")]);
+                }
                 let declared_type = if default_value.is_object() {
                     Some("object")
                 } else if default_value.is_array() {

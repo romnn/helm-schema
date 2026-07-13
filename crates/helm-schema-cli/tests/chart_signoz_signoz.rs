@@ -519,6 +519,15 @@ fn clickhouse_operator_image_field_instance(
 
     let mut root = Map::new();
     root.insert("clickhouse".to_string(), Value::Object(clickhouse));
+    if enabled == Some(false) {
+        // Disabling the clickhouse subchart makes `externalClickhouse.host`
+        // a hard requirement (`required "externalClickhouse.host is
+        // required if not clickhouse.enabled"`), so a helm-valid disabled
+        // instance must provide it.
+        let mut external = Map::new();
+        external.insert("host".to_string(), Value::String("ch.example".to_string()));
+        root.insert("externalClickhouse".to_string(), Value::Object(external));
+    }
     Value::Object(root)
 }
 

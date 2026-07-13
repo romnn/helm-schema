@@ -127,12 +127,6 @@
               "null"
             ]
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "podServiceAccount": {
             "properties": {
               "name": {
@@ -294,7 +288,14 @@
           {
             "properties": {
               "readinessProbe": {
-                "$ref": "#/$defs/helm-truthy"
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
               }
             },
             "required": [
@@ -322,213 +323,26 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
         "properties": {
           "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "podServiceAccount": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
-              }
-            },
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
+            "$ref": "#/$defs/helm-truthy"
           }
         },
+        "required": [
+          "fullnameOverride"
+        ],
         "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "podPriorityClassName": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podPriorityClassName"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "podPriorityClassName": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podPriorityClassName"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "createAggregateClusterRoles": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "createAggregateClusterRoles"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
       },
       "then": {
         "properties": {
           "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -644,6 +458,89 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "podServiceAccount": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
+              }
+            },
+            "type": "object"
+          },
+          "serviceAccount": {
+            "properties": {
+              "name": {
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "properties": {
               "controllerID": {
                 "properties": {
@@ -661,6 +558,109 @@
               "controllerID"
             ],
             "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "podPriorityClassName": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podPriorityClassName"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "podPriorityClassName": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podPriorityClassName"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "createAggregateClusterRoles": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createAggregateClusterRoles"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
             "anyOf": [
@@ -700,6 +700,34 @@
             "type": [
               "string",
               "null"
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -984,7 +1012,14 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/helm-truthy"
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            ]
           },
           "then": {
             "properties": {

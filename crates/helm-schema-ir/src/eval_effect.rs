@@ -30,6 +30,12 @@ pub(crate) struct Effects {
     /// bound a real runtime string contract: rendering fails for non-string
     /// values, so a later total stringification must not erase their shape.
     pub(crate) string_contract_paths: BTreeSet<String>,
+    /// The subset of string contracts recorded by consumers evaluated in
+    /// THIS expression (never copied across a helper-summary boundary):
+    /// only these may become ambient-scoped truthy⇒string fail captures —
+    /// a called helper's path-level contract flags lost their body-internal
+    /// guards and stay row evidence.
+    pub(crate) direct_string_consumer_paths: BTreeSet<String>,
     pub(crate) chart_default_paths: BTreeSet<String>,
     pub(crate) local_default_paths: BTreeSet<String>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
@@ -92,6 +98,8 @@ impl Effects {
         self.derived_text_paths.extend(other.derived_text_paths);
         self.string_contract_paths
             .extend(other.string_contract_paths);
+        self.direct_string_consumer_paths
+            .extend(other.direct_string_consumer_paths);
         self.chart_default_paths.extend(other.chart_default_paths);
         self.local_default_paths.extend(other.local_default_paths);
         self.local_source_paths.extend(other.local_source_paths);

@@ -16,6 +16,10 @@ pub struct FinalizedContract {
 }
 
 impl FinalizedContract {
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "each parameter is one interpreter fact channel; a struct would                   mirror the same nine fields without adding an invariant"
+    )]
     pub(in crate::contract) fn new(
         normalized_uses: Vec<ContractUse>,
         type_hints: BTreeMap<String, BTreeSet<String>>,
@@ -23,6 +27,7 @@ impl FinalizedContract {
         shape_erased_value_paths: BTreeSet<String>,
         string_contract_value_paths: BTreeSet<String>,
         direct_range_source_paths: BTreeSet<String>,
+        destructured_range_source_paths: BTreeSet<String>,
         fail_conditions: Vec<crate::eval_effect::FailCapture>,
         dependency_values_root_fragments: BTreeSet<String>,
     ) -> Self {
@@ -33,6 +38,7 @@ impl FinalizedContract {
             &shape_erased_value_paths,
             &string_contract_value_paths,
             &direct_range_source_paths,
+            &destructured_range_source_paths,
             &fail_conditions,
             &dependency_values_root_fragments,
         );

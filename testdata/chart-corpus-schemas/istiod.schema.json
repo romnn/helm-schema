@@ -1,7 +1,56 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
     {
       "if": {
         "anyOf": [
@@ -56,6 +105,115 @@
             "type": "object"
           },
           "gatewayClasses": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "items": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "env": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "env"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "env": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {
+                    "enum": [
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {
+                    "enum": [
+                      "namespace"
+                    ]
+                  }
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "gatewayClasses": {
             "anyOf": [
               {
                 "additionalProperties": {},
@@ -67,6 +225,289 @@
               },
               {
                 "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "global": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "remotePilotAddress": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "remotePilotAddress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "istiodRemote": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "istiodRemote"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "remotePilotAddress": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "image": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "istiodRemote": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "istiodRemote"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "istiodRemote": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "istiodRemote"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "istiodRemote": {
+                        "properties": {
+                          "enabledLocalInjectorIstiod": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabledLocalInjectorIstiod"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "istiodRemote"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "image": {
+            "anyOf": [
+              {
+                "type": "string"
               },
               {
                 "type": "null"
@@ -179,6 +620,951 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "defaults": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "defaults"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "compatibilityVersion": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "compatibilityVersion"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.25"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.26"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.27"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.28"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.29"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "platform": {
+                          "enum": [
+                            "gke"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "platform"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "platform": {
+                          "enum": [
+                            "k3d"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "platform"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "platform": {
+                          "enum": [
+                            "k3s"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "platform"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "platform": {
+                          "enum": [
+                            "microk8s"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "platform"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "platform": {
+                          "enum": [
+                            "minikube"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "platform"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "platform": {
+                          "enum": [
+                            "openshift"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "platform"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "platform": {
+                      "enum": [
+                        "gke"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "platform"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "platform": {
+                      "enum": [
+                        "k3d"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "platform"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "platform": {
+                      "enum": [
+                        "k3s"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "platform"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "platform": {
+                      "enum": [
+                        "microk8s"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "platform"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "platform": {
+                      "enum": [
+                        "minikube"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "platform"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "platform": {
+                      "enum": [
+                        "openshift"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "platform"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "platform": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "platform"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "platform": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "platform"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "ambient"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "compatibility-version-1.25"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "compatibility-version-1.26"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "compatibility-version-1.27"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "compatibility-version-1.28"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "compatibility-version-1.29"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "demo"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "platform-gke"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "platform-k3d"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "platform-k3s"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "platform-microk8s"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "platform-minikube"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "platform-openshift"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "preview"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "remote"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "profile": {
+                          "enum": [
+                            "stable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "ambient"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "compatibility-version-1.25"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "compatibility-version-1.26"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "compatibility-version-1.27"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "compatibility-version-1.28"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "compatibility-version-1.29"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "demo"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "platform-gke"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "platform-k3d"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "platform-k3s"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "platform-microk8s"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "platform-minikube"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "platform-openshift"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "preview"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "remote"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "profile": {
+                      "enum": [
+                        "stable"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "profile": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "profile"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "profile": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "profile"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -1012,31 +2398,57 @@
       "type": "object"
     },
     "deploymentLabels": {
-      "additionalProperties": {},
-      "properties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
     },
     "env": {
-      "additionalProperties": {},
-      "properties": {
-        "CA_TRUSTED_NODE_ACCOUNTS": {},
-        "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
-          "anyOf": [
-            {
-              "enum": [
-                true
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "CA_TRUSTED_NODE_ACCOUNTS": {},
+            "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+              "anyOf": [
+                {
+                  "enum": [
+                    true
+                  ]
+                },
+                {
+                  "type": "boolean"
+                }
               ]
             },
-            {
-              "type": "boolean"
-            }
-          ]
+            "EXTERNAL_CA": {},
+            "MCS_API_GROUP": {},
+            "PILOT_ENABLE_GATEWAY_API_DEPLOYMENT_CONTROLLER": {}
+          },
+          "type": "object"
         },
-        "EXTERNAL_CA": {},
-        "MCS_API_GROUP": {},
-        "PILOT_ENABLE_GATEWAY_API_DEPLOYMENT_CONTROLLER": {}
-      },
-      "type": "object"
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
     },
     "envVarFrom": {
       "additionalProperties": {},
@@ -1059,8 +2471,21 @@
       "additionalProperties": {},
       "properties": {
         "certSigners": {
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ]
         },
         "configCluster": {},
         "configValidation": {},
@@ -1071,18 +2496,45 @@
           },
           "type": "object"
         },
+        "enableReaderRBAC": {},
         "externalIstiod": {},
         "hub": {
           "type": "string"
         },
         "imagePullPolicy": {},
         "imagePullSecrets": {
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ]
         },
         "ipFamilies": {
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ]
         },
         "ipFamilyPolicy": {},
         "istioNamespace": {
@@ -1249,8 +2701,21 @@
     },
     "initContainers": {},
     "ipFamilies": {
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
     },
     "ipFamilyPolicy": {},
     "istiodRemote": {
@@ -1309,9 +2774,22 @@
       "type": "object"
     },
     "podLabels": {
-      "additionalProperties": {},
-      "properties": {},
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
     },
     "profile": {},
     "replicaCount": {},
@@ -1354,7 +2832,22 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "defaultTemplates": {},
+        "defaultTemplates": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "enableNamespacesByDefault": {},
         "injectedAnnotations": {},
         "neverInjectSelector": {

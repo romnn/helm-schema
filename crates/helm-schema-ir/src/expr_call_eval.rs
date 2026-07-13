@@ -9,9 +9,12 @@ use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::helper_meta::HelperOutputMeta;
 use helm_schema_ast::expression_schema_type;
 use helm_schema_ast::type_is_schema_type;
+use helm_schema_core::Predicate;
+
 use helm_schema_ast::{
-    is_merge_function, is_provenance_preserving_function, is_string_transform_function,
-    is_total_numeric_cast_function, is_total_stringification_function,
+    is_merge_function, is_provenance_preserving_function, is_string_predicate_function,
+    is_string_splitting_function, is_string_transform_function, is_total_numeric_cast_function,
+    is_total_stringification_function,
 };
 use helm_schema_ast::{literal_printf_format, render_printf_string_sets};
 
@@ -48,6 +51,13 @@ pub(crate) fn eval_call_with_helper_calls(
         "cat" => eval_cat(args, env, resolver),
         "index" => eval_index(args, env, resolver),
         "get" if args.len() == 2 => eval_index(args, env, resolver),
+        "dig" if args.len() >= 3 => eval_dig(args, env, resolver),
+        "required" if args.len() == 2 => {
+            let message = eval_expr_with_helper_calls(&args[0], env, resolver);
+            let mut subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+            subject.effects.merge(message.effects);
+            subject
+        }
         "typeIs" | "kindIs" if args.len() >= 2 => eval_type_is(args, env, resolver),
         "fromYaml" if args.len() == 1 => eval_from_yaml(args, env, resolver),
         "toYaml" if args.len() == 1 => eval_to_yaml(args, env, resolver),
@@ -63,6 +73,27 @@ pub(crate) fn eval_call_with_helper_calls(
             let mut effects = result.effects;
             record_string_transform_effects(function, &result.value, &mut effects);
             EvalResult::with_effects(result.value, effects)
+        }
+        // Subject-last string consumers with non-string output (`splitList`,
+        // `semverCompare`): the LAST argument must be a Go string; the
+        // output carries the subject's influence without its identity.
+        function
+            if (is_string_splitting_function(function)
+                || is_string_predicate_function(function))
+                && !args.is_empty() =>
+        {
+            let result = eval_all_args(args, env, resolver);
+            let subject = eval_expr_with_helper_calls(&args[args.len() - 1], env, resolver);
+            let mut effects = result.effects;
+            record_string_consumer_effects(&identity_value_paths(&subject.value), &mut effects);
+            let widened = AbstractValue::widened(
+                result
+                    .value
+                    .as_ref()
+                    .map(AbstractValue::paths)
+                    .unwrap_or_default(),
+            );
+            EvalResult::with_effects(widened, effects)
         }
         function if is_provenance_preserving_function(function) => {
             eval_all_args(args, env, resolver)
@@ -129,6 +160,22 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 merge_arg_effects(args, env, resolver, &mut effects);
                 EvalResult::with_effects(current.value, effects)
             }
+            function
+                if is_string_splitting_function(function)
+                    || is_string_predicate_function(function) =>
+            {
+                let mut effects = current.effects;
+                record_string_consumer_effects(&identity_value_paths(&current.value), &mut effects);
+                merge_arg_effects(args, env, resolver, &mut effects);
+                let widened = AbstractValue::widened(
+                    current
+                        .value
+                        .as_ref()
+                        .map(AbstractValue::paths)
+                        .unwrap_or_default(),
+                );
+                EvalResult::with_effects(widened, effects)
+            }
             "toYaml" => {
                 let mut result = eval_to_yaml_result(current);
                 merge_arg_effects(args, env, resolver, &mut result.effects);
@@ -178,26 +225,51 @@ fn record_string_transform_effects(
         record_total_conversion_effects(paths, effects);
         return;
     }
-    // A path that already passed a converting stage in this expression
-    // (`printf … | trunc`) or that flows out of a shape-erasing local
-    // binding (`$pass := … | toString` then `$pass | b64enc`) reaches this
-    // consumer as derived text: the earlier conversion owns the input
-    // contract, so the consumer claims nothing about the raw path.
-    let raw: BTreeSet<String> = paths
-        .iter()
-        .filter(|path| {
-            !effects.derived_text_paths.contains(*path)
-                && !effects
-                    .local_output_meta
-                    .get(*path)
-                    .is_some_and(|meta| meta.shape_erased || meta.derived_text)
-        })
-        .cloned()
-        .collect();
-    effects.string_contract_paths.extend(raw);
+    record_string_consumer_effects(&paths, effects);
     effects.derived_text_paths.extend(paths.iter().cloned());
     if function == "b64enc" {
         effects.add_encoded_paths(paths);
+    }
+}
+
+/// Record that an expression stage consumes the RAW value of `paths` as a
+/// Go string, failing rendering otherwise. A path that already passed a
+/// converting stage (`printf … | trunc`) or flows out of a shape-erasing
+/// local binding reaches the consumer as derived text, so the earlier
+/// conversion owns the contract. A path behind a `default` fallback is
+/// consumed only when TRUTHY (the fallback replaces it otherwise), so its
+/// contract is the conditional `truthy => string` — captured as a
+/// fail-class implication instead of an unconditional row contract.
+fn record_string_consumer_effects(paths: &BTreeSet<String>, effects: &mut Effects) {
+    for path in paths {
+        if effects.derived_text_paths.contains(path)
+            || effects
+                .local_output_meta
+                .get(path)
+                .is_some_and(|meta| meta.shape_erased || meta.derived_text)
+        {
+            continue;
+        }
+        if effects.defaults.contains(path) || effects.local_default_paths.contains(path) {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: vec![
+                    Predicate::truthy_path(path.clone()),
+                    Predicate::from(crate::Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: "string".to_string(),
+                    })
+                    .negated(),
+                ],
+                approximate_condition_paths: BTreeSet::new(),
+                direct_ranged_paths: BTreeSet::new(),
+            };
+            if !effects.helper_fails.contains(&capture) {
+                effects.helper_fails.push(capture);
+            }
+        } else {
+            effects.string_contract_paths.insert(path.clone());
+            effects.direct_string_consumer_paths.insert(path.clone());
+        }
     }
 }
 
@@ -420,7 +492,11 @@ fn eval_split_list(
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => value,
         _ => return eval_all_args(args, env, resolver),
     };
-    let result = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let mut result = eval_expr_with_helper_calls(&args[1], env, resolver);
+    // The subject must be a Go string at runtime whatever the split
+    // produces: the literal-split fast path below is value refinement on
+    // top of that contract, not a replacement for it.
+    record_string_consumer_effects(&identity_value_paths(&result.value), &mut result.effects);
     let Some(strings) = result.value.as_ref().map(AbstractValue::strings) else {
         return EvalResult::with_effects(None, result.effects);
     };
@@ -455,6 +531,65 @@ fn split_string_set(separator: &str, strings: BTreeSet<String>) -> Option<Vec<Ab
     }
 
     Some(vec![AbstractValue::StringSet(strings)])
+}
+
+/// `dig "k1" … "kn" default subject`: walk literal keys through the
+/// subject dict, falling back to `default` when a key is MISSING. A key
+/// that is present but not a map aborts rendering (sprig type-asserts
+/// every step), so the subject and every intermediate key carry a
+/// truthy⇒object contract; the dug value itself may be any type.
+fn eval_dig(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let (subject_expr, rest) = args.split_last().expect("dig arity checked at dispatch");
+    let (default_expr, key_exprs) = rest.split_last().expect("dig arity checked at dispatch");
+    let mut keys = Vec::new();
+    for key in key_exprs {
+        match key.deparen() {
+            TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+                keys.push(value.clone());
+            }
+            _ => return eval_all_args(args, env, resolver),
+        }
+    }
+    let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
+    let default_result = eval_expr_with_helper_calls(default_expr, env, resolver);
+    let mut effects = subject.effects;
+    effects.merge(default_result.effects);
+    for path in identity_value_paths(&subject.value) {
+        let mut step = path;
+        for prefix_len in 0..keys.len() {
+            if prefix_len > 0 {
+                step = format!("{step}.{}", keys[prefix_len - 1]);
+            }
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: vec![
+                    Predicate::truthy_path(step.clone()),
+                    Predicate::from(crate::Guard::TypeIs {
+                        path: step.clone(),
+                        schema_type: "object".to_string(),
+                    })
+                    .negated(),
+                ],
+                approximate_condition_paths: BTreeSet::new(),
+                direct_ranged_paths: BTreeSet::new(),
+            };
+            if !effects.helper_fails.contains(&capture) {
+                effects.helper_fails.push(capture);
+            }
+        }
+    }
+    let value = subject.value.and_then(|value| value.apply_to_path(&keys));
+    // The dug leaf is a READ of that path whose absence falls back to the
+    // literal default: an output path (so required-subject walking and
+    // read rows see it) marked defaulted, exactly like `default`.
+    for path in identity_value_paths(&value) {
+        effects.output_paths.insert(path.clone());
+        effects.defaults.insert(path);
+    }
+    EvalResult::with_effects(value, effects)
 }
 
 fn eval_index(

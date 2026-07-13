@@ -1719,12 +1719,25 @@
       "type": "object"
     },
     "extraResources": {
-      "description": "Extra user-defined resources\nadd arbitrary user-generated resources\nexample:\nconfig:\nwebsocket:\nenabled: true\nextraResources:\n- apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\nname:\n$tplYaml: >\n{{ include \"nats.fullname\" $ | quote }}\nlabels:\n$tplYaml: |\n{{ include \"nats.labels\" $ }}\nspec:\nhosts:\n- demo.nats.io\ngateways:\n- my-gateway\nhttp:\n- name: default\nmatch:\n- name: root\nuri:\nexact: /\nroute:\n- destination:\nhost:\n$tplYaml: >\n{{ .Values.service.name | quote }}\nport:\nnumber:\n$tplYaml: >\n{{ .Values.config.websocket.port }}",
-      "items": {
-        "additionalProperties": {},
-        "type": "object"
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Extra user-defined resources\nadd arbitrary user-generated resources\nexample:\nconfig:\nwebsocket:\nenabled: true\nextraResources:\n- apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\nname:\n$tplYaml: >\n{{ include \"nats.fullname\" $ | quote }}\nlabels:\n$tplYaml: |\n{{ include \"nats.labels\" $ }}\nspec:\nhosts:\n- demo.nats.io\ngateways:\n- my-gateway\nhttp:\n- name: default\nmatch:\n- name: root\nuri:\nexact: /\nroute:\n- destination:\nhost:\n$tplYaml: >\n{{ .Values.service.name | quote }}\nport:\nnumber:\n$tplYaml: >\n{{ .Values.config.websocket.port }}"
     },
     "fullnameOverride": {
       "description": "override full name of the chart+release"

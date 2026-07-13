@@ -75,14 +75,7 @@
             ]
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           }
         },
         "type": "object"
@@ -151,14 +144,7 @@
             ]
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "serviceAccount": {
             "properties": {
@@ -303,14 +289,7 @@
             ]
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           }
         },
         "type": "object"
@@ -747,14 +726,7 @@
             "type": "string"
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           }
         },
         "type": "object"
@@ -806,13 +778,9 @@
             "type": "object"
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           }
         },
@@ -917,6 +885,34 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -1055,105 +1051,53 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "enableServiceMutatorWebhook": {}
-              },
-              "required": [
-                "enableServiceMutatorWebhook"
-              ],
-              "type": "object"
-            }
-          },
+        "allOf": [
           {
             "properties": {
-              "enableServiceMutatorWebhook": {
+              "metricsBindAddr": {
                 "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "enableServiceMutatorWebhook"
+              "metricsBindAddr"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": {
         "properties": {
-          "nameOverride": {
+          "metricsBindAddr": {
             "anyOf": [
               {
-                "type": "null"
+                "type": "string"
               },
               {
-                "type": "string"
+                "type": "null"
               }
-            ]
-          },
-          "serviceMutatorWebhookConfig": {
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
-            "properties": {
-              "failurePolicy": {
-                "description": "whether or not to fail the service creation if the webhook fails",
-                "type": "string"
-              },
-              "namespaceSelectors": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "const": null
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "key: value\narray of namespace selectors for the service mutator webhook"
-              },
-              "objectSelector": {
-                "description": "limit webhook to only mutate services matching the objectSelector",
-                "properties": {
-                  "matchExpressions": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      }
-                    ]
-                  },
-                  "matchLabels": {
-                    "additionalProperties": {},
-                    "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>",
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "operations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                ],
-                "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook"
-              }
-            },
-            "type": "object"
+            ],
+            "description": "The address the metric endpoint binds to. (default \":8080\")"
           }
         },
         "type": "object"
@@ -1161,80 +1105,70 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "configureDefaultAffinity": {}
-                      },
-                      "required": [
-                        "configureDefaultAffinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "configureDefaultAffinity": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "configureDefaultAffinity"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "type": "string"
               },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
               {
                 "not": {
                   "properties": {
-                    "affinity": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "configureDefaultAffinity": {}
                   },
                   "required": [
-                    "affinity"
+                    "configureDefaultAffinity"
                   ],
                   "type": "object"
                 }
+              },
+              {
+                "properties": {
+                  "configureDefaultAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "configureDefaultAffinity"
+                ],
+                "type": "object"
               }
             ]
           },
           {
             "not": {
               "properties": {
-                "enableCertManager": {
+                "affinity": {
                   "$ref": "#/$defs/helm-truthy"
                 }
               },
               "required": [
-                "enableCertManager"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "webhookConfig": {
-                  "properties": {
-                    "disableIngressValidation": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "disableIngressValidation"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "webhookConfig"
+                "affinity"
               ],
               "type": "object"
             }
@@ -1244,14 +1178,7 @@
       "then": {
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           }
         },
         "type": "object"
@@ -1325,6 +1252,175 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "enableServiceMutatorWebhook": {}
+              },
+              "required": [
+                "enableServiceMutatorWebhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "enableServiceMutatorWebhook": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableServiceMutatorWebhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "serviceMutatorWebhookConfig": {
+            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
+            "properties": {
+              "failurePolicy": {
+                "description": "whether or not to fail the service creation if the webhook fails",
+                "type": "string"
+              },
+              "namespaceSelectors": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "key: value\narray of namespace selectors for the service mutator webhook"
+              },
+              "objectSelector": {
+                "description": "limit webhook to only mutate services matching the objectSelector",
+                "properties": {
+                  "matchExpressions": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "items": {},
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "matchLabels": {
+                    "additionalProperties": {},
+                    "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "operations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "clusterName": {
+                "enum": [
+                  ""
+                ]
+              }
+            },
+            "required": [
+              "clusterName"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "clusterName": {}
+                  },
+                  "required": [
+                    "clusterName"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "clusterName": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "clusterName"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "clusterName": {}
+                  },
+                  "required": [
+                    "clusterName"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "clusterName": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "clusterName"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -1411,6 +1507,67 @@
             },
             "type": "object"
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "maxReplicas": {
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    },
+                    "required": [
+                      "maxReplicas"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "maxReplicas": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "maxReplicas"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "maxReplicas": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "maxReplicas"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "description": "AWS LBC only has 1 main working pod, other pods are just standby\nthe purpose of enable hpa is to survive load induced failure by the calls to the aws-load-balancer-webhook-service\nsince the calls from kube-apiserver are sent round-robin to all replicas, and the failure policy on those webhooks is Fail\nif the pods become overloaded and do not respond within the timeout that could block the creation of pods, targetgroupbindings or ingresses\nPlease keep in mind that the controller pods have `priorityClassName: system-cluster-critical`, enabling HPA may lead to the eviction of other low-priority pods in the node",
@@ -1541,6 +1698,9 @@
       "anyOf": [
         {
           "const": null
+        },
+        {
+          "type": "null"
         },
         {
           "type": "string"
@@ -1680,6 +1840,9 @@
     },
     "env": {
       "anyOf": [
+        {
+          "type": "array"
+        },
         {
           "type": "null"
         },
@@ -2698,9 +2861,6 @@
                     "type": "object"
                   },
                   {
-                    "const": null
-                  },
-                  {
                     "type": "null"
                   }
                 ],
@@ -2718,9 +2878,6 @@
                   {
                     "additionalProperties": {},
                     "type": "object"
-                  },
-                  {
-                    "const": null
                   },
                   {
                     "type": "null"
@@ -3059,7 +3216,14 @@
                   {
                     "properties": {
                       "ingressValidationNamespaceSelector": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -3096,9 +3260,6 @@
                         "type": "object"
                       },
                       {
-                        "const": null
-                      },
-                      {
                         "type": "null"
                       }
                     ]
@@ -3108,9 +3269,6 @@
                       {
                         "additionalProperties": {},
                         "type": "object"
-                      },
-                      {
-                        "const": null
                       },
                       {
                         "type": "null"
@@ -3143,7 +3301,14 @@
                   {
                     "properties": {
                       "ingressValidationObjectSelector": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -3180,9 +3345,6 @@
                         "type": "object"
                       },
                       {
-                        "const": null
-                      },
-                      {
                         "type": "null"
                       }
                     ]
@@ -3192,9 +3354,6 @@
                       {
                         "additionalProperties": {},
                         "type": "object"
-                      },
-                      {
-                        "const": null
                       },
                       {
                         "type": "null"
@@ -3294,6 +3453,82 @@
     },
     "webhookTLS": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "caCert": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "caCert"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "cert": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "cert"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "caCert": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cert": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "description": "webhookTLS specifies TLS cert/key for the webhook",
       "properties": {
         "caCert": {

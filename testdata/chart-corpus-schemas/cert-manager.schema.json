@@ -144,12 +144,6 @@
             },
             "type": "object"
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "namespace": {
             "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart).",
             "type": "string"
@@ -540,6 +534,34 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -614,12 +636,6 @@
               }
             },
             "type": "object"
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
           },
           "namespace": {
             "anyOf": [
@@ -762,12 +778,6 @@
             },
             "type": "object"
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "namespace": {
             "anyOf": [
               {
@@ -891,12 +901,6 @@
             },
             "type": "object"
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "namespace": {
             "anyOf": [
               {
@@ -983,12 +987,6 @@
               }
             },
             "type": "object"
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
           },
           "namespace": {
             "anyOf": [
@@ -1176,12 +1174,6 @@
               }
             },
             "type": "object"
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
         "type": "object"
@@ -1254,12 +1246,6 @@
               "null"
             ]
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "namespace": {
             "anyOf": [
               {
@@ -1327,12 +1313,6 @@
               "null"
             ]
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "namespace": {
             "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart).",
             "type": "string"
@@ -1367,145 +1347,6 @@
               }
             },
             "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "aggregateClusterRoles": {}
-                          },
-                          "required": [
-                            "aggregateClusterRoles"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "rbac": {
-                        "properties": {
-                          "aggregateClusterRoles": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "aggregateClusterRoles"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "rbac": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
         "type": "object"
@@ -1621,6 +1462,126 @@
                     },
                     "required": [
                       "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "rbac": {
+                              "properties": {
+                                "aggregateClusterRoles": {}
+                              },
+                              "required": [
+                                "aggregateClusterRoles"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "rbac"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "aggregateClusterRoles": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "aggregateClusterRoles"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "rbac": {
+                              "properties": {
+                                "create": {}
+                              },
+                              "required": [
+                                "create"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "rbac"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
                     ],
                     "type": "object"
                   }
@@ -2013,66 +1974,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "crds": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "crds"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "installCRDs": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "installCRDs"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "global": {
-            "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "commonLabels": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Labels to apply to all resources.\nPlease note that this does not add labels to the resources created dynamically by the controllers.\nFor these resources, you have to add the labels in the template in the cert-manager custom resource:\nFor example, podTemplate/ ingressTemplate in ACMEChallengeSolverHTTP01Ingress\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEChallengeSolverHTTP01Ingress).\nFor example, secretTemplate in CertificateSpec\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec).",
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -2407,6 +2308,60 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "crds": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "installCRDs": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "installCRDs"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Labels to apply to all resources.\nPlease note that this does not add labels to the resources created dynamically by the controllers.\nFor these resources, you have to add the labels in the template in the cert-manager custom resource:\nFor example, podTemplate/ ingressTemplate in ACMEChallengeSolverHTTP01Ingress\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEChallengeSolverHTTP01Ingress).\nFor example, secretTemplate in CertificateSpec\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec).",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "anyOf": [
@@ -2638,6 +2593,34 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -4091,9 +4074,25 @@
       "description": "Additional environment variables to pass to cert-manager controller binary.\nFor example:\nextraEnv:\n- name: SOME_VAR\nvalue: 'some value'"
     },
     "extraObjects": {
-      "description": "Create dynamic manifests via values.\nFor example:\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: '{{ template \"cert-manager.fullname\" . }}-extra-configmap'",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Create dynamic manifests via values.\nFor example:\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: '{{ template \"cert-manager.fullname\" . }}-extra-configmap'"
     },
     "featureGates": {
       "description": "A comma-separated list of feature gates that should be enabled on the\ncontroller pod.",
@@ -4922,6 +4921,77 @@
             },
             "type": "object"
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "podmonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podmonitor"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "servicemonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "servicemonitor"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {

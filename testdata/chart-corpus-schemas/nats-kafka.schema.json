@@ -102,15 +102,8 @@
             "description": "fullnameOverride overrides nats-kafka.fullname"
           },
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nameOverride overrides nats-kafka.name"
+            "description": "nameOverride overrides nats-kafka.name",
+            "type": "string"
           },
           "namespaceOverride": {
             "anyOf": [
@@ -174,6 +167,93 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "fullnameOverride overrides nats-kafka.fullname"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "nameOverride overrides nats-kafka.name"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "namespaceOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "namespaceOverride overrides nats-kafka.namespace"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -212,8 +292,24 @@
       "additionalProperties": false,
       "properties": {
         "additionalArguments": {
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ]
         },
         "additionalVolumeMounts": {
           "anyOf": [

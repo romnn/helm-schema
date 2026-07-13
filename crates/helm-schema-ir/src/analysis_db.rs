@@ -68,6 +68,14 @@ impl IrAnalysisDb {
         self.file_sources.get(path).map(String::as_str)
     }
 
+    /// Indexed chart file paths (templates plus `.Files.Get` sources),
+    /// sorted for deterministic enumeration.
+    pub(crate) fn file_source_paths(&self) -> Vec<&str> {
+        let mut paths: Vec<&str> = self.file_sources.keys().map(String::as_str).collect();
+        paths.sort_unstable();
+        paths
+    }
+
     #[tracing::instrument(skip_all)]
     fn define_tree(&self, name: &str) -> Option<tree_sitter::Tree> {
         if let Some(tree) = self.define_trees.borrow().get(name) {

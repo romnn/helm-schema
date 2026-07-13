@@ -13,6 +13,30 @@ use helm_schema_core::Predicate;
 
 use super::ValuePathContext;
 
+fn is_files_get_function(function: &str) -> bool {
+    function == "Files.Get" || function.ends_with(".Files.Get")
+}
+
+/// Split a printf format around a single `%s` verb; any other verb (or a
+/// second `%s`) makes the produced name undecodable.
+fn single_string_verb_split(format: &str) -> Option<(&str, &str)> {
+    let index = format.find("%s")?;
+    let (prefix, rest) = format.split_at(index);
+    let suffix = &rest[2..];
+    (!prefix.contains('%') && !suffix.contains('%')).then_some((prefix, suffix))
+}
+
+/// Runtime transform facts a condition expression binds on its direct
+/// `.Values` subjects: unconditional string contracts, `default`-guarded
+/// string contracts (the raw path is consumed only when truthy), and
+/// total-conversion shape erasure.
+#[derive(Debug, Default)]
+pub(crate) struct ConditionTransformFacts {
+    pub(crate) string_contracts: BTreeSet<String>,
+    pub(crate) defaulted_string_contracts: BTreeSet<String>,
+    pub(crate) shape_erased: BTreeSet<String>,
+}
+
 impl ValuePathContext<'_> {
     /// Transform facts a condition expression binds on its DIRECT selector
     /// subjects (anything that went through another call is derived text
@@ -23,13 +47,11 @@ impl ValuePathContext<'_> {
     /// - total conversions (`eq (.Values.x | toString) "true"`,
     ///   `int .Values.x`) render ANY input — shape erasure, exactly like
     ///   the same conversion at a render site or in a `set` expression.
-    pub(crate) fn condition_transform_facts(
-        &self,
-        expr: &TemplateExpr,
-    ) -> (BTreeSet<String>, BTreeSet<String>) {
+    pub(crate) fn condition_transform_facts(&self, expr: &TemplateExpr) -> ConditionTransformFacts {
         fn is_string_consumer(function: &str) -> bool {
             (is_string_transform_function(function) && !is_total_stringification_function(function))
                 || is_string_predicate_function(function)
+                || helm_schema_ast::is_string_splitting_function(function)
         }
         fn is_total_conversion(function: &str) -> bool {
             is_total_stringification_function(function) || is_total_numeric_cast_function(function)
@@ -44,25 +66,53 @@ impl ValuePathContext<'_> {
             )
             .then(|| context.paths_for_expr(subject))
         }
+        /// A subject of the form `<selector> | default <fallback>` (any
+        /// argument order for the prefix form): the raw path is consumed
+        /// only when TRUTHY, so its contract is conditional.
+        fn defaulted_subject_paths(
+            context: &ValuePathContext<'_>,
+            subject: &TemplateExpr,
+        ) -> Option<BTreeSet<String>> {
+            match subject.deparen() {
+                TemplateExpr::Pipeline(stages) if stages.len() == 2 => {
+                    let is_default = matches!(
+                        stages[1].deparen(),
+                        TemplateExpr::Call { function, .. } if function == "default"
+                    );
+                    is_default
+                        .then(|| subject_paths(context, &stages[0]))
+                        .flatten()
+                }
+                TemplateExpr::Call { function, args }
+                    if function == "default" && args.len() == 2 =>
+                {
+                    subject_paths(context, &args[1])
+                }
+                _ => None,
+            }
+        }
         fn walk(
             context: &ValuePathContext<'_>,
             expr: &TemplateExpr,
-            contracts: &mut BTreeSet<String>,
-            erased: &mut BTreeSet<String>,
+            facts: &mut ConditionTransformFacts,
         ) {
             match expr.deparen() {
                 TemplateExpr::Call { function, args } => {
-                    if let Some(subject) = args.last()
-                        && let Some(paths) = subject_paths(context, subject)
-                    {
-                        if is_string_consumer(function) {
-                            contracts.extend(paths);
-                        } else if is_total_conversion(function) {
-                            erased.extend(paths);
+                    if let Some(subject) = args.last() {
+                        if let Some(paths) = subject_paths(context, subject) {
+                            if is_string_consumer(function) {
+                                facts.string_contracts.extend(paths);
+                            } else if is_total_conversion(function) {
+                                facts.shape_erased.extend(paths);
+                            }
+                        } else if is_string_consumer(function)
+                            && let Some(paths) = defaulted_subject_paths(context, subject)
+                        {
+                            facts.defaulted_string_contracts.extend(paths);
                         }
                     }
                     for arg in args {
-                        walk(context, arg, contracts, erased);
+                        walk(context, arg, facts);
                     }
                 }
                 TemplateExpr::Pipeline(stages) => {
@@ -73,13 +123,15 @@ impl ValuePathContext<'_> {
                         // stage decides the raw value's fate. A consumer
                         // after a total conversion (`x | toString | trim`)
                         // operates on the converted text and claims nothing
-                        // about the raw input.
+                        // about the raw input; a consumer after `default`
+                        // sees the raw value only when it is truthy.
                         let first_classifier = stages.iter().skip(1).find_map(|stage| match stage
                             .deparen()
                         {
                             TemplateExpr::Call { function, .. }
                                 if is_string_consumer(function)
-                                    || is_total_conversion(function) =>
+                                    || is_total_conversion(function)
+                                    || function == "default" =>
                             {
                                 Some(function.as_str())
                             }
@@ -87,25 +139,38 @@ impl ValuePathContext<'_> {
                         });
                         match first_classifier {
                             Some(function) if is_string_consumer(function) => {
-                                contracts.extend(paths.iter().cloned());
+                                facts.string_contracts.extend(paths.iter().cloned());
+                            }
+                            Some("default") => {
+                                let consumes = stages.iter().skip(1).any(|stage| {
+                                    matches!(
+                                        stage.deparen(),
+                                        TemplateExpr::Call { function, .. }
+                                            if is_string_consumer(function)
+                                    )
+                                });
+                                if consumes {
+                                    facts
+                                        .defaulted_string_contracts
+                                        .extend(paths.iter().cloned());
+                                }
                             }
                             Some(_) => {
-                                erased.extend(paths);
+                                facts.shape_erased.extend(paths);
                             }
                             None => {}
                         }
                     }
                     for stage in stages {
-                        walk(context, stage, contracts, erased);
+                        walk(context, stage, facts);
                     }
                 }
                 _ => {}
             }
         }
-        let mut contracts = BTreeSet::new();
-        let mut erased = BTreeSet::new();
-        walk(self, expr, &mut contracts, &mut erased);
-        (contracts, erased)
+        let mut facts = ConditionTransformFacts::default();
+        walk(self, expr, &mut facts);
+        facts
     }
 
     /// Whether `condition_predicate_expr` represents this expression
@@ -131,6 +196,10 @@ impl ValuePathContext<'_> {
                 "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
                 "empty" => self.empty_predicate(args).is_some(),
+                "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
+                function if is_files_get_function(function) => {
+                    self.files_get_printf_predicate(args).is_some()
+                }
                 _ => false,
             },
             _ => false,
@@ -167,8 +236,87 @@ impl ValuePathContext<'_> {
             "eq" => self.value_comparison_predicate(args, false),
             "ne" => self.value_comparison_predicate(args, true),
             "typeIs" | "kindIs" => self.type_is_predicate(args),
+            "coalesce" => self.coalesce_truthy_predicate(args),
+            function if is_files_get_function(function) => self
+                .files_get_printf_predicate(args)
+                .or_else(|| self.truthy_predicate(expr)),
             _ => self.truthy_predicate(expr),
         }
+    }
+
+    /// `coalesce` returns its first non-empty argument, so the RESULT is
+    /// truthy exactly when some argument is truthy: the disjunction is the
+    /// precise condition, unlike the generic all-paths-truthy fallback.
+    fn coalesce_truthy_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let mut arms = Vec::new();
+        for arg in args {
+            arms.push(self.truthy_predicate(arg)?);
+        }
+        if arms.len() == 1 {
+            return arms.pop();
+        }
+        (!arms.is_empty()).then_some(Predicate::Or(arms))
+    }
+
+    /// `Files.Get (printf "files/profile-%s.yaml" X)` truthiness decodes
+    /// to a FINITE predicate: the chart ships a fixed file set, so the
+    /// read is non-empty exactly when X names one of the matching files'
+    /// captured segments. With several candidate paths for X (a
+    /// `coalesce`), the union over paths is wider than the render-time
+    /// pick, which rows tolerate; its negation only holds when NO
+    /// candidate carries a valid name — states where rendering fails for
+    /// every pick — so fail-branch negation stays sound.
+    fn files_get_printf_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [arg] = args else {
+            return None;
+        };
+        let TemplateExpr::Call {
+            function,
+            args: printf_args,
+        } = arg.deparen()
+        else {
+            return None;
+        };
+        if function != "printf" || printf_args.len() != 2 {
+            return None;
+        }
+        let format = match printf_args[0].deparen() {
+            TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => value,
+            _ => return None,
+        };
+        let (prefix, suffix) = single_string_verb_split(format)?;
+        let subject_paths = self.paths_for_expr(&printf_args[1]);
+        if subject_paths.is_empty() {
+            return None;
+        }
+        let names: Vec<String> = self
+            .fragment_context
+            .analysis_db
+            .file_source_paths()
+            .into_iter()
+            .filter_map(|path| {
+                path.strip_prefix(prefix)
+                    .and_then(|rest| rest.strip_suffix(suffix))
+                    .filter(|middle| !middle.is_empty())
+                    .map(str::to_string)
+            })
+            .collect();
+        if names.is_empty() {
+            return None;
+        }
+        let mut arms = Vec::new();
+        for path in &subject_paths {
+            for name in &names {
+                arms.push(Predicate::from(Guard::Eq {
+                    path: path.clone(),
+                    value: GuardValue::string(name),
+                }));
+            }
+        }
+        if arms.len() == 1 {
+            return arms.pop();
+        }
+        Some(Predicate::Or(arms))
     }
 
     fn and_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {

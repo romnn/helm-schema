@@ -50,6 +50,34 @@
     {
       "if": {
         "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
           "namespaced": {
             "$ref": "#/$defs/helm-truthy"
           }
@@ -70,6 +98,63 @@
                 "type": "string"
               }
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "namespaceOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "serviceAccountName": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "serviceAccountName"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "serviceAccountName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true"
           }
         },
         "type": "object"
@@ -177,6 +262,63 @@
     },
     "jetstream": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "properties": {
         "additionalArgs": {
           "anyOf": [

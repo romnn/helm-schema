@@ -31,6 +31,34 @@
   "allOf": [
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "not": {
           "properties": {
             "global": {
@@ -103,6 +131,34 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -2327,12 +2383,92 @@
             },
             "env": {
               "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {},
+                  "then": {
+                    "properties": {
+                      "existing": {
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "secret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "secret"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
+                      }
+                    },
+                    "type": "object"
+                  }
+                }
+              ],
               "description": "Support for extra environment variables.",
               "properties": {
                 "existing": {
                   "anyOf": [
                     {
-                      "items": {},
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "type": "array"
                     },
                     {
@@ -2381,6 +2517,41 @@
                       "allOf": [
                         {
                           "if": {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              },
+                              {
+                                "properties": {
+                                  "ALERT_ADDITIONAL_INFO": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "ALERT_ADDITIONAL_INFO"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "then": {
+                            "properties": {
+                              "ALERT_ADDITIONAL_INFO": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "if": {
                             "$ref": "#/$defs/helm-truthy"
                           },
                           "then": {
@@ -2407,6 +2578,111 @@
                                 "type": [
                                   "string",
                                   "null"
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "if": {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              },
+                              {
+                                "properties": {
+                                  "ALERT_ON_RELOAD": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "ALERT_ON_RELOAD"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "then": {
+                            "properties": {
+                              "ALERT_ON_RELOAD": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "if": {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              },
+                              {
+                                "properties": {
+                                  "ALERT_SINK": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "ALERT_SINK"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "then": {
+                            "properties": {
+                              "ALERT_SINK": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "if": {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              },
+                              {
+                                "properties": {
+                                  "ALERT_WEBHOOK_URL": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "ALERT_WEBHOOK_URL"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "then": {
+                            "properties": {
+                              "ALERT_WEBHOOK_URL": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
                                 ]
                               }
                             },

@@ -295,6 +295,34 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "not": {
           "properties": {
             "kubeRBACProxy": {
@@ -356,6 +384,34 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -1157,9 +1213,25 @@
       "description": "List of additional cli arguments to configure kube-state-metrics\nfor example: --enable-gzip-encoding, --log-file, etc.\nall the possible args can be found here: https://github.com/kubernetes/kube-state-metrics/blob/main/docs/developer/cli-arguments.md"
     },
     "extraManifests": {
-      "description": "Extra manifests to deploy as an array\n- apiVersion: v1\nkind: ConfigMap\nmetadata:\nlabels:\nname: prometheus-extra\ndata:\nextra-data: \"value\"",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Extra manifests to deploy as an array\n- apiVersion: v1\nkind: ConfigMap\nmetadata:\nlabels:\nname: prometheus-extra\ndata:\nextra-data: \"value\""
     },
     "fullnameOverride": {
       "type": [
@@ -1492,6 +1564,12 @@
                 {
                   "items": {},
                   "type": "array"
+                },
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "null"
                 },
                 {
                   "type": "object"
@@ -2382,6 +2460,12 @@
                   "type": "array"
                 },
                 {
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                },
+                {
                   "type": "object"
                 }
               ]
@@ -2638,9 +2722,25 @@
           ]
         },
         "loadBalancerSourceRanges": {
-          "description": "Only allow access to the loadBalancerIP from these IPs",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Only allow access to the loadBalancerIP from these IPs"
         },
         "nodePort": {},
         "port": {

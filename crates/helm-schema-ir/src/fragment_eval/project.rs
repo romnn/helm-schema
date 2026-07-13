@@ -68,6 +68,9 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
     contract.extend_shape_erased_value_paths(document.shape_erased_paths.iter().cloned());
     contract.extend_string_contract_value_paths(document.string_contract_paths.iter().cloned());
     contract.extend_direct_range_source_paths(document.direct_range_source_paths.iter().cloned());
+    contract.extend_destructured_range_source_paths(
+        document.destructured_range_source_paths.iter().cloned(),
+    );
     contract.extend_fail_conditions(document.fail_conditions.iter().cloned());
     contract
 }

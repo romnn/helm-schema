@@ -59,6 +59,20 @@ impl ValuePathContext<'_> {
         env
     }
 
+    /// Fail captures an expression's evaluation records on its own
+    /// (structural accessor contracts like `dig`'s intermediate-map
+    /// requirement). Header sites absorb these because a condition or
+    /// `with` header EVALUATES its expression even when the branch is not
+    /// taken.
+    pub(crate) fn expression_fail_captures(
+        &self,
+        expr: &TemplateExpr,
+    ) -> Vec<crate::eval_effect::FailCapture> {
+        eval_expr(expr, &self.expression_eval_env())
+            .effects
+            .helper_fails
+    }
+
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
         eval_expr(expr, &self.expression_eval_env())
             .effects

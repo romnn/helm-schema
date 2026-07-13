@@ -267,3 +267,40 @@ fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contr
     sim_assert_eq!(have: finalized.uses(), want: contract.clone().finalize().uses());
     sim_assert_eq!(have: finalized.schema_signals(), want: &contract.finalize().into_schema_signals());
 }
+
+#[test]
+fn contract_ir_activation_guards_gate_fail_captures() {
+    // A cross-path `fail` conjunction from a dependency chart becomes a
+    // document-level terminal clause; the dependency's `condition:`
+    // activation guard must survive into that clause, or the validator
+    // would reject values documents that keep the dependency disabled.
+    let mut contract = ContractIr::default();
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: vec![
+            helm_schema_core::Predicate::truthy_path("auth.enabled"),
+            helm_schema_core::Predicate::truthy_path("auth.usePassword"),
+        ],
+        approximate_condition_paths: std::collections::BTreeSet::new(),
+        direct_ranged_paths: std::collections::BTreeSet::new(),
+    }]);
+
+    contract.append_guards_to_all_uses(&[Guard::Truthy {
+        path: "redis.enabled".to_string(),
+    }]);
+
+    let signals = contract.finalize().into_schema_signals();
+    sim_assert_eq!(
+        have: signals.terminal_clauses(),
+        want: &[vec![
+            helm_schema_core::ConditionalGuard::Truthy {
+                path: "auth.enabled".to_string(),
+            },
+            helm_schema_core::ConditionalGuard::Truthy {
+                path: "auth.usePassword".to_string(),
+            },
+            helm_schema_core::ConditionalGuard::Truthy {
+                path: "redis.enabled".to_string(),
+            },
+        ]]
+    );
+}

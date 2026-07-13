@@ -8,6 +8,10 @@ use helm_schema_core::{
 };
 
 #[tracing::instrument(skip_all)]
+#[expect(
+    clippy::too_many_arguments,
+    reason = "each parameter is one interpreter fact channel; a struct would               mirror the same nine fields without adding an invariant"
+)]
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     type_hints: &BTreeMap<String, BTreeSet<String>>,
@@ -15,15 +19,27 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     shape_erased_value_paths: &BTreeSet<String>,
     string_contract_value_paths: &BTreeSet<String>,
     direct_range_source_paths: &BTreeSet<String>,
+    destructured_range_source_paths: &BTreeSet<String>,
     fail_conditions: &[crate::eval_effect::FailCapture],
     dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
+    let mut terminal_clauses = Vec::new();
     for contract_use in uses {
-        record_contract_use(&mut paths, contract_use, direct_range_source_paths);
+        record_contract_use(
+            &mut paths,
+            contract_use,
+            direct_range_source_paths,
+            destructured_range_source_paths,
+        );
     }
     for capture in fail_conditions {
-        record_fail_conjunction(&mut paths, capture, direct_range_source_paths);
+        record_fail_conjunction(
+            &mut paths,
+            &mut terminal_clauses,
+            capture,
+            direct_range_source_paths,
+        );
     }
     for value_path in dependency_values_root_fragments {
         if !value_path.trim().is_empty() {
@@ -82,7 +98,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             acc.guarded_type_hints.extend(schema_types);
         }
     }
-    finish_schema_signals(paths)
+    finish_schema_signals(paths, terminal_clauses)
 }
 
 #[derive(Default)]
@@ -147,6 +163,8 @@ impl PathSchemaFactsAccumulator {
         self.facts.accepted_dependency_values_root_fragment |=
             facts.accepted_dependency_values_root_fragment;
         self.facts.is_ranged_source |= facts.is_ranged_source;
+        self.facts.is_direct_ranged_source |= facts.is_direct_ranged_source;
+        self.facts.has_destructured_range_use |= facts.has_destructured_range_use;
         self.facts.is_partial_scalar_value_path |= facts.is_partial_scalar_value_path;
         self.facts.is_nullable |= facts.is_nullable;
         self.facts.merge_render_use_facts(facts);
@@ -211,6 +229,7 @@ fn record_contract_use(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
     direct_range_source_paths: &BTreeSet<String>,
+    destructured_range_source_paths: &BTreeSet<String>,
 ) {
     let conjunctions = contract_use
         .condition
@@ -224,6 +243,7 @@ fn record_contract_use(
             contract_use,
             &predicates,
             direct_range_source_paths,
+            destructured_range_source_paths,
         );
     }
 }
@@ -233,6 +253,7 @@ fn record_contract_use_conjunction(
     contract_use: &ContractUse,
     predicates: &[Predicate],
     direct_range_source_paths: &BTreeSet<String>,
+    destructured_range_source_paths: &BTreeSet<String>,
 ) {
     let has_source = !contract_use.source_expr.trim().is_empty();
     let path_is_empty = contract_use.path.0.is_empty();
@@ -357,12 +378,24 @@ fn record_contract_use_conjunction(
             // accumulator's self-guarded default untouched.
             let facts = ContractValuePathFacts {
                 is_ranged_source: true,
+                is_direct_ranged_source: direct_range_source_paths.contains(&path),
+                has_destructured_range_use: destructured_range_source_paths.contains(&path),
                 is_nullable: true,
                 ..ContractValuePathFacts::default()
             };
             path_accumulator(paths, &path).facts.record_facts(facts);
             if direct_range_source_paths.contains(&path) {
-                record_guarded_range_read(paths, &path, predicates);
+                if let Some(parent) = path.strip_suffix(".*")
+                    && !path_contains_wildcard(parent)
+                {
+                    // A nested range over a MEMBER identity (`range
+                    // $values` where `$values` holds each member of a
+                    // directly ranged map): every member must itself be
+                    // rangeable, or the inner range aborts rendering.
+                    record_member_range_requirement(paths, parent, predicates);
+                } else {
+                    record_guarded_range_read(paths, &path, predicates);
+                }
             }
         }
     }
@@ -430,10 +463,57 @@ fn record_guarded_range_read(
 /// undecodable conditions and must never be negated).
 fn record_fail_conjunction(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
     capture: &crate::eval_effect::FailCapture,
     direct_range_source_paths: &BTreeSet<String>,
 ) {
-    let conjunction = &capture.conjunction;
+    // An approximate enclosing condition with NO resolvable paths (the
+    // empty marker) could gate anything, and a `$local` name leaking into
+    // predicate paths means the condition lowering lost the real subject:
+    // both make negation unsound for the whole capture.
+    if capture.approximate_condition_paths.contains("") {
+        return;
+    }
+    if capture
+        .conjunction
+        .iter()
+        .flat_map(Predicate::value_paths)
+        .any(|path| path.starts_with('$'))
+    {
+        return;
+    }
+    // A multi-path `with` header (`with (coalesce a b)`) contributes its
+    // EXACT disjunction plus one `With` row marker per path; the markers
+    // annotate rows, and reading them as conjuncts would narrow the
+    // failure to "every path set" when the disjunction alone is the
+    // condition. Drop a marker whenever a disjunction over its path is
+    // present.
+    let or_covered: BTreeSet<&str> = capture
+        .conjunction
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Or(items) => Some(items.iter().filter_map(|item| match item {
+                Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) => {
+                    Some(path.as_str())
+                }
+                _ => None,
+            })),
+            _ => None,
+        })
+        .flatten()
+        .collect();
+    let conjunction: Vec<Predicate> = capture
+        .conjunction
+        .iter()
+        .filter(|predicate| {
+            !matches!(
+                predicate,
+                Predicate::Guard(Guard::With { path }) if or_covered.contains(path.as_str())
+            )
+        })
+        .cloned()
+        .collect();
+    let conjunction = &conjunction;
     let ranged: Vec<&str> = conjunction
         .iter()
         .filter_map(|predicate| match predicate {
@@ -502,6 +582,29 @@ fn record_fail_conjunction(
         }
     }
     if requirements.is_empty() || test_paths.len() != 1 {
+        // No single-path test survived. When the WHOLE conjunction lowers
+        // to conditional guards — mutual exclusions and other cross-path
+        // validator formulas — it becomes a document-level terminal
+        // clause: no valid values document may satisfy all of it. Ranged
+        // captures have member semantics no root clause can express, and
+        // an approximate enclosing condition would make the clause fire
+        // too widely.
+        if ranged.is_none()
+            && capture.approximate_condition_paths.is_empty()
+            && !conjunction.is_empty()
+        {
+            let clause = conjunction
+                .iter()
+                .map(|predicate| predicate_to_guard(predicate, None))
+                .collect::<Option<Vec<_>>>();
+            if let Some(mut clause) = clause {
+                clause.sort();
+                clause.dedup();
+                if !clause.is_empty() && !terminal_clauses.contains(&clause) {
+                    terminal_clauses.push(clause);
+                }
+            }
+        }
         return;
     }
     let target = match ranged {
@@ -584,6 +687,11 @@ fn requirements_from_negation(
             (!member.contains('.'))
                 .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
         }
+        // Dropping an equality arm weakens the requirement (fewer values
+        // rejected), which is the safe direction: `required` emptiness
+        // tests carry `= null` / `= ""` arms whose negations have no
+        // member-schema spelling.
+        Predicate::Guard(Guard::Eq { .. }) => Some(Vec::new()),
         _ => None,
     }
 }
@@ -625,9 +733,45 @@ fn requirements_from_holding(
     }
 }
 
+/// A directly ranged path whose LITERAL members another template reads is
+/// object-shaped whenever it is truthy: field access on a non-object
+/// aborts rendering, while an empty (falsy) collection skips the member
+/// templates. This closes the union bypass where the range's array
+/// alternative would admit values the member reads reject.
+fn record_ranged_member_read_implications(paths: &mut BTreeMap<String, ContractPathAccumulator>) {
+    let ranged: Vec<String> = paths
+        .iter()
+        .filter(|(_, acc)| acc.facts.facts.is_direct_ranged_source)
+        .map(|(path, _)| path.clone())
+        .collect();
+    for path in ranged {
+        let member_prefix = format!("{path}.");
+        let has_literal_member_reads = paths.iter().any(|(candidate, acc)| {
+            acc.referenced
+                && candidate
+                    .strip_prefix(&member_prefix)
+                    .is_some_and(|member| !member.starts_with('*'))
+        });
+        if !has_literal_member_reads {
+            continue;
+        }
+        let implication = ContractFailImplication {
+            outer_guards: vec![ConditionalGuard::Truthy { path: path.clone() }],
+            per_member: false,
+            requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
+        };
+        let acc = path_accumulator(paths, &path);
+        if !acc.fail_implications.contains(&implication) {
+            acc.fail_implications.push(implication);
+        }
+    }
+}
+
 fn finish_schema_signals(
     mut paths: BTreeMap<String, ContractPathAccumulator>,
+    mut terminal_clauses: Vec<Vec<ConditionalGuard>>,
 ) -> ContractSchemaSignals {
+    record_ranged_member_read_implications(&mut paths);
     let referenced_paths = paths
         .iter()
         .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))
@@ -657,7 +801,9 @@ fn finish_schema_signals(
             (value_path, evidence)
         })
         .collect();
-    ContractSchemaSignals::new(schema_evidence_by_value_path)
+    terminal_clauses.sort();
+    terminal_clauses.dedup();
+    ContractSchemaSignals::new(schema_evidence_by_value_path, terminal_clauses)
 }
 
 fn path_accumulator<'a>(
@@ -1043,10 +1189,21 @@ fn guard_to_conditional_guard(
         Guard::TypeIs {
             path: value_path,
             schema_type,
-        } => Some(ConditionalGuard::TypeIs {
-            path: path(value_path)?,
-            schema_type: schema_type.clone(),
-        }),
+        } => {
+            // A type test on the TARGET itself is load-bearing dispatch
+            // structure (the `else` of `if typeIs "string" x` scopes an
+            // object overlay to non-strings); only truthiness self-guards
+            // are the row's own firing condition and stay stripped.
+            let path = if target_value_path == Some(value_path.as_str()) {
+                (!path_contains_wildcard(value_path)).then(|| value_path.clone())?
+            } else {
+                path(value_path)?
+            };
+            Some(ConditionalGuard::TypeIs {
+                path,
+                schema_type: schema_type.clone(),
+            })
+        }
         Guard::Range { .. }
         | Guard::With { .. }
         | Guard::Default { .. }
@@ -1067,6 +1224,41 @@ fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool 
                 | Guard::Default { path }
         ) if path == source_expr
     )
+}
+
+/// A nested range over each member of `parent` (`p.*` ranged): members
+/// must be rangeable wherever the outer conditions hold.
+fn record_member_range_requirement(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    parent: &str,
+    predicates: &[Predicate],
+) {
+    let mut outer_guards = Vec::new();
+    for predicate in predicates {
+        if matches!(
+            predicate,
+            Predicate::Guard(Guard::Range { path }) if path == parent || path == &format!("{parent}.*")
+        ) {
+            continue;
+        }
+        if let Some(guard) = predicate_to_guard(predicate, None) {
+            outer_guards.push(guard);
+        }
+    }
+    outer_guards.sort();
+    outer_guards.dedup();
+    let implication = ContractFailImplication {
+        outer_guards,
+        per_member: true,
+        requirements: vec![FailValueRequirement::Iterable {
+            allow_integer: false,
+        }],
+    };
+    let acc = path_accumulator(paths, parent);
+    acc.referenced = true;
+    if !acc.fail_implications.contains(&implication) {
+        acc.fail_implications.push(implication);
+    }
 }
 
 /// Whether a conjunct tests the TYPE of `source_expr`, positively or under

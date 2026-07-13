@@ -38,17 +38,27 @@
       "type": "integer"
     },
     "extraEnv": {
-      "items": {
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "type": "string"
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {}
+            },
+            "type": "object"
           },
-          "value": {}
+          "type": "array"
         },
-        "type": "object"
-      },
-      "type": "array"
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
     },
     "image": {
       "additionalProperties": false,
@@ -111,9 +121,6 @@
                       "type": "object"
                     },
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"

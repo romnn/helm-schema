@@ -4,6 +4,8 @@
 //! bindings join across branches with the same rules as the symbolic
 //! walker.
 
+use std::collections::BTreeSet;
+
 use helm_schema_ast::{TemplateExpr, TemplateHeader, range_variable_name_expr};
 use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
@@ -298,9 +300,32 @@ impl Interpreter<'_> {
         }
     }
 
+    /// Absorb a truthy⇒string fail capture for each path: a condition's
+    /// string consumer fails template evaluation when the raw value is
+    /// present (truthy) but not a string. Ambient guards join through the
+    /// same absorption the helper-body `fail` lane uses.
+    pub(super) fn absorb_condition_string_captures(&mut self, paths: &BTreeSet<String>) {
+        let captures: Vec<crate::eval_effect::FailCapture> = paths
+            .iter()
+            .map(|path| crate::eval_effect::FailCapture {
+                conjunction: vec![
+                    Predicate::truthy_path(path.clone()),
+                    Predicate::from(crate::Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: "string".to_string(),
+                    })
+                    .negated(),
+                ],
+                approximate_condition_paths: BTreeSet::new(),
+                direct_ranged_paths: BTreeSet::new(),
+            })
+            .collect();
+        self.absorb_helper_fails(&captures);
+    }
+
     fn activate_if(&mut self, header: Option<&TemplateHeader>) -> Option<PathCondition> {
         let header = header?;
-        let (mut predicate, faithful, bound_values, (string_contracts, shape_erased)) = {
+        let (mut predicate, faithful, bound_values, transform_facts) = {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
@@ -309,10 +334,40 @@ impl Interpreter<'_> {
                 context.condition_transform_facts(header.expr()),
             )
         };
+        // A string consumer whose subject passes through `default`
+        // (`semverCompare ">=1.19" (.Values.kubeVersion | default …)`)
+        // sees the raw value only when it is truthy: a conditional
+        // contract that binds at condition-EVALUATION time, so it is
+        // absorbed before this header's own fidelity sentinel — only
+        // ENCLOSING approximations can gate whether evaluation happens.
+        self.absorb_condition_string_captures(&transform_facts.defaulted_string_contracts);
+        // Structural accessor contracts the header expression records on
+        // its own (`dig`'s intermediate-map requirement) bind the same
+        // way: the expression evaluates whenever control reaches the
+        // header.
+        let header_captures = self
+            .value_path_context()
+            .expression_fail_captures(header.expr());
+        self.absorb_helper_fails(&header_captures);
+        // A string-consuming call in the condition (`regexMatch`, `replace`,
+        // …) fails template evaluation for non-string subjects: that is a
+        // runtime string contract, exactly like a rendered `trunc`. Under
+        // ambient predicates the row lanes only hint; the truthy⇒string
+        // capture carries the enforceable arm through the same fail
+        // machinery the defaulted form uses.
+        if !self.active_predicates.is_empty() {
+            self.absorb_condition_string_captures(&transform_facts.string_contracts.clone());
+        }
         if !faithful {
             let paths = self
                 .value_path_context()
                 .resolved_values_paths_from_expr(header.expr());
+            if paths.is_empty() {
+                // An undecodable condition with no resolvable paths could
+                // gate ANYTHING; the empty marker poisons fail negation
+                // globally under it.
+                self.approximate_condition_paths.push(String::new());
+            }
             self.approximate_condition_paths.extend(paths);
         }
         for path in &bound_values {
@@ -321,11 +376,8 @@ impl Interpreter<'_> {
         // A total conversion in the condition
         // (`eq (.Values.x | toString) "true"`) renders any input, exactly
         // like the same conversion in a `set` expression or render hole.
-        self.shape_erased_paths.extend(shape_erased);
-        // A string-consuming call in the condition (`regexMatch`, `replace`,
-        // …) fails template evaluation for non-string subjects: that is a
-        // runtime string contract, exactly like a rendered `trunc`.
-        for path in string_contracts {
+        self.shape_erased_paths.extend(transform_facts.shape_erased);
+        for path in transform_facts.string_contracts {
             let sink = if self.hint_scope_is_unconditional(&path) {
                 &mut self.type_hints
             } else {
@@ -388,6 +440,26 @@ impl Interpreter<'_> {
             .extend(hole.effects.shape_erased_paths.iter().cloned());
         self.string_contract_paths
             .extend(hole.effects.string_contract_paths.iter().cloned());
+        // The helper's own guarded reads carry its type-dispatch facts
+        // (`kindIs "string" .Values.x` arms prove the chart handles that
+        // kind), and its `fail` captures its rejected complement: both
+        // hold wherever the condition is EVALUATED, so they absorb here
+        // exactly like at a value-position call.
+        let suppressed: std::collections::BTreeSet<&String> = hole
+            .effects
+            .helper_rendered
+            .iter()
+            .flat_map(|row| row.meta.suppress_predicate_paths.iter())
+            .chain(hole.effects.helper_suppressed_paths.iter())
+            .collect();
+        let claims: std::collections::BTreeSet<String> = hole
+            .effects
+            .helper_reads
+            .iter()
+            .map(|read| read.values_path.clone())
+            .collect();
+        self.absorb_helper_reads_with_suppression(&hole.effects.helper_reads, &suppressed, &claims);
+        self.absorb_helper_fails(&hole.effects.helper_fails);
         let mut paths: std::collections::BTreeSet<String> = hole
             .effects
             .helper_reads
@@ -432,10 +504,20 @@ impl Interpreter<'_> {
                 context.with_body_fragment_value_expr(header.expr()),
             )
         };
+        // Structural accessor contracts recorded by evaluating the header
+        // expression (`with dig … .Values.x`) bind whenever control
+        // reaches the header, before this header's own fidelity sentinel.
+        let header_captures = self
+            .value_path_context()
+            .expression_fail_captures(header.expr());
+        self.absorb_helper_fails(&header_captures);
         if !faithful {
             let paths = self
                 .value_path_context()
                 .resolved_values_paths_from_expr(header.expr());
+            if paths.is_empty() {
+                self.approximate_condition_paths.push(String::new());
+            }
             self.approximate_condition_paths.extend(paths);
         }
         // The with-predicate is pushed before its reads so the reads carry
@@ -478,22 +560,41 @@ impl Interpreter<'_> {
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
         }
-        // The header's collection expression, unwrapped from its variable
-        // bindings (`range $k, $v := <source>` iterates `<source>`).
-        let mut range_source = header.expr();
-        while let TemplateExpr::VariableDefinition { value, .. }
-        | TemplateExpr::Assignment { value, .. } = range_source
-        {
-            range_source = value;
-        }
-        let (source_paths, direct_path) = {
+        // A range over a helper's output (`range (include … . | fromJson)`)
+        // evaluates the helper whenever control reaches the header: its
+        // guarded reads carry the body's type-dispatch facts and its `fail`
+        // captures its rejected complement, absorbed like any call site.
+        self.helper_condition_claim_paths(header.expr());
+        let range_source = header_range_source(header.expr());
+        let (source_paths, direct_path, direct_variable_path) = {
             let context = self.value_path_context();
+            let direct_path = context.single_direct_iterable_range_path_expr(range_source);
+            // A range over a VARIABLE holding a single member identity
+            // (`range $values` where `$values` is one member of an outer
+            // ranged map) iterates that member directly; the fn above
+            // only sees literal selectors. The binding must be the path's
+            // IDENTITY: a variable holding derived data (`$namespaces :=
+            // splitList "," .Values.x`) iterates the derivation, and
+            // stamping the iterable domain on the influencing path would
+            // reject the string the split actually consumes.
+            let direct_variable_path = match (&direct_path, range_source) {
+                (None, TemplateExpr::Variable(name)) => context
+                    .template_bindings
+                    .get(name)
+                    .cloned()
+                    .and_then(AbstractValue::without_widened)
+                    .map(|value| value.paths())
+                    .filter(|paths| paths.len() == 1)
+                    .and_then(|paths| paths.into_iter().next()),
+                _ => None,
+            };
             (
                 context
                     .resolved_values_paths_from_expr(header.expr())
                     .into_iter()
                     .collect::<Vec<_>>(),
-                context.single_direct_iterable_range_path_expr(range_source),
+                direct_path,
+                direct_variable_path,
             )
         };
         let shape = self.range_body_shape(nodes);
@@ -508,10 +609,17 @@ impl Interpreter<'_> {
         if let Some(path) = &direct_path {
             self.direct_range_source_paths.insert(path.clone());
             if destructured {
+                self.destructured_range_source_paths.insert(path.clone());
                 self.type_hints
                     .entry(path.clone())
                     .or_default()
                     .insert("object".to_string());
+            }
+        }
+        if let Some(path) = &direct_variable_path {
+            self.direct_range_source_paths.insert(path.clone());
+            if destructured {
+                self.destructured_range_source_paths.insert(path.clone());
             }
         }
 
@@ -573,7 +681,7 @@ impl Interpreter<'_> {
         if let Some(iterations) = iterations {
             return (Some(Predicate::all(own)), extra, Some(iterations));
         }
-        if let Some(path) = &direct_path {
+        if let Some(path) = direct_path.as_ref().or(direct_variable_path.as_ref()) {
             self.active_direct_ranged_paths.push(path.clone());
         }
         let mut dot = direct_path
@@ -610,6 +718,8 @@ impl Interpreter<'_> {
         self.dot_stack.push(dot);
         (Some(Predicate::all(own)), extra, None)
     }
+
+    // (header_range_source lives at module scope below.)
 
     /// The iterable's fragment value, for the helper-scope range model.
     fn range_iterable_fragment_value(&mut self, header: &TemplateHeader) -> Option<AbstractValue> {
@@ -940,4 +1050,16 @@ struct RangeBodyShape {
     /// The rendered indent of the body's templated entries (the key hole's
     /// explicit `nindent` width when present, else the line indent).
     dynamic_entry_indent: Option<usize>,
+}
+
+/// The header's collection expression, unwrapped from its variable
+/// bindings (`range $k, $v := <source>` iterates `<source>`).
+fn header_range_source(expr: &TemplateExpr) -> &TemplateExpr {
+    let mut source = expr;
+    while let TemplateExpr::VariableDefinition { value, .. }
+    | TemplateExpr::Assignment { value, .. } = source
+    {
+        source = value;
+    }
+    source
 }

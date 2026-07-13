@@ -413,6 +413,35 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "(string) Override the full name of the chart."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -654,6 +683,35 @@
               "string",
               "null"
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "(string) Override the name of the chart."
           }
         },
         "type": "object"
@@ -955,6 +1013,35 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "txtPrefix": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "txtPrefix"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "txtSuffix": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "txtSuffix"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -977,25 +1064,51 @@
               "additionalProperties": {},
               "properties": {
                 "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "podAffinityTerm": {
-                        "additionalProperties": {},
+                  "anyOf": [
+                    {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "podAffinityTerm": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "labelSelector": {}
+                            },
+                            "type": "object"
+                          },
+                          "weight": {}
+                        },
                         "type": "object"
                       },
-                      "weight": {}
+                      "type": "array"
                     },
-                    "type": "object"
-                  },
-                  "type": "array"
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
                 },
                 "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  "type": "array"
+                  "anyOf": [
+                    {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "labelSelector": {}
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
                 }
               },
               "type": "object"
@@ -1004,25 +1117,51 @@
               "additionalProperties": {},
               "properties": {
                 "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "podAffinityTerm": {
-                        "additionalProperties": {},
+                  "anyOf": [
+                    {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "podAffinityTerm": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "labelSelector": {}
+                            },
+                            "type": "object"
+                          },
+                          "weight": {}
+                        },
                         "type": "object"
                       },
-                      "weight": {}
+                      "type": "array"
                     },
-                    "type": "object"
-                  },
-                  "type": "array"
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
                 },
                 "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  "type": "array"
+                  "anyOf": [
+                    {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "labelSelector": {}
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
                 }
               },
               "type": "object"
@@ -1127,11 +1266,24 @@
       "description": "(string) [DNS policy](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy) for the pod, if not set the default will be used."
     },
     "domainFilters": {
-      "description": "Limit possible target zones by domain suffixes.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Limit possible target zones by domain suffixes."
     },
     "enableGatewayListenerSets": {
       "description": "if `true`, the Gateway API ListenerSet flag will be enabled.",
@@ -1156,11 +1308,24 @@
       "description": "[Environment variables](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/) for the `external-dns` container."
     },
     "excludeDomains": {
-      "description": "Intentionally exclude domains from being managed.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Intentionally exclude domains from being managed."
     },
     "extraArgs": {
       "allOf": [
@@ -1450,11 +1615,24 @@
       "type": "string"
     },
     "managedRecordTypes": {
-      "description": "Record types to manage (default: A, AAAA, CNAME)",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Record types to manage (default: A, AAAA, CNAME)"
     },
     "nameOverride": {
       "anyOf": [
@@ -2454,11 +2632,24 @@
       "description": "Source namespace to watch for Kubernetes resources other than Gateway API gateways.\nUsed only when `namespaced=true`. Defaults to Release.Namespace"
     },
     "sources": {
-      "description": "_Kubernetes_ resources to monitor for DNS entries.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "_Kubernetes_ resources to monitor for DNS entries."
     },
     "terminationGracePeriodSeconds": {
       "description": "(int) Termination grace period for the `Pod` in seconds."
@@ -2479,12 +2670,25 @@
       "description": "Node taints which will be tolerated for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)."
     },
     "topologySpreadConstraints": {
-      "description": "Topology spread constraints for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided one will be created from the pod selector labels.",
-      "items": {
-        "additionalProperties": {},
-        "type": "object"
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Topology spread constraints for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided one will be created from the pod selector labels."
     },
     "triggerLoopOnEvent": {
       "description": "If `true`, triggers run loop on create/update/delete events in addition of regular interval.",

@@ -24,7 +24,9 @@ use base_schema::{ConditionalTargetIndex, classify_base};
 use condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
-use overlay_lowering::{append_conditional_schemas, collect_conditional_schemas};
+use overlay_lowering::{
+    append_conditional_schemas, append_terminal_clauses, collect_conditional_schemas,
+};
 use path_resolver::PathSchemaResolver;
 use provider_definitions::{
     extract_provider_definitions, extract_repeated_provider_payloads, insert_definitions_into_root,
@@ -100,6 +102,24 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     draft07_root_document(root_schema)
 }
 
+/// The domain Go's `range` iterates without aborting: collections and nil
+/// render; integer counts iterate through Helm's `--set` int64 channel
+/// (JSON Schema cannot separate that from the failing values-file float64
+/// spelling, so the renderable channel wins) unless the loop body reads
+/// member structure integers cannot provide; strings and non-integral
+/// numbers fail in every channel.
+pub(crate) fn runtime_iterable_schema(allow_integer: bool) -> serde_json::Value {
+    let mut arms = vec![
+        serde_json::json!({ "type": "array" }),
+        serde_json::json!({ "type": "object" }),
+    ];
+    if allow_integer {
+        arms.push(serde_json::json!({ "type": "integer" }));
+    }
+    arms.push(serde_json::json!({ "type": "null" }));
+    serde_json::json!({ "anyOf": arms })
+}
+
 #[tracing::instrument(skip_all)]
 fn build_root_schema(
     contract_schema_signals: &ContractSchemaSignals,
@@ -149,6 +169,11 @@ fn build_root_schema(
     }
 
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
+    append_terminal_clauses(
+        &mut root_schema,
+        contract_schema_signals.terminal_clauses(),
+        values_yaml_doc,
+    );
     // A serialized path's schema is deliberately unconstrained; the
     // declared-default filler must keep the slot present without re-typing
     // it, exactly like a conditional target.
@@ -157,6 +182,11 @@ fn build_root_schema(
         if resolved_path.used_as_serialized {
             default_fill_skip_paths.insert(resolved_path.path_segments.clone());
         }
+    }
+    // A directly ranged path accepts the runtime iterable domain, which is
+    // wider than any declared default; the filler must not re-type it.
+    for value_path in contract_schema_signals.direct_ranged_value_paths() {
+        default_fill_skip_paths.insert(split_value_path(value_path));
     }
     root_schema.merge_missing_values_yaml_defaults_under_roots(
         values_yaml_doc,

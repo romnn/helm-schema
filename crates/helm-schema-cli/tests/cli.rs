@@ -1620,12 +1620,43 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
         .wrap_err("generate schema")?;
 
     // `fullnameOverride` is consumed by `trunc` directly, a real runtime
-    // string contract, so its typing stays. `nameOverride` only reaches the
-    // render as a printf data argument (any value formats), so its slot is
-    // unconstrained and no branch narrows it.
+    // string contract, so its typing stays and the self-guarded consumer
+    // additionally emits the truthy⇒string arm. `nameOverride` only
+    // reaches the render as a printf data argument (any value formats), so
+    // its slot is unconstrained and no branch narrows it.
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": {
+            "helm-truthy": {
+                "anyOf": [
+                    { "const": true },
+                    { "not": { "const": 0 }, "type": "number" },
+                    { "minLength": 1, "type": "string" },
+                    { "minItems": 1, "type": "array" },
+                    { "minProperties": 1, "type": "object" }
+                ]
+            }
+        },
         "additionalProperties": false,
+        "allOf": [
+            {
+                "if": {
+                    "properties": {
+                        "fullnameOverride": { "$ref": "#/$defs/helm-truthy" }
+                    },
+                    "required": ["fullnameOverride"],
+                    "type": "object"
+                },
+                "then": {
+                    "properties": {
+                        "fullnameOverride": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        }
+                    },
+                    "type": "object"
+                }
+            }
+        ],
         "properties": {
             "fullnameOverride": {
                 "anyOf": [

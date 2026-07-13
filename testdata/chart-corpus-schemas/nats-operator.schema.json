@@ -65,90 +65,26 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "antiAffinity": {
-                "enum": [
-                  "hard"
-                ]
-              }
-            },
-            "required": [
-              "antiAffinity"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "antiAffinity": {}
-                      },
-                      "required": [
-                        "antiAffinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "antiAffinity": {
-                        "enum": [
-                          "soft"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "antiAffinity"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "antiAffinity": {}
-                      },
-                      "required": [
-                        "antiAffinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "antiAffinity": {
-                        "not": {
-                          "enum": [
-                            "hard"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "antiAffinity"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
           }
-        ]
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       },
       "then": {
         "properties": {
           "nameOverride": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },

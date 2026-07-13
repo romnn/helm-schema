@@ -411,6 +411,34 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -430,17 +458,49 @@
       "description": "Add `affinities` to the Crossplane pod deployment."
     },
     "args": {
-      "description": "Add custom arguments to the Crossplane pod.",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Add custom arguments to the Crossplane pod."
     },
     "configuration": {
       "additionalProperties": false,
       "properties": {
         "packages": {
-          "description": "A list of Configuration packages to install.",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "A list of Configuration packages to install."
         }
       },
       "type": "object"
@@ -491,22 +551,64 @@
       ]
     },
     "extraEnvVarsCrossplane": {
-      "additionalProperties": {},
-      "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
     },
     "extraEnvVarsCrossplaneInit": {
-      "additionalProperties": {},
-      "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
     },
     "extraEnvVarsRBACManager": {
       "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
     },
     "extraObjects": {
-      "description": "To add arbitrary Kubernetes Objects during a Helm Install",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "To add arbitrary Kubernetes Objects during a Helm Install"
     },
     "extraVolumeMountsCrossplane": {
       "description": "Add custom `volumeMounts` to the Crossplane pod. Supports template expressions."
@@ -518,9 +620,25 @@
       "additionalProperties": false,
       "properties": {
         "packages": {
-          "description": "A list of Function packages to install",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "A list of Function packages to install"
         }
       },
       "type": "object"
@@ -852,16 +970,48 @@
       "additionalProperties": false,
       "properties": {
         "defaultActivations": {
-          "description": "Define entries for the default managed resource activation policy. If defined, a default MRAP will contain these activations.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Define entries for the default managed resource activation policy. If defined, a default MRAP will contain these activations."
         },
         "packages": {
-          "description": "A list of Provider packages to install.",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "A list of Provider packages to install."
         }
       },
       "type": "object"
@@ -1226,9 +1376,20 @@
       "additionalProperties": false,
       "properties": {
         "customAnnotations": {
-          "additionalProperties": {},
-          "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
         }
       },
       "type": "object"
