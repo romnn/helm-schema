@@ -122,22 +122,6 @@
             ],
             "description": "additionalLabels -- Labels to add to each object of the chart."
           },
-          "affinity": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\naffinity -- Affinity for pod assignment"
-          },
           "autoscalingGroups": {
             "anyOf": [
               {
@@ -152,22 +136,6 @@
               }
             ],
             "description": "- color: green\n- shape: circle\nautoscalingGroups -- For AWS, Azure AKS, Exoscale or Magnum. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: asg1<br />\nmaxSize: 2<br />\nminSize: 1\n</pre>\nFor Hetzner Cloud, the `instanceType` and `region` keys are also required.\n<pre>\n- name: mypool<br />\nmaxSize: 2<br />\nminSize: 1<br />\ninstanceType: CPX21<br />\nregion: FSN1\n</pre>\n- name: asg1\nmaxSize: 2\nminSize: 1\n- name: asg2\nmaxSize: 2\nminSize: 1"
-          },
-          "containerSecurityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "containerSecurityContext -- [Security context for container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true"
           },
           "customArgs": {
             "anyOf": [
@@ -195,41 +163,9 @@
                 },
                 "description": "deployment.annotations -- Annotations to add to the Deployment object.",
                 "type": "object"
-              },
-              "selector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "deployment.selector -- Labels for Deployment `spec.selector.matchLabels`."
               }
             },
             "type": "object"
-          },
-          "dnsConfig": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "dnsConfig -- [Pod's DNS Config](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config)\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
           },
           "dnsPolicy": {
             "description": "dnsPolicy -- Defaults to `ClusterFirst`. Valid values are:\n`ClusterFirstWithHostNet`, `ClusterFirst`, `Default` or `None`.\nIf autoscaler does not depend on cluster DNS, recommended to set this to `Default`.",
@@ -243,9 +179,6 @@
               },
               {
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -262,9 +195,6 @@
               },
               {
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -368,36 +298,9 @@
             "type": "object"
           },
           "initContainers": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "initContainers -- Any additional init containers."
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nodeSelector -- Node labels for pod assignment. Ref: https://kubernetes.io/docs/user-guide/node-selection/."
+            "description": "initContainers -- Any additional init containers.",
+            "items": {},
+            "type": "array"
           },
           "podAnnotations": {
             "anyOf": [
@@ -456,89 +359,19 @@
             "description": "replicaCount -- Desired number of pods",
             "type": "integer"
           },
-          "resources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "resources -- Pod resource requests and limits.\nlimits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi"
-          },
           "revisionHistoryLimit": {
             "description": "revisionHistoryLimit -- The number of revisions to keep.",
             "type": "integer"
           },
-          "securityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "securityContext -- [Security context for pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nrunAsNonRoot: true\nrunAsUser: 65534\nrunAsGroup: 65534\nseccompProfile:\ntype: RuntimeDefault"
-          },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "tolerations -- List of node taints to tolerate (requires Kubernetes >= 1.6)."
+            "description": "tolerations -- List of node taints to tolerate (requires Kubernetes >= 1.6).",
+            "items": {},
+            "type": "array"
           },
           "topologySpreadConstraints": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "topologySpreadConstraints -- You can use topology spread constraints to control how Pods are spread across your cluster among failure-domains such as regions, zones, nodes, and other user-defined topology domains. (requires Kubernetes >= 1.19).\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cluster-autoscaler"
-          },
-          "updateStrategy": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "updateStrategy -- [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy)\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 0\ntype: RollingUpdate"
+            "description": "topologySpreadConstraints -- You can use topology spread constraints to control how Pods are spread across your cluster among failure-domains such as regions, zones, nodes, and other user-defined topology domains. (requires Kubernetes >= 1.19).\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cluster-autoscaler",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -3815,6 +3648,12 @@
           "extraVolumeSecrets": {
             "anyOf": [
               {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
                 "properties": {},
                 "type": "object"
               },
@@ -3828,20 +3667,9 @@
             "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath"
           },
           "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "extraVolumes -- Additional volumes.\n- name: ssl-certs\nhostPath:\npath: /etc/ssl/certs/ca-bundle.crt"
+            "description": "extraVolumes -- Additional volumes.\n- name: ssl-certs\nhostPath:\npath: /etc/ssl/certs/ca-bundle.crt",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -4876,6 +4704,98 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "extraArgs": {
+                "properties": {
+                  "expander": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "expander"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "extraArgs"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "extraArgs": {
+                        "properties": {
+                          "expander": {}
+                        },
+                        "required": [
+                          "expander"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "extraArgs"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "extraArgs": {
+                      "properties": {
+                        "expander": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "expander"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "extraArgs"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "extraArgs": {
+            "description": "extraArgs -- Additional container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nEverything after the first _ will be ignored allowing the use of multi-string arguments.",
+            "properties": {
+              "expander": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -4956,14 +4876,12 @@
           "extraEnvConfigMaps": {
             "anyOf": [
               {
+                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
               {
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -5057,14 +4975,12 @@
           "extraEnvSecrets": {
             "anyOf": [
               {
+                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
               {
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -5214,20 +5130,9 @@
       "then": {
         "properties": {
           "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "extraVolumeMounts -- Additional volumes to mount.\n- name: ssl-certs\nmountPath: /etc/ssl/certs/ca-certificates.crt\nreadOnly: true"
+            "description": "extraVolumeMounts -- Additional volumes to mount.\n- name: ssl-certs\nmountPath: /etc/ssl/certs/ca-certificates.crt\nreadOnly: true",
+            "items": {},
+            "type": "array"
           },
           "extraVolumeSecrets": {
             "additionalProperties": {
@@ -5387,6 +5292,12 @@
         "properties": {
           "extraVolumeSecrets": {
             "anyOf": [
+              {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
               {
                 "properties": {},
                 "type": "object"
@@ -6884,130 +6795,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "selector": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "selector"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "autoscalingGroups": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "autoscalingGroups"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "clusterName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "clusterName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "labels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "podLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "podLabels -- Labels to add to each pod."
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -7746,19 +7533,6 @@
       "description": "additionalLabels -- Labels to add to each object of the chart."
     },
     "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\naffinity -- Affinity for pod assignment"
     },
     "autoDiscovery": {
@@ -7901,19 +7675,6 @@
       "description": "clusterAPIWorkloadKubeconfigPath -- Path to kubeconfig for connecting to Cluster API managed workloadcluster, only used if `clusterAPIMode=kubeconfig-kubeconfig or kubeconfig-incluster`"
     },
     "containerSecurityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "containerSecurityContext -- [Security context for container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true"
     },
     "customArgs": {
@@ -7928,38 +7689,12 @@
           "type": "object"
         },
         "selector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "deployment.selector -- Labels for Deployment `spec.selector.matchLabels`."
         }
       },
       "type": "object"
     },
     "dnsConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "dnsConfig -- [Pod's DNS Config](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config)\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
     },
     "dnsPolicy": {
@@ -7990,111 +7725,15 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ]
           }
-        },
-        {
-          "if": {
-            "type": "string"
-          },
-          "then": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      ],
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "string"
         }
       ],
       "description": "Priorities Expander\nexpanderPriorities -- The expanderPriorities is used if `extraArgs.expander` contains `priority` and expanderPriorities is also set with the priorities.\nIf `extraArgs.expander` contains `priority`, then expanderPriorities is used to define cluster-autoscaler-priority-expander priorities.\nSee: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/expander/priority/readme.md"
     },
     "extraArgs": {
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "expander": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "expander"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "expander": {}
-                        },
-                        "required": [
-                          "expander"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "expander": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "expander"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "expander": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "description": "extraArgs -- Additional container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nEverything after the first _ will be ignored allowing the use of multi-string arguments."
     },
     "extraEnv": {
@@ -8220,19 +7859,6 @@
       "description": "nameOverride -- String to partially override `cluster-autoscaler.fullname` template (will maintain the release name)"
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "nodeSelector -- Node labels for pod assignment. Ref: https://kubernetes.io/docs/user-guide/node-selection/."
     },
     "podAnnotations": {
@@ -8276,22 +7902,6 @@
                   }
                 ],
                 "description": "podDisruptionBudget.annotations -- Annotations to add to the PodDisruptionBudget."
-              },
-              "selector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "podDisruptionBudget.selector -- Override labels for PodDisruptionBudget `spec.selector.matchLabels`."
               }
             },
             "type": "object"
@@ -8321,19 +7931,6 @@
         },
         "minAvailable": {},
         "selector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "podDisruptionBudget.selector -- Override labels for PodDisruptionBudget `spec.selector.matchLabels`."
         }
       },
@@ -8462,20 +8059,9 @@
           "then": {
             "properties": {
               "additionalRules": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "rbac.additionalRules -- Additional rules for role/clusterrole\n- apiGroups:\n- infrastructure.cluster.x-k8s.io\nresources:\n- kubemarkmachinetemplates\nverbs:\n- get\n- list\n- watch"
+                "description": "rbac.additionalRules -- Additional rules for role/clusterrole\n- apiGroups:\n- infrastructure.cluster.x-k8s.io\nresources:\n- kubemarkmachinetemplates\nverbs:\n- get\n- list\n- watch",
+                "items": {},
+                "type": "array"
               },
               "annotations": {
                 "anyOf": [
@@ -8486,9 +8072,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -8560,20 +8143,9 @@
           "then": {
             "properties": {
               "additionalRules": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "rbac.additionalRules -- Additional rules for role/clusterrole\n- apiGroups:\n- infrastructure.cluster.x-k8s.io\nresources:\n- kubemarkmachinetemplates\nverbs:\n- get\n- list\n- watch"
+                "description": "rbac.additionalRules -- Additional rules for role/clusterrole\n- apiGroups:\n- infrastructure.cluster.x-k8s.io\nresources:\n- kubemarkmachinetemplates\nverbs:\n- get\n- list\n- watch",
+                "items": {},
+                "type": "array"
               },
               "serviceAccount": {
                 "properties": {
@@ -8681,9 +8253,6 @@
                       },
                       {
                         "type": "array"
-                      },
-                      {
-                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -8868,19 +8437,6 @@
       "description": "replicaCount -- Desired number of pods"
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "resources -- Pod resource requests and limits.\nlimits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi"
     },
     "revisionHistoryLimit": {
@@ -8890,19 +8446,6 @@
       "description": "secretKeyRefNameOverride -- Overrides the name of the Secret to use when loading the secretKeyRef for AWS, Azure and Civo env variables"
     },
     "securityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "securityContext -- [Security context for pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nrunAsNonRoot: true\nrunAsUser: 65534\nrunAsGroup: 65534\nseccompProfile:\ntype: RuntimeDefault"
     },
     "service": {
@@ -8956,20 +8499,9 @@
                 "type": "string"
               },
               "externalIPs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "service.externalIPs -- List of IP addresses at which the service is available. Ref: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips."
+                "description": "service.externalIPs -- List of IP addresses at which the service is available. Ref: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips.",
+                "items": {},
+                "type": "array"
               },
               "labels": {
                 "anyOf": [
@@ -8990,40 +8522,13 @@
                 "type": "string"
               },
               "loadBalancerSourceRanges": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "service.loadBalancerSourceRanges -- List of IP CIDRs allowed access to load balancer (if supported)."
+                "description": "service.loadBalancerSourceRanges -- List of IP CIDRs allowed access to load balancer (if supported).",
+                "items": {},
+                "type": "array"
               },
               "portName": {
                 "description": "service.portName -- Name for service port.",
                 "type": "string"
-              },
-              "selector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "service.selector -- Override labels for Service `spec.selector`."
               },
               "servicePort": {
                 "description": "service.servicePort -- Service port to expose.",
@@ -9107,19 +8612,6 @@
           "description": "service.portName -- Name for service port."
         },
         "selector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "service.selector -- Override labels for Service `spec.selector`."
         },
         "servicePort": {
@@ -9191,9 +8683,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -9289,75 +8778,13 @@
       "description": "topologySpreadConstraints -- You can use topology spread constraints to control how Pods are spread across your cluster among failure-domains such as regions, zones, nodes, and other user-defined topology domains. (requires Kubernetes >= 1.19).\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cluster-autoscaler"
     },
     "updateStrategy": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "updateStrategy -- [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy)\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 0\ntype: RollingUpdate"
     },
     "vpa": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "containerPolicy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "vpa.containerPolicy -- [ContainerResourcePolicy](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler/v0.13.0/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L159). The containerName is always set to the deployment's container name. This value is required if VPA is enabled."
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "description": "vpa -- Configure a VerticalPodAutoscaler for the cluster-autoscaler Deployment.",
       "properties": {
         "containerPolicy": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "vpa.containerPolicy -- [ContainerResourcePolicy](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler/v0.13.0/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L159). The containerName is always set to the deployment's container name. This value is required if VPA is enabled."
         },
         "enabled": {

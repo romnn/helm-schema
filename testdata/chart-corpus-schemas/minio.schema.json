@@ -73,21 +73,6 @@
             ],
             "description": "Additional labels to include with deployment or statefulset"
           },
-          "affinity": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
           "deploymentUpdate": {
             "description": "Update strategy for Deployments",
             "properties": {
@@ -108,9 +93,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -121,36 +103,14 @@
             "type": "string"
           },
           "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Additional volumeMounts to minio container"
+            "description": "Additional volumeMounts to minio container",
+            "items": {},
+            "type": "array"
           },
           "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Additional volumes to minio container"
+            "description": "Additional volumes to minio container",
+            "items": {},
+            "type": "array"
           },
           "image": {
             "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
@@ -193,22 +153,6 @@
             },
             "type": "object"
           },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
-          },
           "podAnnotations": {
             "anyOf": [
               {
@@ -242,39 +186,28 @@
             "type": "string"
           },
           "resources": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
+            "properties": {
+              "requests": {
                 "additionalProperties": {},
+                "properties": {
+                  "memory": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ],
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/"
+            },
+            "type": "object"
           },
           "runtimeClassName": {
             "description": "Pod runtime class name\nref https://kubernetes.io/docs/concepts/containers/runtime-class/",
             "type": "string"
           },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -339,21 +272,6 @@
             ],
             "description": "Additional labels to include with deployment or statefulset"
           },
-          "affinity": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
           "environment": {
             "anyOf": [
               {
@@ -363,9 +281,6 @@
               },
               {
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -378,36 +293,14 @@
             "type": "string"
           },
           "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Additional volumeMounts to minio container"
+            "description": "Additional volumeMounts to minio container",
+            "items": {},
+            "type": "array"
           },
           "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Additional volumes to minio container"
+            "description": "Additional volumes to minio container",
+            "items": {},
+            "type": "array"
           },
           "image": {
             "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
@@ -450,22 +343,6 @@
             },
             "type": "object"
           },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
-          },
           "podAnnotations": {
             "anyOf": [
               {
@@ -499,20 +376,20 @@
             "type": "string"
           },
           "resources": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
+            "properties": {
+              "requests": {
                 "additionalProperties": {},
+                "properties": {
+                  "memory": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ],
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/"
+            },
+            "type": "object"
           },
           "runtimeClassName": {
             "description": "Pod runtime class name\nref https://kubernetes.io/docs/concepts/containers/runtime-class/",
@@ -528,34 +405,12 @@
             "type": "object"
           },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "topologySpreadConstraints": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -1368,176 +1223,32 @@
       "then": {
         "properties": {
           "containerSecurityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
+            "additionalProperties": {},
+            "properties": {
+              "readOnlyRootFilesystem": {
+                "type": "boolean"
               }
-            ]
+            },
+            "type": "object"
           },
           "securityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "additionalProperties": {},
+            "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
               },
-              {
-                "items": {},
-                "type": "array"
+              "fsGroup": {
+                "type": "integer"
               },
-              {
+              "fsGroupChangePolicy": {
                 "type": "string"
-              }
-            ],
-            "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "customCommandJob": {
-                "properties": {
-                  "securityContext": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "customCommandJob"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "customCommands": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "customCommands"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
               },
-              {
-                "properties": {
-                  "customCommands": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "customCommands"
-                ],
-                "type": "object"
+              "runAsGroup": {
+                "type": "integer"
               },
-              {
-                "properties": {
-                  "policies": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "policies"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "svcaccts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "svcaccts"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "customCommandJob": {
-            "description": "Additional Annotations for the Kubernetes Job customCommandJob",
-            "properties": {
-              "containerSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+              "runAsUser": {
+                "type": "integer"
               }
             },
             "type": "object"
@@ -1662,35 +1373,24 @@
                 "description": "- name: extra-policies\nmountPath: /mnt/extras/\nCommand to run after the main command on exit"
               },
               "extraVolumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "- name: extra-policies\nconfigMap:\nname: my-extra-policies-cm\nAdditional volumeMounts to add to the custom commands container when\nrunning the post-job."
+                "description": "- name: extra-policies\nconfigMap:\nname: my-extra-policies-cm\nAdditional volumeMounts to add to the custom commands container when\nrunning the post-job.",
+                "items": {},
+                "type": "array"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "requests": {
                     "additionalProperties": {},
+                    "properties": {
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -1821,20 +1521,9 @@
             "description": "Additional Annotations for the Kubernetes Job customCommandJob",
             "properties": {
               "extraVolumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional volumes to add to the post-job."
+                "description": "Additional volumes to add to the post-job.",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -1860,21 +1549,6 @@
           "postJob": {
             "description": "Merge jobs",
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -1902,19 +1576,8 @@
                 ]
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -2222,150 +1885,6 @@
             "type": "object"
           },
           {
-            "properties": {
-              "makeBucketJob": {
-                "properties": {
-                  "securityContext": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "makeBucketJob"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "customCommands": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "customCommands"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "policies": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "policies"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "svcaccts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "svcaccts"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "makeBucketJob": {
-            "description": "Additional Annotations for the Kubernetes Job makeBucketJob",
-            "properties": {
-              "containerSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "buckets": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "buckets"
-            ],
-            "type": "object"
-          },
-          {
             "anyOf": [
               {
                 "properties": {
@@ -2467,19 +1986,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "requests": {
                     "additionalProperties": {},
+                    "properties": {
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -2516,150 +2035,6 @@
                   },
                   {
                     "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "makePolicyJob": {
-                "properties": {
-                  "securityContext": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "makePolicyJob"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "policies": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "policies"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "customCommands": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "customCommands"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "policies": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "policies"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "svcaccts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "svcaccts"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "makePolicyJob": {
-            "description": "writeexamplepolicy policy grants creation or deletion of buckets with name\nstarting with example. In addition, grants objects write permissions on buckets starting with\nexample.\n- name: writeexamplepolicy\nstatements:\n- effect: Allow  # this is the default\nresources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:AbortMultipartUpload\"\n- \"s3:GetObject\"\n- \"s3:DeleteObject\"\n- \"s3:PutObject\"\n- \"s3:ListMultipartUploadParts\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:CreateBucket\"\n- \"s3:DeleteBucket\"\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nreadonlyexamplepolicy policy grants access to buckets with name starting with example.\nIn addition, grants objects read permissions on buckets starting with example.\n- name: readonlyexamplepolicy\nstatements:\n- resources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:GetObject\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nconditionsexample policy creates all access to example bucket with aws:username=\"johndoe\" and source ip range 10.0.0.0/8 and 192.168.0.0/24 only\n- name: conditionsexample\nstatements:\n- resources:\n- 'arn:aws:s3:::example/*'\nactions:\n- 's3:*'\nconditions:\n- StringEquals: '\"aws:username\": \"johndoe\"'\n- IpAddress: |\n\"aws:SourceIp\": [\n\"10.0.0.0/8\",\n\"192.168.0.0/24\"\n]\nAdditional Annotations for the Kubernetes Job makePolicyJob",
-            "properties": {
-              "containerSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
                   },
                   {
                     "type": "string"
@@ -2789,19 +2164,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "requests": {
                     "additionalProperties": {},
+                    "properties": {
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -2838,149 +2213,6 @@
                   },
                   {
                     "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "makeServiceAccountJob": {
-                "properties": {
-                  "securityContext": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "makeServiceAccountJob"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "svcaccts": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "svcaccts"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "customCommands": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "customCommands"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "policies": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "policies"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "svcaccts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "svcaccts"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "makeServiceAccountJob": {
-            "properties": {
-              "containerSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
                   },
                   {
                     "type": "string"
@@ -3109,19 +2341,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "requests": {
                     "additionalProperties": {},
+                    "properties": {
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -3158,165 +2390,6 @@
                   },
                   {
                     "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "makeUserJob": {
-                "properties": {
-                  "securityContext": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "makeUserJob"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "users": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "users"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "customCommands": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "customCommands"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "policies": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "policies"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "svcaccts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "svcaccts"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "makeUserJob": {
-            "description": "Additional Annotations for the Kubernetes Job makeUserJob",
-            "properties": {
-              "containerSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
                   },
                   {
                     "type": "string"
@@ -3461,19 +2534,19 @@
                 "description": "Command to run after the main command on exit"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "requests": {
                     "additionalProperties": {},
+                    "properties": {
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -4280,123 +3353,6 @@
         "allOf": [
           {
             "properties": {
-              "nodeSelector": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "nodeSelector"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "customCommands": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "customCommands"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "policies": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "policies"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "svcaccts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "svcaccts"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "postJob": {
-            "description": "Merge jobs",
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
               "postJob": {
                 "properties": {
                   "securityContext": {
@@ -4504,19 +3460,22 @@
             "description": "Merge jobs",
             "properties": {
               "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "fsGroup": {
+                    "type": "integer"
                   },
-                  {
-                    "type": "string"
+                  "runAsGroup": {
+                    "type": "integer"
+                  },
+                  "runAsUser": {
+                    "type": "integer"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -5514,21 +4473,7 @@
       ],
       "description": "Additional labels to include with deployment or statefulset"
     },
-    "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "affinity": {},
     "bucketRoot": {
       "description": "Override the root directory which the minio server should serve from.\nIf left empty, it defaults to the value of {{ .Values.mountPath }}\nIf defined, it must be a sub-directory of the path specified in {{ .Values.mountPath }}",
       "type": "string"
@@ -5801,21 +4746,7 @@
       "additionalProperties": {},
       "description": "Additional Annotations for the Kubernetes Job customCommandJob",
       "properties": {
-        "containerSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "containerSecurityContext": {},
         "exitCommand": {
           "description": "- name: extra-policies\nmountPath: /mnt/extras/\nCommand to run after the main command on exit"
         },
@@ -5980,8 +4911,7 @@
           "items": {},
           "type": "array"
         }
-      },
-      "type": "object"
+      }
     },
     "ignoreChartChecksums": {
       "description": "Typically the deployment/statefulset includes checksums of secrets/config,\nSo that when these change on a subsequent helm install, the deployment/statefulset\nis restarted. This can result in unnecessary restarts under GitOps tooling such as\nflux, so set to \"true\" to disable this behaviour.",
@@ -6136,21 +5066,7 @@
       "additionalProperties": {},
       "description": "Additional Annotations for the Kubernetes Job makeBucketJob",
       "properties": {
-        "containerSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "containerSecurityContext": {},
         "exitCommand": {
           "description": "Command to run after the main command on exit"
         },
@@ -6180,21 +5096,7 @@
       "additionalProperties": {},
       "description": "writeexamplepolicy policy grants creation or deletion of buckets with name\nstarting with example. In addition, grants objects write permissions on buckets starting with\nexample.\n- name: writeexamplepolicy\nstatements:\n- effect: Allow  # this is the default\nresources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:AbortMultipartUpload\"\n- \"s3:GetObject\"\n- \"s3:DeleteObject\"\n- \"s3:PutObject\"\n- \"s3:ListMultipartUploadParts\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:CreateBucket\"\n- \"s3:DeleteBucket\"\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nreadonlyexamplepolicy policy grants access to buckets with name starting with example.\nIn addition, grants objects read permissions on buckets starting with example.\n- name: readonlyexamplepolicy\nstatements:\n- resources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:GetObject\"\n- resources:\n- 'arn:aws:s3:::example*'\nactions:\n- \"s3:GetBucketLocation\"\n- \"s3:ListBucket\"\n- \"s3:ListBucketMultipartUploads\"\nconditionsexample policy creates all access to example bucket with aws:username=\"johndoe\" and source ip range 10.0.0.0/8 and 192.168.0.0/24 only\n- name: conditionsexample\nstatements:\n- resources:\n- 'arn:aws:s3:::example/*'\nactions:\n- 's3:*'\nconditions:\n- StringEquals: '\"aws:username\": \"johndoe\"'\n- IpAddress: |\n\"aws:SourceIp\": [\n\"10.0.0.0/8\",\n\"192.168.0.0/24\"\n]\nAdditional Annotations for the Kubernetes Job makePolicyJob",
       "properties": {
-        "containerSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "containerSecurityContext": {},
         "exitCommand": {
           "description": "Command to run after the main command on exit"
         },
@@ -6223,21 +5125,7 @@
     "makeServiceAccountJob": {
       "additionalProperties": {},
       "properties": {
-        "containerSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "containerSecurityContext": {},
         "exitCommand": {
           "description": "Command to run after the main command on exit"
         },
@@ -6267,21 +5155,7 @@
       "additionalProperties": {},
       "description": "Additional Annotations for the Kubernetes Job makeUserJob",
       "properties": {
-        "containerSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "containerSecurityContext": {},
         "exitCommand": {
           "description": "Command to run after the main command on exit"
         },
@@ -6384,22 +5258,6 @@
                       "string",
                       "null"
                     ]
-                  },
-                  "relabelConfigs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "for node metrics"
                   }
                 },
                 "type": "object"
@@ -6438,22 +5296,6 @@
                       "string",
                       "null"
                     ]
-                  },
-                  "relabelConfigsCluster": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "for cluster metrics"
                   }
                 },
                 "type": "object"
@@ -6500,35 +5342,9 @@
               "type": "boolean"
             },
             "relabelConfigs": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "for node metrics"
             },
             "relabelConfigsCluster": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "for cluster metrics"
             },
             "scrapeTimeout": {
@@ -6626,19 +5442,6 @@
       "type": "object"
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "oidc": {
@@ -6805,21 +5608,7 @@
       "additionalProperties": {},
       "description": "Merge jobs",
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -6831,21 +5620,7 @@
             }
           ]
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
         "podAnnotations": {
           "anyOf": [
             {

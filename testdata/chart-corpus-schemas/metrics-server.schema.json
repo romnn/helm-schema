@@ -448,34 +448,12 @@
                 "type": "string"
               },
               "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "relabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "scrapeTimeout": {
                 "type": "string"
@@ -1303,34 +1281,73 @@
                 "type": "object"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "requests": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "readOnlyRootFilesystem": {
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
+                  "runAsNonRoot": {
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "type": "integer"
+                  },
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -1395,27 +1412,7 @@
       },
       "type": "object"
     },
-    "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "affinity": {},
     "apiService": {
       "additionalProperties": {},
       "allOf": [
@@ -1564,27 +1561,7 @@
       ],
       "description": "Annotations to add to the deployment"
     },
-    "dnsConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "dnsConfig": {},
     "extraVolumeMounts": {
       "anyOf": [
         {
@@ -1699,27 +1676,7 @@
       "type": "object"
     },
     "nameOverride": {},
-    "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "nodeSelector": {},
     "podAnnotations": {
       "anyOf": [
         {
@@ -1759,27 +1716,7 @@
         }
       ]
     },
-    "podSecurityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "podSecurityContext": {},
     "priorityClassName": {},
     "rbac": {
       "additionalProperties": {},
@@ -2012,20 +1949,9 @@
                 "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
               },
               "secrets": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The list of secrets mountable by this service account.\nSee https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets"
+                "description": "The list of secrets mountable by this service account.\nSee https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -2457,25 +2383,6 @@
       ]
     },
     "updateStrategy": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 0\nmaxUnavailable: 1"
     }
   },

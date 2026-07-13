@@ -12,15 +12,20 @@ pub(crate) fn merge_explicit_empty_placeholder(
     is_empty_map: bool,
     collection_shape_known: bool,
     preserve_exact_off_state: bool,
+    fragment_total: bool,
 ) -> Value {
     if is_empty_map {
         if crate::schema_model::is_empty_schema(&schema) {
             // No merged shape evidence. When descendant rows describe the
             // collection elsewhere (a list-ranged source), the declared-empty
-            // default is purely the off-state; otherwise the chart iterates
-            // user-supplied entries and the map stays open.
+            // default is purely the off-state; a whole-value `toYaml` splice
+            // is TOTAL (F56), so the declared `{}` placeholder claims no
+            // shape there; otherwise the chart iterates user-supplied
+            // entries and the map stays open.
             return if collection_shape_known {
                 exact_empty_object_schema()
+            } else if fragment_total {
+                schema
             } else {
                 SchemaNode::unknown_object().into_value()
             };

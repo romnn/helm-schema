@@ -53,102 +53,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "resourceScope": {
-                    "enum": [
-                      "all"
-                    ]
-                  }
-                },
-                "required": [
-                  "resourceScope"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "resourceScope": {
-                    "enum": [
-                      "namespace"
-                    ]
-                  }
-                },
-                "required": [
-                  "resourceScope"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "_original": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "gatewayClasses": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "items": {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "properties": {
           "env": {
             "$ref": "#/$defs/helm-truthy"
@@ -225,24 +129,96 @@
       "then": {
         "properties": {
           "gatewayClasses": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "items": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {
+                    "enum": [
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {
+                    "enum": [
+                      "namespace"
+                    ]
+                  }
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "gatewayClasses": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
                 "type": "array"
               },
               {
-                "type": "integer"
+                "type": "object"
               },
               {
                 "type": "null"
-              },
-              {
-                "type": "string"
               }
             ]
           }
@@ -2371,51 +2347,9 @@
       },
       "type": "object"
     },
-    "_original": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "autoscaleBehavior": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "_original": {},
+    "affinity": {},
+    "autoscaleBehavior": {},
     "autoscaleEnabled": {},
     "autoscaleMax": {},
     "autoscaleMin": {},
@@ -2455,25 +2389,13 @@
     "deploymentLabels": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
+          "type": "array"
+        },
+        {
           "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "array"
         },
         {
           "type": "null"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "string"
         }
       ]
     },
@@ -2506,27 +2428,10 @@
         },
         {
           "type": "null"
-        },
-        {
-          "type": "object"
         }
       ]
     },
-    "envVarFrom": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "envVarFrom": {},
     "experimental": {
       "additionalProperties": {},
       "properties": {
@@ -2534,21 +2439,7 @@
       },
       "type": "object"
     },
-    "extraContainerArgs": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "extraContainerArgs": {},
     "gatewayClasses": {},
     "gateways": {},
     "global": {
@@ -2663,21 +2554,7 @@
           "type": "object"
         },
         "meshID": {},
-        "meshNetworks": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "meshNetworks": {},
         "multiCluster": {
           "additionalProperties": {},
           "properties": {
@@ -2815,8 +2692,7 @@
           ]
         },
         "variant": {}
-      },
-      "type": "object"
+      }
     },
     "hub": {
       "anyOf": [
@@ -2900,24 +2776,9 @@
       "properties": {
         "defaultProviders": {},
         "rootNamespace": {}
-      },
-      "type": "object"
+      }
     },
-    "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "nodeSelector": {},
     "ownerName": {
       "type": [
         "string",
@@ -2951,25 +2812,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
+          "type": "array"
+        },
+        {
           "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "array"
         },
         {
           "type": "null"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "string"
         }
       ]
     },
@@ -2991,21 +2840,7 @@
     "revisionTags": {},
     "rollingMaxSurge": {},
     "rollingMaxUnavailable": {},
-    "seccompProfile": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "seccompProfile": {},
     "serviceAccountAnnotations": {
       "anyOf": [
         {
@@ -3035,21 +2870,7 @@
     "sidecarInjectorWebhook": {
       "additionalProperties": {},
       "properties": {
-        "alwaysInjectSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "alwaysInjectSelector": {},
         "defaultTemplates": {
           "anyOf": [
             {
@@ -3068,45 +2889,19 @@
         },
         "enableNamespacesByDefault": {},
         "injectedAnnotations": {},
-        "neverInjectSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "neverInjectSelector": {},
         "reinvocationPolicy": {},
         "templates": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "agentgateway": {},
-                "gateway": {},
-                "grpc-agent": {},
-                "grpc-simple": {},
-                "kube-gateway": {},
-                "sidecar": {},
-                "waypoint": {}
-              },
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "additionalProperties": {},
+          "properties": {
+            "agentgateway": {},
+            "gateway": {},
+            "grpc-agent": {},
+            "grpc-simple": {},
+            "kube-gateway": {},
+            "sidecar": {},
+            "waypoint": {}
+          }
         }
       },
       "type": "object"
@@ -3197,36 +2992,8 @@
       },
       "type": "object"
     },
-    "tolerations": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "topologySpreadConstraints": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "tolerations": {},
+    "topologySpreadConstraints": {},
     "traceSampling": {},
     "trafficDistribution": {},
     "trustedZtunnelName": {},
@@ -3239,36 +3006,8 @@
         "string"
       ]
     },
-    "volumeMounts": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "volumes": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    }
+    "volumeMounts": {},
+    "volumes": {}
   },
   "type": "object"
 }

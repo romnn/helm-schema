@@ -3115,20 +3115,9 @@
                     ]
                   },
                   "extraEnv": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Use existing secret (ignores previous password)\nexistingSecret:\nCassandra related env vars to be configured on the concerned components"
+                    "description": "Use existing secret (ignores previous password)\nexistingSecret:\nCassandra related env vars to be configured on the concerned components",
+                    "items": {},
+                    "type": "array"
                   },
                   "keyspace": {
                     "type": "string"
@@ -3749,21 +3738,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "cmdlineParams": {
                 "anyOf": [
                   {
@@ -3792,20 +3766,9 @@
                 ]
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "timeout: 30000"
+                "description": "timeout: 30000",
+                "items": {},
+                "type": "array"
               },
               "extraSecretMounts": {
                 "anyOf": [
@@ -3831,21 +3794,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "podAnnotations": {
                 "anyOf": [
@@ -3875,67 +3823,29 @@
                 "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
               },
               "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                "additionalProperties": {},
+                "properties": {
+                  "runAsUser": {
+                    "type": "integer"
                   }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                },
+                "type": "object"
               },
               "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                "additionalProperties": {},
+                "properties": {
+                  "runAsUser": {
+                    "type": "integer"
                   }
-                ]
+                },
+                "type": "object"
               },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -4100,21 +4010,7 @@
       ],
       "properties": {
         "activeDeadlineSeconds": {},
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -4175,21 +4071,7 @@
           },
           "type": "object"
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
         "numberOfDays": {
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
         },
@@ -4220,21 +4102,7 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
         "schedule": {
           "description": "- name: ROLLOVER\nvalue: 'true'"
         },
@@ -4302,21 +4170,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "cmdlineParams": {
                 "anyOf": [
                   {
@@ -4345,19 +4198,19 @@
                 ]
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                  "type": "object"
+                },
+                "type": "array"
               },
               "extraSecretMounts": {
                 "anyOf": [
@@ -4383,21 +4236,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "podAnnotations": {
                 "anyOf": [
@@ -4427,67 +4265,20 @@
                 "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120\nEnd: Default values for the various components of Jaeger"
               },
               "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                "additionalProperties": {},
+                "properties": {
+                  "runAsUser": {
+                    "type": "integer"
                   }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                },
+                "type": "object"
               },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -4654,21 +4445,7 @@
       ],
       "properties": {
         "activeDeadlineSeconds": {},
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -4728,21 +4505,7 @@
           },
           "type": "object"
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
         "podAnnotations": {
           "anyOf": [
             {
@@ -4770,37 +4533,9 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
         "schedule": {},
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
@@ -4862,21 +4597,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "cmdlineParams": {
                 "anyOf": [
                   {
@@ -4905,19 +4625,19 @@
                 ]
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                  "type": "object"
+                },
+                "type": "array"
               },
               "extraSecretMounts": {
                 "anyOf": [
@@ -4948,19 +4668,8 @@
                 "description": "ttlSecondsAfterFinished: 120",
                 "properties": {
                   "extraEnv": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "podAnnotations": {
                     "anyOf": [
@@ -4994,21 +4703,6 @@
                 },
                 "type": "object"
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "podAnnotations": {
                 "anyOf": [
                   {
@@ -5037,67 +4731,20 @@
                 "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
               },
               "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                "additionalProperties": {},
+                "properties": {
+                  "runAsUser": {
+                    "type": "integer"
                   }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                },
+                "type": "object"
               },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -5264,21 +4911,7 @@
       ],
       "properties": {
         "activeDeadlineSeconds": {},
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -5396,21 +5029,7 @@
           },
           "type": "object"
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
         "podAnnotations": {
           "anyOf": [
             {
@@ -5438,37 +5057,9 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
         "schedule": {},
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
@@ -5605,21 +5196,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "args": {
                 "anyOf": [
                   {
@@ -5639,50 +5215,17 @@
                 "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "extraVolumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "- name: badger-data\npersistentVolumeClaim:\nclaimName: jaeger-badger-data\n- name: badger-data\nmountPath: /badger"
+                "description": "- name: badger-data\npersistentVolumeClaim:\nclaimName: jaeger-badger-data\n- name: badger-data\nmountPath: /badger",
+                "items": {},
+                "type": "array"
               },
               "extraVolumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "image": {
                 "properties": {
@@ -5691,22 +5234,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "resources:\nlimits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
               },
               "podLabels": {
                 "anyOf": [
@@ -5722,52 +5249,22 @@
                 ]
               },
               "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "fsGroup": {
+                    "type": "integer"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "runAsGroup": {
+                    "type": "integer"
                   },
-                  {
-                    "type": "string"
+                  "runAsUser": {
+                    "type": "integer"
                   }
-                ]
+                },
+                "type": "object"
               },
               "replicas": {
                 "type": "integer"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "serviceAccount": {
                 "properties": {
@@ -5777,50 +5274,9 @@
                 },
                 "type": "object"
               },
-              "strategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "topologySpreadConstraints": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -5892,129 +5348,36 @@
                     "description": "HTTPRoute apiVersion (defaults to \"gateway.networking.k8s.io/v1\" when empty)"
                   },
                   "filters": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "filters applied to requests that match this rule"
+                    "description": "filters applied to requests that match this rule",
+                    "items": {},
+                    "type": "array"
                   },
                   "matches": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
+                    "description": "matches define conditions used to match incoming requests against the rule.\nDefaults to a PathPrefix \"/\" match (mirrors the Ingress behavior above).",
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "path": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
                       },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "matches define conditions used to match incoming requests against the rule.\nDefaults to a PathPrefix \"/\" match (mirrors the Ingress behavior above)."
+                      "type": "object"
+                    },
+                    "type": "array"
                   },
                   "parentRefs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "parentRefs reference the Gateway(s) this HTTPRoute is attached to\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: http"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "ingress": {
-                "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
-                "properties": {
-                  "tls": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "description": "parentRefs reference the Gateway(s) this HTTPRoute is attached to\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: http",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -6099,21 +5462,7 @@
       ],
       "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "args": {
           "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/"
         },
@@ -6303,38 +5652,11 @@
               ],
               "description": "Used to create an Ingress record.\nhosts:\n- chart-example.local\nannotations:\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nlabels:\napp: jaeger\ntls:\nSecrets must be manually created in the namespace.\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
             },
-            "tls": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "tls": {}
           },
           "type": "object"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "resources:\nlimits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
         },
         "podLabels": {
@@ -6353,36 +5675,8 @@
           "type": "object"
         },
         "replicas": {},
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
+        "securityContext": {},
         "service": {
           "additionalProperties": {},
           "properties": {
@@ -6433,21 +5727,7 @@
                 }
               ]
             },
-            "loadBalancerSourceRanges": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "loadBalancerSourceRanges": {},
             "type": {
               "type": [
                 "string",
@@ -6475,21 +5755,7 @@
           },
           "type": "object"
         },
-        "strategy": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "strategy": {},
         "tolerations": {
           "anyOf": [
             {
@@ -6504,21 +5770,7 @@
             }
           ]
         },
-        "topologySpreadConstraints": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "topologySpreadConstraints": {},
         "topologySpreadContraints": {
           "items": {},
           "type": "array"
@@ -6553,21 +5805,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "cmdlineParams": {
                 "anyOf": [
                   {
@@ -6582,20 +5819,9 @@
                 "type": "string"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "spark env var values at\nhttps://github.com/jaegertracing/spark-dependencies/blob/main/jaeger-spark-dependencies-elasticsearch/src/main/java/io/jaegertracing/spark/dependencies/elastic/ElasticsearchDependenciesJob.java\nES_NODES, ES_USERNAME, ES_PASSWORD are set via elasticsearch.env helper which uses storage.elasticsearch"
+                "description": "spark env var values at\nhttps://github.com/jaegertracing/spark-dependencies/blob/main/jaeger-spark-dependencies-elasticsearch/src/main/java/io/jaegertracing/spark/dependencies/elastic/ElasticsearchDependenciesJob.java\nES_NODES, ES_USERNAME, ES_PASSWORD are set via elasticsearch.env helper which uses storage.elasticsearch",
+                "items": {},
+                "type": "array"
               },
               "failedJobsHistoryLimit": {
                 "type": "integer"
@@ -6607,21 +5833,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "podAnnotations": {
                 "anyOf": [
@@ -6650,68 +5861,12 @@
                 ],
                 "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
               },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "successfulJobsHistoryLimit": {
                 "type": "integer"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -6955,21 +6110,7 @@
       "description": "https://github.com/jaegertracing/spark-dependencies",
       "properties": {
         "activeDeadlineSeconds": {},
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -7028,21 +6169,7 @@
           },
           "type": "object"
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
         "podAnnotations": {
           "anyOf": [
             {
@@ -7066,54 +6193,12 @@
           ],
           "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
         },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "podSecurityContext": {},
+        "resources": {},
         "schedule": {
           "description": "- name: ES_NODES_WAN_ONLY\nvalue: 'true'\n- name: ES_CLIENT_NODE_ONLY\nvalue: 'false'\n- name: ES_INDEX_PREFIX\nvalue: 'jaeger'\n- name: ES_INDEX_DATE_SEPARATOR\nvalue: '-'\n- name: ES_TIME_RANGE\nvalue: '24h'\n- name: ES_USE_ALIASES\nvalue: 'false'"
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
@@ -7253,25 +6338,6 @@
       "description": "User provided ui config: see https://www.jaegertracing.io/docs/latest/deployment/frontend-ui/#configuration for more examples and settings\n{\n\"dependencies\": {\n\"dagMaxNumServices\": 200,\n\"menuEnabled\": true\n},\n\"monitor\": {\n\"menuEnabled\": true\n},\n\"themes\": {\n\"enabled\": true\n},\n\"archiveEnabled\": true,\n\"tracking\": {\n\"gaID\": \"UA-000000-2\",\n\"trackErrors\": true\n},\n\"menu\": [\n{\n\"label\": \"About Jaeger\",\n\"items\": [\n{\n\"label\": \"GitHub\",\n\"url\": \"https://github.com/jaegertracing/jaeger\"\n},\n{\n\"label\": \"Docs\",\n\"url\": \"https://www.jaegertracing.io/docs/latest/\"\n}\n]\n}\n],\n\"search\": {\n\"maxLookback\": {\n\"label\": \"2 Days\",\n\"value\": \"2d\"\n},\n\"maxLimit\": 1500\n},\n\"linkPatterns\": [{\n\"type\": \"process\",\n\"key\": \"jaeger.version\",\n\"url\": \"https://github.com/jaegertracing/jaeger-client-java/releases/tag/#{jaeger.version}\",\n\"text\": \"Information about Jaeger release #{jaeger.version}\"\n},\n{\n\"type\": \"tags\",\n\"key\": \"uniqueId\",\n\"url\": \"https://mykibana.com/uniqueId=#{uniqueId}&traceId=#{trace.traceID}\",\n\"text\": \"Redirect to kibana to view log\"\n},\n{\n\"type\": \"traces\",\n\"url\": \"https://my-logs.server?from=#{startTime | add -60000000 | epoch_micros_to_date_iso}&to=#{endTime | add 60000000 | epoch_micros_to_date_iso}'\",\n\"text\": \"Redirect to kibana to view log with formatted dates\"\n}],\n\"traceIdDisplayLength\": 20,\n\"criticalPathEnabled\": true,\n\"topTagPrefixes\": [\"http.\", \"db.\"]\n}"
     },
     "userconfig": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "const": null
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "User provided config to override the config completely\nThere are several examples at https://github.com/jaegertracing/jaeger/tree/main/cmd/jaeger\nservice:\nextensions: [jaeger_storage, jaeger_query, healthcheckv2]\npipelines:\ntraces:\nreceivers: [otlp]\nprocessors: [batch]\nexporters: [jaeger_storage_exporter]\ntelemetry:\nresource:\nservice.name: jaeger\nmetrics:\nlevel: detailed\nreaders:\n- pull:\nexporter:\nprometheus:\nhost: 0.0.0.0\nport: 8888\nextensions:\nhealthcheckv2:\nuse_v2: true\nhttp:\nendpoint: 0.0.0.0:13133"
     }
   },

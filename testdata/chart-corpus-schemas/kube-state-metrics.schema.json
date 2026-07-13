@@ -485,95 +485,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "monitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitor"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "selfMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "selfMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "prometheus": {
-            "properties": {
-              "monitor": {
-                "properties": {
-                  "metrics": {
-                    "description": "selfMonitor endpoint",
-                    "properties": {
-                      "bearerTokenSecret": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -942,20 +853,9 @@
       "then": {
         "properties": {
           "volumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "volumeMounts are used to add custom volume mounts to deployment.\nSee example below\n- mountPath: /etc/config\nname: config-volume"
+            "description": "volumeMounts are used to add custom volume mounts to deployment.\nSee example below\n- mountPath: /etc/config\nname: config-volume",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -1037,20 +937,9 @@
       "then": {
         "properties": {
           "volumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "volumes are used to add custom volumes to deployment\nSee example below\n- configMap:\nname: cm-for-volume\nname: config-volume"
+            "description": "volumes are used to add custom volumes to deployment\nSee example below\n- configMap:\nname: cm-for-volume\nname: config-volume",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -1194,19 +1083,6 @@
       "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
       "properties": {
         "config": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Definition of the CustomResourceStateMetrics. Add (Cluster)Role permissions to list/watch the resources defined in the config to rbac.extraRules."
         },
         "create": {
@@ -1237,25 +1113,6 @@
       "type": "object"
     },
     "dnsConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "dnsConfig allows setting up specific DNS configuration for the pod\nRef: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config"
     },
     "dnsPolicy": {
@@ -1392,36 +1249,34 @@
           "then": {
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Specify security settings for a Container\nAllows overrides and additional options compared to (Pod) securityContext\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "readOnlyRootFilesystem": {
+                    "type": "boolean"
                   }
-                ],
-                "description": "Specify security settings for a Container\nAllows overrides and additional options compared to (Pod) securityContext\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
+                },
+                "type": "object"
               },
               "extraArgs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "List of additional cli arguments to configure kube-rbac-prxy\nfor example: --tls-cipher-suites, --log-file, etc.\nall the possible args can be found here: https://github.com/brancz/kube-rbac-proxy#usage"
+                "description": "List of additional cli arguments to configure kube-rbac-prxy\nfor example: --tls-cipher-suites, --log-file, etc.\nall the possible args can be found here: https://github.com/brancz/kube-rbac-proxy#usage",
+                "items": {},
+                "type": "array"
               },
               "image": {
                 "properties": {
@@ -1459,37 +1314,10 @@
                 ],
                 "description": "Configure specific proxy endpoints port\nThis port is for healthz on readinessProbe kube-rbac-proxy-http container"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
-              },
               "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "volumeMounts enables mounting custom volumes in rbac-proxy containers\nUseful for TLS certificates and keys\n- mountPath: /etc/tls\nname: kube-rbac-proxy-tls\nreadOnly: true"
+                "description": "volumeMounts enables mounting custom volumes in rbac-proxy containers\nUseful for TLS certificates and keys\n- mountPath: /etc/tls\nname: kube-rbac-proxy-tls\nreadOnly: true",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -1565,19 +1393,6 @@
           "description": "Configure specific proxy endpoints port\nThis port is for healthz on readinessProbe kube-rbac-proxy-http container"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
         },
         "volumeMounts": {
@@ -1716,141 +1531,15 @@
     },
     "networkPolicy": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "flavor": {}
-                      },
-                      "required": [
-                        "flavor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "kubernetes"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "egress": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "ingress": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "podSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "description": "Configure network policy for kube-state-metrics",
       "properties": {
         "cilium": {
           "additionalProperties": {},
           "properties": {
-            "kubeApiServerSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "type": "object"
+            "kubeApiServerSelector": {}
+          }
         },
-        "egress": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "egress": {},
         "enabled": {
           "type": "boolean"
         },
@@ -1872,36 +1561,8 @@
           ],
           "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy"
         },
-        "ingress": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "podSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "ingress": {},
+        "podSelector": {}
       },
       "type": "object"
     },
@@ -1923,25 +1584,6 @@
       "description": "Annotations to be added to the pod"
     },
     "podDisruptionBudget": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
     },
     "podLabels": {
@@ -1979,43 +1621,6 @@
               },
               "then": {
                 "properties": {
-                  "bearerTokenSecret": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "http": {
-                    "description": "kube-state-metrics endpoint",
-                    "properties": {
-                      "bearerTokenSecret": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
-                      }
-                    },
-                    "type": "object"
-                  },
                   "jobLabel": {
                     "anyOf": [
                       {
@@ -2039,68 +1644,20 @@
                     "type": "integer"
                   },
                   "namespaceSelector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "podTargetLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "sampleLimit": {
                     "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted.",
                     "type": "integer"
                   },
-                  "selectorOverride": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "targetLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "targetLimit": {
                     "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted.",
@@ -2115,21 +1672,7 @@
             "additionalLabels": {},
             "annotations": {},
             "bearerTokenFile": {},
-            "bearerTokenSecret": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "bearerTokenSecret": {},
             "enableHttp2": {},
             "enabled": {
               "type": "boolean"
@@ -2147,19 +1690,6 @@
                   ]
                 },
                 "bearerTokenSecret": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
                 },
                 "enableHttp2": {
@@ -2225,25 +1755,6 @@
                   ]
                 },
                 "tlsConfig": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": false,
-                      "maxProperties": 0,
-                      "properties": {},
-                      "type": "object"
-                    },
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "name: secret-name\nkey:  key-name"
                 }
               },
@@ -2260,21 +1771,7 @@
             "labelValueLengthLimit": {
               "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
             },
-            "metricRelabelings": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "metricRelabelings": {},
             "metrics": {
               "additionalProperties": {},
               "description": "selfMonitor endpoint",
@@ -2287,19 +1784,6 @@
                   ]
                 },
                 "bearerTokenSecret": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
                 },
                 "enableHttp2": {
@@ -2365,25 +1849,6 @@
                   ]
                 },
                 "tlsConfig": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": false,
-                      "maxProperties": 0,
-                      "properties": {},
-                      "type": "object"
-                    },
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "name: secret-name\nkey:  key-name"
                 }
               },
@@ -2421,41 +1886,13 @@
               ]
             },
             "proxyUrl": {},
-            "relabelings": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "relabelings": {},
             "sampleLimit": {
               "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
             },
             "scheme": {},
             "scrapeTimeout": {},
-            "selectorOverride": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "selectorOverride": {},
             "targetLabels": {
               "anyOf": [
                 {
@@ -2473,21 +1910,7 @@
             "targetLimit": {
               "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
             },
-            "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "tlsConfig": {}
           },
           "type": "object"
         },
@@ -2528,37 +1951,15 @@
                     "type": "integer"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "proxyUrl": {
                     "type": "string"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "sampleLimit": {
                     "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted.",
@@ -2576,21 +1977,6 @@
                   "targetLimit": {
                     "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted.",
                     "type": "integer"
-                  },
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
@@ -2662,21 +2048,7 @@
             "targetLimit": {
               "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
             },
-            "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "tlsConfig": {}
           },
           "type": "object"
         }
@@ -2799,19 +2171,6 @@
       "type": "integer"
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
     },
     "revisionHistoryLimit": {
@@ -2849,19 +2208,34 @@
             ]
           },
           "then": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "fsGroup": {
+                "type": "integer"
+              },
+              "runAsGroup": {
+                "type": "integer"
+              },
+              "runAsNonRoot": {
+                "type": "boolean"
+              },
+              "runAsUser": {
+                "type": "integer"
+              },
+              "seccompProfile": {
                 "additionalProperties": {},
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ]
+            },
+            "type": "object"
           }
         }
       ],
@@ -2986,19 +2360,10 @@
               "then": {
                 "properties": {
                   "ipFamilies": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "ipFamilyPolicy": {
                     "type": "string"
@@ -3208,9 +2573,6 @@
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
                       }
                     ]
@@ -3293,82 +2655,9 @@
           "then": {
             "properties": {
               "controlledResources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
-              },
-              "maxAllowed": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Define the max allowed resources for the pod"
-              },
-              "minAllowed": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
-              },
-              "recommenders": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "updatePolicy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3397,67 +2686,13 @@
           "type": "boolean"
         },
         "maxAllowed": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Define the max allowed resources for the pod"
         },
         "minAllowed": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
         },
-        "recommenders": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "updatePolicy": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "recommenders": {},
+        "updatePolicy": {}
       },
       "type": "object"
     },

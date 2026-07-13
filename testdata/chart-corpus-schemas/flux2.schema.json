@@ -108,20 +108,9 @@
             ]
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "contents of pod imagePullSecret in form 'name=[secretName]'; applied to all controllers"
+            "description": "contents of pod imagePullSecret in form 'name=[secretName]'; applied to all controllers",
+            "items": {},
+            "type": "array"
           },
           "logLevel": {
             "anyOf": [
@@ -1255,20 +1244,9 @@
       "then": {
         "properties": {
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "contents of pod imagePullSecret in form 'name=[secretName]'; applied to all controllers"
+            "description": "contents of pod imagePullSecret in form 'name=[secretName]'; applied to all controllers",
+            "items": {},
+            "type": "array"
           },
           "logLevel": {
             "anyOf": [
@@ -1609,27 +1587,7 @@
     "cli": {
       "additionalProperties": {},
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -1644,57 +1602,9 @@
           ]
         },
         "image": {},
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
+        "resources": {},
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "properties": {
@@ -1719,36 +1629,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "volumeMounts": {},
+        "volumes": {}
       },
       "type": "object"
     },
@@ -1785,21 +1667,6 @@
               },
               "then": {
                 "properties": {
-                  "affinity": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "annotations": {
                     "anyOf": [
                       {
@@ -1813,50 +1680,28 @@
                       }
                     ]
                   },
-                  "nodeSelector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "resources": {
-                    "anyOf": [
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "limits": {
                         "additionalProperties": {},
                         "type": "object"
                       },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "securityContext": {
-                    "anyOf": [
-                      {
+                      "requests": {
                         "additionalProperties": {},
+                        "description": "cpu: 1000m\nmemory: 1Gi",
+                        "properties": {
+                          "cpu": {
+                            "type": "string"
+                          },
+                          "memory": {
+                            "type": "string"
+                          }
+                        },
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
                       }
-                    ]
+                    },
+                    "type": "object"
                   },
                   "timeout": {
                     "anyOf": [
@@ -1875,49 +1720,8 @@
                     ]
                   },
                   "tolerations": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "volumeMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "volumes": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -1926,21 +1730,7 @@
           ],
           "description": "Enable Flux CRs migration using helm pre upgrade hook job",
           "properties": {
-            "affinity": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "affinity": {},
             "annotations": {
               "anyOf": [
                 {
@@ -1955,21 +1745,7 @@
             "enabled": {
               "type": "boolean"
             },
-            "nodeSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "nodeSelector": {},
             "resources": {
               "anyOf": [
                 {
@@ -1981,21 +1757,7 @@
                 }
               ]
             },
-            "securityContext": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "securityContext": {},
             "timeout": {},
             "tolerations": {
               "anyOf": [
@@ -2011,36 +1773,8 @@
                 }
               ]
             },
-            "volumeMounts": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "volumes": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "volumeMounts": {},
+            "volumes": {}
           },
           "type": "object"
         }
@@ -2109,22 +1843,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core\nfor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule"
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -2161,37 +1879,11 @@
                 "type": "object"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "imagePullPolicy": {
                 "type": "string"
-              },
-              "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "labels": {
                 "anyOf": [
@@ -2206,66 +1898,28 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#affinity-v1-core\nfor example:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: foo.bar.com/role\noperator: In\nvalues:\n- master"
-              },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "cpu: 1000m\nmemory: 1Gi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "serviceAccount": {
                 "properties": {
@@ -2276,49 +1930,8 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -2424,19 +2037,6 @@
       ],
       "properties": {
         "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core\nfor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule"
         },
         "annotations": {
@@ -2476,21 +2076,7 @@
         },
         "image": {},
         "imagePullPolicy": {},
-        "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "initContainers": {},
         "labels": {
           "anyOf": [
             {
@@ -2503,36 +2089,9 @@
           ]
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#affinity-v1-core\nfor example:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: foo.bar.com/role\noperator: In\nvalues:\n- master"
         },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "podSecurityContext": {},
         "priorityClassName": {},
         "replicas": {},
         "resources": {
@@ -2546,21 +2105,7 @@
             }
           ]
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "properties": {
@@ -2597,36 +2142,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "volumeMounts": {},
+        "volumes": {}
       },
       "type": "object"
     },
@@ -2662,21 +2179,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -2713,37 +2215,11 @@
                 "type": "object"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "imagePullPolicy": {
                 "type": "string"
-              },
-              "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "labels": {
                 "anyOf": [
@@ -2758,65 +2234,28 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "cpu: 1000m\nmemory: 1Gi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "serviceAccount": {
                 "properties": {
@@ -2827,49 +2266,8 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -2974,21 +2372,7 @@
         }
       ],
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -3026,21 +2410,7 @@
         },
         "image": {},
         "imagePullPolicy": {},
-        "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "initContainers": {},
         "labels": {
           "anyOf": [
             {
@@ -3052,36 +2422,8 @@
             }
           ]
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
+        "podSecurityContext": {},
         "priorityClassName": {},
         "replicas": {},
         "resources": {
@@ -3095,21 +2437,7 @@
             }
           ]
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "properties": {
@@ -3146,36 +2474,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "volumeMounts": {},
+        "volumes": {}
       },
       "type": "object"
     },
@@ -3226,21 +2526,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -3277,37 +2562,11 @@
                 "type": "object"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "imagePullPolicy": {
                 "type": "string"
-              },
-              "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "labels": {
                 "anyOf": [
@@ -3322,65 +2581,28 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "cpu: 1000m\nmemory: 1Gi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "serviceAccount": {
                 "properties": {
@@ -3391,49 +2613,8 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3538,21 +2719,7 @@
         }
       ],
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -3590,21 +2757,7 @@
         },
         "image": {},
         "imagePullPolicy": {},
-        "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "initContainers": {},
         "labels": {
           "anyOf": [
             {
@@ -3616,36 +2769,8 @@
             }
           ]
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
+        "podSecurityContext": {},
         "priorityClassName": {},
         "replicas": {},
         "resources": {
@@ -3659,21 +2784,7 @@
             }
           ]
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "properties": {
@@ -3710,36 +2821,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "volumeMounts": {},
+        "volumes": {}
       },
       "type": "object"
     },
@@ -3778,21 +2861,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -3829,19 +2897,8 @@
                 "type": "object"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "extraSecretMounts": {
                 "anyOf": [
@@ -3861,21 +2918,6 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "labels": {
                 "anyOf": [
                   {
@@ -3889,65 +2931,28 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "cpu: 1000m\nmemory: 1Gi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "serviceAccount": {
                 "properties": {
@@ -3958,49 +2963,8 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -4222,21 +3186,7 @@
         }
       ],
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -4298,21 +3248,7 @@
         },
         "image": {},
         "imagePullPolicy": {},
-        "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "initContainers": {},
         "labels": {
           "anyOf": [
             {
@@ -4324,36 +3260,8 @@
             }
           ]
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
+        "podSecurityContext": {},
         "priorityClassName": {},
         "replicas": {},
         "resources": {
@@ -4387,22 +3295,14 @@
                   "data": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ]
                   },
@@ -4431,9 +3331,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ]
             },
@@ -4441,21 +3338,7 @@
           },
           "type": "object"
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "properties": {
@@ -4492,36 +3375,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "volumeMounts": {},
+        "volumes": {}
       },
       "type": "object"
     },
@@ -4575,21 +3430,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -4626,37 +3466,11 @@
                 "type": "object"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "imagePullPolicy": {
                 "type": "string"
-              },
-              "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "labels": {
                 "anyOf": [
@@ -4671,65 +3485,28 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "cpu: 1000m\nmemory: 1Gi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "service": {
                 "properties": {
@@ -4758,21 +3535,6 @@
                         "type": "null"
                       }
                     ]
-                  },
-                  "ports": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
@@ -4786,49 +3548,8 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "webhookReceiver": {
                 "properties": {
@@ -5043,9 +3764,6 @@
                             "type": "array"
                           },
                           {
-                            "type": "integer"
-                          },
-                          {
                             "type": "null"
                           }
                         ],
@@ -5110,21 +3828,7 @@
         }
       ],
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -5162,21 +3866,7 @@
         },
         "image": {},
         "imagePullPolicy": {},
-        "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "initContainers": {},
         "labels": {
           "anyOf": [
             {
@@ -5188,36 +3878,8 @@
             }
           ]
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
+        "podSecurityContext": {},
         "priorityClassName": {},
         "replicas": {},
         "resources": {
@@ -5231,21 +3893,7 @@
             }
           ]
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "service": {
           "additionalProperties": {},
           "properties": {
@@ -5271,21 +3919,7 @@
                 }
               ]
             },
-            "ports": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "ports": {}
           },
           "type": "object"
         },
@@ -5325,36 +3959,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "volumeMounts": {},
+        "volumes": {},
         "webhookReceiver": {
           "additionalProperties": {},
           "properties": {
@@ -5476,27 +4082,42 @@
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
                       }
                     ]
                   },
                   "podMetricsEndpoints": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "port": {
+                          "type": "string"
+                        },
+                        "relabelings": {
+                          "items": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "action": {
+                                "type": "string"
+                              },
+                              "regex": {
+                                "type": "string"
+                              },
+                              "sourceLabels": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
                       },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                      "type": "object"
+                    },
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -5686,21 +4307,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -5737,37 +4343,11 @@
                 "type": "object"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "imagePullPolicy": {
                 "type": "string"
-              },
-              "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "labels": {
                 "anyOf": [
@@ -5782,65 +4362,28 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "cpu: 1000m\nmemory: 1Gi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "service": {
                 "properties": {
@@ -5869,21 +4412,6 @@
                         "type": "null"
                       }
                     ]
-                  },
-                  "ports": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
@@ -5897,49 +4425,8 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -6044,21 +4531,7 @@
         }
       ],
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -6096,21 +4569,7 @@
         },
         "image": {},
         "imagePullPolicy": {},
-        "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "initContainers": {},
         "labels": {
           "anyOf": [
             {
@@ -6122,36 +4581,8 @@
             }
           ]
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
+        "podSecurityContext": {},
         "priorityClassName": {},
         "resources": {
           "anyOf": [
@@ -6164,21 +4595,7 @@
             }
           ]
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "service": {
           "additionalProperties": {},
           "properties": {
@@ -6204,21 +4621,7 @@
                 }
               ]
             },
-            "ports": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "ports": {}
           },
           "type": "object"
         },
@@ -6258,36 +4661,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "volumeMounts": {},
+        "volumes": {}
       },
       "type": "object"
     },
@@ -6308,21 +4683,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "annotations": {
                 "anyOf": [
                   {
@@ -6359,37 +4719,11 @@
                 "type": "object"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "imagePullPolicy": {
                 "type": "string"
-              },
-              "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "labels": {
                 "anyOf": [
@@ -6404,65 +4738,28 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "cpu: 1000m\nmemory: 1Gi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "service": {
                 "properties": {
@@ -6491,21 +4788,6 @@
                         "type": "null"
                       }
                     ]
-                  },
-                  "ports": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
@@ -6519,49 +4801,8 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "volumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -6651,21 +4892,7 @@
         }
       ],
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "annotations": {
           "anyOf": [
             {
@@ -6703,21 +4930,7 @@
         },
         "image": {},
         "imagePullPolicy": {},
-        "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "initContainers": {},
         "labels": {
           "anyOf": [
             {
@@ -6729,36 +4942,8 @@
             }
           ]
         },
-        "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "nodeSelector": {},
+        "podSecurityContext": {},
         "priorityClassName": {},
         "resources": {
           "anyOf": [
@@ -6771,21 +4956,7 @@
             }
           ]
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "service": {
           "additionalProperties": {},
           "properties": {
@@ -6811,21 +4982,7 @@
                 }
               ]
             },
-            "ports": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "ports": {}
           },
           "type": "object"
         },
@@ -6865,36 +5022,8 @@
             }
           ]
         },
-        "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "volumeMounts": {},
+        "volumes": {}
       },
       "type": "object"
     },

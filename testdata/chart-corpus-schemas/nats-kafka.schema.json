@@ -324,68 +324,9 @@
             }
           ]
         },
-        "additionalVolumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "additionalVolumes": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "additionalVolumeMounts": {},
+        "additionalVolumes": {},
         "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
         },
         "configPath": {
@@ -549,8 +490,7 @@
                   },
                   "type": "object"
                 }
-              },
-              "type": "object"
+              }
             },
             "maxReconnects": {
               "type": "integer"
@@ -566,25 +506,6 @@
           "type": "object"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
         },
         "podLabels": {
@@ -604,19 +525,6 @@
           "type": "integer"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Resources for nats-kafka container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
         },
         "tolerations": {
@@ -644,22 +552,19 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "if": {},
-          "then": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
+          "properties": {
+            "name": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "type": "object"
         }
       ],
       "properties": {

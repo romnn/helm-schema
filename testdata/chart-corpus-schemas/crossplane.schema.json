@@ -103,9 +103,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -132,9 +129,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -146,51 +140,61 @@
               "null"
             ]
           },
-          "podSecurityContextRBACManager": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Add a custom `securityContext` to the RBAC Manager pod."
-          },
           "resourcesRBACManager": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "limits": {
                 "additionalProperties": {},
+                "properties": {
+                  "cpu": {
+                    "description": "CPU resource limits for the RBAC Manager pod.",
+                    "type": "string"
+                  },
+                  "memory": {
+                    "description": "Memory resource limits for the RBAC Manager pod.",
+                    "type": "string"
+                  }
+                },
                 "type": "object"
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
+              "requests": {
+                "additionalProperties": {},
+                "properties": {
+                  "cpu": {
+                    "description": "CPU resource requests for the RBAC Manager pod.",
+                    "type": "string"
+                  },
+                  "memory": {
+                    "description": "Memory resource requests for the RBAC Manager pod.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               }
-            ]
+            },
+            "type": "object"
           },
           "securityContextRBACManager": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "description": "Enable `allowPrivilegeEscalation` for the RBAC Manager pod.",
+                "type": "boolean"
               },
-              {
-                "items": {},
-                "type": "array"
+              "readOnlyRootFilesystem": {
+                "description": "Set the RBAC Manager pod root file system as read-only.",
+                "type": "boolean"
               },
-              {
-                "type": "string"
+              "runAsGroup": {
+                "description": "The group ID used by the RBAC Manager pod.",
+                "type": "integer"
+              },
+              "runAsUser": {
+                "description": "The user ID used by the RBAC Manager pod.",
+                "type": "integer"
               }
-            ]
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -265,9 +269,6 @@
               {
                 "items": {},
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -362,9 +363,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -504,25 +502,6 @@
   ],
   "properties": {
     "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Add `affinities` to the Crossplane pod deployment."
     },
     "args": {
@@ -920,25 +899,6 @@
       ]
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Add `nodeSelectors` to the Crossplane pod deployment."
     },
     "packageCache": {
@@ -1035,41 +995,9 @@
       "type": "object"
     },
     "podSecurityContextCrossplane": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Add a custom `securityContext` to the Crossplane pod."
     },
     "podSecurityContextRBACManager": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Add a custom `securityContext` to the RBAC Manager pod."
     },
     "priorityClassName": {
@@ -1157,22 +1085,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Add `affinities` to the RBAC Manager pod deployment."
-              },
               "args": {
                 "anyOf": [
                   {
@@ -1195,57 +1107,19 @@
                 "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod.",
                 "type": "boolean"
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Add `nodeSelectors` to the RBAC Manager pod deployment."
-              },
               "replicas": {
                 "description": "The number of RBAC Manager pod `replicas` to deploy.",
                 "type": "integer"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Add `tolerations` to the RBAC Manager pod deployment."
+                "description": "Add `tolerations` to the RBAC Manager pod deployment.",
+                "items": {},
+                "type": "array"
               },
               "topologySpreadConstraints": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
+                "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment.",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -1254,19 +1128,6 @@
       ],
       "properties": {
         "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Add `affinities` to the RBAC Manager pod deployment."
         },
         "args": {
@@ -1280,19 +1141,6 @@
           "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Add `nodeSelectors` to the RBAC Manager pod deployment."
         },
         "replicas": {

@@ -282,6 +282,52 @@
     },
     {
       "if": {
+        "properties": {
+          "service": {
+            "properties": {
+              "extraPorts": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "extraPorts"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "extraPorts": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -437,6 +483,52 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "service": {
+            "properties": {
+              "sessionAffinityConfig": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "sessionAffinityConfig"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "sessionAffinityConfig": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -499,39 +591,6 @@
                   },
                   {
                     "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "extraPorts": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "extraPorts"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "extraPorts": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               }
@@ -684,39 +743,6 @@
                   }
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "sessionAffinityConfig": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "sessionAffinityConfig"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "sessionAffinityConfig": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               }
             },
             "type": "object"

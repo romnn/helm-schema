@@ -231,13 +231,17 @@ impl Interpreter<'_> {
                 }
                 | Guard::NotEq {
                     path: guard_path, ..
-                }
-                | Guard::TypeIs {
+                } => !guard_path.trim().is_empty() && foreign(guard_path),
+                // A type test PARTITIONS its subject: hints observed under
+                // it hold only for the tested types, even on the hinted
+                // path itself (a self-truthy guard, by contrast, only
+                // states nullability).
+                Guard::TypeIs {
                     path: guard_path, ..
                 }
                 | Guard::NotTypeIs {
                     path: guard_path, ..
-                } => !guard_path.trim().is_empty() && foreign(guard_path),
+                } => !guard_path.trim().is_empty(),
                 Guard::Or { paths } => paths
                     .iter()
                     .any(|guard_path| !guard_path.trim().is_empty() && foreign(guard_path)),

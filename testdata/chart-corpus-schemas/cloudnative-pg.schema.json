@@ -950,25 +950,6 @@
       "description": "Array containing extra environment variables which can be templated.\nFor example:\n- name: RELEASE_NAME\nvalue: \"{{ .Release.Name }}\"\n- name: MY_VAR\nvalue: \"mySpecialKey\""
     },
     "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Affinity for the operator to be installed."
     },
     "commonAnnotations": {
@@ -988,55 +969,6 @@
     "config": {
       "additionalProperties": {},
       "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "data": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b"
-              }
-            },
-            "type": "object"
-          }
-        },
         {
           "if": {
             "anyOf": [
@@ -1095,19 +1027,6 @@
           "type": "boolean"
         },
         "data": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b"
         },
         "maxConcurrentReconciles": {
@@ -1307,36 +1226,14 @@
                 "description": "Additional labels for the podMonitor"
               },
               "podMonitorMetricRelabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Metrics relabel configurations to apply to samples before ingestion."
+                "description": "Metrics relabel configurations to apply to samples before ingestion.",
+                "items": {},
+                "type": "array"
               },
               "podMonitorRelabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Relabel configurations to apply to samples before scraping."
+                "description": "Relabel configurations to apply to samples before scraping.",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -1680,25 +1577,6 @@
       ]
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Nodeselector for the operator to be installed."
     },
     "podAnnotations": {
@@ -1785,19 +1663,6 @@
       "type": "integer"
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "If you want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 200Mi\nrequests:\ncpu: 100m\nmemory: 100Mi"
     },
     "service": {
@@ -1842,23 +1707,20 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "if": {},
-          "then": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
-              }
-            },
-            "type": "object"
-          }
+          "properties": {
+            "name": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
+            }
+          },
+          "type": "object"
         }
       ],
       "properties": {
@@ -1903,25 +1765,6 @@
       "description": "Topology Spread Constraints for the operator to be installed."
     },
     "updateStrategy": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Update strategy for the operator.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy\nFor example:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%"
     },
     "webhook": {

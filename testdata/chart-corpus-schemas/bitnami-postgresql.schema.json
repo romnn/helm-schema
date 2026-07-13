@@ -7821,19 +7821,66 @@
               "cronjob": {
                 "properties": {
                   "containerSecurityContext": {
-                    "anyOf": [
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "allowPrivilegeEscalation": {
+                        "description": "Set container's Security Context allowPrivilegeEscalation",
+                        "type": "boolean"
+                      },
+                      "capabilities": {
                         "additionalProperties": {},
+                        "properties": {
+                          "drop": {
+                            "description": "List of capabilities to be dropped",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
                         "type": "object"
                       },
-                      {
-                        "items": {},
-                        "type": "array"
+                      "enabled": {
+                        "description": "Enabled containers' Security Context",
+                        "type": "boolean"
                       },
-                      {
-                        "type": "string"
+                      "privileged": {
+                        "description": "Set container's Security Context privileged",
+                        "type": "boolean"
+                      },
+                      "readOnlyRootFilesystem": {
+                        "description": "Set container's Security Context readOnlyRootFilesystem",
+                        "type": "boolean"
+                      },
+                      "runAsGroup": {
+                        "description": "Set containers' Security Context runAsGroup",
+                        "type": "integer"
+                      },
+                      "runAsNonRoot": {
+                        "description": "Set container's Security Context runAsNonRoot",
+                        "type": "boolean"
+                      },
+                      "runAsUser": {
+                        "description": "Set containers' Security Context runAsUser",
+                        "type": "integer"
+                      },
+                      "seLinuxOptions": {
+                        "additionalProperties": {},
+                        "description": "[object,nullable] Set SELinux options in container",
+                        "type": "object"
+                      },
+                      "seccompProfile": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "type": {
+                            "description": "Set container's Security Context seccomp profile",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
                       }
-                    ]
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -8034,8 +8081,7 @@
                         "type": "object"
                       },
                       {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -8059,6 +8105,172 @@
               }
             ],
             "description": "String to partially override common.names.fullname template (will maintain the release name)"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "backup": {
+                      "properties": {
+                        "cronjob": {
+                          "properties": {
+                            "storage": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "storage"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "cronjob"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "backup"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "backup": {
+                    "properties": {
+                      "cronjob": {
+                        "properties": {
+                          "storage": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "storage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cronjob"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "backup"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "backup": {
+                "properties": {
+                  "cronjob": {
+                    "properties": {
+                      "storage": {
+                        "properties": {
+                          "existingClaim": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "existingClaim"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "storage"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "cronjob"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "backup"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "backup": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "backup"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "backup": {
+            "description": "This section implements a trivial logical dump cronjob of the database.\nThis only comes with the consistency guarantees of the dump program.\nThis is not a snapshot based roll forward/backward recovery backup.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+            "properties": {
+              "cronjob": {
+                "properties": {
+                  "storage": {
+                    "properties": {
+                      "existingClaim": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Provide an existing `PersistentVolumeClaim` (only when `architecture=standalone`)\nIf defined, PVC must be created manually before volume will be bound"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -11817,22 +12029,6 @@
                 "description": "Number of PostgreSQL read only replicas",
                 "type": "integer"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
-              },
               "service": {
                 "description": "PostgreSQL read only service configuration",
                 "properties": {
@@ -11922,20 +12118,20 @@
                 "description": "Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods"
               },
               "updateStrategy": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies",
+                "properties": {
+                  "rollingUpdate": {
                     "additionalProperties": {},
+                    "description": "PostgreSQL read only statefulset rolling update configuration parameters",
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                  "type": {
+                    "description": "PostgreSQL read only statefulset strategy type",
                     "type": "string"
                   }
-                ],
-                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -13075,375 +13271,6 @@
               }
             ],
             "description": "Add labels to all the deployed resources"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "readReplicas": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readReplicas"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "readReplicas": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "readReplicas"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "architecture": {
-                "enum": [
-                  "replication"
-                ]
-              }
-            },
-            "required": [
-              "architecture"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "readReplicas": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternalEgress": {}
-                            },
-                            "required": [
-                              "allowExternalEgress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "readReplicas"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "readReplicas": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readReplicas"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Add labels to all the deployed resources"
-          },
-          "containerPorts": {
-            "properties": {
-              "postgresql": {
-                "description": "PostgreSQL container port\nAudit settings\nhttps://github.com/bitnami/containers/tree/main/bitnami/postgresql#auditing",
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          },
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "String to partially override common.names.fullname template (will maintain the release name)"
-          },
-          "readReplicas": {
-            "properties": {
-              "networkPolicy": {
-                "description": "Network Policies\nRef: https://kubernetes.io/docs/concepts/services-networking/network-policies/",
-                "properties": {
-                  "extraEgress": {
-                    "anyOf": [
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "[array] Add extra ingress rules to the NetworkPolicy\ne.g:\nextraEgress:\n- ports:\n- port: 1234\nto:\n- podSelector:\n- matchLabels:\n- role: frontend\n- podSelector:\n- matchExpressions:\n- key: role\noperator: In\nvalues:\n- frontend"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "primary": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "primary"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "primary": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "primary"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "primary": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternalEgress": {}
-                            },
-                            "required": [
-                              "allowExternalEgress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "primary"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "primary": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "primary"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Add labels to all the deployed resources"
-          },
-          "containerPorts": {
-            "properties": {
-              "postgresql": {
-                "description": "PostgreSQL container port\nAudit settings\nhttps://github.com/bitnami/containers/tree/main/bitnami/postgresql#auditing",
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          },
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "String to partially override common.names.fullname template (will maintain the release name)"
           }
         },
         "type": "object"
@@ -14948,14 +14775,374 @@
                 "type": "object"
               },
               {
-                "items": {},
-                "type": "array"
+                "type": "null"
               },
               {
                 "type": "string"
               }
             ],
             "description": "Add labels to all the deployed resources"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "readReplicas": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "readReplicas"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "readReplicas": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "readReplicas"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "architecture": {
+                "enum": [
+                  "replication"
+                ]
+              }
+            },
+            "required": [
+              "architecture"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "readReplicas": {
+                        "properties": {
+                          "networkPolicy": {
+                            "properties": {
+                              "allowExternalEgress": {}
+                            },
+                            "required": [
+                              "allowExternalEgress"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "networkPolicy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readReplicas"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "readReplicas": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "allowExternalEgress": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "allowExternalEgress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "readReplicas"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Add labels to all the deployed resources"
+          },
+          "containerPorts": {
+            "properties": {
+              "postgresql": {
+                "description": "PostgreSQL container port\nAudit settings\nhttps://github.com/bitnami/containers/tree/main/bitnami/postgresql#auditing",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "String to partially override common.names.fullname template (will maintain the release name)"
+          },
+          "readReplicas": {
+            "properties": {
+              "networkPolicy": {
+                "description": "Network Policies\nRef: https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+                "properties": {
+                  "extraEgress": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "[array] Add extra ingress rules to the NetworkPolicy\ne.g:\nextraEgress:\n- ports:\n- port: 1234\nto:\n- podSelector:\n- matchLabels:\n- role: frontend\n- podSelector:\n- matchExpressions:\n- key: role\noperator: In\nvalues:\n- frontend"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "primary": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "primary"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "primary": {
+                        "properties": {
+                          "networkPolicy": {
+                            "properties": {
+                              "allowExternalEgress": {}
+                            },
+                            "required": [
+                              "allowExternalEgress"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "networkPolicy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "primary"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "primary": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "allowExternalEgress": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "allowExternalEgress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "primary"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commonLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Add labels to all the deployed resources"
+          },
+          "containerPorts": {
+            "properties": {
+              "postgresql": {
+                "description": "PostgreSQL container port\nAudit settings\nhttps://github.com/bitnami/containers/tree/main/bitnami/postgresql#auditing",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "String to partially override common.names.fullname template (will maintain the release name)"
           }
         },
         "type": "object"
@@ -17070,378 +17257,39 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
+        "properties": {
+          "global": {
+            "properties": {
+              "postgresql": {
                 "properties": {
-                  "global": {
+                  "auth": {
                     "properties": {
-                      "postgresql": {
-                        "properties": {
-                          "auth": {
-                            "properties": {
-                              "database": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "database"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "auth"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "postgresql"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "passwordUpdateJob": {
-                    "properties": {
-                      "enabled": {
+                      "database": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "database"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "passwordUpdateJob"
+                  "auth"
                 ],
                 "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "passwordUpdateJob": {
-                      "properties": {
-                        "args": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "args"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "passwordUpdateJob"
-                  ],
-                  "type": "object"
-                }
               }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "postgresql": {
-                        "properties": {
-                          "auth": {
-                            "properties": {
-                              "database": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "database"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "auth"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "postgresql"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "primary": {
-                          "properties": {
-                            "readinessProbe": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "readinessProbe"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "primary"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "primary": {
-                        "properties": {
-                          "readinessProbe": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "readinessProbe"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "primary"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "diagnosticMode": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "diagnosticMode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "primary": {
-                      "properties": {
-                        "customReadinessProbe": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "customReadinessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "primary"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "postgresql": {
-                        "properties": {
-                          "auth": {
-                            "properties": {
-                              "database": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "database"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "auth"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "postgresql"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "readReplicas": {
-                          "properties": {
-                            "readinessProbe": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "readinessProbe"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "readReplicas"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "readReplicas": {
-                        "properties": {
-                          "readinessProbe": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "readinessProbe"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "readReplicas"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "architecture": {
-                    "enum": [
-                      "replication"
-                    ]
-                  }
-                },
-                "required": [
-                  "architecture"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "diagnosticMode": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "diagnosticMode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "readReplicas": {
-                      "properties": {
-                        "customReadinessProbe": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "customReadinessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readReplicas"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
           }
-        ]
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
       },
       "then": {
         "properties": {
@@ -22661,9 +22509,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   }
                 ],
@@ -23145,19 +22990,66 @@
           "metrics": {
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "description": "Set container's Security Context allowPrivilegeEscalation",
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "description": "List of capabilities to be dropped",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "enabled": {
+                    "description": "Enabled containers' Security Context",
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
+                  "privileged": {
+                    "description": "Set container's Security Context privileged",
+                    "type": "boolean"
+                  },
+                  "readOnlyRootFilesystem": {
+                    "description": "Set container's Security Context readOnlyRootFilesystem",
+                    "type": "boolean"
+                  },
+                  "runAsGroup": {
+                    "description": "Set containers' Security Context runAsGroup",
+                    "type": "integer"
+                  },
+                  "runAsNonRoot": {
+                    "description": "Set container's Security Context runAsNonRoot",
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "description": "Set containers' Security Context runAsUser",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
+                    "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
+                    "type": "object"
+                  },
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "description": "Set container's Security Context seccomp profile\nConfigure extra options for PostgreSQL Prometheus exporter containers' liveness, readiness and startup probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -23932,8 +23824,7 @@
                         "type": "object"
                       },
                       {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -24317,8 +24208,7 @@
                     "type": "object"
                   },
                   {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -24490,22 +24380,14 @@
                   "ingressNSMatchLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "[object] Labels to match to allow traffic from other namespaces"
@@ -24629,8 +24511,7 @@
                     "type": "object"
                   },
                   {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -27041,19 +26922,66 @@
           "passwordUpdateJob": {
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "description": "Set container's Security Context allowPrivilegeEscalation",
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "description": "List of capabilities to be dropped",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "enabled": {
+                    "description": "Enabled containers' Security Context",
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
+                  "privileged": {
+                    "description": "Set container's Security Context privileged",
+                    "type": "boolean"
+                  },
+                  "readOnlyRootFilesystem": {
+                    "description": "Set container's Security Context readOnlyRootFilesystem",
+                    "type": "boolean"
+                  },
+                  "runAsGroup": {
+                    "description": "Set containers' Security Context runAsGroup",
+                    "type": "integer"
+                  },
+                  "runAsNonRoot": {
+                    "description": "Set container's Security Context runAsNonRoot",
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "description": "Set containers' Security Context runAsUser",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
+                    "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
+                    "type": "object"
+                  },
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "description": "Set container's Security Context seccomp profile\nConfigure Pods Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -27331,19 +27259,32 @@
           "passwordUpdateJob": {
             "properties": {
               "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "description": "Enabled credential init job pods' Security Context",
+                    "type": "boolean"
                   },
-                  {
+                  "fsGroup": {
+                    "description": "Set credential init job pod's Security Context fsGroup",
+                    "type": "integer"
+                  },
+                  "fsGroupChangePolicy": {
+                    "description": "Set filesystem group change policy",
+                    "type": "string"
+                  },
+                  "supplementalGroups": {
+                    "description": "Set filesystem extra groups",
                     "items": {},
                     "type": "array"
                   },
-                  {
-                    "type": "string"
+                  "sysctls": {
+                    "description": "Set kernel settings using the sysctl interface",
+                    "items": {},
+                    "type": "array"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -28649,19 +28590,261 @@
           "primary": {
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "description": "Set container's Security Context allowPrivilegeEscalation",
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "description": "List of capabilities to be dropped",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "enabled": {
+                    "description": "Enabled containers' Security Context",
+                    "type": "boolean"
                   },
+                  "privileged": {
+                    "description": "Set container's Security Context privileged",
+                    "type": "boolean"
+                  },
+                  "readOnlyRootFilesystem": {
+                    "description": "Set container's Security Context readOnlyRootFilesystem",
+                    "type": "boolean"
+                  },
+                  "runAsGroup": {
+                    "description": "Set containers' Security Context runAsGroup",
+                    "type": "integer"
+                  },
+                  "runAsNonRoot": {
+                    "description": "Set container's Security Context runAsNonRoot",
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "description": "Set containers' Security Context runAsUser",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
+                    "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
+                    "type": "object"
+                  },
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "description": "Set container's Security Context seccomp profile",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "primary": {
+                "properties": {
+                  "existingConfigmap": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "existingConfigmap"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "primary"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "configuration": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configuration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "existingConfigmap": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "existingConfigmap"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "pgHbaConfiguration": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "pgHbaConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "existingConfigmap": {
+                "anyOf": [
                   {
                     "type": "string"
+                  },
+                  {
+                    "type": "null"
                   }
-                ]
+                ],
+                "description": "Name of an existing ConfigMap with PostgreSQL Primary configuration\nNOTE: `primary.configuration` and `primary.pgHbaConfiguration` will be ignored"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "primary": {
+                "properties": {
+                  "existingExtendedConfigmap": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "existingExtendedConfigmap"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "primary"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "existingExtendedConfigmap": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "existingExtendedConfigmap"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "extendedConfiguration": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extendedConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "existingExtendedConfigmap": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Name of an existing ConfigMap with PostgreSQL Primary extended configuration\nNOTE: `primary.extendedConfiguration` will be ignored"
               }
             },
             "type": "object"
@@ -28896,6 +29079,180 @@
         "allOf": [
           {
             "properties": {
+              "primary": {
+                "properties": {
+                  "initdb": {
+                    "properties": {
+                      "scriptsConfigMap": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "scriptsConfigMap"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "initdb"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "primary"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "initdb": {
+                        "properties": {
+                          "scripts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "scripts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "initdb"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "initdb": {
+                        "properties": {
+                          "scriptsConfigMap": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "scriptsConfigMap"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "initdb"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "initdb": {
+                "description": "Initdb configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments",
+                "properties": {
+                  "scriptsConfigMap": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "ConfigMap with scripts to be run at first boot\nNOTE: This will override `primary.initdb.scripts`"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "initdb": {
+                "properties": {
+                  "scriptsSecret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "scriptsSecret"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "initdb"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "primary"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "initdb": {
+                "description": "Initdb configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments",
+                "properties": {
+                  "scriptsSecret": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secret with scripts to be run at first boot (in case it contains sensitive information)\nNOTE: This can work along `primary.initdb.scripts` or `primary.initdb.scriptsConfigMap`"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "commonLabels": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -28990,14 +29347,131 @@
                     "type": "object"
                   },
                   {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
                   }
                 ],
                 "description": "Map of labels to add to the pods (postgresql primary)"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "primary": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "primary"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "primary": {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "existingClaim": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "existingClaim"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "primary"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "persistence": {
+                "description": "PostgreSQL Primary persistence configuration",
+                "properties": {
+                  "existingClaim": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Name of an existing PVC to use"
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -29357,35 +29831,37 @@
             "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "runAsGroup": {
+                    "description": "Group ID for the init container",
+                    "type": "integer"
+                  },
+                  "runAsNonRoot": {
+                    "description": "runAsNonRoot for the init container",
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "description": "User ID for the init container",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
                     "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
+                  "seccompProfile": {
                     "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "description": "seccompProfile.type for the init container",
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -29656,8 +30132,7 @@
                     "type": "object"
                   },
                   {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -30195,8 +30670,7 @@
                     "type": "object"
                   },
                   {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -30461,19 +30935,206 @@
           "primary": {
             "properties": {
               "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "description": "Enable security context",
+                    "type": "boolean"
                   },
-                  {
+                  "fsGroup": {
+                    "description": "Group ID for the pod\nContainer Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+                    "type": "integer"
+                  },
+                  "fsGroupChangePolicy": {
+                    "description": "Set filesystem group change policy",
+                    "type": "string"
+                  },
+                  "supplementalGroups": {
+                    "description": "Set filesystem extra groups",
                     "items": {},
                     "type": "array"
                   },
-                  {
-                    "type": "string"
+                  "sysctls": {
+                    "description": "Set kernel settings using the sysctl interface",
+                    "items": {},
+                    "type": "array"
                   }
-                ]
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "primary": {
+                "properties": {
+                  "preInitDb": {
+                    "properties": {
+                      "scriptsConfigMap": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "scriptsConfigMap"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "preInitDb"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "primary"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "preInitDb": {
+                        "properties": {
+                          "scripts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "scripts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "preInitDb"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "preInitDb": {
+                        "properties": {
+                          "scriptsConfigMap": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "scriptsConfigMap"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "preInitDb"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "preInitDb": {
+                "description": "Pre-init configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql/#on-container-start",
+                "properties": {
+                  "scriptsConfigMap": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "ConfigMap with pre-init scripts to be run\nNOTE: This will override `primary.preInitDb.scripts`"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "preInitDb": {
+                "properties": {
+                  "scriptsSecret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "scriptsSecret"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "preInitDb"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "primary"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "primary": {
+            "properties": {
+              "preInitDb": {
+                "description": "Pre-init configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql/#on-container-start",
+                "properties": {
+                  "scriptsSecret": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secret with pre-init scripts to be run\nNOTE: This can work along `primary.preInitDb.scripts` or `primary.preInitDb.scriptsConfigMap`\nConfigure current cluster's primary server to be the standby server in other cluster.\nThis will allow cross cluster replication and provide cross cluster high availability.\nYou will need to configure pgHbaConfiguration if you want to enable this feature with local cluster replication enabled."
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -30623,272 +31284,6 @@
                     "type": "string"
                   }
                 ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "primary": {
-                    "properties": {
-                      "initContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "initContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "primary"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "volumePermissions": {
-                          "properties": {
-                            "enabled": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "volumePermissions"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "volumePermissions": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "volumePermissions"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "primary": {
-                                  "properties": {
-                                    "persistence": {
-                                      "properties": {
-                                        "enabled": {}
-                                      },
-                                      "required": [
-                                        "enabled"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "persistence"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "primary"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "primary": {
-                                "properties": {
-                                  "persistence": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "persistence"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "primary"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "shmVolume": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "shmVolume"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "shmVolume": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "shmVolume"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "primary": {
-            "properties": {
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
               }
             },
             "type": "object"
@@ -31770,19 +32165,66 @@
           "readReplicas": {
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "description": "Set container's Security Context allowPrivilegeEscalation",
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "description": "List of capabilities to be dropped",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "enabled": {
+                    "description": "Enabled containers' Security Context",
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
+                  "privileged": {
+                    "description": "Set container's Security Context privileged",
+                    "type": "boolean"
+                  },
+                  "readOnlyRootFilesystem": {
+                    "description": "Set container's Security Context readOnlyRootFilesystem",
+                    "type": "boolean"
+                  },
+                  "runAsGroup": {
+                    "description": "Set containers' Security Context runAsGroup",
+                    "type": "integer"
+                  },
+                  "runAsNonRoot": {
+                    "description": "Set container's Security Context runAsNonRoot",
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "description": "Set containers' Security Context runAsUser",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
+                    "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
+                    "type": "object"
+                  },
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "description": "Set container's Security Context seccomp profile",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -32308,8 +32750,7 @@
                     "type": "object"
                   },
                   {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -32497,22 +32938,14 @@
                   "ingressNSPodMatchLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "[object] Pod labels to match to allow traffic from other namespaces"
@@ -33583,22 +34016,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
               }
             },
             "type": "object"
@@ -33607,19 +34024,37 @@
             "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "runAsGroup": {
+                    "description": "Group ID for the init container",
+                    "type": "integer"
+                  },
+                  "runAsNonRoot": {
+                    "description": "runAsNonRoot for the init container",
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "description": "User ID for the init container",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
                     "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "description": "seccompProfile.type for the init container",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -34602,8 +35037,7 @@
                     "type": "object"
                   },
                   {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -34881,19 +35315,32 @@
           "readReplicas": {
             "properties": {
               "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "description": "Enable security context",
+                    "type": "boolean"
                   },
-                  {
+                  "fsGroup": {
+                    "description": "Group ID for the pod\nContainer Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+                    "type": "integer"
+                  },
+                  "fsGroupChangePolicy": {
+                    "description": "Set filesystem group change policy",
+                    "type": "string"
+                  },
+                  "supplementalGroups": {
+                    "description": "Set filesystem extra groups",
                     "items": {},
                     "type": "array"
                   },
-                  {
-                    "type": "string"
+                  "sysctls": {
+                    "description": "Set kernel settings using the sysctl interface",
+                    "items": {},
+                    "type": "array"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -35056,285 +35503,6 @@
                     "type": "string"
                   }
                 ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "architecture": {
-                "enum": [
-                  "replication"
-                ]
-              }
-            },
-            "required": [
-              "architecture"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "readReplicas": {
-                    "properties": {
-                      "initContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "initContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "readReplicas"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "volumePermissions": {
-                          "properties": {
-                            "enabled": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "volumePermissions"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "volumePermissions": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "volumePermissions"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "readReplicas": {
-                                  "properties": {
-                                    "persistence": {
-                                      "properties": {
-                                        "enabled": {}
-                                      },
-                                      "required": [
-                                        "enabled"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "persistence"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "readReplicas"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "readReplicas": {
-                                "properties": {
-                                  "persistence": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "persistence"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "readReplicas"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "shmVolume": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "shmVolume"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "shmVolume": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "shmVolume"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "readReplicas": {
-            "properties": {
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
               }
             },
             "type": "object"
@@ -36239,246 +36407,65 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
+            "properties": {
+              "tls": {
                 "properties": {
-                  "backup": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "certificatesSecret": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "backup"
+                  "certificatesSecret"
                 ],
                 "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "certificatesSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "certificatesSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "tls": {
-                      "properties": {
-                        "autoGenerated": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "autoGenerated"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "tls"
-                  ],
-                  "type": "object"
-                }
               }
-            ]
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
           },
           {
-            "allOf": [
-              {
+            "properties": {
+              "tls": {
                 "properties": {
-                  "passwordUpdateJob": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "passwordUpdateJob"
+                  "enabled"
                 ],
                 "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "certificatesSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "certificatesSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "tls": {
-                      "properties": {
-                        "autoGenerated": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "autoGenerated"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "tls"
-                  ],
-                  "type": "object"
-                }
               }
-            ]
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "certificatesSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "certificatesSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "architecture": {
-                    "enum": [
-                      "replication"
-                    ]
-                  }
-                },
-                "required": [
-                  "architecture"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "tls": {
                   "properties": {
-                    "tls": {
-                      "properties": {
-                        "autoGenerated": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "autoGenerated"
-                      ],
-                      "type": "object"
+                    "autoGenerated": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
                   },
                   "required": [
-                    "tls"
+                    "autoGenerated"
                   ],
                   "type": "object"
                 }
-              }
-            ]
+              },
+              "required": [
+                "tls"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -40400,22 +40387,6 @@
                     ],
                     "description": "Node labels for PostgreSQL backup CronJob pod assignment\nref: https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/"
                   },
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Set container requests and limits for different resources like CPU or memory\nExample:"
-                  },
                   "restartPolicy": {
                     "description": "Set the cronjob parameter restartPolicy",
                     "type": "string"
@@ -40816,134 +40787,6 @@
             },
             "type": "object"
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "cronjob": {
-                          "properties": {
-                            "storage": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "storage"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "cronjob"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "cronjob": {
-                        "properties": {
-                          "storage": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "storage"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cronjob"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "cronjob": {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "existingClaim": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "existingClaim"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cronjob"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "cronjob": {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "existingClaim": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Provide an existing `PersistentVolumeClaim` (only when `architecture=standalone`)\nIf defined, PVC must be created manually before volume will be bound"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
         }
       ],
       "description": "This section implements a trivial logical dump cronjob of the database.\nThis only comes with the consistency guarantees of the dump program.\nThis is not a snapshot based roll forward/backward recovery backup.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
@@ -41000,19 +40843,6 @@
               "description": "Node labels for PostgreSQL backup CronJob pod assignment\nref: https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/"
             },
             "podLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Additional pod labels for backup cronjob pods"
             },
             "podSecurityContext": {
@@ -41043,19 +40873,6 @@
               "type": "object"
             },
             "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Set container requests and limits for different resources like CPU or memory\nExample:"
             },
             "resourcesPreset": {
@@ -41444,37 +41261,6 @@
           "properties": {
             "auth": {
               "additionalProperties": {},
-              "allOf": [
-                {
-                  "if": {
-                    "properties": {
-                      "database": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "database"
-                    ],
-                    "type": "object"
-                  },
-                  "then": {
-                    "properties": {
-                      "database": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Name for a custom database to create (overrides `auth.database`)"
-                      }
-                    },
-                    "type": "object"
-                  }
-                }
-              ],
               "properties": {
                 "database": {
                   "description": "Name for a custom database to create (overrides `auth.database`)"
@@ -41769,22 +41555,6 @@
                   }
                 ],
                 "description": "Extra environment variables to add to PostgreSQL Prometheus exporter\nsee: https://github.com/prometheus-community/postgres_exporter#environment-variables\nFor example:\nextraEnvVars:\n- name: PG_EXPORTER_DISABLE_DEFAULT_METRICS\nvalue: \"true\"\nPostgreSQL Prometheus exporter containers' Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
               },
               "service": {
                 "description": "Service configuration",
@@ -42098,19 +41868,6 @@
         },
         "readinessProbe": {},
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
         },
         "resourcesPreset": {
@@ -42182,19 +41939,6 @@
               "description": "Timeout after which the scrape is ended\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint"
             },
             "selector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Prometheus instance selector labels\nref: https://github.com/bitnami/charts/tree/main/bitnami/prometheus-operator#prometheus-configuration"
             }
           },
@@ -42430,22 +42174,6 @@
                   }
                 ],
                 "description": "Additional pod labels\nRef: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
               }
             },
             "type": "object"
@@ -42611,19 +42339,6 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
         },
         "resourcesPreset": {
@@ -42729,76 +42444,6 @@
         },
         {
           "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "existingConfigmap": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "existingConfigmap"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "configuration": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "configuration"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "existingConfigmap": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "existingConfigmap"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "pgHbaConfiguration": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "pgHbaConfiguration"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "existingConfigmap": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Name of an existing ConfigMap with PostgreSQL Primary configuration\nNOTE: `primary.configuration` and `primary.pgHbaConfiguration` will be ignored"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
             "anyOf": [
               {
                 "properties": {
@@ -42859,65 +42504,6 @@
                   }
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "existingExtendedConfigmap": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "existingExtendedConfigmap"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "existingExtendedConfigmap": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "existingExtendedConfigmap"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "extendedConfiguration": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extendedConfiguration"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "existingExtendedConfigmap": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Name of an existing ConfigMap with PostgreSQL Primary extended configuration\nNOTE: `primary.extendedConfiguration` will be ignored"
               }
             },
             "type": "object"
@@ -43519,94 +43105,6 @@
                 },
                 "type": "object"
               }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "scriptsConfigMap": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "scriptsConfigMap"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "scripts": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "scripts"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "scriptsConfigMap": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "scriptsConfigMap"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "scriptsConfigMap": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "ConfigMap with scripts to be run at first boot\nNOTE: This will override `primary.initdb.scripts`"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "properties": {
-                  "scriptsSecret": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "scriptsSecret"
-                ],
-                "type": "object"
-              },
-              "then": {
-                "properties": {
-                  "scriptsSecret": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Secret with scripts to be run at first boot (in case it contains sensitive information)\nNOTE: This can work along `primary.initdb.scripts` or `primary.initdb.scriptsConfigMap`"
-                  }
-                },
-                "type": "object"
-              }
             }
           ],
           "description": "Initdb configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments",
@@ -43897,22 +43395,14 @@
                   "ingressNSMatchLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "[object] Labels to match to allow traffic from other namespaces"
@@ -43996,22 +43486,14 @@
                   "ingressNSPodMatchLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "[object] Pod labels to match to allow traffic from other namespaces"
@@ -44053,9 +43535,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "[object] Labels to match to allow traffic from other namespaces"
@@ -44072,9 +43551,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "[object] Pod labels to match to allow traffic from other namespaces"
@@ -44394,95 +43870,77 @@
             },
             {
               "if": {
-                "allOf": [
+                "anyOf": [
                   {
-                    "anyOf": [
+                    "allOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "enabled": {}
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
                           },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
+                          {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        ]
                       },
                       {
                         "properties": {
-                          "enabled": {
+                          "existingClaim": {
                             "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "enabled"
+                          "existingClaim"
                         ],
                         "type": "object"
                       }
                     ]
                   },
                   {
-                    "properties": {
-                      "existingClaim": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "existingClaim"
-                    ],
-                    "type": "object"
+                    "not": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "enabled": {}
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
                   }
                 ]
-              },
-              "then": {
-                "properties": {
-                  "existingClaim": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Name of an existing PVC to use"
-                  },
-                  "volumeName": {
-                    "description": "Name to assign the volume",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "enabled": {}
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
               },
               "then": {
                 "properties": {
@@ -44701,94 +44159,6 @@
                 },
                 "type": "object"
               }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "scriptsConfigMap": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "scriptsConfigMap"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "scripts": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "scripts"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "scriptsConfigMap": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "scriptsConfigMap"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "scriptsConfigMap": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "ConfigMap with pre-init scripts to be run\nNOTE: This will override `primary.preInitDb.scripts`"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "properties": {
-                  "scriptsSecret": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "scriptsSecret"
-                ],
-                "type": "object"
-              },
-              "then": {
-                "properties": {
-                  "scriptsSecret": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Secret with pre-init scripts to be run\nNOTE: This can work along `primary.preInitDb.scripts` or `primary.preInitDb.scriptsConfigMap`\nConfigure current cluster's primary server to be the standby server in other cluster.\nThis will allow cross cluster replication and provide cross cluster high availability.\nYou will need to configure pgHbaConfiguration if you want to enable this feature with local cluster replication enabled."
-                  }
-                },
-                "type": "object"
-              }
             }
           ],
           "description": "Pre-init configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql/#on-container-start",
@@ -44818,25 +44188,6 @@
         },
         "readinessProbe": {},
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
         },
         "resourcesPreset": {
@@ -45563,9 +44914,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "[object] Labels to match to allow traffic from other namespaces"
@@ -45582,9 +44930,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "[object] Pod labels to match to allow traffic from other namespaces"
@@ -45754,19 +45099,6 @@
           "description": "Number of PostgreSQL read only replicas"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
         },
         "resourcesPreset": {
@@ -46096,63 +45428,6 @@
     "tls": {
       "additionalProperties": {},
       "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "certificatesSecret": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "certificatesSecret"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "autoGenerated": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "autoGenerated"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "certificatesSecret": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Name of an existing secret that contains the certificates"
-              }
-            },
-            "type": "object"
-          }
-        },
         {
           "if": {
             "allOf": [
@@ -46570,19 +45845,6 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
         },
         "resourcesPreset": {

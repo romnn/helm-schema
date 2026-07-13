@@ -52,280 +52,6 @@
             "type": "object"
           },
           {
-            "not": {
-              "properties": {
-                "hpa": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "hpa"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "autoscaler": {
-            "description": "Configue a cluster-proportional-autoscaler for coredns\nSee https://github.com/kubernetes-incubator/cluster-proportional-autoscaler",
-            "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#affinity-v1-core"
-              },
-              "customFlags": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "extraContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "optional array of sidecar containers\n- name: some-container-name\nimage: some-image:latest\nimagePullPolicy: Always"
-              },
-              "image": {
-                "properties": {
-                  "pullPolicy": {
-                    "type": "string"
-                  },
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
-                  },
-                  "repository": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "tag": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
-              },
-              "podAnnotations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Annotations for the coredns proportional autoscaler pods"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "resources for autoscaler pod"
-              },
-              "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core"
-              }
-            },
-            "type": "object"
-          },
-          "customAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
-          },
-          "customLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
-          },
-          "deployment": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "autoscaler": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "autoscaler"
-            ],
-            "type": "object"
-          },
-          {
             "anyOf": [
               {
                 "properties": {
@@ -438,6 +164,215 @@
             "type": "object"
           },
           {
+            "not": {
+              "properties": {
+                "hpa": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "hpa"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "autoscaler": {
+            "description": "Configue a cluster-proportional-autoscaler for coredns\nSee https://github.com/kubernetes-incubator/cluster-proportional-autoscaler",
+            "properties": {
+              "extraContainers": {
+                "description": "optional array of sidecar containers\n- name: some-container-name\nimage: some-image:latest\nimagePullPolicy: Always",
+                "items": {},
+                "type": "array"
+              },
+              "image": {
+                "properties": {
+                  "pullPolicy": {
+                    "type": "string"
+                  },
+                  "pullSecrets": {
+                    "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName",
+                    "items": {},
+                    "type": "array"
+                  },
+                  "repository": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "tag": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "podAnnotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Annotations for the coredns proportional autoscaler pods"
+              },
+              "resources": {
+                "additionalProperties": {},
+                "description": "resources for autoscaler pod",
+                "properties": {
+                  "limits": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "requests": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "tolerations": {
+                "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core",
+                "items": {},
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "customAnnotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
+          },
+          "customLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
+          },
+          "deployment": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscaler": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaler"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
                 "not": {
@@ -489,20 +424,9 @@
               "image": {
                 "properties": {
                   "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
+                    "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -913,38 +837,12 @@
           },
           "hpa": {
             "properties": {
-              "behavior": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "maxReplicas": {
                 "type": "integer"
               },
               "metrics": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "minReplicas": {
                 "type": "integer"
@@ -1365,19 +1263,8 @@
                     "type": "string"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "namespace": {
                     "anyOf": [
@@ -1390,55 +1277,14 @@
                     ]
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "scheme": {
                     "type": "string"
                   },
                   "scrapeTimeout": {
                     "type": "string"
-                  },
-                  "selector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
@@ -2132,36 +1978,14 @@
             "description": "Custom labels to apply to Deployment, Pod, Configmap, Service, ServiceMonitor. Including autoscaler if enabled."
           },
           "env": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "optional array of environment variables for coredns container\npossible usecase: provides username and password for etcd user authentications\n- name: WHATEVER_ENV\nvalue: whatever\n- name: SOME_SECRET_ENV\nvalueFrom:\nsecretKeyRef:\nname: some-secret-name\nkey: secret-key"
+            "description": "optional array of environment variables for coredns container\npossible usecase: provides username and password for etcd user authentications\n- name: WHATEVER_ENV\nvalue: whatever\n- name: SOME_SECRET_ENV\nvalueFrom:\nsecretKeyRef:\nname: some-secret-name\nkey: secret-key",
+            "items": {},
+            "type": "array"
           },
           "extraContainers": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "optional array of sidecar containers"
+            "description": "optional array of sidecar containers",
+            "items": {},
+            "type": "array"
           },
           "extraSecrets": {
             "anyOf": [
@@ -2179,36 +2003,14 @@
             "description": "optional array of secrets to mount inside coredns container\npossible usecase: need for secure connection with etcd backend\n- name: etcd-client-certs\nmountPath: /etc/coredns/tls/etcd\ndefaultMode: 420\n- name: some-fancy-secret\nmountPath: /etc/wherever\ndefaultMode: 440"
           },
           "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "- name: some-volume-name\nemptyDir: {}\noptional array of mount points for extraVolumes\n- name: some-volume-name\nmountPath: /etc/wherever"
+            "description": "- name: some-volume-name\nemptyDir: {}\noptional array of mount points for extraVolumes\n- name: some-volume-name\nmountPath: /etc/wherever",
+            "items": {},
+            "type": "array"
           },
           "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "- name: some-container-name\nimage: some-image:latest\nimagePullPolicy: Always\noptional array of extra volumes to create"
+            "description": "- name: some-container-name\nimage: some-image:latest\nimagePullPolicy: Always\noptional array of extra volumes to create",
+            "items": {},
+            "type": "array"
           },
           "fullnameOverride": {
             "type": [
@@ -2222,20 +2024,9 @@
                 "type": "string"
               },
               "pullSecrets": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
+                "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName",
+                "items": {},
+                "type": "array"
               },
               "repository": {
                 "anyOf": [
@@ -2257,36 +2048,9 @@
             "type": "object"
           },
           "initContainers": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Configures initcontainers for the coredns deployment."
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+            "description": "Configures initcontainers for the coredns deployment.",
+            "items": {},
+            "type": "array"
           },
           "podAnnotations": {
             "anyOf": [
@@ -2302,22 +2066,6 @@
             ],
             "description": "cluster-autoscaler.kubernetes.io/safe-to-evict: \"false\""
           },
-          "podDisruptionBudget": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget"
-          },
           "podLabels": {
             "anyOf": [
               {
@@ -2331,36 +2079,35 @@
               }
             ]
           },
-          "podSecurityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Configure the pod level securityContext."
-          },
           "resources": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "limits": {
                 "additionalProperties": {},
+                "properties": {
+                  "cpu": {
+                    "type": "string"
+                  },
+                  "memory": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
+              "requests": {
+                "additionalProperties": {},
+                "properties": {
+                  "cpu": {
+                    "type": "string"
+                  },
+                  "memory": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               }
-            ]
+            },
+            "type": "object"
           },
           "rollingUpdate": {
             "properties": {
@@ -2374,53 +2121,38 @@
             "type": "object"
           },
           "securityContext": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "description": "Configure SecurityContext for Pod.\nEnsure that required linux capability to bind port number below 1024 is assigned (`CAP_NET_BIND_SERVICE`).",
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "type": "boolean"
+              },
+              "capabilities": {
                 "additionalProperties": {},
+                "properties": {
+                  "add": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "drop": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
                 "type": "object"
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
+              "readOnlyRootFilesystem": {
+                "type": "boolean"
               }
-            ],
-            "description": "Configure SecurityContext for Pod.\nEnsure that required linux capability to bind port number below 1024 is assigned (`CAP_NET_BIND_SERVICE`)."
+            },
+            "type": "object"
           },
           "service": {
             "properties": {
-              "clusterIPs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "externalIPs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "name": {
                 "anyOf": [
                   {
@@ -2431,22 +2163,6 @@
                   }
                 ],
                 "description": "clusterIP: \"\"\nclusterIPs: []\nloadBalancerIP: \"\"\nloadBalancerClass: \"\"\nexternalIPs: []\nexternalTrafficPolicy: \"\"\nipFamilyPolicy: \"\"\ntrafficDistribution: PreferClose\nThe name of the Service\nIf not set, a name is generated using the fullname template"
-              },
-              "selector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Pod selector"
               }
             },
             "type": "object"
@@ -2465,20 +2181,9 @@
             "type": "integer"
           },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core\nfor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule"
+            "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#toleration-v1-core\nfor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule",
+            "items": {},
+            "type": "array"
           },
           "zoneFiles": {
             "anyOf": [
@@ -2590,20 +2295,9 @@
           "image": {
             "properties": {
               "pullSecrets": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
+                "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -2788,31 +2482,6 @@
               "string",
               "null"
             ]
-          },
-          "prometheus": {
-            "properties": {
-              "service": {
-                "properties": {
-                  "selector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
           }
         },
         "type": "object"
@@ -4210,19 +3879,6 @@
       "description": "Configue a cluster-proportional-autoscaler for coredns\nSee https://github.com/kubernetes-incubator/cluster-proportional-autoscaler",
       "properties": {
         "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "expects input structure as per specification https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#affinity-v1-core"
         },
         "configmap": {
@@ -4247,21 +3903,7 @@
         "coresPerReplica": {
           "description": "Number of cores in the cluster per coredns replica"
         },
-        "customFlags": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "customFlags": {},
         "enabled": {
           "description": "Enabled the cluster-proportional-autoscaler",
           "type": "boolean"
@@ -4331,19 +3973,6 @@
           "description": "Min size of replicaCount"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
         },
         "nodesPerReplica": {
@@ -4456,22 +4085,6 @@
           },
           "then": {
             "properties": {
-              "dnsConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "dnsConfig allows fine-grained DNS configuration for the pod.\nOnly used when dnsPolicy is set to \"None\" or when custom DNS settings are needed.\nExample:\ndnsConfig:\nnameservers:\n- 8.8.8.8\nsearches:\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\""
-              },
               "name": {
                 "anyOf": [
                   {
@@ -4481,22 +4094,6 @@
                     "type": "string"
                   }
                 ]
-              },
-              "selector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Pod selector"
               }
             },
             "type": "object"
@@ -4576,19 +4173,6 @@
           "description": "Annotations for the coredns deployment"
         },
         "dnsConfig": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "dnsConfig allows fine-grained DNS configuration for the pod.\nOnly used when dnsPolicy is set to \"None\" or when custom DNS settings are needed.\nExample:\ndnsConfig:\nnameservers:\n- 8.8.8.8\nsearches:\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\""
         },
         "dnsPolicy": {
@@ -4599,19 +4183,6 @@
         },
         "name": {},
         "selector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Pod selector"
         },
         "skipConfig": {
@@ -4692,21 +4263,7 @@
     "hpa": {
       "additionalProperties": {},
       "properties": {
-        "behavior": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "behavior": {},
         "enabled": {
           "type": "boolean"
         },
@@ -4792,19 +4349,6 @@
     },
     "nameOverride": {},
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "podAnnotations": {
@@ -4820,20 +4364,11 @@
       "description": "cluster-autoscaler.kubernetes.io/safe-to-evict: \"false\""
     },
     "podDisruptionBudget": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
-      "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget"
+      "additionalProperties": {},
+      "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget",
+      "properties": {
+        "selector": {}
+      }
     },
     "podLabels": {
       "anyOf": [
@@ -4847,19 +4382,6 @@
       ]
     },
     "podSecurityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Configure the pod level securityContext."
     },
     "priorityClassName": {
@@ -4918,36 +4440,8 @@
             },
             "scheme": {},
             "scrapeTimeout": {},
-            "selector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "selector": {},
+            "tlsConfig": {}
           },
           "type": "object"
         },
@@ -4968,21 +4462,7 @@
             "enabled": {
               "type": "boolean"
             },
-            "selector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "selector": {}
           },
           "type": "object"
         }
@@ -5113,36 +4593,8 @@
           ]
         },
         "clusterIP": {},
-        "clusterIPs": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "externalIPs": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "clusterIPs": {},
+        "externalIPs": {},
         "externalTrafficPolicy": {},
         "ipFamilyPolicy": {},
         "loadBalancerClass": {},
@@ -5151,19 +4603,6 @@
           "description": "clusterIP: \"\"\nclusterIPs: []\nloadBalancerIP: \"\"\nloadBalancerClass: \"\"\nexternalIPs: []\nexternalTrafficPolicy: \"\"\nipFamilyPolicy: \"\"\ntrafficDistribution: PreferClose\nThe name of the Service\nIf not set, a name is generated using the fullname template"
         },
         "selector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Pod selector"
         },
         "trafficDistribution": {}

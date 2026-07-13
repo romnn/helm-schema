@@ -2804,151 +2804,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "createConfigmap": {}
-              },
-              "required": [
-                "createConfigmap"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "createConfigmap": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "createConfigmap"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "alerting": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Configure grafana alerting (can be templated)\nref: https://docs.grafana.com/alerting/set-up/provision-alerting-resources/file-provisioning/\npolicies.yaml:\napiVersion: 1\npolicies:\n- orgId: 1\nreceiver: first_uid\nrules.yaml:\napiVersion: 1\ngroups:\n- orgId: 1\nname: '{{ .Chart.Name }}_my_rule_group'\nfolder: my_first_folder\ninterval: 60s\nrules:\n- uid: my_id_1\ntitle: my_first_rule\ncondition: A\ndata:\n- refId: A\ndatasourceUid: '-100'\nmodel:\nconditions:\n- evaluator:\nparams:\n- 3\ntype: gt\noperator:\ntype: and\nquery:\nparams:\n- A\nreducer:\ntype: last\ntype: query\ndatasource:\ntype: __expr__\nuid: '-100'\nexpression: 1==0\nintervalMs: 1000\nmaxDataPoints: 43200\nrefId: A\ntype: math\ndashboardUid: my_dashboard\npanelId: 123\nnoDataState: Alerting\nfor: 60s\nannotations:\nsome_key: some_value\nlabels:\nteam: sre_team_1\ncontactpoints.yaml:\nsecret:\napiVersion: 1\ncontactPoints:\n- orgId: 1\nname: cp_1\nreceivers:\n- uid: first_uid\ntype: pagerduty\nsettings:\nintegrationKey: XXX\nseverity: critical\nclass: ping failure\ncomponent: Grafana\ngroup: app-stack\nsummary: |\n{{ `{{ include \"default.message\" . }}` }}\ntemplates.yaml:\napiVersion: 1\ntemplates:\n- orgId: 1\nname: my_first_template\ntemplate: |\n{{ `\n{{ define \"my_first_template\" }}\nCustom notification message\n{{ end }}\n` }}\nmutetimes.yaml\napiVersion: 1\nmuteTimes:\n- orgId: 1\nname: mti_1\nrefer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0\ntime_intervals: {}"
-          },
-          "annotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "dashboardProviders": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Configure grafana dashboard providers\nref: http://docs.grafana.org/administration/provisioning/#dashboards\n`path` must be /var/lib/grafana/dashboards/<provider_name>\ndashboardproviders.yaml:\napiVersion: 1\nproviders:\n- name: 'default'\norgId: 1\nfolder: ''\ntype: file\ndisableDeletion: false\neditable: true\noptions:\npath: /var/lib/grafana/dashboards/default"
-          },
-          "dashboards": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Configure grafana dashboard to import\nNOTE: To use dashboards you must also enable/configure dashboardProviders\nref: https://grafana.com/dashboards\ndashboards per provider, use provider name as key.\ndefault:\nsome-dashboard:\njson: |\n$RAW_JSON\ncustom-dashboard:\nfile: dashboards/custom-dashboard.json\nprometheus-stats:\ngnetId: 2\nrevision: 2\ndatasource: Prometheus\nlocal-dashboard:\nurl: https://example.com/repository/test.json\ncurlOptions: \"-sLf\"\ntoken: ''\nlocal-dashboard-base64:\nurl: https://example.com/repository/test-b64.json\ntoken: ''\nb64content: true\nlocal-dashboard-gitlab:\nurl: https://example.com/repository/test-gitlab.json\ngitlabToken: ''\nlocal-dashboard-bitbucket:\nurl: https://example.com/repository/test-bitbucket.json\nbearerToken: ''\nlocal-dashboard-azure:\nurl: https://example.com/repository/test-azure.json\nbasic: ''\nacceptHeader: '*/*'"
-          },
-          "datasources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Configure grafana datasources\nref: http://docs.grafana.org/administration/provisioning/#datasources\ndatasources.yaml:\napiVersion: 1\ndatasources:\n- name: Prometheus\ntype: prometheus\nurl: http://prometheus-prometheus-server\naccess: proxy\nisDefault: true\n- name: CloudWatch\ntype: cloudwatch\naccess: proxy\nuid: cloudwatch\neditable: false\njsonData:\nauthType: default\ndefaultRegion: us-east-1\ndeleteDatasources: []\n- name: Prometheus"
-          },
-          "notifiers": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Configure notifiers\nref: http://docs.grafana.org/administration/provisioning/#alert-notification-channels\nnotifiers.yaml:\nnotifiers:\n- name: email-notifier\ntype: email\nuid: email1\neither:\norg_id: 1\nor\norg_name: Main Org.\nis_default: true\nsettings:\naddresses: an_email_address@example.com\ndelete_notifiers:"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "not": {
@@ -3046,9 +2901,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -3072,19 +2924,37 @@
             "type": "boolean"
           },
           "containerSecurityContext": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "type": "boolean"
+              },
+              "capabilities": {
                 "additionalProperties": {},
+                "properties": {
+                  "drop": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
                 "type": "object"
               },
-              {
-                "items": {},
-                "type": "array"
+              "privileged": {
+                "type": "boolean"
               },
-              {
-                "type": "string"
+              "seccompProfile": {
+                "additionalProperties": {},
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               }
-            ]
+            },
+            "type": "object"
           },
           "dashboardProviders": {
             "anyOf": [
@@ -3108,9 +2978,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -3132,36 +2999,14 @@
             "description": "Configure grafana datasources\nref: http://docs.grafana.org/administration/provisioning/#datasources\ndatasources.yaml:\napiVersion: 1\ndatasources:\n- name: Prometheus\ntype: prometheus\nurl: http://prometheus-prometheus-server\naccess: proxy\nisDefault: true\n- name: CloudWatch\ntype: cloudwatch\naccess: proxy\nuid: cloudwatch\neditable: false\njsonData:\nauthType: default\ndefaultRegion: us-east-1\ndeleteDatasources: []\n- name: Prometheus"
           },
           "deploymentStrategy": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
+            "additionalProperties": {},
+            "description": "See `kubectl explain deployment.spec.strategy` for more\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy",
+            "properties": {
+              "type": {
                 "type": "string"
               }
-            ],
-            "description": "See `kubectl explain deployment.spec.strategy` for more\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy"
-          },
-          "dnsConfig": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nameservers:\n- 8.8.8.8\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
+            },
+            "type": "object"
           },
           "envRenderSecret": {
             "anyOf": [
@@ -3177,12 +3022,7 @@
           "extraContainers": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
+                "type": "null"
               },
               {
                 "type": "string"
@@ -3265,20 +3105,9 @@
             "type": "object"
           },
           "hostAliases": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "overrides pod.spec.hostAliases in the grafana deployment's pods\n- ip: \"1.2.3.4\"\nhostnames:\n- \"my.host.com\""
+            "description": "overrides pod.spec.hostAliases in the grafana deployment's pods\n- ip: \"1.2.3.4\"\nhostnames:\n- \"my.host.com\"",
+            "items": {},
+            "type": "array"
           },
           "image": {
             "properties": {
@@ -3355,35 +3184,31 @@
             ]
           },
           "livenessProbe": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "failureThreshold": {
+                "type": "integer"
+              },
+              "httpGet": {
                 "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
               },
-              {
-                "items": {},
-                "type": "array"
+              "initialDelaySeconds": {
+                "type": "integer"
               },
-              {
-                "type": "string"
+              "timeoutSeconds": {
+                "type": "integer"
               }
-            ]
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Node labels for pod assignment\nref: https://kubernetes.io/docs/user-guide/node-selection/"
+            },
+            "type": "object"
           },
           "notifiers": {
             "anyOf": [
@@ -3442,54 +3267,44 @@
             "type": "string"
           },
           "readinessProbe": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "httpGet": {
                 "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ]
-          },
-          "resources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
+            },
+            "type": "object"
           },
           "revisionHistoryLimit": {
             "description": "Number of old ReplicaSets to retain",
             "type": "integer"
           },
           "securityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "fsGroup": {
+                "type": "integer"
               },
-              {
-                "items": {},
-                "type": "array"
+              "runAsGroup": {
+                "type": "integer"
               },
-              {
-                "type": "string"
+              "runAsNonRoot": {
+                "type": "boolean"
+              },
+              "runAsUser": {
+                "type": "integer"
               }
-            ]
+            },
+            "type": "object"
           },
           "service": {
             "description": "Expose the grafana service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
@@ -3527,36 +3342,132 @@
             "type": "object"
           },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Tolerations for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
+            "description": "Tolerations for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/",
+            "items": {},
+            "type": "array"
           },
           "topologySpreadConstraints": {
+            "description": "Topology Spread Constraints\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/",
+            "items": {},
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "createConfigmap": {}
+              },
+              "required": [
+                "createConfigmap"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "createConfigmap": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "createConfigmap"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "alerting": {
             "anyOf": [
               {
-                "additionalProperties": {},
+                "properties": {},
                 "type": "object"
               },
               {
-                "items": {},
                 "type": "array"
               },
               {
-                "type": "string"
+                "type": "null"
               }
             ],
-            "description": "Topology Spread Constraints\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/"
+            "description": "Configure grafana alerting (can be templated)\nref: https://docs.grafana.com/alerting/set-up/provision-alerting-resources/file-provisioning/\npolicies.yaml:\napiVersion: 1\npolicies:\n- orgId: 1\nreceiver: first_uid\nrules.yaml:\napiVersion: 1\ngroups:\n- orgId: 1\nname: '{{ .Chart.Name }}_my_rule_group'\nfolder: my_first_folder\ninterval: 60s\nrules:\n- uid: my_id_1\ntitle: my_first_rule\ncondition: A\ndata:\n- refId: A\ndatasourceUid: '-100'\nmodel:\nconditions:\n- evaluator:\nparams:\n- 3\ntype: gt\noperator:\ntype: and\nquery:\nparams:\n- A\nreducer:\ntype: last\ntype: query\ndatasource:\ntype: __expr__\nuid: '-100'\nexpression: 1==0\nintervalMs: 1000\nmaxDataPoints: 43200\nrefId: A\ntype: math\ndashboardUid: my_dashboard\npanelId: 123\nnoDataState: Alerting\nfor: 60s\nannotations:\nsome_key: some_value\nlabels:\nteam: sre_team_1\ncontactpoints.yaml:\nsecret:\napiVersion: 1\ncontactPoints:\n- orgId: 1\nname: cp_1\nreceivers:\n- uid: first_uid\ntype: pagerduty\nsettings:\nintegrationKey: XXX\nseverity: critical\nclass: ping failure\ncomponent: Grafana\ngroup: app-stack\nsummary: |\n{{ `{{ include \"default.message\" . }}` }}\ntemplates.yaml:\napiVersion: 1\ntemplates:\n- orgId: 1\nname: my_first_template\ntemplate: |\n{{ `\n{{ define \"my_first_template\" }}\nCustom notification message\n{{ end }}\n` }}\nmutetimes.yaml\napiVersion: 1\nmuteTimes:\n- orgId: 1\nname: mti_1\nrefer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0\ntime_intervals: {}"
+          },
+          "annotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dashboardProviders": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Configure grafana dashboard providers\nref: http://docs.grafana.org/administration/provisioning/#dashboards\n`path` must be /var/lib/grafana/dashboards/<provider_name>\ndashboardproviders.yaml:\napiVersion: 1\nproviders:\n- name: 'default'\norgId: 1\nfolder: ''\ntype: file\ndisableDeletion: false\neditable: true\noptions:\npath: /var/lib/grafana/dashboards/default"
+          },
+          "dashboards": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure grafana dashboard to import\nNOTE: To use dashboards you must also enable/configure dashboardProviders\nref: https://grafana.com/dashboards\ndashboards per provider, use provider name as key.\ndefault:\nsome-dashboard:\njson: |\n$RAW_JSON\ncustom-dashboard:\nfile: dashboards/custom-dashboard.json\nprometheus-stats:\ngnetId: 2\nrevision: 2\ndatasource: Prometheus\nlocal-dashboard:\nurl: https://example.com/repository/test.json\ncurlOptions: \"-sLf\"\ntoken: ''\nlocal-dashboard-base64:\nurl: https://example.com/repository/test-b64.json\ntoken: ''\nb64content: true\nlocal-dashboard-gitlab:\nurl: https://example.com/repository/test-gitlab.json\ngitlabToken: ''\nlocal-dashboard-bitbucket:\nurl: https://example.com/repository/test-bitbucket.json\nbearerToken: ''\nlocal-dashboard-azure:\nurl: https://example.com/repository/test-azure.json\nbasic: ''\nacceptHeader: '*/*'"
+          },
+          "datasources": {
+            "anyOf": [
+              {
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure grafana datasources\nref: http://docs.grafana.org/administration/provisioning/#datasources\ndatasources.yaml:\napiVersion: 1\ndatasources:\n- name: Prometheus\ntype: prometheus\nurl: http://prometheus-prometheus-server\naccess: proxy\nisDefault: true\n- name: CloudWatch\ntype: cloudwatch\naccess: proxy\nuid: cloudwatch\neditable: false\njsonData:\nauthType: default\ndefaultRegion: us-east-1\ndeleteDatasources: []\n- name: Prometheus"
+          },
+          "notifiers": {
+            "anyOf": [
+              {
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure notifiers\nref: http://docs.grafana.org/administration/provisioning/#alert-notification-channels\nnotifiers.yaml:\nnotifiers:\n- name: email-notifier\ntype: email\nuid: email1\neither:\norg_id: 1\nor\norg_name: Main Org.\nis_default: true\nsettings:\naddresses: an_email_address@example.com\ndelete_notifiers:"
           }
         },
         "type": "object"
@@ -3938,35 +3849,35 @@
                   }
                 ]
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -4304,28 +4215,14 @@
           "dashboards": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
                 "properties": {},
                 "type": "object"
               },
               {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Configure grafana dashboard to import\nNOTE: To use dashboards you must also enable/configure dashboardProviders\nref: https://grafana.com/dashboards\ndashboards per provider, use provider name as key.\ndefault:\nsome-dashboard:\njson: |\n$RAW_JSON\ncustom-dashboard:\nfile: dashboards/custom-dashboard.json\nprometheus-stats:\ngnetId: 2\nrevision: 2\ndatasource: Prometheus\nlocal-dashboard:\nurl: https://example.com/repository/test.json\ncurlOptions: \"-sLf\"\ntoken: ''\nlocal-dashboard-base64:\nurl: https://example.com/repository/test-b64.json\ntoken: ''\nb64content: true\nlocal-dashboard-gitlab:\nurl: https://example.com/repository/test-gitlab.json\ngitlabToken: ''\nlocal-dashboard-bitbucket:\nurl: https://example.com/repository/test-bitbucket.json\nbearerToken: ''\nlocal-dashboard-azure:\nurl: https://example.com/repository/test-azure.json\nbasic: ''\nacceptHeader: '*/*'"
@@ -6699,6 +6596,111 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "imageRenderer": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "imageRenderer"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "imageRenderer": {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "imageRenderer"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "imageRenderer": {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "imageRenderer"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "imageRenderer": {
+            "description": "Add a seperate remote image renderer deployment/service",
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "anyOf": [
               {
                 "not": {
@@ -6924,37 +6926,48 @@
                 },
                 "type": "object"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "initChownData resource requests and limits\nRef: http://kubernetes.io/docs/user-guide/compute-resources/"
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
+                "properties": {
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "add": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "readOnlyRootFilesystem": {
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
+                  "runAsNonRoot": {
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "type": "integer"
+                  },
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -9265,190 +9278,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "imageRenderer": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "imageRenderer"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "imageRenderer": {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "limitEgress": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "limitEgress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "imageRenderer"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "podLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "service": {
-            "description": "Expose the grafana service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
-            "properties": {
-              "targetPort": {
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "imageRenderer": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "imageRenderer"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "imageRenderer": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "limitIngress": {}
-                          },
-                          "required": [
-                            "limitIngress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "imageRenderer"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "imageRenderer": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "limitIngress": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "limitIngress"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "imageRenderer"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "podLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -9653,57 +9482,69 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "properties": {
-              "networkPolicy": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
+            "allOf": [
               {
                 "properties": {
-                  "networkPolicy": {
+                  "imageRenderer": {
                     "properties": {
-                      "ingress": {
+                      "enabled": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "ingress"
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "imageRenderer"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "imageRenderer": {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "limitEgress": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "limitEgress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "imageRenderer"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
                     ],
                     "type": "object"
                   }
@@ -9712,6 +9553,48 @@
                   "networkPolicy"
                 ],
                 "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "ingress": {}
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "ingress": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "ingress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           }
@@ -9724,6 +9607,70 @@
             "properties": {
               "targetPort": {
                 "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "namespace": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "namespace"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -9884,20 +9831,9 @@
                 "description": "Log level default for all sidecars. Can be one of: DEBUG, INFO, WARN, ERROR, CRITICAL. Defaults to INFO\nlogLevel: INFO",
                 "properties": {
                   "extraMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8080\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional alerts sidecar volume mounts"
+                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8080\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional alerts sidecar volume mounts",
+                    "items": {},
+                    "type": "array"
                   },
                   "label": {
                     "description": "ENV_NAME:\nconfigMapKeyRef:\nname: configmap-name\nkey: value_key\nDo not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true\nlabel that the configmaps with alert are marked with (can be templated)",
@@ -9928,66 +9864,36 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "livenessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -10146,20 +10052,9 @@
                 "description": "Log level default for all sidecars. Can be one of: DEBUG, INFO, WARN, ERROR, CRITICAL. Defaults to INFO\nlogLevel: INFO",
                 "properties": {
                   "extraMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8080\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional alerts sidecar volume mounts"
+                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8080\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional alerts sidecar volume mounts",
+                    "items": {},
+                    "type": "array"
                   },
                   "label": {
                     "description": "ENV_NAME:\nconfigMapKeyRef:\nname: configmap-name\nkey: value_key\nDo not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true\nlabel that the configmaps with alert are marked with (can be templated)",
@@ -10186,66 +10081,36 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "livenessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -11724,20 +11589,9 @@
               "dashboards": {
                 "properties": {
                   "extraMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Additional dashboards sidecar volume mounts"
+                    "description": "Additional dashboards sidecar volume mounts",
+                    "items": {},
+                    "type": "array"
                   },
                   "label": {
                     "description": "label that the configmaps with dashboards are marked with (can be templated)",
@@ -11768,66 +11622,36 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "livenessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -12848,20 +12672,9 @@
               "datasources": {
                 "properties": {
                   "extraMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8081\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional datasources sidecar volume mounts"
+                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8081\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional datasources sidecar volume mounts",
+                    "items": {},
+                    "type": "array"
                   },
                   "label": {
                     "description": "ENV_NAME:\nconfigMapKeyRef:\nname: configmap-name\nkey: value_key\nDo not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true\nlabel that the configmaps with datasources are marked with (can be templated)",
@@ -12892,66 +12705,36 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "livenessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -14257,38 +14040,12 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "livenessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "plugins": {
                 "properties": {
                   "extraMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Additional plugins sidecar volume mounts"
+                    "description": "Additional plugins sidecar volume mounts",
+                    "items": {},
+                    "type": "array"
                   },
                   "label": {
                     "description": "Do not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true\nlabel that the configmaps with plugins are marked with (can be templated)",
@@ -14316,51 +14073,36 @@
                 },
                 "type": "object"
               },
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -14524,38 +14266,12 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "livenessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "notifiers": {
                 "properties": {
                   "extraMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8082\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional notifiers sidecar volume mounts"
+                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8082\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional notifiers sidecar volume mounts",
+                    "items": {},
+                    "type": "array"
                   },
                   "label": {
                     "description": "Do not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true\nlabel that the configmaps with notifiers are marked with (can be templated)",
@@ -14579,51 +14295,36 @@
                 },
                 "type": "object"
               },
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -14785,38 +14486,12 @@
               "imagePullPolicy": {
                 "type": "string"
               },
-              "livenessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "notifiers": {
                 "properties": {
                   "extraMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8082\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional notifiers sidecar volume mounts"
+                    "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8082\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nAdditional notifiers sidecar volume mounts",
+                    "items": {},
+                    "type": "array"
                   },
                   "label": {
                     "description": "Do not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true\nlabel that the configmaps with notifiers are marked with (can be templated)",
@@ -14836,51 +14511,36 @@
                 },
                 "type": "object"
               },
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "seccompProfile": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -19921,21 +19581,6 @@
           },
           "then": {
             "properties": {
-              "behavior": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "maxReplicas": {
                 "type": "integer"
               },
@@ -19955,21 +19600,7 @@
       ],
       "description": "Create HorizontalPodAutoscaler object for deployment type",
       "properties": {
-        "behavior": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "behavior": {},
         "enabled": {
           "type": "boolean"
         },
@@ -20043,19 +19674,6 @@
       "description": "See `kubectl explain deployment.spec.strategy` for more\nref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy"
     },
     "dnsConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "nameservers:\n- 8.8.8.8\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
     },
     "dnsPolicy": {
@@ -20074,21 +19692,7 @@
           "description": "ENV_NAME:\nconfigMapKeyRef:\nname: configmap-name\nkey: value_key",
           "type": "object"
         },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
         "securityContext": {
           "anyOf": [
             {
@@ -20195,21 +19799,7 @@
         "additionalProperties": {},
         "properties": {
           "configMap": {},
-          "items": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "items": {},
           "mountPath": {},
           "name": {},
           "optional": {},
@@ -20297,55 +19887,13 @@
       "items": {
         "additionalProperties": {},
         "properties": {
-          "csi": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "csi": {},
           "defaultMode": {},
-          "items": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "items": {},
           "mountPath": {},
           "name": {},
           "optional": {},
-          "projected": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "projected": {},
           "readOnly": {},
           "secretName": {},
           "subPath": {
@@ -20383,67 +19931,11 @@
       "items": {
         "additionalProperties": {},
         "properties": {
-          "configMap": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "csi": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "emptyDir": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "configMap": {},
+          "csi": {},
+          "emptyDir": {},
           "existingClaim": {},
-          "hostPath": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "hostPath": {},
           "name": {}
         },
         "type": "object"
@@ -20649,35 +20141,38 @@
                 ]
               },
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "image-renderer deployment container securityContext",
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "readOnlyRootFilesystem": {
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "image-renderer deployment container securityContext"
-              },
-              "deploymentStrategy": {
-                "anyOf": [
-                  {
+                  "seccompProfile": {
                     "additionalProperties": {},
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "env": {
                 "anyOf": [
@@ -20704,9 +20199,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   }
                 ],
@@ -20721,9 +20213,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -20792,20 +20281,9 @@
                 "description": "Extra volumes for image-renderer pods"
               },
               "hostAliases": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "image-renderer deployment Host Aliases"
+                "description": "image-renderer deployment Host Aliases",
+                "items": {},
+                "type": "array"
               },
               "image": {
                 "properties": {
@@ -20900,22 +20378,6 @@
                   }
                 ]
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi\nNode labels for pod assignment\nref: https://kubernetes.io/docs/user-guide/node-selection/"
-              },
               "podAnnotations": {
                 "anyOf": [
                   {
@@ -20947,40 +20409,9 @@
                 "description": "image-renderer deployment priority class",
                 "type": "string"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "revisionHistoryLimit": {
                 "description": "number of image-renderer replica sets to keep",
                 "type": "integer"
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "image-renderer deployment securityContext"
               },
               "service": {
                 "properties": {
@@ -20996,20 +20427,9 @@
                 "type": "string"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Tolerations for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
+                "description": "Tolerations for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -21054,21 +20474,6 @@
             "properties": {
               "autoscaling": {
                 "properties": {
-                  "behavior": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "maxReplicas": {
                     "type": "integer"
                   },
@@ -21151,38 +20556,12 @@
               "networkPolicy": {
                 "properties": {
                   "extraIngressSelectors": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Allow additional services to access image-renderer (eg. Prometheus operator when ServiceMonitor is enabled)"
+                    "description": "Allow additional services to access image-renderer (eg. Prometheus operator when ServiceMonitor is enabled)",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
-              },
-              "podLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "service": {
                 "properties": {
@@ -21191,62 +20570,6 @@
                   }
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "limitEgress": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "limitEgress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "podLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               }
             },
             "type": "object"
@@ -21463,19 +20786,8 @@
                     "type": "string"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "scheme": {
                     "type": "string"
@@ -21484,110 +20796,9 @@
                     "type": "string"
                   },
                   "targetLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "See: https://doc.crds.dev/github.com/prometheus-operator/kube-prometheus/monitoring.coreos.com/ServiceMonitor/v1@v0.11.0#spec-targetLabels"
-                  },
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "serviceMonitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMonitor"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "serviceMonitor": {
-                    "properties": {
-                      "namespace": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "namespace"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMonitor"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "description": "See: https://doc.crds.dev/github.com/prometheus-operator/kube-prometheus/monitoring.coreos.com/ServiceMonitor/v1@v0.11.0#spec-targetLabels",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -21618,21 +20829,7 @@
         "autoscaling": {
           "additionalProperties": {},
           "properties": {
-            "behavior": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "behavior": {},
             "enabled": {
               "type": "boolean"
             },
@@ -21656,21 +20853,7 @@
           ],
           "description": "image-renderer deployment container securityContext"
         },
-        "deploymentStrategy": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "deploymentStrategy": {},
         "enabled": {
           "description": "Enable the image-renderer deployment & service",
           "type": "boolean"
@@ -21796,19 +20979,6 @@
           "type": "object"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "limits:\ncpu: 100m\nmemory: 100Mi\nrequests:\ncpu: 50m\nmemory: 50Mi\nNode labels for pod assignment\nref: https://kubernetes.io/docs/user-guide/node-selection/"
         },
         "podAnnotations": {
@@ -21845,39 +21015,12 @@
           "description": "The callback url of grafana instances if it is not in the same namespace with the remote image renderer"
         },
         "replicas": {},
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
         "revisionHistoryLimit": {
           "description": "number of image-renderer replica sets to keep"
         },
         "schedulerName": {},
         "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "image-renderer deployment securityContext"
         },
         "serverURL": {
@@ -21973,21 +21116,7 @@
               ],
               "description": "See: https://doc.crds.dev/github.com/prometheus-operator/kube-prometheus/monitoring.coreos.com/ServiceMonitor/v1@v0.11.0#spec-targetLabels"
             },
-            "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "tlsConfig": {}
           },
           "type": "object"
         },
@@ -22036,9 +21165,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -22166,19 +21292,6 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "initChownData resource requests and limits\nRef: http://kubernetes.io/docs/user-guide/compute-resources/"
         },
         "securityContext": {
@@ -22312,115 +21425,12 @@
                     "type": "array"
                   },
                   "to": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [grafana]}"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "ingress": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "allowExternal": {}
-                        },
-                        "required": [
-                          "allowExternal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "allowExternal": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternal"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "explicitNamespacesSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
+                    "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [grafana]}",
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the grafana.\nBut sometimes, we want the grafana to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -22469,19 +21479,6 @@
           "type": "boolean"
         },
         "explicitNamespacesSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the grafana.\nBut sometimes, we want the grafana to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
         },
         "ingress": {
@@ -22492,19 +21489,6 @@
       "type": "object"
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Node labels for pod assignment\nref: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "notifiers": {
@@ -22601,21 +21585,7 @@
           "description": "If 'lookupVolumeName' is set to true, Helm will attempt to retrieve\nthe current value of 'spec.volumeName' and incorporate it into the template.",
           "type": "boolean"
         },
-        "selectorLabels": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "selectorLabels": {},
         "size": {},
         "storageClassName": {},
         "subPath": {},
@@ -22748,20 +21718,17 @@
     },
     "replicas": {},
     "resources": {
-      "anyOf": [
-        {
+      "additionalProperties": {},
+      "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
+      "properties": {
+        "limits": {
           "additionalProperties": {},
+          "properties": {
+            "memory": {}
+          },
           "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
         }
-      ],
-      "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
+      }
     },
     "revisionHistoryLimit": {
       "description": "Number of old ReplicaSets to retain"
@@ -22925,21 +21892,7 @@
                 ]
               },
               "enabled": {},
-              "filters": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
+              "filters": {},
               "hostnames": {},
               "httpsRedirect": {},
               "labels": {
@@ -22955,36 +21908,8 @@
                   }
                 ]
               },
-              "matches": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "parentRefs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
+              "matches": {},
+              "parentRefs": {}
             },
             "type": "object"
           },
@@ -23044,36 +21969,10 @@
                 "description": "Adds the appProtocol field to the service. This allows to work with istio protocol selection. Ex: \"http\" or \"tcp\"",
                 "type": "string"
               },
-              "externalIPs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "ipFamilies": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Sets the families that should be supported and the order in which they should be applied to ClusterIP as well. Can be IPv4 and/or IPv6."
+                "description": "Sets the families that should be supported and the order in which they should be applied to ClusterIP as well. Can be IPv4 and/or IPv6.",
+                "items": {},
+                "type": "array"
               },
               "ipFamilyPolicy": {
                 "description": "Set the ip family policy to configure dual-stack see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)",
@@ -23155,19 +22054,8 @@
                 "type": "string"
               },
               "loadBalancerSourceRanges": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -23186,21 +22074,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "externalIPs": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "externalIPs": {},
         "externalTrafficPolicy": {},
         "ipFamilies": {
           "anyOf": [
@@ -23384,38 +22258,12 @@
           },
           "then": {
             "properties": {
-              "basicAuth": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "interval": {
                 "type": "string"
               },
               "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "namespace": {
                 "type": [
@@ -23427,19 +22275,8 @@
                 "type": "string"
               },
               "relabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "scheme": {
                 "type": "string"
@@ -23448,77 +22285,8 @@
                 "type": "string"
               },
               "targetLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "tlsConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "namespace": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "namespace"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -23526,21 +22294,7 @@
         }
       ],
       "properties": {
-        "basicAuth": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "basicAuth": {},
         "enabled": {
           "description": "If true, a ServiceMonitor CR is created for a prometheus operator\nhttps://github.com/coreos/prometheus-operator",
           "type": "boolean"
@@ -23595,21 +22349,7 @@
             }
           ]
         },
-        "tlsConfig": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "tlsConfig": {}
       },
       "type": "object"
     },
@@ -23704,21 +22444,7 @@
               "type": "boolean"
             },
             "skipTlsVerify": {},
-            "startupProbe": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "startupProbe": {},
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
@@ -23853,21 +22579,7 @@
             "skipReload": {
               "type": "boolean"
             },
-            "startupProbe": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "startupProbe": {},
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
@@ -23944,21 +22656,7 @@
             "skipReload": {
               "type": "boolean"
             },
-            "startupProbe": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "startupProbe": {},
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
@@ -23983,21 +22681,7 @@
           "type": "object"
         },
         "imagePullPolicy": {},
-        "livenessProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "livenessProbe": {},
         "logLevel": {},
         "notifiers": {
           "additionalProperties": {},
@@ -24076,21 +22760,7 @@
             "skipReload": {
               "type": "boolean"
             },
-            "startupProbe": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "startupProbe": {},
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
@@ -24169,36 +22839,8 @@
           },
           "type": "object"
         },
-        "readinessProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "readinessProbe": {},
+        "resources": {},
         "securityContext": {
           "anyOf": [
             {

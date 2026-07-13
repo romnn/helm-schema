@@ -201,22 +201,6 @@
                 },
                 "type": "object"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure Pods Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
-              },
               "revisionHistoryLimit": {
                 "description": "The number of old history to retain to allow rollback\nNOTE: Explicitly setting this field to 0, will result in cleaning up all the history, breaking ability to rollback",
                 "type": "integer"
@@ -385,22 +369,6 @@
                 },
                 "type": "object"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure Pods Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
-              },
               "revisionHistoryLimit": {
                 "description": "The number of old history to retain to allow rollback\nNOTE: Explicitly setting this field to 0, will result in cleaning up all the history, breaking ability to rollback",
                 "type": "integer"
@@ -441,20 +409,15 @@
                 "type": "integer"
               },
               "updateStrategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies",
+                "properties": {
+                  "type": {
+                    "description": "Redis(R) replicas statefulset strategy type\nStrategyType\nCan be set to RollingUpdate, OnDelete (statefulset), Recreate (deployment)",
                     "type": "string"
                   }
-                ],
-                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -692,22 +655,6 @@
                 "description": "Number of Redis(R) replicas to deploy",
                 "type": "integer"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure Pods Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
-              },
               "revisionHistoryLimit": {
                 "description": "The number of old history to retain to allow rollback\nNOTE: Explicitly setting this field to 0, will result in cleaning up all the history, breaking ability to rollback",
                 "type": "integer"
@@ -717,20 +664,15 @@
                 "type": "boolean"
               },
               "updateStrategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies",
+                "properties": {
+                  "type": {
+                    "description": "Redis(R) replicas statefulset strategy type\nStrategyType\nCan be set to RollingUpdate, OnDelete (statefulset), Recreate (deployment)",
                     "type": "string"
                   }
-                ],
-                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -749,22 +691,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
               },
               "service": {
                 "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden.",
@@ -6346,35 +6272,27 @@
             "description": "Kubectl InitContainer\nused by Sentinel to update the isMaster label on the Redis(TM) pods\nBitnami Kubectl image version\nref: https://hub.docker.com/r/bitnami/kubectl/tags/",
             "properties": {
               "command": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "kubectl command to execute\nConfigure Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
+                "description": "kubectl command to execute\nConfigure Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
+                    "description": "The resources limits for the kubectl containers",
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "requests": {
+                    "additionalProperties": {},
+                    "description": "The requested resources for the kubectl containers",
+                    "type": "object"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -8092,22 +8010,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
               }
             },
             "type": "object"
@@ -8116,36 +8018,20 @@
             "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters",
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "NOTE: when runAsUser is set to special value \"auto\", init container will try to chown the\ndata folder to auto-determined user&group, using commands: `id -u`:`id -G | cut -d\" \" -f2`\n\"auto\" is especially useful for OpenShift which has scc with dynamic user ids (and 0 is not allowed)",
+                "properties": {
+                  "runAsUser": {
+                    "description": "Set init container's Security Context runAsUser",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
                     "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "NOTE: when runAsUser is set to special value \"auto\", init container will try to chown the\ndata folder to auto-determined user&group, using commands: `id -u`:`id -G | cut -d\" \" -f2`\n\"auto\" is especially useful for OpenShift which has scc with dynamic user ids (and 0 is not allowed)"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nInit container Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -9117,20 +9003,9 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Redis(R) master service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24"
+                    "description": "Redis(R) master service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -10111,20 +9986,15 @@
           "master": {
             "properties": {
               "updateStrategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies",
+                "properties": {
+                  "type": {
+                    "description": "Redis(R) master statefulset strategy type\nStrategyType\nCan be set to RollingUpdate, OnDelete (statefulset), Recreate (deployment)",
                     "type": "string"
                   }
-                ],
-                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -10527,378 +10397,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "master": {
-                          "properties": {
-                            "count": {}
-                          },
-                          "required": [
-                            "count"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "master"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "master": {
-                        "properties": {
-                          "count": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "count"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "master"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "architecture": {
-                        "not": {
-                          "enum": [
-                            "replication"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "sentinel": {
-                          "properties": {
-                            "enabled": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "sentinel"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "sentinel": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sentinel"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "sentinel": {
-                    "properties": {
-                      "service": {
-                        "properties": {
-                          "nodePorts": {
-                            "properties": {
-                              "redis": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "redis"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "nodePorts"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "service"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sentinel"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "sentinel": {
-                          "properties": {
-                            "service": {
-                              "properties": {
-                                "type": {}
-                              },
-                              "required": [
-                                "type"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "service"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "sentinel"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "sentinel": {
-                        "properties": {
-                          "service": {
-                            "properties": {
-                              "type": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "type"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sentinel"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "architecture": {
-                        "enum": [
-                          "replication"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "architecture": {
-                        "enum": [
-                          "replication"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "metrics": {
-            "properties": {
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "properties": {
@@ -11091,22 +10589,14 @@
                   "ingressNSMatchLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Labels to match to allow traffic from other namespaces to metrics endpoint"
@@ -11114,22 +10604,14 @@
                   "ingressNSPodMatchLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Pod labels to match to allow traffic from other namespaces to metrics endpoint"
@@ -13520,22 +13002,6 @@
                   }
                 },
                 "type": "object"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
               }
             },
             "type": "object"
@@ -13544,36 +13010,20 @@
             "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters",
             "properties": {
               "containerSecurityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "NOTE: when runAsUser is set to special value \"auto\", init container will try to chown the\ndata folder to auto-determined user&group, using commands: `id -u`:`id -G | cut -d\" \" -f2`\n\"auto\" is especially useful for OpenShift which has scc with dynamic user ids (and 0 is not allowed)",
+                "properties": {
+                  "runAsUser": {
+                    "description": "Set init container's Security Context runAsUser",
+                    "type": "integer"
+                  },
+                  "seLinuxOptions": {
                     "additionalProperties": {},
+                    "description": "[object,nullable] Set SELinux options in container",
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "NOTE: when runAsUser is set to special value \"auto\", init container will try to chown the\ndata folder to auto-determined user&group, using commands: `id -u`:`id -G | cut -d\" \" -f2`\n\"auto\" is especially useful for OpenShift which has scc with dynamic user ids (and 0 is not allowed)"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nInit container Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -14826,20 +14276,9 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Redis(R) replicas service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24"
+                    "description": "Redis(R) replicas service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -16733,20 +16172,9 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Redis(R) master service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24"
+                    "description": "Redis(R) master service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -16763,20 +16191,9 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Redis(R) Sentinel service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24"
+                    "description": "Redis(R) Sentinel service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -18447,20 +17864,9 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Redis(R) Sentinel service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24"
+                    "description": "Redis(R) Sentinel service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -22073,19 +21479,6 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure Pods Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
         },
         "resourcesPreset": {
@@ -22344,71 +21737,27 @@
                     "type": "string"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Metrics RelabelConfigs to apply to samples before ingestion.\n- targetLabel: \"app\"\nreplacement: \"redis\""
+                    "description": "Metrics RelabelConfigs to apply to samples before ingestion.\n- targetLabel: \"app\"\nreplacement: \"redis\"",
+                    "items": {},
+                    "type": "array"
                   },
                   "podTargetLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Labels from the Kubernetes pod to be transferred to the created metrics"
+                    "description": "Labels from the Kubernetes pod to be transferred to the created metrics",
+                    "items": {},
+                    "type": "array"
                   },
                   "port": {
                     "description": "the pod port to scrape metrics from",
                     "type": "string"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Metrics RelabelConfigs to apply to samples before scraping."
+                    "description": "Metrics RelabelConfigs to apply to samples before scraping.",
+                    "items": {},
+                    "type": "array"
                   },
                   "relabellings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "sampleLimit": {
                     "description": "Limit of how many samples should be scraped from every Pod",
@@ -22421,28 +21770,6 @@
                   "targetLimit": {
                     "description": "Limit of how many targets should be scraped",
                     "type": "boolean"
-                  }
-                },
-                "type": "object"
-              },
-              "serviceMonitor": {
-                "description": "Prometheus Service Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint",
-                "properties": {
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "[object] TLS configuration used for scrape endpoints used by Prometheus"
                   }
                 },
                 "type": "object"
@@ -22666,20 +21993,9 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Redis(R) exporter service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24"
+                    "description": "Redis(R) exporter service Load Balancer sources\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g.\nloadBalancerSourceRanges:\n- 10.10.10.0/24",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -22835,36 +22151,14 @@
                     "type": "string"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Metrics RelabelConfigs to apply to samples before ingestion."
+                    "description": "Metrics RelabelConfigs to apply to samples before ingestion.",
+                    "items": {},
+                    "type": "array"
                   },
                   "podTargetLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Labels from the Kubernetes pod to be transferred to the created metrics"
+                    "description": "Labels from the Kubernetes pod to be transferred to the created metrics",
+                    "items": {},
+                    "type": "array"
                   },
                   "port": {
                     "description": "the service port to scrape metrics from",
@@ -22881,22 +22175,6 @@
                   "targetLimit": {
                     "description": "Limit of how many targets should be scraped",
                     "type": "boolean"
-                  },
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "[object] TLS configuration used for scrape endpoints used by Prometheus"
                   }
                 },
                 "type": "object"
@@ -23257,19 +22535,6 @@
           "description": "A way to specify an alternative Redis(R) hostname\nUseful for certificate CN/SAN matching"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
         },
         "resourcesPreset": {
@@ -23434,19 +22699,6 @@
               "description": "Limit of how many targets should be scraped"
             },
             "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "[object] TLS configuration used for scrape endpoints used by Prometheus"
             }
           },
@@ -23594,22 +22846,14 @@
               "ingressNSMatchLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Labels to match to allow traffic from other namespaces"
@@ -23617,22 +22861,14 @@
               "ingressNSPodMatchLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Pod labels to match to allow traffic from other namespaces"
@@ -23678,9 +22914,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "Labels to match to allow traffic from other namespaces"
@@ -23697,9 +22930,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "Pod labels to match to allow traffic from other namespaces"
@@ -23723,9 +22953,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "Labels to match to allow traffic from other namespaces to metrics endpoint"
@@ -23742,9 +22969,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "Pod labels to match to allow traffic from other namespaces to metrics endpoint"
@@ -24332,19 +23556,6 @@
           "description": "Number of Redis(R) replicas to deploy"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure Pods Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
         },
         "resourcesPreset": {
@@ -25120,19 +24331,6 @@
           "type": "boolean"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
         },
         "resourcesPreset": {
@@ -25374,19 +24572,6 @@
           "type": "boolean"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
         },
         "resourcesPreset": {
@@ -25511,19 +24696,6 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nInit container Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
         },
         "resourcesPreset": {

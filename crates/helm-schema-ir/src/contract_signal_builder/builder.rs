@@ -225,6 +225,33 @@ impl PathSchemaFactsAccumulator {
     }
 }
 
+/// The subset of a path's observed type hints compatible with an overlay
+/// branch's own type partition. A positive `TypeIs(T)` key keeps only `T`;
+/// a negated one drops `T`; foreign guards leave the hints untouched.
+fn partition_compatible_hints(
+    hints: &BTreeSet<String>,
+    guards: &[ConditionalGuard],
+    value_path: &str,
+) -> BTreeSet<String> {
+    let mut compatible = hints.clone();
+    for guard in guards {
+        match guard {
+            ConditionalGuard::TypeIs { path, schema_type } if path == value_path => {
+                compatible.retain(|hint| hint == schema_type);
+            }
+            ConditionalGuard::Not(inner) => {
+                if let ConditionalGuard::TypeIs { path, schema_type } = inner.as_ref()
+                    && path == value_path
+                {
+                    compatible.retain(|hint| hint != schema_type);
+                }
+            }
+            _ => {}
+        }
+    }
+    compatible
+}
+
 fn record_contract_use(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
@@ -410,7 +437,12 @@ fn record_contract_use_conjunction(
                     // rangeable, or the inner range aborts rendering.
                     record_member_range_requirement(paths, parent, predicates);
                 } else {
-                    record_guarded_range_read(paths, &path, predicates);
+                    record_guarded_range_read(
+                        paths,
+                        &path,
+                        predicates,
+                        destructured_range_source_paths.contains(&path),
+                    );
                 }
             }
         }
@@ -427,6 +459,7 @@ fn record_guarded_range_read(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     ranged_path: &str,
     predicates: &[Predicate],
+    destructured: bool,
 ) {
     if path_contains_wildcard(ranged_path) {
         return;
@@ -467,6 +500,9 @@ fn record_guarded_range_read(
     branch.facts.is_nullable = true;
     branch.record_facts(ContractValuePathFacts {
         is_ranged_source: true,
+        // A two-variable range cannot iterate integers; the branch's
+        // iterable domain must follow the parsed binding arity (F58).
+        has_destructured_range_use: destructured,
         is_nullable: true,
         ..ContractValuePathFacts::default()
     });
@@ -960,11 +996,22 @@ impl ContractPathAccumulator {
         } else {
             conditional_overlay_branches
                 .into_iter()
-                .map(|(guards, branch)| ConditionalPathOverlay {
-                    guards,
-                    evidence: branch
-                        .conditional_overlay_evidence(facts, overlay_type_hints.clone()),
-                    preserve_base_schema: has_unconditional_overlay_peer,
+                .map(|(guards, branch)| {
+                    // A branch keyed on the path's own type partition hosts
+                    // only the hints compatible with that partition: the
+                    // map arm's object hint must never type the slice arm's
+                    // `then` (and vice versa), or a live arm becomes
+                    // internally contradictory.
+                    let branch_hints = partition_compatible_hints(
+                        &overlay_type_hints,
+                        &guards,
+                        value_path.as_str(),
+                    );
+                    ConditionalPathOverlay {
+                        guards,
+                        evidence: branch.conditional_overlay_evidence(facts, branch_hints),
+                        preserve_base_schema: has_unconditional_overlay_peer,
+                    }
                 })
                 .collect()
         };

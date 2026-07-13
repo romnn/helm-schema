@@ -266,6 +266,234 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Overrides the chart's computed fullname"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Overrides the chart's name"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "protocol": {}
+                      },
+                      "required": [
+                        "protocol"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "protocol": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "protocol"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "LoadBalancer"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "protocol": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "ingress": {}
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "ingress": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "targetPort": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -399,184 +627,9 @@
       },
       "then": {
         "properties": {
-          "extraLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Apply extra labels to common labels."
-          },
-          "global": {
-            "properties": {
-              "commonLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Common labels for all object directly managed by this chart."
-              }
-            },
-            "type": "object"
-          },
           "tempo": {
             "properties": {
               "tag": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Overrides the chart's computed fullname"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Overrides the chart's name"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "networkPolicy": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "ingress": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "service": {
-            "properties": {
-              "targetPort": {
                 "type": "string"
               }
             },
@@ -589,25 +642,6 @@
   ],
   "properties": {
     "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Affinity for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "annotations": {
@@ -782,115 +816,12 @@
                     "type": "array"
                   },
                   "to": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "ingress": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "allowExternal": {}
-                        },
-                        "required": [
-                          "allowExternal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "allowExternal": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternal"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "explicitNamespacesSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
+                    "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}",
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -940,19 +871,6 @@
           "type": "boolean"
         },
         "explicitNamespacesSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
         },
         "ingress": {
@@ -963,25 +881,6 @@
       "type": "object"
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Node labels for pod assignment. See: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "persistence": {
@@ -1002,41 +901,17 @@
           "then": {
             "properties": {
               "accessModes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "storageClassName: local-path"
+                "description": "storageClassName: local-path",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
               "annotations": {
                 "additionalProperties": {
                   "type": "string"
                 },
                 "type": "object"
-              },
-              "selector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               }
             },
             "type": "object"
@@ -1070,21 +945,7 @@
         "enabled": {
           "type": "boolean"
         },
-        "selector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "selector": {},
         "size": {},
         "storageClassName": {}
       },
@@ -1224,154 +1085,6 @@
             },
             "type": "object"
           }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "type": {}
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "type": {
-                    "not": {
-                      "enum": [
-                        "LoadBalancer"
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "externalIPs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "LoadBalancer"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "loadBalancerSourceRanges": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "protocol": {}
-                      },
-                      "required": [
-                        "protocol"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "protocol": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "protocol"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "LoadBalancer"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "protocol": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\""
-              }
-            },
-            "type": "object"
-          }
         }
       ],
       "properties": {
@@ -1389,21 +1102,7 @@
           ]
         },
         "clusterIP": {},
-        "externalIPs": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "externalIPs": {},
         "labels": {
           "anyOf": [
             {
@@ -1420,21 +1119,7 @@
         "loadBalancerIP": {
           "description": "(string) IP address, in case of 'type: LoadBalancer'"
         },
-        "loadBalancerSourceRanges": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "loadBalancerSourceRanges": {},
         "protocol": {
           "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\"",
           "type": [
@@ -1508,20 +1193,9 @@
                 "type": "boolean"
               },
               "imagePullSecrets": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Image pull secrets for the service account"
+                "description": "Image pull secrets for the service account",
+                "items": {},
+                "type": "array"
               },
               "labels": {
                 "anyOf": [
@@ -1908,19 +1582,6 @@
           "type": "object"
         },
         "per_tenant_overrides": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "The `per tenant` aka `tenant-specific` runtime overrides. This allows overriding values set in the configuration on a per-tenant basis. Note that *all* values must be given for each per-tenant configuration block. Refer to [Runtime overrides](https://grafana.com/docs/tempo/latest/configuration/#runtime-overrides) and [Tenant-Specific overrides](https://grafana.com/docs/tempo/latest/configuration/#tenant-specific-overrides) documentation for more details.\n'tenant-id':\nmetrics_generator:\nprocessors:\n- service-graphs\n- span-metrics"
         },
         "pullPolicy": {
@@ -2094,46 +1755,13 @@
           ]
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
         },
         "retention": {
           "description": "search:\nconcurrent_jobs: 2000",
           "type": "string"
         },
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "server": {
           "additionalProperties": {},
           "description": "Tempo server configuration.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#server",
@@ -2234,45 +1862,20 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   }
                 ],
                 "description": "Additional container arguments"
               },
               "extraEnv": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Environment variables to add"
+                "description": "Environment variables to add",
+                "items": {},
+                "type": "array"
               },
               "extraVolumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Volume mounts to add"
+                "description": "Volume mounts to add",
+                "items": {},
+                "type": "array"
               },
               "pullPolicy": {
                 "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nRefers to: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName",
@@ -2293,38 +1896,6 @@
                     "type": "string"
                   }
                 ]
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
-              },
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable"
               },
               "tag": {
                 "anyOf": [
@@ -2415,9 +1986,6 @@
                       },
                       {
                         "type": "array"
-                      },
-                      {
-                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -2545,35 +2113,9 @@
         },
         "repository": {},
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
         },
         "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable"
         },
         "service": {

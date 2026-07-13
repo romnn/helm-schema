@@ -610,8 +610,14 @@ impl Interpreter<'_> {
             self.direct_range_source_paths.insert(path.clone());
             if destructured {
                 self.destructured_range_source_paths.insert(path.clone());
-                self.type_hints
-                    .entry(path.clone())
+                // Under a gating predicate (a `kindIs "map"` partition arm)
+                // the map hint holds only where that branch renders.
+                let sink = if self.hint_scope_is_unconditional(path) {
+                    &mut self.type_hints
+                } else {
+                    &mut self.guarded_type_hints
+                };
+                sink.entry(path.clone())
                     .or_default()
                     .insert("object".to_string());
             }

@@ -362,20 +362,9 @@
       "then": {
         "properties": {
           "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra [volume mounts](https://kubernetes.io/docs/concepts/storage/volumes/) for the `external-dns` container."
+            "description": "Extra [volume mounts](https://kubernetes.io/docs/concepts/storage/volumes/) for the `external-dns` container.",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -419,20 +408,9 @@
       "then": {
         "properties": {
           "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Extra [volumes](https://kubernetes.io/docs/concepts/storage/volumes/) for the `Pod`."
+            "description": "Extra [volumes](https://kubernetes.io/docs/concepts/storage/volumes/) for the `Pod`.",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -924,49 +902,12 @@
                   "serviceMonitor": {
                     "properties": {
                       "metricRelabelings": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
+                        "items": {},
+                        "type": "array"
                       },
                       "relabelings": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "tlsConfig": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
@@ -1433,170 +1374,130 @@
         {
           "additionalProperties": {},
           "properties": {
-            "nodeAffinity": {
+            "nodeAffinity": {},
+            "podAffinity": {
               "anyOf": [
                 {
                   "additionalProperties": {},
+                  "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {
+                      "anyOf": [
+                        {
+                          "items": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "podAffinityTerm": {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "labelSelector": {}
+                                },
+                                "type": "object"
+                              },
+                              "weight": {}
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "requiredDuringSchedulingIgnoredDuringExecution": {
+                      "anyOf": [
+                        {
+                          "items": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "labelSelector": {}
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
                   "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
                 }
               ]
             },
-            "podAffinity": {
-              "additionalProperties": {},
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "podAffinityTerm": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "labelSelector": {}
-                                },
-                                "type": "object"
-                              },
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          },
-                          "weight": {}
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "object"
-                    }
-                  ]
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "properties": {
-                              "labelSelector": {}
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
-              "type": "object"
-            },
             "podAntiAffinity": {
-              "additionalProperties": {},
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "podAffinityTerm": {
-                            "anyOf": [
-                              {
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {
+                      "anyOf": [
+                        {
+                          "items": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "podAffinityTerm": {
                                 "additionalProperties": {},
                                 "properties": {
                                   "labelSelector": {}
                                 },
                                 "type": "object"
                               },
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                              "weight": {}
+                            },
+                            "type": "object"
                           },
-                          "weight": {}
+                          "type": "array"
                         },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "object"
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ]
                     }
-                  ]
+                  }
                 },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "anyOf": [
-                          {
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "requiredDuringSchedulingIgnoredDuringExecution": {
+                      "anyOf": [
+                        {
+                          "items": {
                             "additionalProperties": {},
                             "properties": {
                               "labelSelector": {}
                             },
                             "type": "object"
                           },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "object"
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ]
                     }
-                  ]
+                  },
+                  "type": "object"
                 }
-              },
-              "type": "object"
+              ]
             }
           },
           "type": "object"
@@ -1692,25 +1593,6 @@
       "type": "object"
     },
     "dnsConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "const": null
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "(object) [DNS config](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) for the pod, if not set the default will be used."
     },
     "dnsPolicy": {
@@ -1789,17 +1671,11 @@
       "description": "Intentionally exclude domains from being managed."
     },
     "extraArgs": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              }
-            ]
+            "type": "object"
           },
           "then": {
             "anyOf": [
@@ -1811,27 +1687,28 @@
                 "type": "array"
               },
               {
-                "type": "integer"
+                "type": "null"
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "array"
+          },
+          "then": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
               },
               {
                 "type": "null"
               }
             ]
           }
-        }
-      ],
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
         }
       ],
       "description": "Extra arguments to provide to _ExternalDNS_.\nAn array or map can be used, with maps allowing for value overrides; maps also support slice values to use the same arg multiple times."
@@ -2112,25 +1989,6 @@
       "description": "if `true`, _ExternalDNS_ will run in a namespaced scope (`Role`` and `Rolebinding`` will be namespaced too)."
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Node labels to match for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)."
     },
     "podAnnotations": {
@@ -2259,49 +2117,16 @@
               "webhook": {
                 "properties": {
                   "args": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "env": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "extraVolumeMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "image": {
                     "properties": {
@@ -2312,64 +2137,70 @@
                     "type": "object"
                   },
                   "livenessProbe": {
-                    "anyOf": [
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "failureThreshold": {
+                        "type": "integer"
+                      },
+                      "httpGet": {
                         "additionalProperties": {},
+                        "properties": {
+                          "path": {
+                            "type": "string"
+                          },
+                          "port": {
+                            "type": "string"
+                          }
+                        },
                         "type": "object"
                       },
-                      {
-                        "items": {},
-                        "type": "array"
+                      "initialDelaySeconds": {
+                        "type": "integer"
                       },
-                      {
-                        "type": "string"
+                      "periodSeconds": {
+                        "type": "integer"
+                      },
+                      "successThreshold": {
+                        "type": "integer"
+                      },
+                      "timeoutSeconds": {
+                        "type": "integer"
                       }
-                    ]
+                    },
+                    "type": "object"
                   },
                   "readinessProbe": {
-                    "anyOf": [
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "failureThreshold": {
+                        "type": "integer"
+                      },
+                      "httpGet": {
                         "additionalProperties": {},
+                        "properties": {
+                          "path": {
+                            "type": "string"
+                          },
+                          "port": {
+                            "type": "string"
+                          }
+                        },
                         "type": "object"
                       },
-                      {
-                        "items": {},
-                        "type": "array"
+                      "initialDelaySeconds": {
+                        "type": "integer"
                       },
-                      {
-                        "type": "string"
+                      "periodSeconds": {
+                        "type": "integer"
+                      },
+                      "successThreshold": {
+                        "type": "integer"
+                      },
+                      "timeoutSeconds": {
+                        "type": "integer"
                       }
-                    ]
-                  },
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "securityContext": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    },
+                    "type": "object"
                   },
                   "service": {
                     "properties": {
@@ -2421,19 +2252,8 @@
           "then": {
             "properties": {
               "additionalPermissions": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -2505,25 +2325,6 @@
       ]
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "[Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for the `external-dns` container."
     },
     "revisionHistoryLimit": {
@@ -2549,22 +2350,14 @@
               "data": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "`Secret` data."
@@ -2576,9 +2369,7 @@
       ],
       "properties": {
         "data": {
-          "additionalProperties": {},
-          "description": "`Secret` data.",
-          "type": "object"
+          "description": "`Secret` data."
         },
         "enabled": {
           "description": "If `true`, create a `Secret` to store sensitive provider configuration (**DEPRECATED**).",
@@ -2720,9 +2511,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -2877,20 +2665,9 @@
                 "description": "Annotations to add to the `ServiceMonitor`."
               },
               "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "[Metric relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs) to apply to samples before ingestion."
+                "description": "[Metric relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs) to apply to samples before ingestion.",
+                "items": {},
+                "type": "array"
               },
               "namespace": {
                 "description": "(string) If set create the `ServiceMonitor` in an alternate namespace.",
@@ -2900,52 +2677,14 @@
                 ]
               },
               "relabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "[Relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) to apply to samples before ingestion."
+                "description": "[Relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) to apply to samples before ingestion.",
+                "items": {},
+                "type": "array"
               },
               "targetLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Provide target labels for the `ServiceMonitor`."
-              },
-              "tlsConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Configure the `ServiceMonitor` [TLS config](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig)."
+                "description": "Provide target labels for the `ServiceMonitor`.",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3042,19 +2781,6 @@
           "description": "Provide target labels for the `ServiceMonitor`."
         },
         "tlsConfig": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Configure the `ServiceMonitor` [TLS config](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig)."
         }
       },
@@ -3116,21 +2842,10 @@
     "topologySpreadConstraints": {
       "anyOf": [
         {
-          "items": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "items": {},
+          "type": "array"
+        },
+        {
           "type": "array"
         },
         {

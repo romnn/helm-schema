@@ -301,70 +301,28 @@
             "description": "See [access logs reference](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/)",
             "properties": {
               "bufferingSize": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set [bufferingSize](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-accesslog-bufferingSize)"
+                "description": "Set [bufferingSize](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-accesslog-bufferingSize)",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "fields": {
                 "properties": {
                   "defaultMode": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Set default mode for fields.names"
+                    "description": "Set default mode for fields.names",
+                    "type": "string"
                   },
                   "headers": {
                     "properties": {
                       "defaultMode": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "[Limit logged fields or headers](https://doc.traefik.io/traefik/observe/logs-and-access-logs/#log-fields-customization)"
+                        "description": "[Limit logged fields or headers](https://doc.traefik.io/traefik/observe/logs-and-access-logs/#log-fields-customization)",
+                        "type": "string"
                       },
                       "names": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "properties": {},
                             "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
                           },
                           {
                             "type": "string"
@@ -377,13 +335,7 @@
                   "names": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -394,23 +346,11 @@
                   "queryParameters": {
                     "properties": {
                       "defaultMode": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Keep or drop all query parameters in the RequestPath access log field (v3.7.3+)."
+                        "description": "Keep or drop all query parameters in the RequestPath access log field (v3.7.3+).",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
                     "type": "object"
@@ -419,38 +359,17 @@
                 "type": "object"
               },
               "filePath": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
+                "type": [
+                  "string",
+                  "null"
                 ]
               },
               "format": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set [access log format](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-accesslog-format)\nfilePath: \"/var/log/traefik/access.log"
+                "description": "Set [access log format](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-accesslog-format)\nfilePath: \"/var/log/traefik/access.log",
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "type": "object"
@@ -834,12 +753,7 @@
                   "minDuration": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -849,12 +763,7 @@
                   "statusCodes": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -1299,13 +1208,7 @@
                   "resourceAttributes": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -1314,23 +1217,11 @@
                     "description": "Defines additional resource attributes to be sent to the collector."
                   },
                   "serviceName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Service name used in OTLP backend. Default: traefik."
+                    "description": "Service name used in OTLP backend. Default: traefik.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 },
                 "type": "object"
@@ -1418,12 +1309,7 @@
               "timezone": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -1437,11 +1323,6 @@
           "additionalArguments": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
                 "items": {},
                 "type": "array"
               },
@@ -1452,42 +1333,23 @@
                 "type": "null"
               },
               {
+                "type": "object"
+              },
+              {
                 "type": "string"
               }
             ],
             "description": "Additional arguments to be passed at Traefik's binary\nSee [CLI Reference](https://docs.traefik.io/reference/static-configuration/cli/)\nUse curly braces to pass values: `helm install --set=\"additionalArguments={--providers.kubernetesingress.ingressclass=traefik-internal,--log.level=DEBUG}\"`\n- \"--providers.kubernetesingress.ingressclass=traefik-internal\"\n- \"--log.level=DEBUG\""
           },
           "env": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Additional Environment variables to be passed to Traefik's binary"
+            "description": "Additional Environment variables to be passed to Traefik's binary",
+            "items": {},
+            "type": "array"
           },
           "envFrom": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Environment variables to be passed to Traefik's binary from configMaps or secrets"
+            "description": "Environment variables to be passed to Traefik's binary from configMaps or secrets",
+            "items": {},
+            "type": "array"
           },
           "experimental": {
             "description": "Traefik experimental features",
@@ -1512,12 +1374,7 @@
           "hostNetwork": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
+                "type": "boolean"
               },
               {
                 "type": "string"
@@ -1540,95 +1397,44 @@
           "image": {
             "properties": {
               "pullPolicy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               }
             },
             "type": "object"
           },
           "livenessProbe": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "failureThreshold": {
+                "type": "integer"
               },
-              {
-                "items": {},
-                "type": "array"
+              "initialDelaySeconds": {
+                "type": "integer"
               },
-              {
-                "type": "string"
+              "periodSeconds": {
+                "type": "integer"
+              },
+              "successThreshold": {
+                "type": "integer"
+              },
+              "timeoutSeconds": {
+                "type": "integer"
               }
-            ]
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nodeSelector is the simplest recommended form of node selection constraint."
+            },
+            "type": "object"
           },
           "persistence": {
             "properties": {
               "name": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               },
               "path": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               },
               "subPath": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -1640,30 +1446,37 @@
             "type": "object"
           },
           "podSecurityContext": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "description": "[Pod Security Context](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context)",
+            "properties": {
+              "runAsGroup": {
+                "type": "integer"
+              },
+              "runAsNonRoot": {
+                "type": "boolean"
+              },
+              "runAsUser": {
+                "type": "integer"
+              },
+              "seccompProfile": {
                 "additionalProperties": {},
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ],
-            "description": "[Pod Security Context](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context)"
+            },
+            "type": "object"
           },
           "ports": {
             "anyOf": [
               {
-                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
               {
-                "items": {},
                 "type": "array"
               },
               {
@@ -1677,12 +1490,7 @@
           "priorityClassName": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
+                "type": "null"
               },
               {
                 "type": "string"
@@ -1711,51 +1519,50 @@
             "type": "object"
           },
           "readinessProbe": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "failureThreshold": {
+                "type": "integer"
               },
-              {
-                "items": {},
-                "type": "array"
+              "initialDelaySeconds": {
+                "type": "integer"
               },
-              {
-                "type": "string"
+              "periodSeconds": {
+                "type": "integer"
+              },
+              "successThreshold": {
+                "type": "integer"
+              },
+              "timeoutSeconds": {
+                "type": "integer"
               }
-            ]
-          },
-          "resources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "[Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for `traefik` container."
+            },
+            "type": "object"
           },
           "securityContext": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "description": "[SecurityContext](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1)",
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "type": "boolean"
+              },
+              "capabilities": {
                 "additionalProperties": {},
+                "properties": {
+                  "drop": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
                 "type": "object"
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
+              "readOnlyRootFilesystem": {
+                "type": "boolean"
               }
-            ],
-            "description": "[SecurityContext](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1)"
+            },
+            "type": "object"
           },
           "serviceAccount": {
             "description": "The service account the pods will use to interact with the Kubernetes API",
@@ -1763,12 +1570,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -1778,37 +1580,10 @@
             },
             "type": "object"
           },
-          "startupProbe": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Define [Startup Probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes)"
-          },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Tolerations allow the scheduler to schedule pods with matching taints."
+            "description": "Tolerations allow the scheduler to schedule pods with matching taints.",
+            "items": {},
+            "type": "array"
           },
           "updateStrategy": {
             "properties": {
@@ -1921,12 +1696,7 @@
               "timezone": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -1940,12 +1710,11 @@
           "additionalArguments": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
                 "items": {},
                 "type": "array"
+              },
+              {
+                "type": "null"
               },
               {
                 "type": "string"
@@ -1954,36 +1723,14 @@
             "description": "Additional arguments to be passed at Traefik's binary\nSee [CLI Reference](https://docs.traefik.io/reference/static-configuration/cli/)\nUse curly braces to pass values: `helm install --set=\"additionalArguments={--providers.kubernetesingress.ingressclass=traefik-internal,--log.level=DEBUG}\"`\n- \"--providers.kubernetesingress.ingressclass=traefik-internal\"\n- \"--log.level=DEBUG\""
           },
           "env": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Additional Environment variables to be passed to Traefik's binary"
+            "description": "Additional Environment variables to be passed to Traefik's binary",
+            "items": {},
+            "type": "array"
           },
           "envFrom": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Environment variables to be passed to Traefik's binary from configMaps or secrets"
+            "description": "Environment variables to be passed to Traefik's binary from configMaps or secrets",
+            "items": {},
+            "type": "array"
           },
           "experimental": {
             "description": "Traefik experimental features",
@@ -2011,9 +1758,6 @@
                 "type": "boolean"
               },
               {
-                "type": "null"
-              },
-              {
                 "type": "string"
               }
             ],
@@ -2034,95 +1778,44 @@
           "image": {
             "properties": {
               "pullPolicy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               }
             },
             "type": "object"
           },
           "livenessProbe": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "failureThreshold": {
+                "type": "integer"
               },
-              {
-                "items": {},
-                "type": "array"
+              "initialDelaySeconds": {
+                "type": "integer"
               },
-              {
-                "type": "string"
+              "periodSeconds": {
+                "type": "integer"
+              },
+              "successThreshold": {
+                "type": "integer"
+              },
+              "timeoutSeconds": {
+                "type": "integer"
               }
-            ]
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nodeSelector is the simplest recommended form of node selection constraint."
+            },
+            "type": "object"
           },
           "persistence": {
             "properties": {
               "name": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               },
               "path": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               },
               "subPath": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -2134,30 +1827,37 @@
             "type": "object"
           },
           "podSecurityContext": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "description": "[Pod Security Context](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context)",
+            "properties": {
+              "runAsGroup": {
+                "type": "integer"
+              },
+              "runAsNonRoot": {
+                "type": "boolean"
+              },
+              "runAsUser": {
+                "type": "integer"
+              },
+              "seccompProfile": {
                 "additionalProperties": {},
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ],
-            "description": "[Pod Security Context](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context)"
+            },
+            "type": "object"
           },
           "ports": {
             "anyOf": [
               {
-                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
               {
-                "items": {},
                 "type": "array"
               },
               {
@@ -2171,12 +1871,7 @@
           "priorityClassName": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
+                "type": "null"
               },
               {
                 "type": "string"
@@ -2205,51 +1900,50 @@
             "type": "object"
           },
           "readinessProbe": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "failureThreshold": {
+                "type": "integer"
               },
-              {
-                "items": {},
-                "type": "array"
+              "initialDelaySeconds": {
+                "type": "integer"
               },
-              {
-                "type": "string"
+              "periodSeconds": {
+                "type": "integer"
+              },
+              "successThreshold": {
+                "type": "integer"
+              },
+              "timeoutSeconds": {
+                "type": "integer"
               }
-            ]
-          },
-          "resources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "[Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for `traefik` container."
+            },
+            "type": "object"
           },
           "securityContext": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "description": "[SecurityContext](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1)",
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "type": "boolean"
+              },
+              "capabilities": {
                 "additionalProperties": {},
+                "properties": {
+                  "drop": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
                 "type": "object"
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
+              "readOnlyRootFilesystem": {
+                "type": "boolean"
               }
-            ],
-            "description": "[SecurityContext](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1)"
+            },
+            "type": "object"
           },
           "serviceAccount": {
             "description": "The service account the pods will use to interact with the Kubernetes API",
@@ -2257,12 +1951,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -2272,37 +1961,10 @@
             },
             "type": "object"
           },
-          "startupProbe": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Define [Startup Probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes)"
-          },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Tolerations allow the scheduler to schedule pods with matching taints."
+            "description": "Tolerations allow the scheduler to schedule pods with matching taints.",
+            "items": {},
+            "type": "array"
           },
           "updateStrategy": {
             "properties": {
@@ -2471,6 +2133,114 @@
               }
             ],
             "description": "Additional arguments to be passed at Traefik's binary\nSee [CLI Reference](https://docs.traefik.io/reference/static-configuration/cli/)\nUse curly braces to pass values: `helm install --set=\"additionalArguments={--providers.kubernetesingress.ingressclass=traefik-internal,--log.level=DEBUG}\"`\n- \"--providers.kubernetesingress.ingressclass=traefik-internal\"\n- \"--log.level=DEBUG\""
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscaling": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "autoscaling": {
+                      "properties": {
+                        "scaleTargetRef": {
+                          "properties": {
+                            "name": {}
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "scaleTargetRef"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "autoscaling"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "scaleTargetRef": {
+                        "properties": {
+                          "name": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "scaleTargetRef"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "autoscaling": {
+            "properties": {
+              "scaleTargetRef": {
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -2711,12 +2481,7 @@
               "defaultRuleSyntax": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -2953,12 +2718,7 @@
               "healthchecksHost": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -3382,25 +3142,14 @@
               "localPlugins": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
                     "type": "array"
                   },
                   {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Enable experimental local plugins"
@@ -3444,9 +3193,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -3476,25 +3222,14 @@
               "localPlugins": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
                     "type": "array"
                   },
                   {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Enable experimental local plugins"
@@ -3527,9 +3262,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -3559,25 +3291,14 @@
               "localPlugins": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "additionalProperties": {},
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
                     "type": "array"
                   },
                   {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Enable experimental local plugins"
@@ -4787,22 +4508,6 @@
                   }
                 ],
                 "description": "Additional gateway annotations (e.g. for cert-manager.io/issuer)"
-              },
-              "infrastructure": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "[Infrastructure](https://kubernetes.io/blog/2023/11/28/gateway-api-ga/#gateway-infrastructure-labels)"
               },
               "listeners": {
                 "additionalProperties": {
@@ -6787,12 +6492,7 @@
                       "listenAddr": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -7284,12 +6984,7 @@
                       "secretName": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -8024,12 +7719,11 @@
               "namespaces": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -8039,13 +7733,7 @@
               "redis": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "properties": {},
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
                   },
                   {
                     "type": "string"
@@ -8053,19 +7741,7 @@
                 ]
               },
               "tokenMountPath": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               }
             },
             "type": "object"
@@ -8312,13 +7988,7 @@
                   "sources": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -8611,13 +8281,7 @@
                   "sentinel": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -8910,13 +8574,7 @@
                   "tls": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -11054,12 +10712,7 @@
               "filePath": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -11068,33 +10721,16 @@
                 "description": "To write the logs into a log file, use the filePath option."
               },
               "format": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Set [logs format](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-log-format)\nBy default, the level is set to INFO."
+                "description": "Set [logs format](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-log-format)\nBy default, the level is set to INFO.",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "level": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -11499,13 +11135,7 @@
                   "resourceAttributes": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -11514,23 +11144,11 @@
                     "description": "Defines additional resource attributes to be sent to the collector."
                   },
                   "serviceName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Service name used in OTLP backend. Default: traefik."
+                    "description": "Service name used in OTLP backend. Default: traefik.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 },
                 "type": "object"
@@ -11882,12 +11500,7 @@
                   "pushInterval": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -11898,13 +11511,7 @@
                   "resourceAttributes": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -11913,23 +11520,11 @@
                     "description": "Defines additional resource attributes to be sent to the collector."
                   },
                   "serviceName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Service name used in OTLP backend. Default: traefik."
+                    "description": "Service name used in OTLP backend. Default: traefik.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 },
                 "type": "object"
@@ -12278,12 +11873,7 @@
                   "buckets": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -12292,31 +11882,13 @@
                     "description": "Buckets for latency metrics. Default=\"0.1,0.3,1.2,5.0\""
                   },
                   "entryPoint": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Entry point used to expose metrics."
+                    "description": "Entry point used to expose metrics.",
+                    "type": "string"
                   },
                   "headerLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -15778,12 +15350,7 @@
               "existingClaim": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -16286,121 +15853,10 @@
               "traefik": {
                 "properties": {
                   "hostIP": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Use hostIP if set. If not set, Kubernetes will default to 0.0.0.0, which\nmeans it's listening on all your interfaces and all your IPs. You may want\nto set this value if you need traefik to listen on specific interface\nonly."
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "deployment": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "deployment"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "deployment": {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "deployment"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "ports": {
-            "properties": {
-              "traefik": {
-                "properties": {
-                  "port": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
+                    "description": "Use hostIP if set. If not set, Kubernetes will default to 0.0.0.0, which\nmeans it's listening on all your interfaces and all your IPs. You may want\nto set this value if you need traefik to listen on specific interface\nonly.",
+                    "type": [
+                      "string",
+                      "null"
                     ]
                   }
                 },
@@ -16415,69 +15871,50 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "enabled": {}
+                        "deployment": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "enabled"
+                        "deployment"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "deployment": {
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "deployment": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "deployment"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "deployment"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                ]
               },
               {
                 "properties": {
@@ -16485,7 +15922,7 @@
                     "properties": {
                       "kind": {
                         "enum": [
-                          "Deployment"
+                          "DaemonSet"
                         ]
                       }
                     },
@@ -16501,6 +15938,96 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "deployment": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "deployment"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "deployment": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "deployment"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "deployment": {
+                          "properties": {
+                            "kind": {}
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "deployment"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "deployment": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "Deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "deployment"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -16514,9 +16041,6 @@
                     "anyOf": [
                       {
                         "type": "integer"
-                      },
-                      {
-                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -16856,12 +16380,7 @@
                   "labelSelector": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -17718,12 +17237,7 @@
                   "labelSelector": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -18661,23 +18175,11 @@
               "kubernetesGateway": {
                 "properties": {
                   "burst": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Maximum burst of requests to the Kubernetes API server (v3.7.3+). Defaults to 100."
+                    "description": "Maximum burst of requests to the Kubernetes API server (v3.7.3+). Defaults to 100.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "crossProviderNamespaces": {
                     "anyOf": [
@@ -18697,12 +18199,7 @@
                   "labelSelector": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -18711,23 +18208,11 @@
                     "description": "A label selector can be defined to filter on specific GatewayClass objects only."
                   },
                   "qps": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Maximum QPS to the Kubernetes API server. A negative value disables client-side ratelimiting (v3.7.3+). Defaults to 50."
+                    "description": "Maximum QPS to the Kubernetes API server. A negative value disables client-side ratelimiting (v3.7.3+). Defaults to 50.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 },
                 "type": "object"
@@ -19731,12 +19216,7 @@
                       "hostname": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -19747,12 +19227,7 @@
                       "ip": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -20494,12 +19969,7 @@
                           "name": {
                             "anyOf": [
                               {
-                                "additionalProperties": {},
-                                "type": "object"
-                              },
-                              {
-                                "items": {},
-                                "type": "array"
+                                "type": "null"
                               },
                               {
                                 "type": "string"
@@ -20509,12 +19979,7 @@
                           "namespace": {
                             "anyOf": [
                               {
-                                "additionalProperties": {},
-                                "type": "object"
-                              },
-                              {
-                                "items": {},
-                                "type": "array"
+                                "type": "null"
                               },
                               {
                                 "type": "string"
@@ -20837,35 +20302,18 @@
                     "description": "List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references. Requires traefik v3.7.1+."
                   },
                   "ingressClass": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "When ingressClass is set, only Ingresses containing an annotation with the same value are processed. Otherwise, Ingresses missing the annotation, having an empty value, or the value traefik are processed."
+                    "description": "When ingressClass is set, only Ingresses containing an annotation with the same value are processed. Otherwise, Ingresses missing the annotation, having an empty value, or the value traefik are processed.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "ingressEndpoint": {
                     "properties": {
                       "hostname": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -20876,12 +20324,7 @@
                       "ip": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -20893,21 +20336,9 @@
                     "type": "object"
                   },
                   "labelSelector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
+                    "type": [
+                      "string",
+                      "null"
                     ]
                   }
                 },
@@ -22119,12 +21550,7 @@
                       "pathOverride": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -22702,12 +22128,7 @@
                       "pathOverride": {
                         "anyOf": [
                           {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
+                            "type": "null"
                           },
                           {
                             "type": "string"
@@ -23741,13 +23162,7 @@
               "resourceAttributes": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "properties": {},
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
                   },
                   {
                     "type": "string"
@@ -23769,21 +23184,9 @@
                 ]
               },
               "serviceName": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
+                "type": [
+                  "string",
+                  "null"
                 ]
               }
             },
@@ -24117,13 +23520,7 @@
                   "resourceAttributes": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
-                        "properties": {},
                         "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -24131,18 +23528,9 @@
                     ]
                   },
                   "serviceName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
+                    "type": [
+                      "string",
+                      "null"
                     ]
                   }
                 },
@@ -26311,22 +25699,6 @@
           "type": "boolean"
         },
         "bufferingSize": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set [bufferingSize](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-accesslog-bufferingSize)"
         },
         "dualOutput": {
@@ -26365,60 +25737,17 @@
                   ],
                   "description": "[Limit logged fields or headers](https://doc.traefik.io/traefik/observe/logs-and-access-logs/#log-fields-customization)"
                 },
-                "names": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
+                "names": {}
               },
               "type": "object"
             },
             "names": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Names of the fields to limit."
             },
             "queryParameters": {
               "additionalProperties": {},
               "properties": {
                 "defaultMode": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Keep or drop all query parameters in the RequestPath access log field (v3.7.3+)."
                 }
               },
@@ -26427,21 +25756,7 @@
           },
           "type": "object"
         },
-        "filePath": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "filePath": {},
         "filters": {
           "additionalProperties": {},
           "description": "Set [filtering](https://doc.traefik.io/traefik/observe/logs-and-access-logs/#access-log-filters)",
@@ -26473,22 +25788,6 @@
           "type": "object"
         },
         "format": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set [access log format](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-accesslog-format)\nfilePath: \"/var/log/traefik/access.log"
         },
         "otlp": {
@@ -26627,38 +25926,9 @@
               "type": "object"
             },
             "resourceAttributes": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Defines additional resource attributes to be sent to the collector."
             },
             "serviceName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Service name used in OTLP backend. Default: traefik."
             }
           },
@@ -26733,35 +26003,9 @@
           },
           "then": {
             "properties": {
-              "behavior": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "metrics": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "scaleTargetRef": {
                 "properties": {
@@ -26773,85 +26017,6 @@
                   },
                   "name": {
                     "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "scaleTargetRef": {
-                          "properties": {
-                            "name": {}
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "scaleTargetRef"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "scaleTargetRef": {
-                        "properties": {
-                          "name": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "scaleTargetRef"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "scaleTargetRef": {
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
@@ -26893,21 +26058,7 @@
         }
       ],
       "properties": {
-        "behavior": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "behavior": {},
         "enabled": {
           "type": "boolean"
         },
@@ -27092,36 +26243,14 @@
           "then": {
             "properties": {
               "additionalContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional containers (e.g. for metric offloading sidecars)\nhttps://docs.datadoghq.com/developers/dogstatsd/unix_socket/?tab=host\n- name: socat-proxy\nimage: alpine/socat:1.0.5\nargs: [\"-s\", \"-u\", \"udp-recv:8125\", \"unix-sendto:/socket/socket\"]\nvolumeMounts:\n- name: dsdsocket\nmountPath: /socket"
+                "description": "Additional containers (e.g. for metric offloading sidecars)\nhttps://docs.datadoghq.com/developers/dogstatsd/unix_socket/?tab=host\n- name: socat-proxy\nimage: alpine/socat:1.0.5\nargs: [\"-s\", \"-u\", \"udp-recv:8125\", \"unix-sendto:/socket/socket\"]\nvolumeMounts:\n- name: dsdsocket\nmountPath: /socket",
+                "items": {},
+                "type": "array"
               },
               "additionalVolumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional volumes available for use with initContainers and additionalContainers\n- name: dsdsocket\nhostPath:\npath: /var/run/statsd-exporter"
+                "description": "Additional volumes available for use with initContainers and additionalContainers\n- name: dsdsocket\nhostPath:\npath: /var/run/statsd-exporter",
+                "items": {},
+                "type": "array"
               },
               "annotations": {
                 "anyOf": [
@@ -27140,12 +26269,7 @@
               "dnsPolicy": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -27154,109 +26278,40 @@
                 "description": "Custom pod DNS policy. Apply if `hostNetwork: true`"
               },
               "healthchecksPort": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Override the liveness/readiness port. This is useful to integrate traefik\nwith an external Load Balancer that performs healthchecks.\nDefault: ports.traefik.port"
+                "description": "Override the liveness/readiness port. This is useful to integrate traefik\nwith an external Load Balancer that performs healthchecks.\nDefault: ports.traefik.port",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "healthchecksScheme": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Override the liveness/readiness scheme. Useful for getting ping to\nrespond on websecure entryPoint."
+                "description": "Override the liveness/readiness scheme. Useful for getting ping to\nrespond on websecure entryPoint.",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "hostAliases": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Custom [host aliases](https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/)"
+                "description": "Custom [host aliases](https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/)",
+                "items": {},
+                "type": "array"
               },
               "hostUsers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Whether to use the host user namespace. Setting this to false enables user namespaces,\nwhich can improve security by isolating the pod's users from the host.\nSee https://kubernetes.io/docs/concepts/workloads/pods/user-namespaces/"
+                "description": "Whether to use the host user namespace. Setting this to false enables user namespaces,\nwhich can improve security by isolating the pod's users from the host.\nSee https://kubernetes.io/docs/concepts/workloads/pods/user-namespaces/",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "imagePullSecrets": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Pull secret for fetching traefik container image"
+                "description": "Pull secret for fetching traefik container image",
+                "items": {},
+                "type": "array"
               },
               "initContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional initContainers (e.g. for setting file permission as shown below)\nThe \"volume-permissions\" init container is required if you run into permission issues.\nRelated issue: https://github.com/traefik/traefik-helm-chart/issues/396\n- name: volume-permissions\nimage: busybox:latest\ncommand: [\"sh\", \"-c\", \"touch /data/acme.json; chmod -v 600 /data/acme.json\"]\nvolumeMounts:\n- name: data\nmountPath: /data"
+                "description": "Additional initContainers (e.g. for setting file permission as shown below)\nThe \"volume-permissions\" init container is required if you run into permission issues.\nRelated issue: https://github.com/traefik/traefik-helm-chart/issues/396\n- name: volume-permissions\nimage: busybox:latest\ncommand: [\"sh\", \"-c\", \"touch /data/acme.json; chmod -v 600 /data/acme.json\"]\nvolumeMounts:\n- name: data\nmountPath: /data",
+                "items": {},
+                "type": "array"
               },
               "labels": {
                 "anyOf": [
@@ -27272,31 +26327,10 @@
                 ],
                 "description": "Additional deployment labels (e.g. for filtering deployment by custom labels)"
               },
-              "lifecycle": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Pod lifecycle actions\npreStop:\nsleep:\nseconds: 20\npostStart:\nhttpGet:\npath: /ping\nport: 8080\nhost: localhost\nscheme: HTTP"
-              },
               "livenessPath": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -27311,12 +26345,7 @@
               "readinessPath": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -27327,12 +26356,7 @@
               "runtimeClassName": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -27343,206 +26367,16 @@
               "terminationGracePeriodSeconds": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
                     "type": "integer"
+                  },
+                  {
+                    "type": "null"
                   },
                   {
                     "type": "string"
                   }
                 ],
                 "description": "Amount of time (in seconds) before Kubernetes will send the SIGKILL signal if Traefik does not shut down"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "dnsConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "dnsConfig"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "dnsConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "dnsConfig"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "Deployment"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "dnsConfig": {
-                "description": "Custom pod [DNS config](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#poddnsconfig-v1-core)",
-                "properties": {
-                  "nameservers": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "options": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "searches": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
               }
             },
             "type": "object"
@@ -27603,51 +26437,9 @@
             {
               "additionalProperties": {},
               "properties": {
-                "nameservers": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "options": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "searches": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
+                "nameservers": {},
+                "options": {},
+                "searches": {}
               },
               "type": "object"
             }
@@ -27685,41 +26477,9 @@
           "description": "Override the liveness/readiness host. Useful for getting ping to respond on non-default entryPoint.\nDefault: ports.traefik.hostIP if set, otherwise Pod IP"
         },
         "healthchecksPort": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Override the liveness/readiness port. This is useful to integrate traefik\nwith an external Load Balancer that performs healthchecks.\nDefault: ports.traefik.port"
         },
         "healthchecksScheme": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Override the liveness/readiness scheme. Useful for getting ping to\nrespond on websecure entryPoint."
         },
         "hostAliases": {
@@ -27738,22 +26498,6 @@
           "description": "Custom [host aliases](https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/)"
         },
         "hostUsers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Whether to use the host user namespace. Setting this to false enables user namespaces,\nwhich can improve security by isolating the pod's users from the host.\nSee https://kubernetes.io/docs/concepts/workloads/pods/user-namespaces/"
         },
         "imagePullSecrets": {
@@ -27817,19 +26561,6 @@
           "description": "Additional deployment labels (e.g. for filtering deployment by custom labels)"
         },
         "lifecycle": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Pod lifecycle actions\npreStop:\nsleep:\nseconds: 20\npostStart:\nhttpGet:\npath: /ping\nport: 8080\nhost: localhost\nscheme: HTTP"
         },
         "livenessPath": {
@@ -28063,19 +26794,6 @@
           "type": "boolean"
         },
         "infrastructure": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "[Infrastructure](https://kubernetes.io/blog/2023/11/28/gateway-api-ga/#gateway-infrastructure-labels)"
         },
         "listeners": {},
@@ -28253,12 +26971,11 @@
               "namespaces": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
                     "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -28709,21 +27426,9 @@
           ]
         },
         "offline": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "pluginRegistry": {
@@ -29117,15 +27822,7 @@
         "sendlogs": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
               "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
             },
             {
               "type": "null"
@@ -29750,82 +28447,7 @@
                   }
                 ]
               },
-              "tls": {
-                "anyOf": [
-                  {
-                    "description": "TLS defines the TLS configuration.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#tls",
-                    "properties": {
-                      "certResolver": {
-                        "description": "CertResolver defines the name of the certificate resolver to use.\nCert resolvers have to be configured in the static configuration.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/tls/certificate-resolvers/acme/",
-                        "type": "string"
-                      },
-                      "domains": {
-                        "description": "Domains defines the list of domains that will be used to issue certificates.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#domains",
-                        "items": {
-                          "description": "Domain holds a domain name with SANs.",
-                          "properties": {
-                            "main": {
-                              "description": "Main defines the main domain name.",
-                              "type": "string"
-                            },
-                            "sans": {
-                              "description": "SANs defines the subject alternative domain names.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "options": {
-                        "description": "Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.\nIf not defined, the `default` TLSOption is used.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-options/",
-                        "properties": {
-                          "name": {
-                            "description": "Name defines the name of the referenced TLSOption.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsoption/",
-                            "type": "string"
-                          },
-                          "namespace": {
-                            "description": "Namespace defines the namespace of the referenced TLSOption.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsoption/",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "type": "object"
-                      },
-                      "secretName": {
-                        "description": "SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.",
-                        "type": "string"
-                      },
-                      "store": {
-                        "description": "Store defines the reference to the TLSStore, that will be used to store certificates.\nPlease note that only `default` TLSStore can be used.",
-                        "properties": {
-                          "name": {
-                            "description": "Name defines the name of the referenced TLSStore.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsstore/",
-                            "type": "string"
-                          },
-                          "namespace": {
-                            "description": "Namespace defines the namespace of the referenced TLSStore.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsstore/",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
+              "tls": {}
             },
             "type": "object"
           },
@@ -29877,22 +28499,6 @@
           "description": "To write the logs into a log file, use the filePath option."
         },
         "format": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set [logs format](https://doc.traefik.io/traefik/reference/install-configuration/observability/logs-and-accesslogs/#opt-log-format)\nBy default, the level is set to INFO."
         },
         "level": {
@@ -30061,38 +28667,9 @@
               "type": "object"
             },
             "resourceAttributes": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Defines additional resource attributes to be sent to the collector."
             },
             "serviceName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Service name used in OTLP backend. Default: traefik."
             }
           },
@@ -30110,242 +28687,79 @@
           "type": "boolean"
         },
         "datadog": {
-          "additionalProperties": {},
-          "properties": {
-            "addEntryPointsLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addEntryPointsLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
-              ]
+              }
             },
-            "addRoutersLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addRoutersLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
-                {
-                  "items": {},
-                  "type": "array"
+                "addServicesLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "addServicesLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "address": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "prefix": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "pushInterval": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+                "address": {},
+                "prefix": {},
+                "pushInterval": {}
+              },
+              "type": "object"
             }
-          },
-          "type": "object"
+          ]
         },
         "influxdb2": {
-          "additionalProperties": {},
-          "properties": {
-            "addEntryPointsLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addEntryPointsLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
-              ]
+              }
             },
-            "addRoutersLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addRoutersLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
-                {
-                  "items": {},
-                  "type": "array"
+                "addServicesLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "addServicesLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "additionalLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "address": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "bucket": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "org": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "pushInterval": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "token": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+                "additionalLabels": {},
+                "address": {},
+                "bucket": {},
+                "org": {},
+                "pushInterval": {},
+                "token": {}
+              },
+              "type": "object"
             }
-          },
-          "type": "object"
+          ]
         },
         "otlp": {
           "additionalProperties": {},
@@ -30354,15 +28768,7 @@
             "addEntryPointsLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
                   "const": null
-                },
-                {
-                  "items": {},
-                  "type": "array"
                 },
                 {
                   "type": "null"
@@ -30376,15 +28782,7 @@
             "addRoutersLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
                   "const": null
-                },
-                {
-                  "items": {},
-                  "type": "array"
                 },
                 {
                   "type": "null"
@@ -30398,15 +28796,7 @@
             "addServicesLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
                   "const": null
-                },
-                {
-                  "items": {},
-                  "type": "array"
                 },
                 {
                   "type": "null"
@@ -30564,38 +28954,9 @@
               "description": "Interval at which metrics are sent to the OpenTelemetry Collector. Default: 10s"
             },
             "resourceAttributes": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Defines additional resource attributes to be sent to the collector."
             },
             "serviceName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Service name used in OTLP backend. Default: traefik."
             }
           },
@@ -30697,35 +29058,9 @@
                           }
                         ]
                       },
-                      "namespaceSelector": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
                       "relabelings": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
+                        "items": {},
+                        "type": "array"
                       },
                       "scrapeTimeout": {
                         "type": "string"
@@ -30802,21 +29137,6 @@
                         "anyOf": [
                           {
                             "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "rules": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
                           },
                           {
                             "type": "string"
@@ -30940,15 +29260,7 @@
             "addEntryPointsLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
                   "const": null
-                },
-                {
-                  "items": {},
-                  "type": "array"
                 },
                 {
                   "type": "null"
@@ -30965,15 +29277,7 @@
             "addServicesLabels": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
                   "const": null
-                },
-                {
-                  "items": {},
-                  "type": "array"
                 },
                 {
                   "type": "null"
@@ -31002,19 +29306,6 @@
               "description": "Entry point used to expose metrics."
             },
             "headerLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Add HTTP header labels to metrics. See EXAMPLES.md or upstream doc for usage."
             },
             "manualRouting": {
@@ -31041,21 +29332,7 @@
                   "type": "boolean"
                 },
                 "namespace": {},
-                "rules": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
+                "rules": {}
               },
               "type": "object"
             },
@@ -31118,21 +29395,7 @@
                 "jobLabel": {},
                 "metricRelabelings": {},
                 "namespace": {},
-                "namespaceSelector": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
+                "namespaceSelector": {},
                 "relabelings": {
                   "anyOf": [
                     {
@@ -31155,86 +29418,35 @@
           "type": "object"
         },
         "statsd": {
-          "additionalProperties": {},
-          "properties": {
-            "addEntryPointsLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addEntryPointsLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
-              ]
+              }
             },
-            "addRoutersLabels": {},
-            "addServicesLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addRoutersLabels": {},
+                "addServicesLabels": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "address": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "prefix": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "pushInterval": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+                "address": {},
+                "prefix": {},
+                "pushInterval": {}
+              },
+              "type": "object"
             }
-          },
-          "type": "object"
+          ]
         }
       },
       "type": "object"
@@ -31267,19 +29479,6 @@
       "description": "This field overrides the default Release Namespace for Helm.\nIt will not affect optional CRDs such as `ServiceMonitor` and `PrometheusRules`"
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "nodeSelector is the simplest recommended form of node selection constraint."
     },
     "oci_meta": {
@@ -31597,22 +29796,6 @@
           "additionalProperties": {},
           "properties": {
             "burst": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Maximum burst of requests to the Kubernetes API server (v3.7.3+). Defaults to 100."
             },
             "crossProviderNamespaces": {
@@ -31645,22 +29828,6 @@
               "type": "boolean"
             },
             "qps": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Maximum QPS to the Kubernetes API server. A negative value disables client-side ratelimiting (v3.7.3+). Defaults to 50."
             },
             "statusAddress": {
@@ -31757,22 +29924,6 @@
               "type": "boolean"
             },
             "ingressClass": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "When ingressClass is set, only Ingresses containing an annotation with the same value are processed. Otherwise, Ingresses missing the annotation, having an empty value, or the value traefik are processed."
             },
             "ingressEndpoint": {
@@ -31803,24 +29954,7 @@
               },
               "type": "object"
             },
-            "labelSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "labelSelector": {},
             "namespaces": {
               "description": "Array of namespaces to watch. If left empty, Traefik watches all namespaces. . When using `rbac.namespaced`, it will watch helm release namespace and namespaces listed in this array."
             },
@@ -32186,20 +30320,20 @@
       "type": "object"
     },
     "resources": {
-      "anyOf": [
-        {
+      "additionalProperties": {},
+      "description": "[Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for `traefik` container.",
+      "properties": {
+        "limits": {
           "additionalProperties": {},
+          "properties": {
+            "cpu": {},
+            "memory": {
+              "type": "string"
+            }
+          },
           "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
         }
-      ],
-      "description": "[Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for `traefik` container."
+      }
     },
     "securityContext": {
       "anyOf": [
@@ -32329,19 +30463,6 @@
       "description": "Additional serviceAccount annotations (e.g. for oidc authentication)"
     },
     "startupProbe": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Define [Startup Probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes)"
     },
     "tlsOptions": {
@@ -32493,91 +30614,20 @@
               },
               "type": "object"
             },
-            "resourceAttributes": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "serviceName": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "resourceAttributes": {},
+            "serviceName": {}
           },
           "type": "object"
         },
-        "resourceAttributes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resourceAttributes": {},
         "safeQueryParams": {},
         "sampleRate": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
-        "serviceName": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "serviceName": {}
       },
       "type": "object"
     },
@@ -32609,34 +30659,10 @@
         "additionalProperties": {},
         "properties": {
           "mountPath": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "name": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "type": {
             "anyOf": [

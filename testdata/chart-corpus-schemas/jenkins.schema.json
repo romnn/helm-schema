@@ -1245,6 +1245,331 @@
                   "properties": {
                     "controller": {
                       "properties": {
+                        "admin": {
+                          "properties": {
+                            "createSecret": {}
+                          },
+                          "required": [
+                            "createSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "admin"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "admin": {
+                        "properties": {
+                          "createSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "admin"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "admin": {
+                    "properties": {
+                      "password": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "password"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "admin"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "admin": {
+                      "properties": {
+                        "existingSecret": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingSecret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "admin"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "admin": {
+                "description": "When enabling LDAP or another non-Jenkins identity source, the built-in admin account will no longer exist.\nIf you disable the non-Jenkins identity store and instead use the Jenkins internal one,\nyou should revert controller.admin.username to your preferred admin user:",
+                "properties": {
+                  "password": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Admin password created as a secret if `controller.admin.createSecret` is true"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "admin": {
+                          "properties": {
+                            "createSecret": {}
+                          },
+                          "required": [
+                            "createSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "admin"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "admin": {
+                        "properties": {
+                          "createSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "admin"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "admin": {
+                          "properties": {
+                            "username": {}
+                          },
+                          "required": [
+                            "username"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "admin"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "admin": {
+                        "properties": {
+                          "username": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "username"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "admin"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "admin": {
+                      "properties": {
+                        "existingSecret": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingSecret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "admin"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "admin": {
+                "description": "When enabling LDAP or another non-Jenkins identity source, the built-in admin account will no longer exist.\nIf you disable the non-Jenkins identity store and instead use the Jenkins internal one,\nyou should revert controller.admin.username to your preferred admin user:",
+                "properties": {
+                  "username": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Admin username created as a secret if `controller.admin.createSecret` is true"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
                         "agentListenerEnabled": {}
                       },
                       "required": [
@@ -1308,6 +1633,727 @@
               "agentListenerPort": {
                 "description": "Listening port for agents",
                 "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "httpsKeyStore": {
+                    "properties": {
+                      "enable": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enable"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "httpsKeyStore"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "httpsKeyStore": {
+                          "properties": {
+                            "password": {}
+                          },
+                          "required": [
+                            "password"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "httpsKeyStore"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "httpsKeyStore": {
+                        "properties": {
+                          "password": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "password"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "httpsKeyStore"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "httpsKeyStore": {
+                      "properties": {
+                        "disableSecretMount": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableSecretMount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "httpsKeyStore"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "httpsKeyStore": {
+                      "properties": {
+                        "jenkinsHttpsJksSecretName": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "jenkinsHttpsJksSecretName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "httpsKeyStore"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "httpsKeyStore": {
+                "properties": {
+                  "password": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Jenkins keystore password"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "JCasC": {
+                              "properties": {
+                                "defaultConfig": {}
+                              },
+                              "required": [
+                                "defaultConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "JCasC"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "JCasC": {
+                            "properties": {
+                              "defaultConfig": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "defaultConfig"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "JCasC"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "hostName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "hostName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "jenkinsUrl": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "jenkinsUrl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "hostName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "hostName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "hostName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Ingress hostname"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "ingressClassName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingressClassName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "ingressClassName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Ingress ingressClassName"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "resourceRootUrl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "resourceRootUrl"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "resourceRootUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Primary Hostname to serve assets from"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "hostName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "hostName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "secondaryingress": {
+                "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
+                "properties": {
+                  "hostName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secondary Ingress hostname"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "ingressClassName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ingressClassName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "secondaryingress": {
+                "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
+                "properties": {
+                  "ingressClassName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -3835,22 +4881,14 @@
                   "namespaceLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "A map of labels (keys/values) that agents namespaces must have to be able to connect to controller"
@@ -3858,28 +4896,173 @@
                   "podLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "A map of labels (keys/values) that agent pods must have to be able to connect to controller"
                   }
                 },
                 "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "persistence": {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "volumes": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "volumes"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "storageClass": {
+                      "enum": [
+                        "-"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "storageClass"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "storageClass": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Storage class for the PVC"
               }
             },
             "type": "object"
@@ -6120,8 +7303,7 @@
       "properties": {
         "ApiVersion": {},
         "Enabled": {}
-      },
-      "type": "object"
+      }
     },
     "additionalAgents": {
       "additionalProperties": {},
@@ -6133,8 +7315,7 @@
         "additionalProperties": {},
         "properties": {
           "additionalAgentsOverride": {}
-        },
-        "type": "object"
+        }
       },
       "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com",
       "type": "object"
@@ -6511,63 +7692,52 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "properties": {
-                      "type": {
-                        "anyOf": [
-                          {
-                            "enum": [
-                              "ConfigMap"
-                            ]
-                          },
-                          {
-                            "enum": [
-                              "EmptyDir"
-                            ]
-                          },
-                          {
-                            "enum": [
-                              "EphemeralVolume"
-                            ]
-                          },
-                          {
-                            "enum": [
-                              "HostPath"
-                            ]
-                          },
-                          {
-                            "enum": [
-                              "Nfs"
-                            ]
-                          },
-                          {
-                            "enum": [
-                              "PVC"
-                            ]
-                          },
-                          {
-                            "enum": [
-                              "Secret"
-                            ]
-                          },
-                          {
-                            "type": "string"
-                          }
+                "additionalProperties": {},
+                "properties": {
+                  "type": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "ConfigMap"
                         ]
+                      },
+                      {
+                        "enum": [
+                          "EmptyDir"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "EphemeralVolume"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "HostPath"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "Nfs"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "PVC"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "Secret"
+                        ]
+                      },
+                      {
+                        "type": "string"
                       }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                    ]
                   }
-                ]
+                },
+                "type": "object"
               },
               "type": "array"
             },
@@ -6595,59 +7765,48 @@
           "type": "string"
         },
         "workspaceVolume": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "type": {
-                  "anyOf": [
-                    {
-                      "enum": [
-                        "DynamicPVC"
-                      ]
-                    },
-                    {
-                      "enum": [
-                        "EmptyDir"
-                      ]
-                    },
-                    {
-                      "enum": [
-                        "EphemeralVolume"
-                      ]
-                    },
-                    {
-                      "enum": [
-                        "HostPath"
-                      ]
-                    },
-                    {
-                      "enum": [
-                        "Nfs"
-                      ]
-                    },
-                    {
-                      "enum": [
-                        "PVC"
-                      ]
-                    },
-                    {
-                      "type": "string"
-                    }
+          "additionalProperties": {},
+          "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
+          "properties": {
+            "type": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "DynamicPVC"
                   ]
+                },
+                {
+                  "enum": [
+                    "EmptyDir"
+                  ]
+                },
+                {
+                  "enum": [
+                    "EphemeralVolume"
+                  ]
+                },
+                {
+                  "enum": [
+                    "HostPath"
+                  ]
+                },
+                {
+                  "enum": [
+                    "Nfs"
+                  ]
+                },
+                {
+                  "enum": [
+                    "PVC"
+                  ]
+                },
+                {
+                  "type": "string"
                 }
-              },
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
+              ]
             }
-          ],
-          "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false"
+          },
+          "type": "object"
         },
         "yamlMergeStrategy": {
           "description": "Defines how the raw yaml field gets merged with yaml definitions from inherited pod templates. Possible values: \"merge\" or \"override\"",
@@ -6729,102 +7888,6 @@
       "allOf": [
         {
           "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "sidecars": {
-                        "properties": {
-                          "configAutoReload": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configAutoReload"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecars"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "sidecars": {
-                      "properties": {
-                        "configAutoReload": {
-                          "properties": {
-                            "enabled": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "configAutoReload"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sidecars"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": {
-            "properties": {
-              "JCasC": {
-                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
-                "properties": {
-                  "configScripts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "properties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
             "anyOf": [
               {
                 "not": {
@@ -6898,9 +7961,6 @@
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
                       }
                     ],
@@ -6929,6 +7989,94 @@
                   }
                 ],
                 "description": "Root URI Jenkins will be served on"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecars": {
+                        "properties": {
+                          "configAutoReload": {
+                            "properties": {
+                              "enabled": {}
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "configAutoReload"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecars"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecars": {
+                      "properties": {
+                        "configAutoReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configAutoReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecars"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "JCasC": {
+                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
+                "properties": {
+                  "configScripts": {
+                    "anyOf": [
+                      {
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -7026,9 +8174,6 @@
                   {
                     "items": {},
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -7319,20 +8464,11 @@
           "then": {
             "properties": {
               "agentListenerLoadBalancerSourceRanges": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Allowed inbound IP for the agentListener service"
+                "description": "Allowed inbound IP for the agentListener service",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               }
             },
             "type": "object"
@@ -7660,22 +8796,6 @@
               "fsGroupChangePolicy": {
                 "description": "Deprecated in favor of `controller.podSecurityContextOverride`. fsGroupChangePolicy for the pod security context",
                 "type": "string"
-              },
-              "securityContextCapabilities": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW"
               }
             },
             "type": "object"
@@ -7783,107 +8903,6 @@
                       }
                     ],
                     "description": "HTTP Port that Jenkins should listen to along with HTTPS, it also serves as the liveness and readiness probes port."
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "JCasC": {
-                          "properties": {
-                            "defaultConfig": {}
-                          },
-                          "required": [
-                            "defaultConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "JCasC"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "JCasC": {
-                        "properties": {
-                          "defaultConfig": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "defaultConfig"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "JCasC"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "hostName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "hostName"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "jenkinsUrl": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "jenkinsUrl"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "hostName": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Primary Ingress hostname"
                   }
                 },
                 "type": "object"
@@ -8151,20 +9170,11 @@
           "then": {
             "properties": {
               "loadBalancerSourceRanges": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Allowed inbound IP addresses"
+                "description": "Allowed inbound IP addresses",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               }
             },
             "type": "object"
@@ -8187,20 +9197,35 @@
           "then": {
             "properties": {
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Resource allocation (Requests and Limits)",
+                "properties": {
+                  "limits": {
                     "additionalProperties": {},
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
+                  "requests": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                ],
-                "description": "Resource allocation (Requests and Limits)"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -8556,78 +9581,6 @@
                     ]
                   },
                   {
-                    "properties": {
-                      "password": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "password"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "existingSecret": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "existingSecret"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "password": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Admin password created as a secret if `controller.admin.createSecret` is true"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "createSecret": {}
-                          },
-                          "required": [
-                            "createSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "createSecret": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createSecret"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
                     "not": {
                       "properties": {
                         "existingSecret": {
@@ -8654,93 +9607,6 @@
                   "username": {
                     "description": "Admin username created as a secret if `controller.admin.createSecret` is true",
                     "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "createSecret": {}
-                          },
-                          "required": [
-                            "createSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "createSecret": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createSecret"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "username": {}
-                          },
-                          "required": [
-                            "username"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "username": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "username"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "existingSecret": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "existingSecret"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "username": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Admin username created as a secret if `controller.admin.createSecret` is true"
                   }
                 },
                 "type": "object"
@@ -8775,25 +9641,6 @@
         "adminSecret": {},
         "adminUser": {},
         "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Affinity settings"
         },
         "agentListenerEnabled": {
@@ -8898,22 +9745,6 @@
                   "name": {
                     "description": "backendconfig name",
                     "type": "string"
-                  },
-                  "spec": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "backendconfig spec"
                   }
                 },
                 "type": "object"
@@ -8957,19 +9788,6 @@
               "description": "backendconfig name"
             },
             "spec": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "backendconfig spec"
             }
           },
@@ -9072,25 +9890,6 @@
           "type": "array"
         },
         "dnsConfig": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "DNS config for the pod"
         },
         "enableRawHtmlMarkupFormatter": {
@@ -9224,39 +10023,17 @@
                     "type": "string"
                   },
                   "extraRules": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Extra HTTPRoute rules that will be appended before the default backend"
+                    "description": "Extra HTTPRoute rules that will be appended before the default backend",
+                    "items": {},
+                    "type": "array"
                   },
                   "kind": {
                     "type": "string"
                   },
                   "parentRefs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "specify the Gateway instance to bind the HTTPRoute to."
+                    "description": "specify the Gateway instance to bind the HTTPRoute to.",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -9430,181 +10207,73 @@
             },
             {
               "if": {
-                "allOf": [
+                "anyOf": [
                   {
-                    "properties": {
-                      "enable": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enable"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "disableSecretMount": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "disableSecretMount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "jenkinsHttpsJksSecretName": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "jenkinsHttpsJksSecretName"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "jenkinsKeyStoreBase64Encoded": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Base64 encoded Keystore content. Keystore must be converted to base64 then being pasted here\nConvert keystore.jks files content to base64 > $ cat keystore.jks | base64\n/u3+7QAAAAIAAAABAAAAAQANamVua2luc2NpLmNvbQAAAW2r/b1ZAAAFATCCBP0wDgYKKwYBBAEq\nAhEBAQUABIIE6QbCqasvoHS0pSwYqSvdydMCB9t+VNfwhFIiiuAelJfO5sSe2SebJbtwHgLcRz1Z\ngMtWgOSFdl3bWSzA7vrW2LED52h+jXLYSWvZzuDuh8hYO85m10ikF6QR+dTi4jra0whIFDvq3pxe\nTnESxEsN+DvbZM3jA3qsjQJSeISNpDjO099dqQvHpnCn18lyk7J4TWJ8sOQQb1EM2zDAfAOSqA/x\nQuPEFl74DlY+5DIk6EBvpmWhaMSvXzWZACGA0sYqa157dq7O0AqmuLG/EI5EkHETO4CrtBW+yLcy\n2dUCXOMA+j+NjM1BjrQkYE5vtSfNO6lFZcISyKo5pTFlcA7ut0Fx2nZ8GhHTn32CpeWwNcZBn1gR\npZVt6DxVVkhTAkMLhR4rL2wGIi/1WRs23ZOLGKtyDNvDHnQyDiQEoJGy9nAthA8aNHa3cfdF10vB\nDrb19vtpFHmpvKEEhpk2EBRF4fTi644Fuhu2Ied6118AlaPvEea+n6G4vBz+8RWuVCmZjLU+7h8l\nHy3/WdUPoIL5eW7Kz+hS+sRTFzfu9C48dMkQH3a6f3wSY+mufizNF9U298r98TnYy+PfDJK0bstG\nPh6yPWx8DGXKQBwrhWJWXI6JwZDeC5Ny+l8p1SypTmAjpIaSW3ge+KgcL6Wtt1R5hUV1ajVwVSUi\nHF/FachKqPqyLJFZTGjNrxnmNYpt8P1d5JTvJfmfr55Su/P9n7kcyWp7zMcb2Q5nlXt4tWogOHLI\nOzEWKCacbFfVHE+PpdrcvCVZMDzFogIq5EqGTOZe2poPpBVE+1y9mf5+TXBegy5HToLWvmfmJNTO\nNCDuBjgLs2tdw2yMPm4YEr57PnMX5gGTC3f2ZihXCIJDCRCdQ9sVBOjIQbOCzxFXkVITo0BAZhCi\nYz61wt3Ud8e//zhXWCkCsSV+IZCxxPzhEFd+RFVjW0Nm9hsb2FgAhkXCjsGROgoleYgaZJWvQaAg\nUyBzMmKDPKTllBHyE3Gy1ehBNGPgEBChf17/9M+j8pcm1OmlM434ctWQ4qW7RU56//yq1soFY0Te\nfu2ei03a6m68fYuW6s7XEEK58QisJWRAvEbpwu/eyqfs7PsQ+zSgJHyk2rO95IxdMtEESb2GRuoi\nBs+AHNdYFTAi+GBWw9dvEgqQ0Mpv0//6bBE/Fb4d7b7f56uUNnnE7mFnjGmGQN+MvC62pfwfvJTT\nEkT1iZ9kjM9FprTFWXT4UmO3XTvesGeE50sV9YPm71X4DCQwc4KE8vyuwj0s6oMNAUACW2ClU9QQ\ny0tRpaF1tzs4N42Q5zl0TzWxbCCjAtC3u6xf+c8MCGrr7DzNhm42LOQiHTa4MwX4x96q7235oiAU\niQqSI/hyF5yLpWw4etyUvsx2/0/0wkuTU1FozbLoCWJEWcPS7QadMrRRISxHf0YobIeQyz34regl\nt1qSQ3dCU9D6AHLgX6kqllx4X0fnFq7LtfN7fA2itW26v+kAT2QFZ3qZhINGfofCja/pITC1uNAZ\ngsJaTMcQ600krj/ynoxnjT+n1gmeqThac6/Mi3YlVeRtaxI2InL82ZuD+w/dfY9OpPssQjy3xiQa\njPuaMWXRxz/sS9syOoGVH7XBwKrWpQcpchozWJt40QV5DslJkclcr8aC2AGlzuJMTdEgz1eqV0+H\nbAXG9HRHN/0eJTn1/QAAAAEABVguNTA5AAADjzCCA4swggJzAhRGqVxH4HTLYPGO4rzHcCPeGDKn\nxTANBgkqhkiG9w0BAQsFADCBgTELMAkGA1UEBhMCY2ExEDAOBgNVBAgMB29udGFyaW8xEDAOBgNV\nBAcMB3Rvcm9udG8xFDASBgNVBAoMC2plbmtpbnN0ZXN0MRkwFwYDVQQDDBBqZW5raW5zdGVzdC5p\nbmZvMR0wGwYJKoZIhvcNAQkBFg50ZXN0QHRlc3QuaW5mbzAeFw0xOTEwMDgxNTI5NTVaFw0xOTEx\nMDcxNTI5NTVaMIGBMQswCQYDVQQGEwJjYTEQMA4GA1UECAwHb250YXJpbzEQMA4GA1UEBwwHdG9y\nb250bzEUMBIGA1UECgwLamVua2luc3Rlc3QxGTAXBgNVBAMMEGplbmtpbnN0ZXN0LmluZm8xHTAb\nBgkqhkiG9w0BCQEWDnRlc3RAdGVzdC5pbmZvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\nAQEA02q352JTHGvROMBhSHvSv+vnoOTDKSTz2aLQn0tYrIRqRo+8bfmMjXuhkwZPSnCpvUGNAJ+w\nJrt/dqMoYUjCBkjylD/qHmnXN5EwS1cMg1Djh65gi5JJLFJ7eNcoSsr/0AJ+TweIal1jJSP3t3PF\n9Uv21gm6xdm7HnNK66WpUUXLDTKaIs/jtagVY1bLOo9oEVeLN4nT2CYWztpMvdCyEDUzgEdDbmrP\nF5nKUPK5hrFqo1Dc5rUI4ZshL3Lpv398aMxv6n2adQvuL++URMEbXXBhxOrT6rCtYzbcR5fkwS9i\nd3Br45CoWOQro02JAepoU0MQKY5+xQ4Bq9Q7tB9BAwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAe\n4xc+mSvKkrKBHg9/zpkWgZUiOp4ENJCi8H4tea/PCM439v6y/kfjT/okOokFvX8N5aa1OSz2Vsrl\nm8kjIc6hiA7bKzT6lb0EyjUShFFZ5jmGVP4S7/hviDvgB5yEQxOPpumkdRP513YnEGj/o9Pazi5h\n/MwpRxxazoda9r45kqQpyG+XoM4pB+Fd3JzMc4FUGxfVPxJU4jLawnJJiZ3vqiSyaB0YyUL+Er1Q\n6NnqtR4gEBF0ZVlQmkycFvD4EC2boP943dLqNUvop+4R3SM1QMM6P5u8iTXtHd/VN4MwMyy1wtog\nhYAzODo1Jt59pcqqKJEas0C/lFJEB3frw4ImNx5fNlJYOpx+ijfQs9m39CevDq0="
-                  },
-                  "password": {
-                    "description": "Jenkins keystore password",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enable": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enable"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "password": {}
-                          },
-                          "required": [
-                            "password"
-                          ],
-                          "type": "object"
-                        }
-                      },
+                    "allOf": [
                       {
                         "properties": {
-                          "password": {
+                          "disableSecretMount": {
                             "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "password"
+                          "disableSecretMount"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "enable": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enable"
                         ],
                         "type": "object"
                       }
                     ]
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "disableSecretMount": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "disableSecretMount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "jenkinsHttpsJksSecretName": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "jenkinsHttpsJksSecretName"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "password": {
-                    "anyOf": [
+                    "allOf": [
                       {
-                        "type": "string"
+                        "properties": {
+                          "enable": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enable"
+                        ],
+                        "type": "object"
                       },
                       {
-                        "type": "null"
+                        "not": {
+                          "properties": {
+                            "disableSecretMount": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableSecretMount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "jenkinsHttpsJksSecretName": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "jenkinsHttpsJksSecretName"
+                          ],
+                          "type": "object"
+                        }
                       }
-                    ],
-                    "description": "Jenkins keystore password"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "disableSecretMount": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "disableSecretMount"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "enable": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enable"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 ]
               },
@@ -9646,22 +10315,6 @@
               "description": "Name of the secret that already has SSL keystore"
             },
             "jenkinsKeyStoreBase64Encoded": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Base64 encoded Keystore content. Keystore must be converted to base64 then being pasted here\nConvert keystore.jks files content to base64 > $ cat keystore.jks | base64\n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"
             },
             "password": {
@@ -9736,50 +10389,6 @@
           "allOf": [
             {
               "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "hostName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "hostName"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "hostName": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Primary Ingress hostname"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
                 "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
@@ -9838,94 +10447,6 @@
                       }
                     ],
                     "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "ingressClassName"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "ingressClassName": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Primary Ingress ingressClassName"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "resourceRootUrl": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "resourceRootUrl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "resourceRootUrl": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Primary Hostname to serve assets from"
                   }
                 },
                 "type": "object"
@@ -9990,44 +10511,10 @@
           "description": "Environment variable sources for Init Container"
         },
         "initContainerResources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Resources allocation (Requests and Limits) for Init Container\ninitContainerResources:\nrequests:\ncpu: \"50m\"\nmemory: \"256Mi\"\nlimits:\ncpu: \"2000m\"\nmemory: \"4096Mi\""
         },
         "initScripts": {
           "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
             {
               "type": "array"
             },
@@ -10036,9 +10523,6 @@
             },
             {
               "type": "object"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "Map of groovy init scripts to be executed during Jenkins controller start\ntest: |-\nprint 'adding global pipeline libraries, register properties, bootstrap jobs...'"
@@ -10132,25 +10616,6 @@
           "type": "boolean"
         },
         "lifecycle": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Lifecycle specification for controller-container\npostStart:\nexec:\ncommand:\n- \"uname\"\n- \"-a\""
         },
         "loadBalancerIP": {
@@ -10186,25 +10651,6 @@
           "description": "k8s node port. Only used if serviceType is NodePort"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Node labels for pod assignment"
         },
         "numExecutors": {
@@ -10410,9 +10856,6 @@
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
                       }
                     ],
@@ -10448,52 +10891,19 @@
               "then": {
                 "properties": {
                   "alertingrules": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Array of prometheus alerting rules"
+                    "description": "Array of prometheus alerting rules",
+                    "items": {},
+                    "type": "array"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "MetricRelabelConfigs to apply to samples before ingestion."
+                    "description": "MetricRelabelConfigs to apply to samples before ingestion.",
+                    "items": {},
+                    "type": "array"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
+                    "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                    "items": {},
+                    "type": "array"
                   },
                   "scrapeEndpoint": {
                     "anyOf": [
@@ -10526,9 +10936,6 @@
                       },
                       {
                         "type": "array"
-                      },
-                      {
-                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -10798,50 +11205,6 @@
           "allOf": [
             {
               "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "hostName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "hostName"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "hostName": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Secondary Ingress hostname"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
                 "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
@@ -10914,50 +11277,6 @@
                 },
                 "type": "object"
               }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "ingressClassName"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "ingressClassName": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
-                  }
-                },
-                "type": "object"
-              }
             }
           ],
           "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
@@ -11004,19 +11323,6 @@
           "description": "List of `SecretClaim` resources to create\n- name: secretName        # required\npath: testPath          # required\ntype: kubernetes.io/tls # optional\nrenew: 60               # optional"
         },
         "securityContextCapabilities": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here\nsecurityContextCapabilities:\ndrop:\n- NET_RAW"
         },
         "serviceAnnotations": {
@@ -11100,20 +11406,17 @@
                   "then": {
                     "properties": {
                       "containerSecurityContext": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
+                        "additionalProperties": {},
+                        "description": "Enable container security context",
+                        "properties": {
+                          "allowPrivilegeEscalation": {
+                            "type": "boolean"
                           },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
+                          "readOnlyRootFilesystem": {
+                            "type": "boolean"
                           }
-                        ],
-                        "description": "Enable container security context"
+                        },
+                        "type": "object"
                       },
                       "healthPort": {
                         "description": "Port for sidecar health probes",
@@ -11181,21 +11484,6 @@
                       "reqRetryConnect": {
                         "description": "How many connection-related errors to retry on",
                         "type": "integer"
-                      },
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
                       },
                       "scheme": {
                         "anyOf": [
@@ -11305,21 +11593,7 @@
                 "reqRetryConnect": {
                   "description": "How many connection-related errors to retry on"
                 },
-                "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
+                "resources": {},
                 "scheme": {
                   "description": "The scheme to use when connecting to the Jenkins configuration as code endpoint"
                 },
@@ -11436,25 +11710,6 @@
           "description": "Topology spread constraints"
         },
         "updateStrategy": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Update strategy for StatefulSet"
         },
         "usePodSecurityContext": {
@@ -11640,9 +11895,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "A map of labels (keys/values) that agents namespaces must have to be able to connect to controller"
@@ -11659,9 +11911,6 @@
                 },
                 {
                   "type": "null"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "description": "A map of labels (keys/values) that agent pods must have to be able to connect to controller"
@@ -11748,22 +11997,6 @@
                 ],
                 "description": "Annotations for the PVC"
               },
-              "dataSource": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Existing data source to clone PVC from\nname: PVC-NAME\nkind: PersistentVolumeClaim"
-              },
               "labels": {
                 "anyOf": [
                   {
@@ -11777,106 +12010,6 @@
                   }
                 ],
                 "description": "Labels for the PVC"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "storageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "existingClaim": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "existingClaim"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "volumes": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "volumes"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "storageClass": {
-                      "enum": [
-                        "-"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "storageClass"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "storageClass": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Storage class for the PVC"
               }
             },
             "type": "object"
@@ -11900,19 +12033,6 @@
           "description": "Annotations for the PVC"
         },
         "dataSource": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Existing data source to clone PVC from\nname: PVC-NAME\nkind: PersistentVolumeClaim"
         },
         "enabled": {

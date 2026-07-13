@@ -1,8 +1,10 @@
 # Popular-chart corpus expansion: inventory and findings
 
-Status: ALL FINDINGS RESOLVED OR ADJUDICATED (2026-07-13) — F36-F50 fixed
-this round (see the F36-F50 fix summary); F31/F34/F44 residuals stay
-adjudicated-abstained; F12 remains a policy item awaiting a user decision.
+Status: ACCURACY RE-AUDIT CONTINUES (2026-07-13) — F36-F50 were fixed or
+adjudicated in the preceding round, but a fresh parallel fixture-versus-Helm
+audit found fifteen runtime-verified follow-ups (F51-F65). F31/F34/F44
+residuals stay adjudicated-abstained; F12 remains a policy item awaiting a
+user decision.
 Previous status: ROUND 2 IMPLEMENTED, ACCURACY RE-AUDIT CONTINUES —
 F1–F29 are recorded as fixed. A fresh parallel audit of the committed fixtures
 against the actual chart templates and Helm runtime found sixteen more
@@ -2425,12 +2427,430 @@ chart itself enforces via `fail`/`required`/its own shipped
 `values.schema.json`. These are safe (Helm still rejects at render), but
 worth modeling where the constraint is structural:
 
-- ingress-nginx: `rbac.scope` must equal `controller.scope.enabled` (chart
-  `fail`); schema accepts the mismatch (cross-path equality, unmodeled).
+- ingress-nginx's `rbac.scope` / `controller.scope.enabled` mismatch is now
+  promoted into F51: its statically empty `required` sentinel is a structural
+  terminal effect, not merely a lower-priority scalar facet.
 - datadog `registryMigrationMode`: chart rejects unknown values; schema has
   no enum.
-- airflow: object-form `extraEnv`, `elasticsearch.enabled` without a
-  secret/connection, and an out-of-range `airflowVersion` are rejected by
-  the chart's `check-values.yaml` / shipped schema; our schema accepts them.
+- airflow's `check-values.yaml` termination cases are now promoted into F51.
+  Object-form `extraEnv` remains a separate lower-priority acceptance.
 - nats `container.env.<VAR>`: a numeric value fails Helm (`must be string or
   map`); schema accepts it.
+
+## Round F51-F65: post-F50 fixture re-audit (VERIFIED 2026-07-13)
+
+The committed F36-F50 state was re-audited in three parallel chart lanes,
+with an independent cross-cutting pass over the newly broadened corpus and
+changed gen/IR fixtures. Every finding below has a current full-schema result
+and the opposite `helm template --skip-schema-validation` result on helm
+v4.2.3. Schema probes compose the chart's defaults and apply the corpus's
+null-dropping behavior; valid sibling values were rendered wherever necessary
+to distinguish a missing alternative from an invalid chart state. Shipped
+`values.schema.json` files were not used as evidence.
+
+### F51. `required` effects are still lost for sentinels, pipelines, and helper calls (OPEN, VERIFIED 2026-07-13)
+
+F30/F32 capture only a subset of `required(message, subject)` call shapes.
+The call disappears when its empty subject has no values-path identity, when a
+values member continues through a conversion pipeline, or when the call is
+inside a named helper.
+
+- Airflow's action-only `templates/check-values.yaml` implements validation
+  with `required "..." nil`. The current root schema accepts Elasticsearch
+  enabled without either connection source, Elasticsearch and OpenSearch both
+  enabled, missing external broker URLs, and mutually exclusive broker fields;
+  Helm terminates at lines 62-94. This includes the exact Airflow F32 example
+  previously claimed fixed. A valid Elasticsearch secret renders.
+- Ingress NGINX similarly uses a statically empty
+  `required(..., index (dict) ".")` at `templates/clusterrole.yaml:3-4`.
+  The schema accepts `rbac.scope=true` with `controller.scope.enabled=false`;
+  Helm rejects the mismatch.
+- Argo CD requires each ranged `configs.clusterCredentials.*.config` at
+  `cluster-secrets.yaml:37`, then pipes it through `toRawJson | nindent`.
+  The fixture captures sibling `server` but accepts an entry without `config`;
+  Helm fails. A complete entry renders.
+- Kyverno's `kyverno.chartVersion` helper requires
+  `global.templating.version` before `replace` (`_helpers.tpl:10-15`). Under
+  `global.templating.enabled=true`, an empty version validates but fails Helm;
+  a nonempty version renders.
+
+Airflow also computes one sentinel guard by mutating a local Boolean while
+ranging `env` (lines 38-52). The empty-env case validates and fails Helm, while
+an item named `AIRFLOW__CELERY__BROKER_URL_CMD` renders. That is a required pin:
+capturing the terminal call without preserving its range-derived existential
+condition would merely create a different wrong schema.
+
+**Fix direction.** Emit a `required` effect independently of output placement
+and subject-path discovery. A statically Helm-empty subject is a guarded
+terminal clause; a values-derived subject is a guarded non-emptiness
+requirement. Preserve that effect through pipelines, ranged-member identities,
+named-helper summaries, and calls. Track simple loop-local reductions such as
+"any item matches" structurally, or conservatively keep the valid alternative
+when the condition cannot be represented.
+
+### F52. Helm-executed `NOTES.txt` templates are excluded from analysis (OPEN, VERIFIED 2026-07-13)
+
+Chart discovery currently recognizes template `tpl`, `yaml`, and `yml` files,
+but Helm also executes `templates/NOTES.txt`. Runtime consumers and termination
+inside notes therefore never become schema evidence.
+
+- Trivy Operator accepts map-valued `targetNamespaces`; Helm fails the `tpl`
+  call in `templates/NOTES.txt:3`, which requires a string. A string renders.
+- Velero accepts legacy map-form
+  `configuration.backupStorageLocation`; its notes migration validator fails at
+  lines 29-30/94-95 and requires the supported list form, which renders.
+
+**Fix direction.** Include Helm-executed notes in the template/effect analysis
+phase while keeping their prose out of YAML resource detection. Parse their Go
+template actions structurally, propagate helper calls and terminal effects,
+and pin both a strict consumer and an explicit migration failure.
+
+### F53. `tpl` contracts inside named helpers do not reach callers (PARTIAL 2026-07-13)
+
+F45 and the F50 summary claim helper summaries carry truthy-to-string `tpl`
+contracts, but current chart fixtures still lose them.
+
+- OAuth2 Proxy accepts map-valued `config.configFile`; Helm reaches
+  `oauth2-proxy.legacy-config.content` from `deployment.yaml:36` and fails the
+  helper-local `tpl` at `_helpers.tpl:235-237`.
+- With `alphaConfig.enabled=true`, map-valued `alphaConfig.configFile` also
+  validates and fails the helper-local `tpl` at `_helpers.tpl:161-162`.
+  Ordinary strings render in both paths.
+
+**Fix direction.** Carry raw-input consumer contracts in named-helper summaries
+with the helper's own guard stack, bind relative/helper arguments back to the
+call-site values identity, and conjoin the contract at every reachable include.
+Pin direct and enabled/conditional helper uses at full-chart scale.
+
+### F54. Type-dispatch overlays can make an explicitly supported arm impossible (FIXED 2026-07-13)
+
+Some F36/F37/F41 conditional schemas are internally contradictory: the base
+admits the type selected by a live branch, then an `if type=...` overlay requires
+only incompatible types.
+
+- OAuth2 Proxy explicitly supports map and slice `extraArgs` in
+  `templates/deployment.yaml:139-154`. Its own
+  `ci/extra-args-as-list-values.yaml` renders, but the fixture rejects it: the
+  base admits array, then `if type=array` requires `null|object`.
+- Cluster Autoscaler's priority expander accepts a raw string or map at
+  `priority-expander-configmap.yaml:16-23`. The schema's base admits string,
+  then `if type=string` requires `null|object`; a valid multiline priority
+  string is rejected while Helm renders it.
+
+**Fix direction.** Keep every branch-body contract inside the matching type
+partition and merge it with, rather than against, that partition. Add a schema
+invariant scan/test: a positive `TypeIs(T)` arm must not lower to a `then`
+schema whose root domain is disjoint from `T`. Pin sequential positive `if`
+blocks and an `if`/`else` dispatch separately.
+
+### F55. Partial type dispatch re-closes the silent unmatched complement (FIXED 2026-07-13)
+
+F23 established that unmatched types remain valid when independent type-guarded
+blocks do nothing for them. The latest declared-container changes regress that
+rule.
+
+- External DNS has independent map and slice blocks for `extraArgs` at
+  `templates/deployment.yaml:139-164`, with no catch-all use. Integer, string,
+  Boolean, and non-integral number inputs execute neither block and Helm renders
+  successfully. The current fixture admits only array/object and rejects all
+  four silent-complement values.
+- OAuth2 Proxy's two independent `extraArgs` blocks have the same silent
+  complement in addition to the live-array contradiction in F54.
+
+**Fix direction.** Preserve an open complement whenever no executing catch-all
+or downstream consumer rejects unmatched types. A declared `{}` placeholder
+must not close that complement. Keep this distinct from F36: an executing
+`else` is strict evidence; absence of an `else` is not.
+
+### F56. The generic `object|array|string` fragment fallback ignores actual structural placement (FIXED 2026-07-13, string-arm residual)
+
+F48 replaced the old map guess with a hard-coded three-shape union. That union
+is neither the runtime domain of `toYaml` nor a valid domain for every YAML
+fragment slot, causing errors in both directions.
+
+- In mapping-value positions, `toYaml` is total. Promtail rejects
+  `affinity=false`, `affinity=7`, and numeric `nodeSelector` even though the
+  falsy value skips its `with` and the truthy scalars render. CloudNativePG
+  similarly rejects integer, Boolean, and floating-point `config.data` when
+  `clusterWide=true`; Helm serializes all three.
+- In sequence positions, arbitrary strings are not a valid structural lane.
+  Zalando Postgres Operator and UI accept `extraEnvs: "audit"`, then Helm
+  produces invalid YAML under `env:`. Promtail `extraArgs` has the same
+  mismatch. The K8s-typed Zalando gen fixture correctly remains `array|null`;
+  only the full fixture gains the spurious string arm.
+
+**Fix direction.** Treat `toYaml` itself as shape-neutral (the established F9
+model), then derive constraints from the parsed YAML slot and independent
+consumers. Do not use one universal shape shortlist. A mapping value may accept
+any JSON type absent stronger evidence; a sequence splice must retain its
+sequence/item structure; a `tpl` string arm exists only with actual `tpl`
+evidence.
+
+### F57. A broad fragment alternative bypasses independent member/range contracts (PARTIAL 2026-07-13)
+
+Even where another use supplies exact structure, the new fragment lane is
+unioned as a bypass instead of being intersected under the correct guard. This
+is a generalized F43 regression.
+
+- CoreDNS `podDisruptionBudget` is truthy-guarded, reads `.selector`, then
+  serializes the object. The schema accepts truthy string/list values that fail
+  Helm at `.selector`, yet rejects `false` and `0`, which Helm skips
+  successfully. The correct relation is falsy-or-object, not
+  `object|array|string`.
+- Fluent Bit accepts string `config.extraFiles`, `config.upstream`, and
+  `luaScripts` through a broad fragment lane; Helm reaches their direct ranges
+  and fails `range can't iterate`. Maps render.
+
+**Fix direction.** Conjoin independently active uses after every union lane.
+Retain exact Helm-truthy scoping, so a strict member/range contract applies only
+when its branch executes while falsy skip values remain accepted. Add a
+cross-template and a same-template pin; testing the fragment use alone cannot
+catch this.
+
+### F58. Integer rangeability ignores range-variable arity (FIXED 2026-07-13)
+
+Helm's modern integer iteration permits a zero/one-variable range, but rejects
+an integer when the template declares two iteration variables. F38 currently
+adds the integer arm without considering the range header.
+
+- `controller.containerPort=7` passes the Ingress NGINX fixture and fails Helm
+  at `controller-deployment.yaml:122`: `can't use 7 to iterate over more than
+  one variable`.
+- The same mismatch is verified for Kyverno
+  `backgroundController.extraArgs`, Kube Prometheus Stack
+  `prometheusOperator.env`, Prometheus `server.extraArgs`, Jenkins
+  `controller.JCasC.configScripts`, and KEDA `extraArgs.metricsAdapter`.
+  Valid maps render.
+
+**Fix direction.** Make the iterable domain a function of the parsed range
+binding arity. Admit integer only for range forms the supported Helm/Go runtime
+can execute, while preserving array/map behavior for two-variable key/value
+iteration. Pin zero-, one-, and two-variable forms.
+
+### F59. Range-body requirements still do not reach every iterable lane (OPEN, VERIFIED 2026-07-13)
+
+F39 can remove a bare integer arm in some direct cases, but consumer/member
+requirements from the body still fail to constrain integer iteration, array
+items, and map values consistently.
+
+- KEDA accepts integer
+  `permissions.operator.restrict.serviceAccountTokenCreationRoles`; Helm
+  iterates and fails `$r.name`. Jaeger accepts integer `jaeger.args`; Helm
+  reaches `tpl $arg` and fails. Jenkins `controller.installPlugins` is the
+  same string-body case.
+- Surveyor accepts `config.jetstream.accounts: [7]` and `{A: 7}`; Helm fails
+  `.tls` on each scalar member. The changed per-template fixture still leaves
+  `accounts: {}`. Object item/value forms render.
+- Velero accepts `credentials.extraEnvVars: {TOKEN: 7}`; Helm fails the ranged
+  `tpl $value` at `templates/secret.yaml:22`. String values render.
+
+**Fix direction.** Project the body's semantic contract onto every candidate
+lane: integer iteration values, array `items`, and map
+`additionalProperties`. Preserve identities through range locals and helper
+calls, and apply string/member/map requirements after the iterable domain is
+formed. Pin all three lane shapes rather than only the collection root.
+
+### F60. `eq`/`ne` predicates do not preserve runtime-compatible operand domains (OPEN, VERIFIED 2026-07-13)
+
+Comparison predicates are used for branch selection but often emit no input
+contract. Go-template equality then terminates on incompatible dynamic types
+that the schema accepts.
+
+- Harbor accepts map-valued `logLevel` and `redis.type`; Helm fails comparisons
+  against string literals in `registry-cm.yaml:12` and helper-relative
+  `_helpers.tpl:272`. Valid strings render. `logLevel`'s only scalar overlay is
+  also incorrectly scoped under unrelated `metrics.enabled`.
+- Fluent Bit accepts map-valued `kind`; Helm fails `eq ... "DaemonSet"` in
+  `templates/service.yaml:23`.
+- ReLoader accepts integer `reloadStrategy`, and Trivy Operator accepts a map
+  at `vulnerabilityReportsPlugin`; Helm fails their `ne`/`eq` calls.
+- The changed SigNoz IR records `global.storageClass == "-"`, but its gen/full
+  schema leaves the path `{}`; maps/lists/numbers validate and fail the helper
+  comparison, while strings render.
+
+**Fix direction.** Model the runtime comparability domain of `eq`/`ne` as a
+semantic operand contract, including Helm's numeric compatibility and nil
+behavior. Propagate relative/helper operand identities, retain ambient guards,
+and do not scope unconditional evidence under a sibling branch.
+
+### F61. Strict collection functions have missing or wrong input signatures (OPEN, VERIFIED 2026-07-13)
+
+String consumers gained a semantic catalog, but collection functions still
+lack precise input-domain effects. The result includes both false acceptances
+and false rejections.
+
+- Argo CD accepts string `global.env`/`controller.env`; Helm's `concat` calls
+  require lists. Arrays render.
+- Datadog accepts strings at its `kubernetesResources*AsTags` maps;
+  `mergeOverwrite` fails. CloudNativePG accepts string `config.data` under
+  `clusterWide=false`, and Velero accepts string `podSecurityContext` through
+  `default dict`; their `merge` calls require maps. Object forms render.
+- OAuth2 Proxy accepts `extraVolumes=7`; Helm fails `len` because numbers are
+  not length-bearing.
+- Kube State Metrics accepts `collectors=7`; Helm's `has` rejects it. Its
+  `namespaces` path has the inverse error: the chart documents and renders a
+  comma-separated string or YAML list through `join | split`, but the schema
+  permits only string/null and rejects the list.
+
+**Fix direction.** Define typed runtime signatures for collection consumers
+and conversions (`merge*`, `concat`, `append`/`prepend`, `len`, `has`, `join`,
+and siblings), emit operand contracts during call evaluation, and propagate
+them through `default`, pipelines, locals, and helpers. Keep each function's
+actual accepted union—do not replace this with one generic "collection" type.
+The CloudNativePG branch pair is the scoping pin: `toYaml` is total when
+`clusterWide=true`, while `merge` requires object when false.
+
+### F62. Opening empty declared containers can erase the container type entirely (PARTIAL 2026-07-13)
+
+F46 correctly says an open object is not a closed observed-key subset, but
+several current nodes became `{}` rather than an open, typed container. F48 has
+the analogous list loss.
+
+- OAuth2 Proxy's `service.annotations` is `{}` and accepts integer `7`; Helm
+  rejects the rendered metadata because annotations must be a string map. Its
+  `extraEnv` is description-only and accepts `7`; Helm produces invalid YAML.
+  Arbitrary annotation maps and EnvVar lists render.
+- Sealed Secrets emits `livenessProbe: {additionalProperties:{}}` without
+  `type: object`; integer `7` validates and fails `.enabled` at
+  `templates/deployment.yaml:205`.
+- The same class is reproduced in External DNS service-account annotations,
+  ReLoader labels/annotations, Promtail extra volumes, and Jenkins container
+  environment paths.
+
+**Fix direction.** Separate openness from type erasure. A declared/open map
+must remain `type: object` with open additional properties; a declared/rendered
+list must retain `type: array` and its item evidence. Add string/other lanes only
+when a real dispatch or `tpl` path supports them.
+
+### F63. Chained member reads do not require intermediate members (OPEN, VERIFIED 2026-07-13)
+
+Direct selector chains can fail before their leaf is rendered when an
+intermediate map member is absent. The schema records descendant descriptions
+but not the conditional presence/object requirement.
+
+- Surveyor accepts `config.credentials: {audit: 1}`; Helm enters the truthy
+  branch and fails `.secret.key` at `templates/deployment.yaml:44` because
+  `secret` is absent. `config.password` fails analogously at `.secret.name`
+  (line 110), and `config.tls`/`config.nkey` provide sibling repros.
+- Supplying the intermediate `secret` object makes the valid configurations
+  render.
+
+**Fix direction.** A chained read must record every nonterminal segment's
+presence and object shape under the exact guard/dot binding that executes it.
+Do not automatically require the final leaf when Go-template rendering would
+tolerate a missing leaf; pin the intermediate-missing and empty-intermediate
+cases separately.
+
+### F64. Dropping an unlowerable outer guard leaks strict contracts into dead branches (OPEN, VERIFIED 2026-07-13)
+
+Airflow's webserver Deployment is guarded by
+`semverCompare "<3.0.0" .Values.airflowVersion` at
+`webserver-deployment.yaml:23`. Inside it, `config.webserver.base_url` flows
+through `tpl`/`urlParse` and must be a string. The semver guard cannot currently
+lower, but the child string contract is retained globally.
+
+- With shipped Airflow 3.2.2 the Deployment branch is dead. A map-valued
+  `base_url` renders through the chart's free-form config path, but the schema
+  rejects it twice.
+- With Airflow 2.11.0 the branch is live: Helm rejects the same map and renders
+  a URL string. The contract is real; only its scope is wrong.
+
+**Fix direction.** Never discard an unlowerable outer predicate while retaining
+its narrowing child effect. Preserve an opaque/alternative branch or abstain
+from the narrowing until semver predicates can be represented faithfully.
+Pin both sides of the version guard so a globally strict fallback cannot pass.
+
+### F65. Ordered helper mutation is not reflected in accepted input domains (OPEN, VERIFIED 2026-07-13)
+
+NACK supports `jetstream.image` as a string or map. The `jsc.fixImage` helper
+checks for a string and mutates `.Values.jetstream.image` into a map with
+`set`/`unset` (`_helpers.tpl:69-76`); the later `jsc.image` helper reads
+`.repository`/`.tag` (lines 83-86).
+
+- String and map image forms both validate and render.
+- Integer `7` also validates because the current node has open properties but
+  no object type; Helm skips the conversion and fails the later member read.
+
+Simply restoring `type: object` would fix the acceptance while regressing the
+supported string form.
+
+**Fix direction.** Model ordered `set`/`unset` effects on values-derived
+subtrees across helper boundaries. Relate the post-mutation map identity to the
+pre-mutation branch, and infer the exact input union (string converted to map,
+or already-map) while rejecting the untouched complement. Pin call order and
+both valid input forms.
+
+## Round F51-F65 partial fix summary (2026-07-13)
+
+Fixed this round, each with minimal reproducer tests that fail without the
+fix (946/946 workspace tests; closed-object/facet/dotted scans clean; the
+CI-values residual dropped 5 → 4 — the F54 oauth2 list rejection is gone,
+the rest are the genuine aws-lb `required` case plus the adjudicated
+root-strictness/values-template classes):
+
+- **F54**: branch-body contracts stay inside their type partition — hints
+  gate under self-type tests (`hint_scope_is_unconditional`, the
+  destructured-range map hint), overlays receive only
+  partition-compatible hints, and `conditional_target_schema` enforces the
+  invariant that a positive `TypeIs(T)` arm's `then` is never disjoint
+  from `T`. Pins: `slice_partition_overlay_accepts_arrays` and the chart
+  case (oauth2 `extra-args-as-list` now validates).
+- **F55**: the silent unmatched complement of independent positive
+  type-guarded blocks stays open — the declared-`{}` placeholder no longer
+  stamps object typing on dispatch-serialized paths. Pin:
+  `independent_type_blocks_keep_silent_complement_open` (external-dns
+  scalars now accepted).
+- **F56**: `toYaml` fragments are shape-neutral. The resolve-side fragment
+  fallback claims nothing, the declared-`{}` placeholder is
+  fragment-aware (base and BRANCH merging both), and provider typing at
+  fragment positions binds only ARRAY slots (sequence structure is
+  load-bearing; promtail/cnpg scalars now render-valid). RESIDUAL: the
+  full-fixture string arm (zalando `extraEnvs: "audit"`) comes from
+  `open_fragment_base_schema`'s unconditional string alternative and
+  still needs gating on actual `tpl` evidence.
+- **F58**: the iterable domain follows range-binding arity in BOTH lanes —
+  `record_guarded_range_read` now carries `has_destructured_range_use`,
+  so two-variable ranges exclude integer iteration (ingress-nginx,
+  kyverno, prometheus, keda all reject integers now). Pins:
+  `destructured_range_excludes_integer_iteration` and
+  `guarded_destructured_range_excludes_integer_iteration`.
+- **F62 (partial)**: empty carrier slots coerced to host members stay
+  open and UNTYPED (`SchemaNode::untyped_member_host`), so falsy scalars
+  pass guarded member-read parents. RESIDUAL: metadata string-map typing
+  (oauth2 `service.annotations: 7`) and the object/array lane
+  restoration for description-only nodes remain open.
+- **F53 (partial)**: `tpl` records its runtime string contract on raw
+  subjects (landed with F50), which covers direct and with-dot forms and
+  the airflow helper shape; the oauth2 legacy-config helper CHAIN
+  (`include` of a helper whose `tpl` subject is a helper-local composite)
+  still loses the contract.
+
+Open, with design notes from this round's attempts:
+
+- **F57 (member half)/F63**: a naive per-read lowering of intermediate
+  member-access contracts (each chained selector prefix ⇒
+  object-or-null arm) is SEMANTICALLY right but exploded umbrella-chart
+  schemas past helm's 5 MiB chart-file limit (signoz) and destabilized
+  carrier/union assembly. The feature needs a size-aware encoding:
+  base-level structural narrowing for unconditional reads, arms only for
+  guarded partitions, and requirement deduplication across paths. Two
+  reproducers ship `#[ignore]`-pinned with this rationale
+  (`member_read_beside_serialize_requires_object_when_truthy`,
+  `chained_member_read_requires_intermediate_objects`).
+- **F51, F52, F59, F60, F61, F64, F65**: untouched this round; the
+  finding text above remains the work order.
+
+## F51-F65 audit record (2026-07-13)
+
+The re-audit deliberately made no implementation, chart, fixture, IR, or
+expected-output changes. F51-F65 are follow-up work only. False rejections are
+explicitly represented in F54-F56, F61, and F64; the other findings are false
+acceptances or mixed-direction classes. Mechanical integrity and workspace
+tests are recorded after the final plan-only diff below.
+
+Post-audit integrity gates: 941/941 workspace tests pass; closed-object and
+facet scans are empty; every dotted key is literal or beneath an open parent;
+26,919 local references resolve across 93 JSON fixtures. The CI-values sweep
+remains 5/119 rejected, but one residual is now positively identified as F54
+(`oauth2-proxy/extra-args-as-list-values.yaml` is Helm-valid), rather than all
+five being an adjudicated baseline. Only this plan file is modified.

@@ -524,20 +524,9 @@
               "httproute": {
                 "properties": {
                   "filters": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Filters define the filters that are applied to requests that match this rule."
+                    "description": "Filters define the filters that are applied to requests that match this rule.",
+                    "items": {},
+                    "type": "array"
                   },
                   "labels": {
                     "anyOf": [
@@ -553,35 +542,30 @@
                     ]
                   },
                   "matches": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "path": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
                       },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                      "type": "object"
+                    },
+                    "type": "array"
                   },
                   "parentRefs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Keep in mind parentRefs field is required\n- name: vault-gateway-example\nnamespace: example-ns"
+                    "description": "Keep in mind parentRefs field is required\n- name: vault-gateway-example\nnamespace: example-ns",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -820,20 +804,14 @@
                     ]
                   },
                   "tls": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
+                    "additionalProperties": {},
+                    "description": "tls will be passed directly to the route's TLS config, which\ncan be used to configure other termination methods that terminate\nTLS at the router",
+                    "properties": {
+                      "termination": {
                         "type": "string"
                       }
-                    ],
-                    "description": "tls will be passed directly to the route's TLS config, which\ncan be used to configure other termination methods that terminate\nTLS at the router"
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -1598,57 +1576,14 @@
               "serviceMonitor": {
                 "description": "Enable support for the Prometheus Operator. If authorization is not set for authenticating\nto Vault's metrics endpoint, the following Vault server `telemetry{}` config must be included\nin the `listener \"tcp\"{}` stanza\ntelemetry {\nunauthenticated_metrics_access = \"true\"\n}\nSee the `standalone.config` for a more complete example of this.\nIn addition, a top level `telemetry{}` stanza must also be included in the Vault configuration:\nexample:\ntelemetry {\nprometheus_retention_time = \"30s\"\ndisable_hostname = true\n}\nConfiguration for monitoring the Vault server.\nThe Prometheus operator *must* be installed before enabling this feature,\nif not the chart will fail to install due to missing CustomResourceDefinitions\nprovided by the operator.\nInstructions on how to install the Helm chart can be found here:\nhttps://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack\nMore information can be found here:\nhttps://github.com/prometheus-operator/prometheus-operator\nhttps://github.com/prometheus-operator/kube-prometheus",
                 "properties": {
-                  "authorization": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "authorization used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.SafeAuthorization\nexample:\nauthorization:\ncredentials:\nname: vault-metrics-client\nkey: token"
-                  },
                   "interval": {
                     "description": "Interval at which Prometheus scrapes metrics",
                     "type": "string"
                   },
-                  "matchLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "matchLabels configures the service selector labels for the ServiceMonitor.\nBy default, the ServiceMonitor targets services with:\n- HA mode: vault-active: \"true\" (scrapes the raft leader only)\n- Standalone mode: vault-internal: \"true\"\nTo scrape metrics from all Vault pods including standbys (Enterprise only):\n1. Enable unauthenticated_metrics_access in your Vault listener telemetry config\n2. Set matchLabels to target the vault-internal headless service\nSee: https://developer.hashicorp.com/vault/docs/configuration/telemetry#prometheus\nExample:\nmatchLabels:\nvault-internal: \"true\""
-                  },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "metricRelabelings configures the relabeling rules to apply to the samples before ingestion.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.RelabelConfig\nexample:\nmetricRelabelings:\n- sourceLabels: [cluster]\ntargetLabel: vault_cluster"
+                    "description": "metricRelabelings configures the relabeling rules to apply to the samples before ingestion.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.RelabelConfig\nexample:\nmetricRelabelings:\n- sourceLabels: [cluster]\ntargetLabel: vault_cluster",
+                    "items": {},
+                    "type": "array"
                   },
                   "scrapeTimeout": {
                     "description": "Timeout for Prometheus scrapes",
@@ -1667,22 +1602,6 @@
                       }
                     ],
                     "description": "Selector labels to add to the ServiceMonitor.\nWhen empty, defaults to:\nrelease: prometheus"
-                  },
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "tlsConfig used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.TLSConfig\nexample:\ntlsConfig:\nca:\nsecret:\nname: vault-metrics-client\nkey: ca.crt"
                   }
                 },
                 "type": "object"
@@ -2413,20 +2332,9 @@
                 "description": "The Prometheus operator *must* be installed before enabling this feature,\nif not the chart will fail to install due to missing CustomResourceDefinitions\nprovided by the operator.",
                 "properties": {
                   "rules": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Some example rules.\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 500ms on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 500\nfor: 5m\nlabels:\nseverity: warning\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 1s on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 1000\nfor: 5m\nlabels:\nseverity: critical"
+                    "description": "Some example rules.\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 500ms on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 500\nfor: 5m\nlabels:\nseverity: warning\n- alert: vault-HighResponseTime\nannotations:\nmessage: The response time of Vault is over 1s on average over the last 5 minutes.\nexpr: vault_core_handle_request{quantile=\"0.5\", namespace=\"mynamespace\"} > 1000\nfor: 5m\nlabels:\nseverity: critical",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -2638,19 +2546,8 @@
               "then": {
                 "properties": {
                   "extraArgs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "image": {
                     "properties": {
@@ -2697,22 +2594,6 @@
                   },
                   "logLevel": {
                     "type": "string"
-                  },
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
                   }
                 },
                 "type": "object"
@@ -2747,19 +2628,6 @@
             "logFormat": {},
             "logLevel": {},
             "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
             },
             "securityContext": {
@@ -2997,25 +2865,6 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "resources:\nrequests:\ncpu: 50m\nmemory: 128Mi\nlimits:\ncpu: 50m\nmemory: 128Mi"
         },
         "serviceAccount": {
@@ -3042,47 +2891,9 @@
           "type": "object"
         },
         "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "volumeMounts is a list of volumeMounts for the main server container. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- name: tls\nmountPath: \"/vault/tls\"\nreadOnly: true"
         },
         "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "volumes is a list of volumes made available to all containers. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- name: tls\nsecret:\nsecretName: vault-tls"
         }
       },
@@ -3207,84 +3018,6 @@
             "anyOf": [
               {
                 "properties": {
-                  "namespaceSelector": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "namespaceSelector"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "namespaceSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "namespaceSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "namespaceSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Deprecated: please use 'webhook.namespaceSelector' instead\nnamespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
-              },
-              "webhook": {
-                "properties": {
-                  "namespaceSelector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "namespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
                   "webhook": {
                     "properties": {
                       "annotations": {
@@ -3317,36 +3050,11 @@
           },
           "then": {
             "properties": {
-              "webhook": {
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Extra annotations to attach to the webhook"
-                  }
-                },
-                "type": "object"
-              },
               "webhookAnnotations": {
                 "anyOf": [
                   {
                     "additionalProperties": {},
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
                   },
                   {
                     "type": "string"
@@ -3624,19 +3332,6 @@
           "type": "object"
         },
         "namespaceSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Deprecated: please use 'webhook.namespaceSelector' instead\nnamespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
         },
         "nodeSelector": {
@@ -3648,25 +3343,6 @@
           "type": "object"
         },
         "podDisruptionBudget": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "A disruption budget limits the number of pods of a replicated application\nthat are down simultaneously from voluntary disruptions\npodDisruptionBudget:\nmaxUnavailable: 1"
         },
         "port": {
@@ -3708,25 +3384,6 @@
         },
         "replicas": {},
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
         },
         "revokeOnShutdown": {
@@ -3806,19 +3463,6 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Extra annotations to attach to the webhook"
             },
             "failurePolicy": {
@@ -3836,19 +3480,6 @@
               ]
             },
             "namespaceSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "namespaceSelector is the selector for restricting the webhook to only\nspecific namespaces.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-namespaceselector\nfor more details.\nExample:\nnamespaceSelector:\nmatchLabels:\nsidecar-injector: enabled"
             },
             "objectSelector": {
@@ -3873,19 +3504,6 @@
           "type": "object"
         },
         "webhookAnnotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Deprecated: please use 'webhook.annotations' instead\nExtra annotations to attach to the webhook"
         }
       },
@@ -4506,25 +4124,6 @@
           "type": "string"
         },
         "extraContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "extraContainers is a list of sidecar containers. Specified as a YAML list."
         },
         "extraEnvironmentVars": {
@@ -4533,25 +4132,6 @@
           "type": "object"
         },
         "extraInitContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "extraInitContainers is a list of init containers. Specified as a YAML list.\nThis is useful if you need to run a script to provision TLS certificates or\nwrite out configuration files in a dynamic way.\nThis example installs a plugin pulled from github into the /usr/local/libexec/vault/oauthapp folder,\nwhich is defined in the volumes value.\n- name: oauthapp\nimage: \"alpine\"\ncommand: [sh, -c]\nargs:\n- cd /tmp &&\nwget https://github.com/puppetlabs/vault-plugin-secrets-oauthapp/releases/download/v1.2.0/vault-plugin-secrets-oauthapp-v1.2.0-linux-amd64.tar.xz -O oauthapp.xz &&\ntar -xf oauthapp.xz &&\nmv vault-plugin-secrets-oauthapp-v1.2.0-linux-amd64 /usr/local/libexec/vault/oauthapp &&\nchmod +x /usr/local/libexec/vault/oauthapp\nvolumeMounts:\n- name: plugins\nmountPath: /usr/local/libexec/vault"
         },
         "extraLabels": {
@@ -4569,25 +4149,6 @@
           "description": "Extra labels to attach to the server pods\nThis should be a YAML map of the labels to apply to the server pods"
         },
         "extraPorts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "extraPorts is a list of extra ports. Specified as a YAML list.\nThis is useful if you need to add additional ports to the statefulset in dynamic way.\n- containerPort: 8300\nname: http-monitoring"
         },
         "extraSecretEnvironmentVars": {
@@ -5053,35 +4614,46 @@
               "then": {
                 "properties": {
                   "egress": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "ingress": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
+                    "description": "egress:\n- to:\n- ipBlock:\ncidr: 10.0.0.0/24\nports:\n- protocol: TCP\nport: 443",
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "from": {
+                          "items": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "namespaceSelector": {
+                                "additionalProperties": {},
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "ports": {
+                          "items": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "port": {
+                                "type": "integer"
+                              },
+                              "protocol": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
                       },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "egress:\n- to:\n- ipBlock:\ncidr: 10.0.0.0/24\nports:\n- protocol: TCP\nport: 443"
+                      "type": "object"
+                    },
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -5127,25 +4699,6 @@
           "description": "nodeSelector labels for server pod assignment, formatted as a multi-line string or YAML map.\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector\nExample:\nnodeSelector:\nbeta.kubernetes.io/arch: amd64"
         },
         "persistentVolumeClaimRetentionPolicy": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Persistent Volume Claim (PVC) retention policy\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention\nExample:\npersistentVolumeClaimRetentionPolicy:\nwhenDeleted: Retain\nwhenScaled: Retain"
         },
         "postStart": {
@@ -5287,25 +4840,6 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Resource requests, limits, etc. for the server cluster placement. This\nshould map directly to the value of the resources field for a PodSpec.\nBy default no direct resource request is made.\nresources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
         },
         "route": {
@@ -5728,47 +5262,9 @@
           "type": "string"
         },
         "volumeMounts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "volumeMounts is a list of volumeMounts for the main server container. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- mountPath: /usr/local/libexec/vault\nname: plugins\nreadOnly: true"
         },
         "volumes": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "volumes is a list of volumes made available to all containers. These are rendered\nvia toYaml rather than pre-processed like the extraVolumes value.\nThe purpose is to make it easy to share volumes between containers.\n- name: plugins\nemptyDir: {}"
         }
       },
@@ -5821,19 +5317,6 @@
           "description": "Enable support for the Prometheus Operator. If authorization is not set for authenticating\nto Vault's metrics endpoint, the following Vault server `telemetry{}` config must be included\nin the `listener \"tcp\"{}` stanza\ntelemetry {\nunauthenticated_metrics_access = \"true\"\n}\nSee the `standalone.config` for a more complete example of this.\nIn addition, a top level `telemetry{}` stanza must also be included in the Vault configuration:\nexample:\ntelemetry {\nprometheus_retention_time = \"30s\"\ndisable_hostname = true\n}\nConfiguration for monitoring the Vault server.\nThe Prometheus operator *must* be installed before enabling this feature,\nif not the chart will fail to install due to missing CustomResourceDefinitions\nprovided by the operator.\nInstructions on how to install the Helm chart can be found here:\nhttps://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack\nMore information can be found here:\nhttps://github.com/prometheus-operator/prometheus-operator\nhttps://github.com/prometheus-operator/kube-prometheus",
           "properties": {
             "authorization": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "authorization used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.SafeAuthorization\nexample:\nauthorization:\ncredentials:\nname: vault-metrics-client\nkey: token"
             },
             "enabled": {
@@ -5844,19 +5327,6 @@
               "description": "Interval at which Prometheus scrapes metrics"
             },
             "matchLabels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "matchLabels configures the service selector labels for the ServiceMonitor.\nBy default, the ServiceMonitor targets services with:\n- HA mode: vault-active: \"true\" (scrapes the raft leader only)\n- Standalone mode: vault-internal: \"true\"\nTo scrape metrics from all Vault pods including standbys (Enterprise only):\n1. Enable unauthenticated_metrics_access in your Vault listener telemetry config\n2. Set matchLabels to target the vault-internal headless service\nSee: https://developer.hashicorp.com/vault/docs/configuration/telemetry#prometheus\nExample:\nmatchLabels:\nvault-internal: \"true\""
             },
             "metricRelabelings": {
@@ -5890,19 +5360,6 @@
               "description": "Selector labels to add to the ServiceMonitor.\nWhen empty, defaults to:\nrelease: prometheus"
             },
             "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "tlsConfig used for scraping the Vault metrics API.\nSee API reference: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.TLSConfig\nexample:\ntlsConfig:\nca:\nsecret:\nname: vault-metrics-client\nkey: ca.crt"
             }
           },

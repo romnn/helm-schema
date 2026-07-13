@@ -544,36 +544,9 @@
       "then": {
         "properties": {
           "hostAliases": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"\n- ip: \"10.1.2.3\"\nhostnames:\n- \"foo.remote\"\n- \"bar.remote\""
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nodeSelector set the operator nodeSelector"
+            "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"\n- ip: \"10.1.2.3\"\nhostnames:\n- \"foo.remote\"\n- \"bar.remote\"",
+            "items": {},
+            "type": "array"
           },
           "serviceAccount": {
             "properties": {
@@ -592,20 +565,9 @@
             "type": "object"
           },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "tolerations set the operator tolerations"
+            "description": "tolerations set the operator tolerations",
+            "items": {},
+            "type": "array"
           },
           "trivy": {
             "properties": {
@@ -703,91 +665,83 @@
                     "description": "volumes set trivy-server volumes",
                     "properties": {
                       "volumeMounts": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Statefulset volumeMounts"
+                        "description": "Statefulset volumeMounts",
+                        "items": {},
+                        "type": "array"
                       },
                       "volumes": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "- name: trusted-ca\nmountPath: /etc/ssl/trusted-ca\nsubPath: trusted-ca.crt\nreadOnly: true\nStatefulset volumes\n- name: trusted-ca\nsecret:\nsecretName: trusted-ca"
+                        "description": "- name: trusted-ca\nmountPath: /etc/ssl/trusted-ca\nsubPath: trusted-ca.crt\nreadOnly: true\nStatefulset volumes\n- name: trusted-ca\nsecret:\nsecretName: trusted-ca",
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
                   },
                   "podSecurityContext": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
+                    "additionalProperties": {},
+                    "description": "podSecurityContext set trivy-server podSecurityContext",
+                    "properties": {
+                      "fsGroup": {
+                        "type": "integer"
                       },
-                      {
-                        "items": {},
-                        "type": "array"
+                      "runAsNonRoot": {
+                        "type": "boolean"
                       },
-                      {
-                        "type": "string"
+                      "runAsUser": {
+                        "type": "integer"
                       }
-                    ],
-                    "description": "podSecurityContext set trivy-server podSecurityContext"
+                    },
+                    "type": "object"
                   },
                   "replicas": {
                     "description": "the number of replicas of the trivy-server",
                     "type": "integer"
                   },
                   "resources": {
-                    "anyOf": [
-                      {
+                    "additionalProperties": {},
+                    "description": "resources set trivy-server resource",
+                    "properties": {
+                      "limits": {
                         "additionalProperties": {},
+                        "description": "ephemeral-storage: \"2Gi\"",
+                        "properties": {
+                          "cpu": {
+                            "type": "integer"
+                          },
+                          "memory": {
+                            "description": "ephemeral-storage: \"2Gi\"",
+                            "type": "string"
+                          }
+                        },
                         "type": "object"
                       },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
+                      "requests": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "cpu": {
+                            "type": "string"
+                          },
+                          "memory": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
                       }
-                    ],
-                    "description": "resources set trivy-server resource"
+                    },
+                    "type": "object"
                   },
                   "securityContext": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
+                    "additionalProperties": {},
+                    "description": "securityContext set trivy-server securityContext",
+                    "properties": {
+                      "privileged": {
+                        "type": "boolean"
                       },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
+                      "readOnlyRootFilesystem": {
+                        "type": "boolean"
                       }
-                    ],
-                    "description": "securityContext set trivy-server securityContext"
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -1025,22 +979,14 @@
           "trivy": {
             "anyOf": [
               {
-                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
               {
-                "items": {},
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
-              },
-              {
-                "type": "string"
               }
             ]
           }
@@ -1097,20 +1043,8 @@
           "trivyOperator": {
             "properties": {
               "policiesConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "policiesConfig Custom Rego Policies to be used by the config audit scanner\nSee https://github.com/aquasecurity/trivy-operator/blob/main/docs/tutorials/writing-custom-configuration-audit-policies.md for more details."
+                "description": "policiesConfig Custom Rego Policies to be used by the config audit scanner\nSee https://github.com/aquasecurity/trivy-operator/blob/main/docs/tutorials/writing-custom-configuration-audit-policies.md for more details.",
+                "type": "string"
               }
             },
             "type": "object"
@@ -1452,56 +1386,171 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
             "properties": {
-              "alternateReportStorage": {
+              "policiesBundle": {
                 "properties": {
-                  "enabled": {
+                  "registryPassword": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "registryPassword"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "alternateReportStorage"
+              "policiesBundle"
             ],
             "type": "object"
           },
           {
             "properties": {
-              "podSecurityContext": {
-                "$ref": "#/$defs/helm-truthy"
+              "policiesBundle": {
+                "properties": {
+                  "registryPassword": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "registryPassword"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "podSecurityContext"
+              "policiesBundle"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "policiesBundle": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "policiesBundle"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": {
         "properties": {
-          "podSecurityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
+          "policiesBundle": {
+            "properties": {
+              "registryPassword": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "registryPassword is the password for the registry"
               }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "policiesBundle": {
+                "properties": {
+                  "registryUser": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "registryUser"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "policiesBundle"
             ],
-            "description": "fsGroup: 2000"
+            "type": "object"
+          },
+          {
+            "properties": {
+              "policiesBundle": {
+                "properties": {
+                  "registryUser": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "registryUser"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "policiesBundle"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "policiesBundle": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "policiesBundle"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "policiesBundle": {
+            "properties": {
+              "registryUser": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "registryUser is the user for the registry"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -1552,127 +1601,6 @@
                 "type": "null"
               }
             ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "trivy": {
-            "properties": {
-              "configFile": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "configFile can be used to tell Trivy to use specific options available only in the config file (e.g. Mirror registries).\nconfigFile:\nregistry:\nmirrors:\nindex.docker.io:\n- mirror.with.bad.auth\n- mirror.without.image"
-              }
-            },
-            "type": "object"
           }
         },
         "type": "object"
@@ -1919,23 +1847,176 @@
         "allOf": [
           {
             "properties": {
-              "operator": {
+              "trivy": {
                 "properties": {
-                  "builtInTrivyServer": {
+                  "dbRepositoryPassword": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "builtInTrivyServer"
+                  "dbRepositoryPassword"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "operator"
+              "trivy"
             ],
             "type": "object"
           },
+          {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "dbRepositoryPassword": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dbRepositoryPassword"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "dbRepositoryPassword": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The password for dbRepository authentication"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "dbRepositoryUsername": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dbRepositoryUsername"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "dbRepositoryUsername": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dbRepositoryUsername"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "dbRepositoryUsername": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The username for dbRepository authentication"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "properties": {
               "trivy": {
@@ -2011,127 +2092,6 @@
                   }
                 ],
                 "description": "githubToken is the GitHub access token used by Trivy to download the vulnerabilities\ndatabase from GitHub. Only applicable in Standalone mode."
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "trivy": {
-            "properties": {
-              "ignoreFile": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "ignoreFile can be used to tell Trivy to ignore vulnerabilities by ID (one per line)\nignoreFile:\n- CVE-1970-0001\n- CVE-1970-0002"
               }
             },
             "type": "object"
@@ -2486,22 +2446,14 @@
               "insecureRegistries": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The registry to which insecure connections are allowed. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
@@ -2848,22 +2800,14 @@
               "nonSslRegistries": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "Registries without SSL. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
@@ -2976,22 +2920,14 @@
                   "mirror": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "\"docker.io\": docker-mirror.example.com"
@@ -5223,25 +5159,6 @@
   ],
   "properties": {
     "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "affinity set the operator affinity"
     },
     "alternateReportStorage": {
@@ -5599,25 +5516,6 @@
       "type": "object"
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "nodeSelector set the operator nodeSelector"
     },
     "operator": {
@@ -5897,81 +5795,11 @@
       "description": "podAnnotations annotations added to the operator's pod"
     },
     "podSecurityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "fsGroup: 2000"
     },
     "policiesBundle": {
       "additionalProperties": {},
       "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "registryPassword": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "registryPassword"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "registryPassword": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "registryPassword"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "existingSecret": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "existingSecret"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "registryPassword": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "registryPassword is the password for the registry"
-              }
-            },
-            "type": "object"
-          }
-        },
         {
           "if": {
             "not": {
@@ -6001,63 +5829,6 @@
                   "string",
                   "null"
                 ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "registryUser": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "registryUser"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "registryUser": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "registryUser"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "existingSecret": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "existingSecret"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "registryUser": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "registryUser is the user for the registry"
               }
             },
             "type": "object"
@@ -6124,27 +5895,7 @@
       },
       "type": "object"
     },
-    "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "resources": {},
     "securityContext": {
       "anyOf": [
         {
@@ -6385,22 +6136,6 @@
                 ],
                 "description": "Additional annotations for the serviceMonitor"
               },
-              "endpointAdditionalProperties": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc."
-              },
               "honorLabels": {
                 "description": "HonorLabels chooses the metric’s labels on collisions with target labels",
                 "type": "boolean"
@@ -6450,19 +6185,6 @@
           "type": "boolean"
         },
         "endpointAdditionalProperties": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc."
         },
         "honorLabels": {
@@ -6515,63 +6237,6 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "dbRepositoryPassword": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "dbRepositoryPassword"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "dbRepositoryPassword": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "dbRepositoryPassword"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "existingSecret": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "existingSecret"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "dbRepositoryPassword": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The password for dbRepository authentication"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
             "not": {
               "properties": {
                 "existingSecret": {
@@ -6606,120 +6271,6 @@
                   "string",
                   "null"
                 ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "dbRepositoryUsername": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "dbRepositoryUsername"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "dbRepositoryUsername": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "dbRepositoryUsername"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "existingSecret": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "existingSecret"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "dbRepositoryUsername": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The username for dbRepository authentication"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "githubToken": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "githubToken"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "githubToken": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "githubToken"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "existingSecret": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "existingSecret"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "githubToken": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "githubToken is the GitHub access token used by Trivy to download the vulnerabilities\ndatabase from GitHub. Only applicable in Standalone mode."
               }
             },
             "type": "object"

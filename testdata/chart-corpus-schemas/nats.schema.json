@@ -311,20 +311,9 @@
                     "description": "ingress\nservice must be enabled also",
                     "properties": {
                       "hosts": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "must contain at least 1 host otherwise ingress will not be created"
+                        "description": "must contain at least 1 host otherwise ingress will not be created",
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
@@ -1744,21 +1733,10 @@
     "extraResources": {
       "anyOf": [
         {
-          "items": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
+          "items": {},
+          "type": "array"
+        },
+        {
           "type": "array"
         },
         {
@@ -1900,27 +1878,6 @@
           },
           "then": {
             "properties": {
-              "container": {
-                "description": "deployment -> pod template -> nats-box container",
-                "properties": {
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              },
               "contentsSecret": {
                 "description": "contents secret",
                 "properties": {
@@ -1937,16 +1894,10 @@
               "contexts": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
-                    "properties": {},
+                    "type": "null"
+                  },
+                  {
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "NATS contexts"
@@ -2101,21 +2052,7 @@
               "items": {},
               "type": "array"
             },
-            "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "resources": {}
           },
           "type": "object"
         },

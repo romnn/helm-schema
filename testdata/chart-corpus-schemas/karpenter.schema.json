@@ -1356,94 +1356,18 @@
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Resources for the controller container.\nWe usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nrequests:\ncpu: 1\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 1Gi"
         },
         "securityContext": {
           "additionalProperties": {},
           "properties": {
             "appArmorProfile": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "AppArmor profile for the controller container."
             },
             "seLinuxOptions": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "SELinux options for the controller container."
             },
             "seccompProfile": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Seccomp profile for the controller container."
             }
           },
@@ -1471,25 +1395,6 @@
       "type": "object"
     },
     "dnsConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Configure DNS Config for the pod\noptions:\n- name: ndots\nvalue: \"1\""
     },
     "dnsPolicy": {
@@ -1558,25 +1463,6 @@
       "description": "Image pull secrets for Docker images."
     },
     "initContainers": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "add additional initContainers to run before karpenter container starts\n- name: list-ec2-instances\nimage: amazon/aws-cli:latest\ncommand: [ 'aws', 'ec2', 'describe-instance-types']"
     },
     "logErrorOutputPaths": {
@@ -1718,23 +1604,20 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "if": {},
-          "then": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."
-              }
-            },
-            "type": "object"
-          }
+          "properties": {
+            "name": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."
+            }
+          },
+          "type": "object"
         }
       ],
       "properties": {
@@ -1791,53 +1674,15 @@
                 ],
                 "description": "Additional labels for the ServiceMonitor."
               },
-              "endpointConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
-              },
               "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs"
+                "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs",
+                "items": {},
+                "type": "array"
               },
               "relabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
+                "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -1862,19 +1707,6 @@
           "type": "boolean"
         },
         "endpointConfig": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
         },
         "metricRelabelings": {

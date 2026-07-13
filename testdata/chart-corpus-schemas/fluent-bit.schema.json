@@ -60,21 +60,6 @@
       },
       "then": {
         "properties": {
-          "affinity": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
           "annotations": {
             "anyOf": [
               {
@@ -89,133 +74,76 @@
             ]
           },
           "command": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "daemonSetVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "items": {
+              "additionalProperties": {},
+              "properties": {
+                "mountPath": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "readOnly": {
+                  "type": "boolean"
+                }
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+              "type": "object"
+            },
+            "type": "array"
           },
           "daemonSetVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "items": {
+              "additionalProperties": {},
+              "properties": {
+                "hostPath": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "name": {
+                  "type": "string"
+                }
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "dnsConfig": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
+              "type": "object"
+            },
+            "type": "array"
           },
           "dnsPolicy": {
             "type": "string"
           },
           "envFrom": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "existingConfigMap": {
             "description": "Make use of a pre-defined configmap instead of the one templated here",
             "type": "string"
           },
           "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "hostAliases": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "- ip: \"1.2.3.4\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\""
+            "description": "- ip: \"1.2.3.4\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"",
+            "items": {},
+            "type": "array"
           },
           "hostNetwork": {
             "type": "boolean"
@@ -229,19 +157,8 @@
             "type": "object"
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "labels": {
             "anyOf": [
@@ -256,54 +173,26 @@
               }
             ]
           },
-          "lifecycle": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "preStop:\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 20\"]"
-          },
           "livenessProbe": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "httpGet": {
                 "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ]
+            },
+            "type": "object"
           },
           "metricsPort": {
             "type": "integer"
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
           },
           "podLabels": {
             "anyOf": [
@@ -318,71 +207,26 @@
               }
             ]
           },
-          "podSecurityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "fsGroup: 2000"
-          },
           "priorityClassName": {
             "type": "string"
           },
           "readinessProbe": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "httpGet": {
                 "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ]
-          },
-          "resources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
-          },
-          "securityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "capabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nrunAsNonRoot: true\nrunAsUser: 1000"
+            },
+            "type": "object"
           },
           "serviceAccount": {
             "properties": {
@@ -396,35 +240,8 @@
             "type": "object"
           },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "updateStrategy": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "type: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1"
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -446,21 +263,6 @@
       },
       "then": {
         "properties": {
-          "affinity": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
           "annotations": {
             "anyOf": [
               {
@@ -475,103 +277,34 @@
             ]
           },
           "command": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "dnsConfig": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "nameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "dnsPolicy": {
             "type": "string"
           },
           "envFrom": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "existingConfigMap": {
             "description": "Make use of a pre-defined configmap instead of the one templated here",
             "type": "string"
           },
           "extraVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "extraVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "hostAliases": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "- ip: \"1.2.3.4\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\""
+            "description": "- ip: \"1.2.3.4\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"",
+            "items": {},
+            "type": "array"
           },
           "hostNetwork": {
             "type": "boolean"
@@ -585,19 +318,8 @@
             "type": "object"
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "labels": {
             "anyOf": [
@@ -612,54 +334,26 @@
               }
             ]
           },
-          "lifecycle": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "preStop:\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 20\"]"
-          },
           "livenessProbe": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "httpGet": {
                 "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ]
+            },
+            "type": "object"
           },
           "metricsPort": {
             "type": "integer"
-          },
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
           },
           "podLabels": {
             "anyOf": [
@@ -674,71 +368,26 @@
               }
             ]
           },
-          "podSecurityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "fsGroup: 2000"
-          },
           "priorityClassName": {
             "type": "string"
           },
           "readinessProbe": {
-            "anyOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "httpGet": {
                 "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "string"
+                  }
+                },
                 "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
               }
-            ]
-          },
-          "resources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
-          },
-          "securityContext": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "capabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nrunAsNonRoot: true\nrunAsUser: 1000"
+            },
+            "type": "object"
           },
           "serviceAccount": {
             "properties": {
@@ -752,35 +401,8 @@
             "type": "object"
           },
           "tolerations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "updateStrategy": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "type: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1"
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -941,19 +563,10 @@
       "then": {
         "properties": {
           "args": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -1001,37 +614,10 @@
           "autoscaling": {
             "description": "only available if kind is Deployment",
             "properties": {
-              "behavior": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "- type: Pods\npods:\nmetric:\nname: packets-per-second\ntarget:\ntype: AverageValue\naverageValue: 1k\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-configurable-scaling-behavior\nscaleDown:\npolicies:\n- type: Pods\nvalue: 4\nperiodSeconds: 60\n- type: Percent\nvalue: 10\nperiodSeconds: 60"
-              },
               "customRules": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "targetMemoryUtilizationPercentage: 75\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#autoscaling-on-multiple-metrics-and-custom-metrics"
+                "description": "targetMemoryUtilizationPercentage: 75\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#autoscaling-on-multiple-metrics-and-custom-metrics",
+                "items": {},
+                "type": "array"
               },
               "maxReplicas": {
                 "type": "integer"
@@ -1154,22 +740,14 @@
               "extraFiles": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "This allows adding more files with arbitrary filenames to /fluent-bit/etc/conf by providing key/value pairs.\nThe key becomes the filename, the value becomes the file content.\nupstream.conf: |\n[UPSTREAM]\nupstream1\n[NODE]\nname       node-1\nhost       127.0.0.1\nport       43000\nexample.conf: |\n[OUTPUT]\nName example\nMatch foo.*\nHost bar"
@@ -1177,22 +755,14 @@
               "upstream": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers\nThis configuration is deprecated, please use `extraFiles` instead."
@@ -1584,34 +1154,46 @@
       "then": {
         "properties": {
           "daemonSetVolumeMounts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "items": {
+              "additionalProperties": {},
+              "properties": {
+                "mountPath": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "readOnly": {
+                  "type": "boolean"
+                }
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+              "type": "object"
+            },
+            "type": "array"
           },
           "daemonSetVolumes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
+            "items": {
+              "additionalProperties": {},
+              "properties": {
+                "hostPath": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "name": {
+                  "type": "string"
+                }
               },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -1726,20 +1308,9 @@
       "then": {
         "properties": {
           "env": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "- name: FOO\nvalue: \"bar\""
+            "description": "- name: FOO\nvalue: \"bar\"",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -2053,35 +1624,41 @@
                   }
                 ]
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "allowPrivilegeEscalation": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
                     "additionalProperties": {},
+                    "properties": {
+                      "drop": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "privileged": {
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
+                  "readOnlyRootFilesystem": {
+                    "type": "boolean"
+                  },
+                  "runAsGroup": {
+                    "type": "integer"
+                  },
+                  "runAsNonRoot": {
+                    "type": "boolean"
+                  },
+                  "runAsUser": {
+                    "type": "integer"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -2141,9 +1718,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -2313,86 +1887,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "podDisruptionBudget": {
-            "description": "only available if kind is Deployment",
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "maxUnavailable": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -2431,22 +1925,14 @@
           "luaScripts": {
             "anyOf": [
               {
-                "additionalProperties": {},
                 "properties": {},
                 "type": "object"
               },
               {
-                "items": {},
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "See Lua script configuration example in README.md"
@@ -2633,6 +2119,71 @@
         "allOf": [
           {
             "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "podDisruptionBudget": {
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "maxUnavailable": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "kind": {
                 "enum": [
                   "Deployment"
@@ -2736,24 +2287,98 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "metricRelabelings": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "metricRelabelings"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "metricRelabelings": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "metricRelabelings"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "metricRelabelings": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
-    "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "affinity": {},
     "annotations": {
       "anyOf": [
         {
@@ -2784,19 +2409,6 @@
       "description": "only available if kind is Deployment",
       "properties": {
         "behavior": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "- type: Pods\npods:\nmetric:\nname: packets-per-second\ntarget:\ntype: AverageValue\naverageValue: 1k\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-configurable-scaling-behavior\nscaleDown:\npolicies:\n- type: Pods\nvalue: 4\nperiodSeconds: 60\n- type: Percent\nvalue: 10\nperiodSeconds: 60"
         },
         "customRules": {
@@ -2852,71 +2464,9 @@
                     ]
                   },
                   "controlledResources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory"
-                  },
-                  "controlledValues": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Values that the vertical pod autoscaler can control. Allowed values are RequestsAndLimits and RequestsOnly. Default is RequestsAndLimits."
-                  },
-                  "maxAllowed": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Define the max allowed resources for the pod"
-                  },
-                  "minAllowed": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory",
+                    "items": {},
+                    "type": "array"
                   },
                   "recommender": {
                     "description": "Name of the VPA recommender that will provide recommendations for vertical scaling.",
@@ -3019,57 +2569,15 @@
               "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory"
             },
             "controlledValues": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Values that the vertical pod autoscaler can control. Allowed values are RequestsAndLimits and RequestsOnly. Default is RequestsAndLimits."
             },
             "enabled": {
               "type": "boolean"
             },
             "maxAllowed": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Define the max allowed resources for the pod"
             },
             "minAllowed": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
             },
             "recommender": {
@@ -3131,9 +2639,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "This allows adding more files with arbitrary filenames to /fluent-bit/etc/conf by providing key/value pairs.\nThe key becomes the filename, the value becomes the file content.\nupstream.conf: |\n[UPSTREAM]\nupstream1\n[NODE]\nname       node-1\nhost       127.0.0.1\nport       43000\nexample.conf: |\n[OUTPUT]\nName example\nMatch foo.*\nHost bar"
@@ -3193,9 +2698,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers\nThis configuration is deprecated, please use `extraFiles` instead."
@@ -3303,19 +2805,6 @@
       "type": "object"
     },
     "dnsConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "nameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
     },
     "dnsPolicy": {},
@@ -3454,21 +2943,7 @@
           },
           "type": "object"
         },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
         "securityContext": {
           "anyOf": [
             {
@@ -3566,19 +3041,6 @@
       ]
     },
     "lifecycle": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "preStop:\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 20\"]"
     },
     "livenessProbe": {
@@ -3600,9 +3062,6 @@
         },
         {
           "type": "null"
-        },
-        {
-          "type": "string"
         }
       ],
       "description": "See Lua script configuration example in README.md"
@@ -3614,46 +3073,6 @@
     "nameOverride": {},
     "networkPolicy": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "from": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "enabled": {
           "description": "ingress:\nfrom: []",
@@ -3662,42 +3081,13 @@
         "ingress": {
           "additionalProperties": {},
           "properties": {
-            "from": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "type": "object"
+            "from": {}
+          }
         }
       },
       "type": "object"
     },
-    "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "nodeSelector": {},
     "openShift": {
       "additionalProperties": {},
       "allOf": [
@@ -3777,34 +3167,22 @@
                     ]
                   },
                   "runAsUser": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
                         "type": "string"
                       }
-                    ]
+                    },
+                    "type": "object"
                   },
                   "seLinuxContext": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
                         "type": "string"
                       }
-                    ]
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -3914,19 +3292,6 @@
       ]
     },
     "podSecurityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "fsGroup: 2000"
     },
     "podSecurityPolicy": {
@@ -3960,34 +3325,23 @@
                 ]
               },
               "runAsUser": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "rule": {
                     "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               },
               "seLinux": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "rule": {
+                    "description": "This policy assumes the nodes are using AppArmor rather than SELinux.",
                     "type": "string"
                   }
-                ]
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -4071,21 +3425,6 @@
                   "string",
                   "null"
                 ]
-              },
-              "rules": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               }
             },
             "type": "object"
@@ -4109,21 +3448,7 @@
           "type": "boolean"
         },
         "namespace": {},
-        "rules": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "rules": {}
       },
       "type": "object"
     },
@@ -4150,35 +3475,9 @@
       "description": "replicaCount -- Only applicable if kind=Deployment"
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
     "securityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "capabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nrunAsNonRoot: true\nrunAsUser: 1000"
     },
     "service": {
@@ -4201,19 +3500,8 @@
           "then": {
             "properties": {
               "loadBalancerSourceRanges": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -4404,20 +3692,9 @@
           "then": {
             "properties": {
               "additionalEndpoints": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Bear in mind if you want to collect metrics from a different port\nyou will need to configure the new ports on the extraPorts property.\n- port: metrics\npath: /metrics\ninterval: 10s\nscrapeTimeout: 10s\nscheme: \"\"\ntlsConfig: {}\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
+                "description": "Bear in mind if you want to collect metrics from a different port\nyou will need to configure the new ports on the extraPorts property.\n- port: metrics\npath: /metrics\ninterval: 10s\nscrapeTimeout: 10s\nscheme: \"\"\ntlsConfig: {}\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
+                "items": {},
+                "type": "array"
               },
               "namespace": {
                 "type": [
@@ -4431,21 +3708,6 @@
                   "null"
                 ]
               },
-              "relabelings": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "selector": {
                 "anyOf": [
                   {
@@ -4456,80 +3718,6 @@
                   },
                   {
                     "type": "null"
-                  }
-                ]
-              },
-              "tlsConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metricRelabelings": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "metricRelabelings"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metricRelabelings": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "metricRelabelings"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               }
@@ -4562,21 +3750,7 @@
         "metricRelabelings": {},
         "namespace": {},
         "path": {},
-        "relabelings": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "relabelings": {},
         "scheme": {},
         "scrapeTimeout": {},
         "selector": {
@@ -4590,21 +3764,7 @@
             }
           ]
         },
-        "tlsConfig": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "tlsConfig": {}
       },
       "type": "object"
     },
@@ -4652,19 +3812,6 @@
       ]
     },
     "updateStrategy": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "type: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1"
     },
     "volumeMounts": {

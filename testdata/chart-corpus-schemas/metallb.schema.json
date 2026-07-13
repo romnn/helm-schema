@@ -451,22 +451,6 @@
               "frrk8s": {
                 "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                 "properties": {
-                  "affinity": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Affinity for pod assignment.\nSelects which runtime class will be used by the pod."
-                  },
                   "alwaysBlock": {
                     "anyOf": [
                       {
@@ -552,22 +536,6 @@
                         },
                         "type": "object"
                       },
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Resource limits and requests for the FRR container."
-                      },
                       "secureMetricsPort": {
                         "anyOf": [
                           {
@@ -584,27 +552,6 @@
                           }
                         ],
                         "description": "Secure metrics port for FRR."
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "frrMetrics": {
-                    "properties": {
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Resource limits and requests for the FRR metrics container."
                       }
                     },
                     "type": "object"
@@ -630,22 +577,6 @@
                           }
                         ],
                         "description": "Polling interval for FRR status updates."
-                      },
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Resource limits and requests for the FRR status container."
                       }
                     },
                     "type": "object"
@@ -695,22 +626,14 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {},
                         "properties": {},
                         "type": "object"
                       },
                       {
-                        "items": {},
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
-                      },
-                      {
-                        "type": "string"
                       }
                     ],
                     "description": "Additional labels to add to the pod."
@@ -735,78 +658,20 @@
                     ],
                     "description": "Controller log level that is passed as a CLI flag. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
                   },
-                  "nodeSelector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Node selector for pod assignment."
-                  },
-                  "reloader": {
-                    "properties": {
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Resource limits and requests for the reloader container."
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Resource limits and requests for the frr-k8s controller container.\nlimits:\ncpu: 100m\nmemory: 100Mi"
-                  },
                   "runtimeClassName": {
                     "description": "Runtime class name for the pod.",
                     "type": "string"
                   },
                   "updateStrategy": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
+                    "additionalProperties": {},
+                    "description": "ref: https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/\nStrategyType\nCan be set to RollingUpdate or OnDelete",
+                    "properties": {
+                      "type": {
+                        "description": "Specify the FRR-K8s daemonset update strategy.",
                         "type": "string"
                       }
-                    ],
-                    "description": "ref: https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/\nStrategyType\nCan be set to RollingUpdate or OnDelete"
+                    },
+                    "type": "object"
                   },
                   "webhookPort": {
                     "anyOf": [
@@ -838,21 +703,6 @@
                   }
                 ],
                 "description": "String to override the default fully qualified app name."
-              },
-              "imagePullSecrets": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "nameOverride": {
                 "description": "String to override the default chart name.",
@@ -1720,36 +1570,14 @@
                         "description": "Optional additional annotations for the controller serviceMonitor."
                       },
                       "metricRelabelings": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+                        "description": "Metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
+                        "items": {},
+                        "type": "array"
                       },
                       "relabelings": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
+                        "description": "Relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace",
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
@@ -3084,20 +2912,9 @@
                 "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                 "properties": {
                   "tolerations": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Tolerations for pod assignment."
+                    "description": "Tolerations for pod assignment.",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -4535,20 +4352,15 @@
                     "description": "Prometheus Operator ServiceMonitors.",
                     "properties": {
                       "tlsConfig": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
+                        "additionalProperties": {},
+                        "description": "Optional TLS configuration for the controller serviceMonitor, in case secure metrics are enabled.",
+                        "properties": {
+                          "insecureSkipVerify": {
+                            "description": "Disables SSL certificate verification",
+                            "type": "boolean"
                           }
-                        ],
-                        "description": "Optional TLS configuration for the controller serviceMonitor, in case secure metrics are enabled."
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
@@ -4714,19 +4526,8 @@
             ]
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "loadBalancerClass": {
             "anyOf": [
@@ -4901,19 +4702,8 @@
             ]
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "items": {},
+            "type": "array"
           },
           "loadBalancerClass": {
             "anyOf": [
@@ -7097,20 +6887,14 @@
                         "description": "optional additional annotations for the speaker serviceMonitor"
                       },
                       "tlsConfig": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
+                        "additionalProperties": {},
+                        "description": "optional tls configuration for the speaker serviceMonitor, in case\nsecure metrics are enabled.",
+                        "properties": {
+                          "insecureSkipVerify": {
+                            "type": "boolean"
                           }
-                        ],
-                        "description": "optional tls configuration for the speaker serviceMonitor, in case\nsecure metrics are enabled."
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
@@ -8054,161 +7838,38 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
+            "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "not": {
+                  "properties": {
+                    "speaker": {
                       "properties": {
-                        "controller": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
+                        "enabled": {}
                       },
                       "required": [
-                        "controller"
+                        "enabled"
                       ],
                       "type": "object"
                     }
                   },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "speaker": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "speaker"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "speaker": {
-                          "properties": {
-                            "memberlist": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "memberlist"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "speaker"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "memberlist": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "memberlist"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                  "required": [
+                    "speaker"
+                  ],
+                  "type": "object"
+                }
               },
               {
                 "properties": {
                   "speaker": {
                     "properties": {
-                      "secretName": {
+                      "enabled": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "secretName"
+                      "enabled"
                     ],
                     "type": "object"
                   }
@@ -8221,55 +7882,13 @@
             ]
           },
           {
-            "allOf": [
+            "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "not": {
+                  "properties": {
+                    "speaker": {
                       "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "rbac": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "speaker": {
+                        "memberlist": {
                           "properties": {
                             "enabled": {}
                           },
@@ -8280,14 +7899,22 @@
                         }
                       },
                       "required": [
-                        "speaker"
+                        "memberlist"
                       ],
                       "type": "object"
                     }
                   },
-                  {
+                  "required": [
+                    "speaker"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "speaker": {
                     "properties": {
-                      "speaker": {
+                      "memberlist": {
                         "properties": {
                           "enabled": {
                             "$ref": "#/$defs/helm-truthy"
@@ -8300,80 +7927,7 @@
                       }
                     },
                     "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "speaker": {
-                          "properties": {
-                            "memberlist": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "memberlist"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "speaker"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "memberlist": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "memberlist"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "speaker": {
-                    "properties": {
-                      "secretName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "secretName"
+                      "memberlist"
                     ],
                     "type": "object"
                   }
@@ -8384,6 +7938,25 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "properties": {
+              "speaker": {
+                "properties": {
+                  "secretName": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "secretName"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "speaker"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -9605,35 +9178,9 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "extraContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "image": {
                 "properties": {
@@ -9678,22 +9225,14 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -9717,51 +9256,21 @@
                 ],
                 "description": "Controller log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "fsGroup": {
+                    "type": "integer"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "runAsNonRoot": {
+                    "type": "boolean"
                   },
-                  {
-                    "type": "string"
+                  "runAsUser": {
+                    "description": "nobody",
+                    "type": "integer"
                   }
-                ]
+                },
+                "type": "object"
               },
               "serviceAccount": {
                 "properties": {
@@ -9780,35 +9289,18 @@
                 "type": "object"
               },
               "strategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy\ne.g:\nstrategy:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%",
+                "properties": {
+                  "type": {
                     "type": "string"
                   }
-                ],
-                "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy\ne.g:\nstrategy:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%"
+                },
+                "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "webhookMode": {
                 "anyOf": [
@@ -10041,21 +9533,7 @@
       ],
       "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "command": {},
         "enabled": {
           "type": "boolean"
@@ -10095,9 +9573,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ]
         },
@@ -10120,19 +9595,6 @@
           "description": "Controller log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "limits:\ncpu: 100m\nmemory: 100Mi"
         },
         "podAnnotations": {
@@ -10162,21 +9624,7 @@
           },
           "type": "object"
         },
-        "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "resources": {},
         "runtimeClassName": {},
         "securityContext": {
           "anyOf": [
@@ -10338,20 +9786,9 @@
           "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
           "properties": {
             "affinity": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
-              "description": "Affinity for pod assignment.\nSelects which runtime class will be used by the pod."
+              "additionalProperties": {},
+              "description": "Affinity for pod assignment.\nSelects which runtime class will be used by the pod.",
+              "type": "object"
             },
             "alwaysBlock": {
               "description": "A comma separated list of cidrs to always block for incoming routes."
@@ -10395,20 +9832,9 @@
                   "type": "integer"
                 },
                 "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "description": "Resource limits and requests for the FRR container."
+                  "additionalProperties": {},
+                  "description": "Resource limits and requests for the FRR container.",
+                  "type": "object"
                 },
                 "secureMetricsPort": {
                   "description": "Secure metrics port for FRR."
@@ -10420,20 +9846,9 @@
               "additionalProperties": {},
               "properties": {
                 "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "description": "Resource limits and requests for the FRR metrics container."
+                  "additionalProperties": {},
+                  "description": "Resource limits and requests for the FRR metrics container.",
+                  "type": "object"
                 }
               },
               "type": "object"
@@ -10445,20 +9860,9 @@
                   "description": "Polling interval for FRR status updates."
                 },
                 "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "description": "Resource limits and requests for the FRR status container."
+                  "additionalProperties": {},
+                  "description": "Resource limits and requests for the FRR status container.",
+                  "type": "object"
                 }
               },
               "type": "object"
@@ -10523,20 +9927,9 @@
               "description": "Controller log level that is passed as a CLI flag. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
             },
             "nodeSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
-              "description": "Node selector for pod assignment."
+              "additionalProperties": {},
+              "description": "Node selector for pod assignment.",
+              "type": "object"
             },
             "podAnnotations": {
               "additionalProperties": {},
@@ -10575,39 +9968,17 @@
               "additionalProperties": {},
               "properties": {
                 "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "description": "Resource limits and requests for the reloader container."
+                  "additionalProperties": {},
+                  "description": "Resource limits and requests for the reloader container.",
+                  "type": "object"
                 }
               },
               "type": "object"
             },
             "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
-              "description": "Resource limits and requests for the frr-k8s controller container.\nlimits:\ncpu: 100m\nmemory: 100Mi"
+              "additionalProperties": {},
+              "description": "Resource limits and requests for the frr-k8s controller container.\nlimits:\ncpu: 100m\nmemory: 100Mi",
+              "type": "object"
             },
             "restartOnRotatorSecretRefresh": {
               "description": "Specifies whether the pod restarts when the rotator refreshes the cert secret. Useful for webhook stability during redeployments.",
@@ -10701,21 +10072,7 @@
           "additionalProperties": {},
           "type": "object"
         },
-        "imagePullSecrets": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "imagePullSecrets": {},
         "nameOverride": {
           "description": "String to override the default chart name."
         },
@@ -11669,36 +11026,14 @@
                     "description": "optional annotations for podMonitors"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+                    "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
+                    "items": {},
+                    "type": "array"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
+                    "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -11820,19 +11155,8 @@
                     "description": "optional annotations for prometheusRules"
                   },
                   "extraAlerts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -11919,19 +11243,13 @@
                         "description": "Exclude the pools matching the regular expression from triggering the alert."
                       },
                       "labels": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
+                        "additionalProperties": {},
+                        "properties": {
+                          "severity": {
                             "type": "string"
                           }
-                        ]
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
@@ -12091,19 +11409,13 @@
                     "description": "MetalLBBGPSessionDown",
                     "properties": {
                       "labels": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
+                        "additionalProperties": {},
+                        "properties": {
+                          "severity": {
                             "type": "string"
                           }
-                        ]
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
@@ -12176,19 +11488,13 @@
                     "description": "MetalLBConfigNotLoaded",
                     "properties": {
                       "labels": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
+                        "additionalProperties": {},
+                        "properties": {
+                          "severity": {
                             "type": "string"
                           }
-                        ]
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
@@ -12261,19 +11567,13 @@
                     "description": "MetalLBStaleConfig",
                     "properties": {
                       "labels": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
+                        "additionalProperties": {},
+                        "properties": {
+                          "severity": {
                             "type": "string"
                           }
-                        ]
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
@@ -12495,55 +11795,27 @@
                         "description": "optional additional annotations for the controller serviceMonitor"
                       },
                       "tlsConfig": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
+                        "additionalProperties": {},
+                        "description": "optional tls configuration for the controller serviceMonitor, in case\nsecure metrics are enabled.",
+                        "properties": {
+                          "insecureSkipVerify": {
+                            "type": "boolean"
                           }
-                        ],
-                        "description": "optional tls configuration for the controller serviceMonitor, in case\nsecure metrics are enabled."
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+                    "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
+                    "items": {},
+                    "type": "array"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
+                    "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -12724,21 +11996,6 @@
           },
           "then": {
             "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "bgpDebounceTimeout": {
                 "anyOf": [
                   {
@@ -12760,19 +12017,8 @@
                 "description": "BGP debounce timeout for FRR configuration reloads, in milliseconds. Only applies when BGP type is frr. Default (when unset) is 3000 ms. This feature is experimental"
               },
               "extraContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               },
               "image": {
                 "properties": {
@@ -12817,22 +12063,14 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
                     "properties": {},
                     "type": "object"
                   },
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               },
@@ -12856,72 +12094,20 @@
                 ],
                 "description": "Speaker log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
               },
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "limits:\ncpu: 100m\nmemory: 100Mi"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Defines a secret name for the controller to generate a memberlist encryption secret\nBy default secretName: {{ \"metallb.fullname\" }}-memberlist\nsecretName:"
-              },
               "runtimeClassName": {
                 "description": "Selects which runtime class will be used by the pod.",
                 "type": "string"
               },
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
               "updateStrategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "ref: https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/",
+                "properties": {
+                  "type": {
+                    "description": "Speaker daemonset strategy type\nStrategyType\nCan be set to RollingUpdate or OnDelete",
                     "type": "string"
                   }
-                ],
-                "description": "ref: https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/"
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -13032,126 +12218,6 @@
                       },
                       {
                         "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              },
-              "frrMetrics": {
-                "properties": {
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              },
-              "initContainers": {
-                "properties": {
-                  "cpFrrFiles": {
-                    "properties": {
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "cpMetrics": {
-                    "properties": {
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "cpReloader": {
-                    "properties": {
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              "reloader": {
-                "properties": {
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
                       },
                       {
                         "type": "string"
@@ -13721,106 +12787,6 @@
                   {
                     "not": {
                       "properties": {
-                        "memberlist": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "memberlist"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "memberlist": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "memberlist"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "secretName": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "secretName"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "secretName": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
                         "serviceAccount": {
                           "properties": {
                             "create": {}
@@ -14067,19 +13033,8 @@
           "then": {
             "properties": {
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -14150,21 +13105,7 @@
       ],
       "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
       "properties": {
-        "affinity": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "affinity": {},
         "bgpDebounceTimeout": {
           "description": "BGP debounce timeout for FRR configuration reloads, in milliseconds. Only applies when BGP type is frr. Default (when unset) is 3000 ms. This feature is experimental"
         },
@@ -14213,42 +13154,14 @@
               "type": "object"
             },
             "metricsPort": {},
-            "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "resources": {}
           },
           "type": "object"
         },
         "frrMetrics": {
           "additionalProperties": {},
           "properties": {
-            "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "resources": {}
           },
           "type": "object"
         },
@@ -14271,63 +13184,21 @@
             "cpFrrFiles": {
               "additionalProperties": {},
               "properties": {
-                "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
+                "resources": {}
               },
               "type": "object"
             },
             "cpMetrics": {
               "additionalProperties": {},
               "properties": {
-                "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
+                "resources": {}
               },
               "type": "object"
             },
             "cpReloader": {
               "additionalProperties": {},
               "properties": {
-                "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
+                "resources": {}
               },
               "type": "object"
             }
@@ -14346,9 +13217,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ]
         },
@@ -14384,19 +13252,6 @@
           "type": "object"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "limits:\ncpu: 100m\nmemory: 100Mi"
         },
         "podAnnotations": {
@@ -14429,59 +13284,18 @@
         "reloader": {
           "additionalProperties": {},
           "properties": {
-            "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "resources": {}
           },
           "type": "object"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Defines a secret name for the controller to generate a memberlist encryption secret\nBy default secretName: {{ \"metallb.fullname\" }}-memberlist\nsecretName:"
         },
         "runtimeClassName": {
           "description": "Selects which runtime class will be used by the pod."
         },
         "secretName": {},
-        "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "securityContext": {},
         "serviceAccount": {
           "additionalProperties": {},
           "properties": {

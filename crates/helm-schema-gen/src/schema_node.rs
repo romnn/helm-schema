@@ -45,6 +45,10 @@ pub(crate) enum SchemaNode {
     Empty,
     Object {
         properties: BTreeMap<String, SchemaNode>,
+        /// Whether the emitted schema pins `type: object`. Hosts that only
+        /// exist to carry a referenced descendant stay untyped: member
+        /// presence is conditional evidence, not a shape claim.
+        typed: bool,
         all_of: Vec<SchemaNode>,
         include_empty_properties: bool,
         required: BTreeSet<String>,
@@ -102,6 +106,7 @@ impl SchemaNode {
     pub(crate) fn object() -> Self {
         Self::Object {
             properties: BTreeMap::new(),
+            typed: true,
             all_of: Vec::new(),
             include_empty_properties: false,
             required: BTreeSet::new(),
@@ -109,6 +114,17 @@ impl SchemaNode {
             min_properties: None,
             max_properties: None,
         }
+    }
+
+    /// An open, UNTYPED member host: lists descendants without claiming
+    /// the value is an object (falsy scalars skip guarded member reads,
+    /// and the conditional truthy⇒object arms carry the strict part).
+    pub(crate) fn untyped_member_host() -> Self {
+        let mut node = Self::object().with_additional_properties(Self::empty());
+        if let Self::Object { typed, .. } = &mut node {
+            *typed = false;
+        }
+        node
     }
 
     pub(crate) fn closed_object() -> Self {
@@ -425,6 +441,7 @@ impl SchemaNode {
             Self::Empty => Value::Object(Map::new()),
             Self::Object {
                 properties,
+                typed,
                 all_of,
                 include_empty_properties,
                 required,
@@ -432,7 +449,11 @@ impl SchemaNode {
                 min_properties,
                 max_properties,
             } => {
-                let mut object = type_map(JsonSchemaType::Object);
+                let mut object = if typed {
+                    type_map(JsonSchemaType::Object)
+                } else {
+                    Map::new()
+                };
                 if include_empty_properties || !properties.is_empty() {
                     object.insert(
                         "properties".to_string(),

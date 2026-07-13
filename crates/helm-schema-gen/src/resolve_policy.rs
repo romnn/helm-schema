@@ -86,6 +86,7 @@ impl ValuePathSchemaFacts {
 
     fn empty_map_placeholder_has_structural_object_use(self, provider_schema: &Value) -> bool {
         self.values_yaml.is_empty_map
+            && !self.contract.used_as_serialized
             && (self.contract.is_ranged_source
                 || self.contract.has_self_range_guard_render_use
                 || (schema_allows_type(provider_schema, "object")
@@ -118,7 +119,16 @@ impl ResolvePolicy {
         use_: &ProviderSchemaUse,
     ) -> Option<Value> {
         match use_.kind {
-            ValueKind::Fragment => Some(schema.clone()),
+            ValueKind::Fragment => {
+                // `toYaml` is TOTAL in a lone mapping-value slot: scalars,
+                // sequences, and maps all render, so an object-typed
+                // provider position must not bound the INPUT. Only a
+                // sequence position is load-bearing — splicing a non-list
+                // beside sequence items breaks the surrounding structure —
+                // so the provider schema constrains exactly when it types
+                // the slot as an array.
+                schema_allows_type(schema, "array").then(|| schema.clone())
+            }
             ValueKind::PartialScalar | ValueKind::Serialized => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
                 ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
@@ -286,6 +296,7 @@ impl ResolvePolicy {
                 // so only STRUCTURED item rows prove a list shape here.
                 facts.contract.has_structured_item_descendants,
                 facts.contract.has_render_use && facts.contract.all_render_uses_self_guarded,
+                facts.contract.used_as_fragment && !facts.contract.is_ranged_source,
             )
         } else if facts.values_yaml.has_no_schema_evidence && facts.contract.is_ranged_source {
             // An undeclared map the chart itself iterates is user-populated
@@ -453,17 +464,12 @@ impl ResolvePolicy {
             && (is_empty_schema(&input.values_yaml_schema) || input.facts.values_yaml.is_empty_map)
         {
             // A fragment-only path with no shape evidence (undeclared, or a
-            // declared-`{}` placeholder) splices whatever the user supplies:
-            // `toYaml` renders sequences as readily as maps (coredns
-            // `service.clusterIPs`, nats-kafka `additionalVolumes`), and a
-            // `tpl`-composed fragment is a template STRING (airflow
-            // `extraEnv`), so the domain is the fragment union, not an
-            // object guess.
-            union_schema_list(vec![
-                SchemaNode::unknown_object().into_value(),
-                SchemaNode::array().items(SchemaNode::empty()).into_value(),
-                type_schema("string"),
-            ])
+            // declared-`{}` placeholder) splices whatever the user supplies
+            // and `toYaml` is TOTAL: scalars, sequences, and maps all
+            // render in a mapping-value slot (F56). The splice claims no
+            // shape; independent consumers narrow through their own
+            // guarded lanes.
+            empty_schema()
         } else if !is_empty_schema(&input.values_yaml_schema) {
             input.values_yaml_schema
         } else {
@@ -532,8 +538,31 @@ pub(crate) fn conditional_target_schema(
             .is_some_and(|default_value| !schema_accepts_json_value(schema, default_value))
     };
 
+    // INVARIANT (F54): a branch keyed on the path's own positive type
+    // partition must stay satisfiable for that type — the arm EXECUTES for
+    // it. A branch resolve that contradicts its partition (an object-guess
+    // for a `kindIs "slice"` arm) merges WITH the partition instead.
+    let branch_schema = {
+        let mut branch_schema = branch_schema;
+        for guard in &overlay.guards {
+            if let helm_schema_core::ConditionalGuard::TypeIs { path, schema_type } = guard
+                && path == target_value_path
+                && !schema_allows_type(&branch_schema, schema_type)
+                && !is_empty_schema(&branch_schema)
+            {
+                branch_schema = union_schema_list(vec![branch_schema, type_schema(schema_type)]);
+            }
+        }
+        branch_schema
+    };
+
     let branch_schema = if active_by_defaults.is_some()
         && !overlay.evidence.facts.used_as_serialized
+        // A declared-`{}` placeholder claims no input shape for a fragment
+        // branch: `toYaml` is total there (F56), so the placeholder's
+        // object typing must not narrow the branch.
+        && !(overlay.evidence.facts.used_as_fragment
+            && is_placeholder_fragment_object_schema(&values_yaml_schema))
         && should_merge_values_yaml_into_conditional_branch(&branch_schema, &values_yaml_schema)
     {
         merge_schema_list(vec![branch_schema, values_yaml_schema.clone()])

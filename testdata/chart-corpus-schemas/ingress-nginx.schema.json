@@ -409,20 +409,9 @@
             ]
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"
+            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName",
+            "items": {},
+            "type": "array"
           },
           "revisionHistoryLimit": {
             "description": "Rollback limit",
@@ -457,9 +446,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -474,9 +460,6 @@
               },
               {
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -519,20 +502,9 @@
             ]
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"
+            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName",
+            "items": {},
+            "type": "array"
           },
           "revisionHistoryLimit": {
             "description": "Rollback limit",
@@ -559,14 +531,10 @@
           "tcp": {
             "anyOf": [
               {
-                "properties": {},
-                "type": "object"
-              },
-              {
                 "type": "array"
               },
               {
-                "type": "integer"
+                "type": "object"
               },
               {
                 "type": "null"
@@ -577,14 +545,10 @@
           "udp": {
             "anyOf": [
               {
-                "properties": {},
-                "type": "object"
-              },
-              {
                 "type": "array"
               },
               {
-                "type": "integer"
+                "type": "object"
               },
               {
                 "type": "null"
@@ -625,20 +589,9 @@
             ]
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"
+            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName",
+            "items": {},
+            "type": "array"
           },
           "revisionHistoryLimit": {
             "description": "Rollback limit",
@@ -831,20 +784,9 @@
             ]
           },
           "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"
+            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName",
+            "items": {},
+            "type": "array"
           }
         },
         "type": "object"
@@ -1101,9 +1043,6 @@
                 "type": "array"
               },
               {
-                "type": "integer"
-              },
-              {
                 "type": "null"
               }
             ],
@@ -1118,9 +1057,6 @@
               },
               {
                 "type": "array"
-              },
-              {
-                "type": "integer"
               },
               {
                 "type": "null"
@@ -1307,14 +1243,10 @@
           "tcp": {
             "anyOf": [
               {
-                "properties": {},
-                "type": "object"
-              },
-              {
                 "type": "array"
               },
               {
-                "type": "integer"
+                "type": "object"
               },
               {
                 "type": "null"
@@ -1325,14 +1257,10 @@
           "udp": {
             "anyOf": [
               {
-                "properties": {},
-                "type": "object"
-              },
-              {
                 "type": "array"
               },
               {
-                "type": "integer"
+                "type": "object"
               },
               {
                 "type": "null"
@@ -4166,29 +4094,10 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   }
                 ],
                 "description": "Configures the ports that the nginx-controller listens on"
-              },
-              "dnsConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Optionally customize the pod dnsConfig."
               },
               "dnsPolicy": {
                 "description": "Optionally change this to ClusterFirstWithHostNet in case you have 'hostNetwork: true'.\nBy default, while using host network, name resolution uses the host's DNS. If you wish nginx-controller\nto keep resolving names inside the k8s network, use ClusterFirstWithHostNet.",
@@ -4246,36 +4155,14 @@
                 "description": "Additional command line arguments to pass to Ingress-Nginx Controller\nE.g. to specify the default SSL certificate you can use\nextraArgs:\ndefault-ssl-certificate: \"<namespace>/<secret_name>\"\ntime-buckets: \"0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\"\nlength-buckets: \"10,20,30,40,50,60,70,80,90,100\"\nsize-buckets: \"10,100,1000,10000,100000,1e+06,1e+07\""
               },
               "extraContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional containers to be added to the controller pod.\nSee https://github.com/lemonldap-ng-controller/lemonldap-ng-controller as example.\n- name: my-sidecar\nimage: nginx:latest\n- name: lemonldap-ng-controller\nimage: lemonldapng/lemonldap-ng-controller:0.2.0\nargs:\n- /lemonldap-ng-controller\n- --alsologtostderr\n- --configmap=$(POD_NAMESPACE)/lemonldap-ng-configuration\nenv:\n- name: POD_NAME\nvalueFrom:\nfieldRef:\nfieldPath: metadata.name\n- name: POD_NAMESPACE\nvalueFrom:\nfieldRef:\nfieldPath: metadata.namespace\nvolumeMounts:\n- name: copy-portal-skins\nmountPath: /srv/var/lib/lemonldap-ng/portal/skins"
+                "description": "Additional containers to be added to the controller pod.\nSee https://github.com/lemonldap-ng-controller/lemonldap-ng-controller as example.\n- name: my-sidecar\nimage: nginx:latest\n- name: lemonldap-ng-controller\nimage: lemonldapng/lemonldap-ng-controller:0.2.0\nargs:\n- /lemonldap-ng-controller\n- --alsologtostderr\n- --configmap=$(POD_NAMESPACE)/lemonldap-ng-configuration\nenv:\n- name: POD_NAME\nvalueFrom:\nfieldRef:\nfieldPath: metadata.name\n- name: POD_NAMESPACE\nvalueFrom:\nfieldRef:\nfieldPath: metadata.namespace\nvolumeMounts:\n- name: copy-portal-skins\nmountPath: /srv/var/lib/lemonldap-ng/portal/skins",
+                "items": {},
+                "type": "array"
               },
               "extraEnvs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional environment variables to set\nextraEnvs:\n- name: FOO\nvalueFrom:\nsecretKeyRef:\nkey: FOO\nname: secret-resource"
+                "description": "Additional environment variables to set\nextraEnvs:\n- name: FOO\nvalueFrom:\nsecretKeyRef:\nkey: FOO\nname: secret-resource",
+                "items": {},
+                "type": "array"
               },
               "healthCheckHost": {
                 "anyOf": [
@@ -4300,22 +4187,6 @@
               "hostNetwork": {
                 "description": "Required for use with CNI based kubernetes installations (such as ones set up by kubeadm),\nsince CNI and hostport don't mix yet. Can be deprecated once https://github.com/kubernetes/kubernetes/issues/23920\nis merged",
                 "type": "boolean"
-              },
-              "hostname": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Optionally customize the pod hostname."
               },
               "image": {
                 "properties": {
@@ -4371,36 +4242,67 @@
                 "description": "For backwards compatibility with ingress.class annotation, use ingressClass.\nAlgorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation"
               },
               "lifecycle": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Improve connection draining when ingress controller pod is deleted using a lifecycle hook:\nWith this new hook, we increased the default terminationGracePeriodSeconds from 30 seconds\nto 300, allowing the draining of connections up to five minutes.\nIf the active connections end before that, the pod will terminate gracefully at that time.\nTo effectively take advantage of this feature, the Configmap feature\nworker-shutdown-timeout new value is 240s instead of 10s.",
+                "properties": {
+                  "preStop": {
                     "additionalProperties": {},
+                    "properties": {
+                      "exec": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "command": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "Improve connection draining when ingress controller pod is deleted using a lifecycle hook:\nWith this new hook, we increased the default terminationGracePeriodSeconds from 30 seconds\nto 300, allowing the draining of connections up to five minutes.\nIf the active connections end before that, the pod will terminate gracefully at that time.\nTo effectively take advantage of this feature, the Configmap feature\nworker-shutdown-timeout new value is 240s instead of 10s."
+                },
+                "type": "object"
               },
               "livenessProbe": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Liveness and readiness probe values\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes\nstartupProbe:\nhttpGet:\nshould match container.healthCheckPath\npath: \"/healthz\"\nport: 10254\nscheme: HTTP\ninitialDelaySeconds: 5\nperiodSeconds: 5\ntimeoutSeconds: 2\nsuccessThreshold: 1\nfailureThreshold: 5",
+                "properties": {
+                  "failureThreshold": {
+                    "type": "integer"
+                  },
+                  "httpGet": {
                     "additionalProperties": {},
+                    "properties": {
+                      "path": {
+                        "description": "should match container.healthCheckPath",
+                        "type": "string"
+                      },
+                      "port": {
+                        "type": "integer"
+                      },
+                      "scheme": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "initialDelaySeconds": {
+                    "type": "integer"
                   },
-                  {
-                    "type": "string"
+                  "periodSeconds": {
+                    "type": "integer"
+                  },
+                  "successThreshold": {
+                    "type": "integer"
+                  },
+                  "timeoutSeconds": {
+                    "type": "integer"
                   }
-                ],
-                "description": "Liveness and readiness probe values\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes\nstartupProbe:\nhttpGet:\nshould match container.healthCheckPath\npath: \"/healthz\"\nport: 10254\nscheme: HTTP\ninitialDelaySeconds: 5\nperiodSeconds: 5\ntimeoutSeconds: 2\nsuccessThreshold: 1\nfailureThreshold: 5"
+                },
+                "type": "object"
               },
               "maxmindLicenseKey": {
                 "anyOf": [
@@ -4453,20 +4355,14 @@
                 "type": "integer"
               },
               "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "Node labels for controller pod assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/",
+                "properties": {
+                  "kubernetes.io/os": {
                     "type": "string"
                   }
-                ],
-                "description": "Node labels for controller pod assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
+                },
+                "type": "object"
               },
               "podAnnotations": {
                 "anyOf": [
@@ -4478,9 +4374,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -4503,106 +4396,79 @@
                 "description": "Labels to add to the pod container metadata\nkey: value"
               },
               "readinessProbe": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "failureThreshold": {
+                    "type": "integer"
+                  },
+                  "httpGet": {
                     "additionalProperties": {},
+                    "properties": {
+                      "path": {
+                        "description": "should match container.healthCheckPath",
+                        "type": "string"
+                      },
+                      "port": {
+                        "type": "integer"
+                      },
+                      "scheme": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "initialDelaySeconds": {
+                    "type": "integer"
                   },
-                  {
-                    "type": "string"
+                  "periodSeconds": {
+                    "type": "integer"
+                  },
+                  "successThreshold": {
+                    "type": "integer"
+                  },
+                  "timeoutSeconds": {
+                    "type": "integer"
                   }
-                ]
+                },
+                "type": "object"
               },
               "resizePolicy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Resize policy for controller containers.\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources"
+                "description": "Resize policy for controller containers.\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources",
+                "items": {},
+                "type": "array"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Define requests resources to avoid probe issues due to CPU utilization in busy nodes\nref: https://github.com/kubernetes/ingress-nginx/issues/4735#issuecomment-551204903\nIdeally, there should be no limits.\nhttps://engineering.indeedblog.com/blog/2019/12/cpu-throttling-regression-fix/",
+                "properties": {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "limits:\ncpu: 100m\nmemory: 90Mi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "Define requests resources to avoid probe issues due to CPU utilization in busy nodes\nref: https://github.com/kubernetes/ingress-nginx/issues/4735#issuecomment-551204903\nIdeally, there should be no limits.\nhttps://engineering.indeedblog.com/blog/2019/12/cpu-throttling-regression-fix/"
+                },
+                "type": "object"
               },
               "shareProcessNamespace": {
                 "description": "shareProcessNamespace enables process namespace sharing within the pod.\nThis can be used for example to signal log rotation using `kill -USR1` from a sidecar.",
                 "type": "boolean"
-              },
-              "startupProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "terminationGracePeriodSeconds": {
                 "description": "`terminationGracePeriodSeconds` to avoid killing pods before we are ready\nwait up to five minutes for the drain of connections",
                 "type": "integer"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\""
-              },
-              "updateStrategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The update strategy to apply to the Deployment or DaemonSet\nrollingUpdate:\nmaxUnavailable: 1\ntype: RollingUpdate"
+                "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\"",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -4679,29 +4545,10 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   }
                 ],
                 "description": "Configures the ports that the nginx-controller listens on"
-              },
-              "dnsConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Optionally customize the pod dnsConfig."
               },
               "dnsPolicy": {
                 "description": "Optionally change this to ClusterFirstWithHostNet in case you have 'hostNetwork: true'.\nBy default, while using host network, name resolution uses the host's DNS. If you wish nginx-controller\nto keep resolving names inside the k8s network, use ClusterFirstWithHostNet.",
@@ -4759,36 +4606,14 @@
                 "description": "Additional command line arguments to pass to Ingress-Nginx Controller\nE.g. to specify the default SSL certificate you can use\nextraArgs:\ndefault-ssl-certificate: \"<namespace>/<secret_name>\"\ntime-buckets: \"0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\"\nlength-buckets: \"10,20,30,40,50,60,70,80,90,100\"\nsize-buckets: \"10,100,1000,10000,100000,1e+06,1e+07\""
               },
               "extraContainers": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional containers to be added to the controller pod.\nSee https://github.com/lemonldap-ng-controller/lemonldap-ng-controller as example.\n- name: my-sidecar\nimage: nginx:latest\n- name: lemonldap-ng-controller\nimage: lemonldapng/lemonldap-ng-controller:0.2.0\nargs:\n- /lemonldap-ng-controller\n- --alsologtostderr\n- --configmap=$(POD_NAMESPACE)/lemonldap-ng-configuration\nenv:\n- name: POD_NAME\nvalueFrom:\nfieldRef:\nfieldPath: metadata.name\n- name: POD_NAMESPACE\nvalueFrom:\nfieldRef:\nfieldPath: metadata.namespace\nvolumeMounts:\n- name: copy-portal-skins\nmountPath: /srv/var/lib/lemonldap-ng/portal/skins"
+                "description": "Additional containers to be added to the controller pod.\nSee https://github.com/lemonldap-ng-controller/lemonldap-ng-controller as example.\n- name: my-sidecar\nimage: nginx:latest\n- name: lemonldap-ng-controller\nimage: lemonldapng/lemonldap-ng-controller:0.2.0\nargs:\n- /lemonldap-ng-controller\n- --alsologtostderr\n- --configmap=$(POD_NAMESPACE)/lemonldap-ng-configuration\nenv:\n- name: POD_NAME\nvalueFrom:\nfieldRef:\nfieldPath: metadata.name\n- name: POD_NAMESPACE\nvalueFrom:\nfieldRef:\nfieldPath: metadata.namespace\nvolumeMounts:\n- name: copy-portal-skins\nmountPath: /srv/var/lib/lemonldap-ng/portal/skins",
+                "items": {},
+                "type": "array"
               },
               "extraEnvs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional environment variables to set\nextraEnvs:\n- name: FOO\nvalueFrom:\nsecretKeyRef:\nkey: FOO\nname: secret-resource"
+                "description": "Additional environment variables to set\nextraEnvs:\n- name: FOO\nvalueFrom:\nsecretKeyRef:\nkey: FOO\nname: secret-resource",
+                "items": {},
+                "type": "array"
               },
               "healthCheckHost": {
                 "anyOf": [
@@ -4813,22 +4638,6 @@
               "hostNetwork": {
                 "description": "Required for use with CNI based kubernetes installations (such as ones set up by kubeadm),\nsince CNI and hostport don't mix yet. Can be deprecated once https://github.com/kubernetes/kubernetes/issues/23920\nis merged",
                 "type": "boolean"
-              },
-              "hostname": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Optionally customize the pod hostname."
               },
               "image": {
                 "properties": {
@@ -4884,36 +4693,67 @@
                 "description": "For backwards compatibility with ingress.class annotation, use ingressClass.\nAlgorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation"
               },
               "lifecycle": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Improve connection draining when ingress controller pod is deleted using a lifecycle hook:\nWith this new hook, we increased the default terminationGracePeriodSeconds from 30 seconds\nto 300, allowing the draining of connections up to five minutes.\nIf the active connections end before that, the pod will terminate gracefully at that time.\nTo effectively take advantage of this feature, the Configmap feature\nworker-shutdown-timeout new value is 240s instead of 10s.",
+                "properties": {
+                  "preStop": {
                     "additionalProperties": {},
+                    "properties": {
+                      "exec": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "command": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "Improve connection draining when ingress controller pod is deleted using a lifecycle hook:\nWith this new hook, we increased the default terminationGracePeriodSeconds from 30 seconds\nto 300, allowing the draining of connections up to five minutes.\nIf the active connections end before that, the pod will terminate gracefully at that time.\nTo effectively take advantage of this feature, the Configmap feature\nworker-shutdown-timeout new value is 240s instead of 10s."
+                },
+                "type": "object"
               },
               "livenessProbe": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Liveness and readiness probe values\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes\nstartupProbe:\nhttpGet:\nshould match container.healthCheckPath\npath: \"/healthz\"\nport: 10254\nscheme: HTTP\ninitialDelaySeconds: 5\nperiodSeconds: 5\ntimeoutSeconds: 2\nsuccessThreshold: 1\nfailureThreshold: 5",
+                "properties": {
+                  "failureThreshold": {
+                    "type": "integer"
+                  },
+                  "httpGet": {
                     "additionalProperties": {},
+                    "properties": {
+                      "path": {
+                        "description": "should match container.healthCheckPath",
+                        "type": "string"
+                      },
+                      "port": {
+                        "type": "integer"
+                      },
+                      "scheme": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "initialDelaySeconds": {
+                    "type": "integer"
                   },
-                  {
-                    "type": "string"
+                  "periodSeconds": {
+                    "type": "integer"
+                  },
+                  "successThreshold": {
+                    "type": "integer"
+                  },
+                  "timeoutSeconds": {
+                    "type": "integer"
                   }
-                ],
-                "description": "Liveness and readiness probe values\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes\nstartupProbe:\nhttpGet:\nshould match container.healthCheckPath\npath: \"/healthz\"\nport: 10254\nscheme: HTTP\ninitialDelaySeconds: 5\nperiodSeconds: 5\ntimeoutSeconds: 2\nsuccessThreshold: 1\nfailureThreshold: 5"
+                },
+                "type": "object"
               },
               "maxmindLicenseKey": {
                 "anyOf": [
@@ -4966,20 +4806,14 @@
                 "type": "integer"
               },
               "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "Node labels for controller pod assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/",
+                "properties": {
+                  "kubernetes.io/os": {
                     "type": "string"
                   }
-                ],
-                "description": "Node labels for controller pod assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
+                },
+                "type": "object"
               },
               "podAnnotations": {
                 "anyOf": [
@@ -4991,9 +4825,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -5020,106 +4851,79 @@
                 "type": "integer"
               },
               "readinessProbe": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "failureThreshold": {
+                    "type": "integer"
+                  },
+                  "httpGet": {
                     "additionalProperties": {},
+                    "properties": {
+                      "path": {
+                        "description": "should match container.healthCheckPath",
+                        "type": "string"
+                      },
+                      "port": {
+                        "type": "integer"
+                      },
+                      "scheme": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
                   },
-                  {
-                    "items": {},
-                    "type": "array"
+                  "initialDelaySeconds": {
+                    "type": "integer"
                   },
-                  {
-                    "type": "string"
+                  "periodSeconds": {
+                    "type": "integer"
+                  },
+                  "successThreshold": {
+                    "type": "integer"
+                  },
+                  "timeoutSeconds": {
+                    "type": "integer"
                   }
-                ]
+                },
+                "type": "object"
               },
               "resizePolicy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Resize policy for controller containers.\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources"
+                "description": "Resize policy for controller containers.\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources",
+                "items": {},
+                "type": "array"
               },
               "resources": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "description": "Define requests resources to avoid probe issues due to CPU utilization in busy nodes\nref: https://github.com/kubernetes/ingress-nginx/issues/4735#issuecomment-551204903\nIdeally, there should be no limits.\nhttps://engineering.indeedblog.com/blog/2019/12/cpu-throttling-regression-fix/",
+                "properties": {
+                  "requests": {
                     "additionalProperties": {},
+                    "description": "limits:\ncpu: 100m\nmemory: 90Mi",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    },
                     "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
                   }
-                ],
-                "description": "Define requests resources to avoid probe issues due to CPU utilization in busy nodes\nref: https://github.com/kubernetes/ingress-nginx/issues/4735#issuecomment-551204903\nIdeally, there should be no limits.\nhttps://engineering.indeedblog.com/blog/2019/12/cpu-throttling-regression-fix/"
+                },
+                "type": "object"
               },
               "shareProcessNamespace": {
                 "description": "shareProcessNamespace enables process namespace sharing within the pod.\nThis can be used for example to signal log rotation using `kill -USR1` from a sidecar.",
                 "type": "boolean"
-              },
-              "startupProbe": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
               },
               "terminationGracePeriodSeconds": {
                 "description": "`terminationGracePeriodSeconds` to avoid killing pods before we are ready\nwait up to five minutes for the drain of connections",
                 "type": "integer"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\""
-              },
-              "updateStrategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The update strategy to apply to the Deployment or DaemonSet\nrollingUpdate:\nmaxUnavailable: 1\ntype: RollingUpdate"
+                "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\"",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -5383,21 +5187,6 @@
                       }
                     ]
                   },
-                  "behavior": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "maxReplicas": {
                     "type": "integer"
                   },
@@ -5414,20 +5203,9 @@
                 "type": "object"
               },
               "autoscalingTemplate": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "scaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 1\nperiodSeconds: 180\nscaleUp:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 2\nperiodSeconds: 60\nCustom or additional autoscaling metrics\nref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-custom-metrics\n- type: Pods\npods:\nmetric:\nname: nginx_ingress_controller_nginx_process_requests_total\ntarget:\ntype: AverageValue\naverageValue: 10000m"
+                "description": "scaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 1\nperiodSeconds: 180\nscaleUp:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 2\nperiodSeconds: 60\nCustom or additional autoscaling metrics\nref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-custom-metrics\n- type: Pods\npods:\nmetric:\nname: nginx_ingress_controller_nginx_process_requests_total\ntarget:\ntype: AverageValue\naverageValue: 10000m",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -5473,9 +5251,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -6052,20 +5827,9 @@
                 "type": "object"
               },
               "extraVolumes": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional volumes to the controller pod.\n- name: copy-portal-skins\nemptyDir: {}"
+                "description": "Additional volumes to the controller pod.\n- name: copy-portal-skins\nemptyDir: {}",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -6429,20 +6193,9 @@
           "then": {
             "properties": {
               "extraVolumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional volumeMounts to the controller main container.\n- name: copy-portal-skins\nmountPath: /var/lib/lemonldap-ng/portal/skins"
+                "description": "Additional volumeMounts to the controller main container.\n- name: copy-portal-skins\nmountPath: /var/lib/lemonldap-ng/portal/skins",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -6554,19 +6307,13 @@
                     "type": "integer"
                   },
                   "seccompProfile": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
                         "type": "string"
                       }
-                    ]
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -6656,22 +6403,6 @@
                   "apiVersion": {
                     "type": "string"
                   },
-                  "behavior": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "scaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 1\nperiodSeconds: 180\nscaleUp:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 2\nperiodSeconds: 60"
-                  },
                   "cooldownPeriod": {
                     "type": "integer"
                   },
@@ -6718,20 +6449,9 @@
                     "type": "object"
                   },
                   "triggers": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Custom annotations for ScaledObject resource\nannotations:\nkey: value\n- type: prometheus\nmetadata:\nserverAddress: http://<prometheus-host>:9090\nmetricName: http_requests_total\nthreshold: '100'\nquery: sum(rate(http_requests_total{deployment=\"my-deployment\"}[2m]))"
+                    "description": "Custom annotations for ScaledObject resource\nannotations:\nkey: value\n- type: prometheus\nmetadata:\nserverAddress: http://<prometheus-host>:9090\nmetricName: http_requests_total\nthreshold: '100'\nquery: sum(rate(http_requests_total{deployment=\"my-deployment\"}[2m]))",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -7084,152 +6804,6 @@
               "minAvailable": {
                 "description": "Minimum available pods set in PodDisruptionBudget.\nDefine either 'minAvailable' or 'maxUnavailable', never both.",
                 "type": "integer"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "podSecurityContext": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "podSecurityContext"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "sysctls": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "sysctls"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "Deployment"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "podSecurityContext": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "podSecurityContext"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "sysctls": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "sysctls"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Security context for controller pods"
-              },
-              "sysctls": {
-                "anyOf": [
-                  {
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "sysctls for controller pods\nRef: https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/\nsysctls:\n\"net.core.somaxconn\": \"8192\""
               }
             },
             "type": "object"
@@ -8420,29 +7994,138 @@
             },
             "type": "object"
           }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "podSecurityContext": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "podSecurityContext"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "sysctls": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sysctls"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "kind": {}
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "Deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "podSecurityContext": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "podSecurityContext"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "sysctls": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sysctls"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "sysctls": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "sysctls for controller pods\nRef: https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/\nsysctls:\n\"net.core.somaxconn\": \"8192\""
+              }
+            },
+            "type": "object"
+          }
         }
       ],
       "properties": {
         "addHeaders": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Will add custom headers before sending response traffic to the client according to: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#add-headers"
         },
         "admissionWebhooks": {
@@ -8564,88 +8247,66 @@
                         "description": "Deadline in seconds for the job to complete. Must be greater than 0 to enforce. If unset or 0, no deadline is enforced.",
                         "type": "integer"
                       },
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "limits:\ncpu: 10m\nmemory: 20Mi\nrequests:\ncpu: 10m\nmemory: 20Mi"
-                      },
                       "securityContext": {
-                        "anyOf": [
-                          {
+                        "additionalProperties": {},
+                        "description": "Security context for secret creation containers",
+                        "properties": {
+                          "allowPrivilegeEscalation": {
+                            "type": "boolean"
+                          },
+                          "capabilities": {
                             "additionalProperties": {},
+                            "properties": {
+                              "drop": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              }
+                            },
                             "type": "object"
                           },
-                          {
-                            "items": {},
-                            "type": "array"
+                          "readOnlyRootFilesystem": {
+                            "type": "boolean"
                           },
-                          {
-                            "type": "string"
+                          "runAsGroup": {
+                            "type": "integer"
+                          },
+                          "runAsNonRoot": {
+                            "type": "boolean"
+                          },
+                          "runAsUser": {
+                            "type": "integer"
+                          },
+                          "seccompProfile": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
                           }
-                        ],
-                        "description": "Security context for secret creation containers"
+                        },
+                        "type": "object"
                       },
                       "volumeMounts": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Volume mounts for secret creation containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true"
+                        "description": "Volume mounts for secret creation containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true",
+                        "items": {},
+                        "type": "array"
                       },
                       "volumes": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Volumes for secret creation pod"
+                        "description": "Volumes for secret creation pod",
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
                   },
                   "extraEnvs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Additional environment variables to set\nextraEnvs:\n- name: FOO\nvalueFrom:\nsecretKeyRef:\nkey: FOO\nname: secret-resource"
+                    "description": "Additional environment variables to set\nextraEnvs:\n- name: FOO\nvalueFrom:\nsecretKeyRef:\nkey: FOO\nname: secret-resource",
+                    "items": {},
+                    "type": "array"
                   },
                   "failurePolicy": {
                     "description": "Admission Webhook failure policy to use",
@@ -8719,19 +8380,13 @@
                         "description": "Labels to be added to patch job resources"
                       },
                       "nodeSelector": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
+                        "additionalProperties": {},
+                        "properties": {
+                          "kubernetes.io/os": {
                             "type": "string"
                           }
-                        ]
+                        },
+                        "type": "object"
                       },
                       "podAnnotations": {
                         "anyOf": [
@@ -8750,22 +8405,6 @@
                         "description": "Provide a priority class name to the webhook patching job",
                         "type": "string"
                       },
-                      "securityContext": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Security context for secret creation & webhook patch pods"
-                      },
                       "serviceAccount": {
                         "description": "Admission webhook patch job service account",
                         "properties": {
@@ -8777,19 +8416,8 @@
                         "type": "object"
                       },
                       "tolerations": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
@@ -8801,68 +8429,58 @@
                         "description": "Deadline in seconds for the job to complete. Must be greater than 0 to enforce. If unset or 0, no deadline is enforced.",
                         "type": "integer"
                       },
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
                       "securityContext": {
-                        "anyOf": [
-                          {
+                        "additionalProperties": {},
+                        "description": "Security context for webhook patch containers",
+                        "properties": {
+                          "allowPrivilegeEscalation": {
+                            "type": "boolean"
+                          },
+                          "capabilities": {
                             "additionalProperties": {},
+                            "properties": {
+                              "drop": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              }
+                            },
                             "type": "object"
                           },
-                          {
-                            "items": {},
-                            "type": "array"
+                          "readOnlyRootFilesystem": {
+                            "type": "boolean"
                           },
-                          {
-                            "type": "string"
+                          "runAsGroup": {
+                            "type": "integer"
+                          },
+                          "runAsNonRoot": {
+                            "type": "boolean"
+                          },
+                          "runAsUser": {
+                            "type": "integer"
+                          },
+                          "seccompProfile": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
                           }
-                        ],
-                        "description": "Security context for webhook patch containers"
+                        },
+                        "type": "object"
                       },
                       "volumeMounts": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Volume mounts for webhook patch containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true"
+                        "description": "Volume mounts for webhook patch containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true",
+                        "items": {},
+                        "type": "array"
                       },
                       "volumes": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Volumes for webhook patch pod"
+                        "description": "Volumes for webhook patch pod",
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
@@ -8939,36 +8557,6 @@
                     ],
                     "description": "Labels to be added to admission webhooks"
                   },
-                  "namespaceSelector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "objectSelector": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
                   "service": {
                     "properties": {
                       "annotations": {
@@ -8985,36 +8573,14 @@
                         ]
                       },
                       "externalIPs": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "clusterIP: \"\""
+                        "description": "clusterIP: \"\"",
+                        "items": {},
+                        "type": "array"
                       },
                       "loadBalancerSourceRanges": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "loadBalancerIP: \"\""
+                        "description": "loadBalancerIP: \"\"",
+                        "items": {},
+                        "type": "array"
                       },
                       "servicePort": {
                         "type": "integer"
@@ -9099,21 +8665,6 @@
                           }
                         },
                         "type": "object"
-                      },
-                      "issuerRef": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
                       }
                     },
                     "type": "object"
@@ -9879,21 +9430,7 @@
                 "enabled": {
                   "type": "boolean"
                 },
-                "issuerRef": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
+                "issuerRef": {},
                 "rootCert": {
                   "additionalProperties": {},
                   "description": "self-signed root certificate",
@@ -9919,19 +9456,6 @@
                 },
                 "name": {},
                 "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "limits:\ncpu: 10m\nmemory: 20Mi\nrequests:\ncpu: 10m\nmemory: 20Mi"
                 },
                 "securityContext": {
@@ -10015,36 +9539,8 @@
               "description": "Labels to be added to admission webhooks"
             },
             "name": {},
-            "namespaceSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "objectSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "namespaceSelector": {},
+            "objectSelector": {},
             "patch": {
               "additionalProperties": {},
               "description": "- name: certs\nsecret:\nsecretName: my-webhook-secret",
@@ -10167,19 +9663,6 @@
                   "description": "Instruct the kubelet to use the named RuntimeClass to run the pod"
                 },
                 "securityContext": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Security context for secret creation & webhook patch pods"
                 },
                 "serviceAccount": {
@@ -10224,21 +9707,7 @@
                   "description": "Deadline in seconds for the job to complete. Must be greater than 0 to enforce. If unset or 0, no deadline is enforced."
                 },
                 "name": {},
-                "resources": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
+                "resources": {},
                 "securityContext": {
                   "anyOf": [
                     {
@@ -10376,21 +9845,7 @@
                 }
               ]
             },
-            "behavior": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "behavior": {},
             "enabled": {
               "type": "boolean"
             },
@@ -10419,21 +9874,6 @@
         "config": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
               "type": "array"
             },
             {
@@ -10441,9 +9881,6 @@
             },
             {
               "type": "object"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "Global configuration passed to the ConfigMap consumed by the controller. Values may contain Helm templates.\nRef.: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/"
@@ -10472,25 +9909,6 @@
           "description": "Configures the ports that the nginx-controller listens on"
         },
         "containerSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Security context for controller containers"
         },
         "customTemplate": {
@@ -10507,19 +9925,6 @@
           "type": "boolean"
         },
         "dnsConfig": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Optionally customize the pod dnsConfig."
         },
         "dnsPolicy": {
@@ -10655,19 +10060,6 @@
           "type": "object"
         },
         "hostname": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Optionally customize the pod hostname."
         },
         "image": {
@@ -10834,25 +10226,6 @@
               "description": "Name of the IngressClass"
             },
             "parameters": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "A link to a custom resource containing additional configuration for the controller.\nThis is optional if the controller consuming this IngressClass does not require additional parameters.\nRef: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class\nparameters:\napiGroup: k8s.example.com\nkind: IngressParameters\nname: external-lb"
             }
           },
@@ -10864,19 +10237,6 @@
           "properties": {
             "apiVersion": {},
             "behavior": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "scaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 1\nperiodSeconds: 180\nscaleUp:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 2\nperiodSeconds: 60"
             },
             "cooldownPeriod": {},
@@ -10885,12 +10245,21 @@
               "type": "boolean"
             },
             "fallback": {
-              "additionalProperties": {},
-              "properties": {
-                "failureThreshold": {},
-                "replicas": {}
-              },
-              "type": "object"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "failureThreshold": {}
+                  }
+                },
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "replicas": {}
+                  },
+                  "type": "object"
+                }
+              ]
             },
             "maxReplicas": {},
             "minReplicas": {},
@@ -11076,20 +10445,9 @@
                         "description": "prometheus.io/scrape: \"true\"\nprometheus.io/port: \"10254\""
                       },
                       "externalIPs": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "List of IP addresses at which the stats-exporter service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+                        "description": "List of IP addresses at which the stats-exporter service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips",
+                        "items": {},
+                        "type": "array"
                       },
                       "labels": {
                         "anyOf": [
@@ -11106,20 +10464,9 @@
                         "description": "Labels to be added to the metrics service resource\nclusterIP: \"\""
                       },
                       "loadBalancerSourceRanges": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "loadBalancerIP: \"\""
+                        "description": "loadBalancerIP: \"\"",
+                        "items": {},
+                        "type": "array"
                       },
                       "servicePort": {
                         "type": "integer"
@@ -11217,19 +10564,8 @@
                         "type": "integer"
                       },
                       "metricRelabelings": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
+                        "items": {},
+                        "type": "array"
                       },
                       "namespace": {
                         "anyOf": [
@@ -11242,35 +10578,9 @@
                         ],
                         "description": "The label to use to retrieve the job name from.\njobLabel: \"app.kubernetes.io/name\""
                       },
-                      "namespaceSelector": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
                       "relabelings": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
+                        "items": {},
+                        "type": "array"
                       },
                       "sampleLimit": {
                         "description": "Defines a per-scrape limit on the number of scraped samples that will be accepted.",
@@ -11285,20 +10595,9 @@
                         "type": "string"
                       },
                       "targetLabels": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "honorLabels: true"
+                        "description": "honorLabels: true",
+                        "items": {},
+                        "type": "array"
                       },
                       "targetLimit": {
                         "description": "Defines a limit on the number of scraped targets that will be accepted.",
@@ -11384,20 +10683,9 @@
                         ]
                       },
                       "rules": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "namespace: \"\"\nThese are just examples rules, please adapt them to your needs\n- alert: NGINXConfigFailed\nexpr: count(nginx_ingress_controller_config_last_reload_successful == 0) > 0\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: bad ingress config - nginx config test failed\nsummary: uninstall the latest ingress changes to allow config reloads to resume\nBy default a fake self-signed certificate is generated as default and\nit is fine if it expires. If `--default-ssl-certificate` flag is used\nand a valid certificate passed please do not filter for `host` label!\n(i.e. delete `{host!=\"_\"}` so also the default SSL certificate is\nchecked for expiration)\n- alert: NGINXCertificateExpiry\nexpr: (avg(nginx_ingress_controller_ssl_expire_time_seconds{host!=\"_\"}) by (host) - time()) < 604800\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: ssl certificate(s) will expire in less then a week\nsummary: renew expiring certificates to avoid downtime\n- alert: NGINXTooMany500s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"5.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 5XXs\nsummary: More than 5% of all requests returned 5XX, this requires your attention\n- alert: NGINXTooMany400s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"4.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 4XXs\nsummary: More than 5% of all requests returned 4XX, this requires your attention"
+                        "description": "namespace: \"\"\nThese are just examples rules, please adapt them to your needs\n- alert: NGINXConfigFailed\nexpr: count(nginx_ingress_controller_config_last_reload_successful == 0) > 0\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: bad ingress config - nginx config test failed\nsummary: uninstall the latest ingress changes to allow config reloads to resume\nBy default a fake self-signed certificate is generated as default and\nit is fine if it expires. If `--default-ssl-certificate` flag is used\nand a valid certificate passed please do not filter for `host` label!\n(i.e. delete `{host!=\"_\"}` so also the default SSL certificate is\nchecked for expiration)\n- alert: NGINXCertificateExpiry\nexpr: (avg(nginx_ingress_controller_ssl_expire_time_seconds{host!=\"_\"}) by (host) - time()) < 604800\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: ssl certificate(s) will expire in less then a week\nsummary: renew expiring certificates to avoid downtime\n- alert: NGINXTooMany500s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"5.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 5XXs\nsummary: More than 5% of all requests returned 5XX, this requires your attention\n- alert: NGINXTooMany400s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"4.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 4XXs\nsummary: More than 5% of all requests returned 4XX, this requires your attention",
+                        "items": {},
+                        "type": "array"
                       }
                     },
                     "type": "object"
@@ -11590,21 +10878,7 @@
                 "namespace": {
                   "description": "The label to use to retrieve the job name from.\njobLabel: \"app.kubernetes.io/name\""
                 },
-                "namespaceSelector": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
+                "namespaceSelector": {},
                 "relabelings": {
                   "anyOf": [
                     {
@@ -11711,19 +10985,6 @@
           "description": "Labels to add to the pod container metadata\nkey: value"
         },
         "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Security context for controller pods"
         },
         "priorityClassName": {},
@@ -11731,25 +10992,6 @@
           "description": "Specifies the number of seconds you want to wait for the controller deployment to progress before the system reports back that it has failed.\nRef.: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#progress-deadline-seconds"
         },
         "proxySetHeaders": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Will add custom headers before sending traffic to backends according to https://github.com/kubernetes/ingress-nginx/tree/main/docs/examples/customization/custom-headers"
         },
         "publishService": {
@@ -11918,9 +11160,6 @@
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
                       }
                     ],
@@ -11931,20 +11170,9 @@
                     "type": "string"
                   },
                   "clusterIPs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Pre-defined cluster internal IP addresses of the external controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
+                    "description": "Pre-defined cluster internal IP addresses of the external controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address",
+                    "items": {},
+                    "type": "array"
                   },
                   "external": {
                     "properties": {
@@ -11966,40 +11194,20 @@
                     "type": "object"
                   },
                   "externalIPs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "List of node IP addresses at which the external controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+                    "description": "List of node IP addresses at which the external controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips",
+                    "items": {},
+                    "type": "array"
                   },
                   "externalTrafficPolicy": {
                     "description": "External traffic policy of the external controller service. Set to \"Local\" to preserve source IP on providers supporting it.\nRef: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip",
                     "type": "string"
                   },
                   "ipFamilies": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "List of IP families (e.g. IPv4, IPv6) assigned to the external controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
+                    "description": "List of IP families (e.g. IPv4, IPv6) assigned to the external controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "ipFamilyPolicy": {
                     "description": "Represents the dual-stack capabilities of the external controller service. Possible values are SingleStack, PreferDualStack or RequireDualStack.\nFields `ipFamilies` and `clusterIP` depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services",
@@ -12028,20 +11236,9 @@
                     "type": "string"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Restrict access to the external controller service. Values must be CIDRs. Allows any source address by default."
+                    "description": "Restrict access to the external controller service. Values must be CIDRs. Allows any source address by default.",
+                    "items": {},
+                    "type": "array"
                   },
                   "sessionAffinity": {
                     "description": "Session affinity of the external controller service. Must be either \"None\" or \"ClientIP\" if set. Defaults to \"None\".\nRef: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity",
@@ -12123,9 +11320,6 @@
                           },
                           {
                             "type": "array"
-                          },
-                          {
-                            "type": "integer"
                           },
                           {
                             "type": "null"
@@ -12218,56 +11412,25 @@
                         "type": "string"
                       },
                       "clusterIPs": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Pre-defined cluster internal IP addresses of the internal controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
+                        "description": "Pre-defined cluster internal IP addresses of the internal controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address",
+                        "items": {},
+                        "type": "array"
                       },
                       "externalIPs": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "List of node IP addresses at which the internal controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+                        "description": "List of node IP addresses at which the internal controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips",
+                        "items": {},
+                        "type": "array"
                       },
                       "externalTrafficPolicy": {
                         "description": "External traffic policy of the internal controller service. Set to \"Local\" to preserve source IP on providers supporting it.\nRef: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip",
                         "type": "string"
                       },
                       "ipFamilies": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "List of IP families (e.g. IPv4, IPv6) assigned to the internal controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
+                        "description": "List of IP families (e.g. IPv4, IPv6) assigned to the internal controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
                       },
                       "ipFamilyPolicy": {
                         "description": "Represents the dual-stack capabilities of the internal controller service. Possible values are SingleStack, PreferDualStack or RequireDualStack.\nFields `ipFamilies` and `clusterIP` depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services",
@@ -12296,20 +11459,9 @@
                         "type": "string"
                       },
                       "loadBalancerSourceRanges": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Restrict access to the internal controller service. Values must be CIDRs. Allows any source address by default."
+                        "description": "Restrict access to the internal controller service. Values must be CIDRs. Allows any source address by default.",
+                        "items": {},
+                        "type": "array"
                       },
                       "sessionAffinity": {
                         "description": "Session affinity of the internal controller service. Must be either \"None\" or \"ClientIP\" if set. Defaults to \"None\".\nRef: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity",
@@ -13278,21 +12430,7 @@
         "shareProcessNamespace": {
           "description": "shareProcessNamespace enables process namespace sharing within the pod.\nThis can be used for example to signal log rotation using `kill -USR1` from a sidecar."
         },
-        "startupProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "startupProbe": {},
         "sysctls": {
           "description": "sysctls for controller pods\nRef: https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/\nsysctls:\n\"net.core.somaxconn\": \"8192\""
         },
@@ -13397,19 +12535,6 @@
           "description": "Eviction policy for unhealthy pods guarded by PodDisruptionBudget.\nRef: https://kubernetes.io/blog/2023/01/06/unhealthy-pod-eviction-policy-for-pdbs/"
         },
         "updateStrategy": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "The update strategy to apply to the Deployment or DaemonSet\nrollingUpdate:\nmaxUnavailable: 1\ntype: RollingUpdate"
         },
         "watchIngressWithoutClass": {
@@ -13507,22 +12632,6 @@
           },
           "then": {
             "properties": {
-              "containerSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Security context for default backend containers"
-              },
               "extraArgs": {
                 "anyOf": [
                   {
@@ -13531,9 +12640,6 @@
                   },
                   {
                     "type": "array"
-                  },
-                  {
-                    "type": "integer"
                   },
                   {
                     "type": "null"
@@ -13556,36 +12662,14 @@
                 "description": "Additional configmaps to the default backend pod.\n- name: my-extra-configmap-1\nlabels:\ntype: config-1\ndata:\nextra_file_1.html: |\n<!-- Extra HTML content for ConfigMap 1 -->\n- name: my-extra-configmap-2\nlabels:\ntype: config-2\ndata:\nextra_file_2.html: |\n<!-- Extra HTML content for ConfigMap 2 -->"
               },
               "extraEnvs": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional environment variables to set for defaultBackend pods"
+                "description": "Additional environment variables to set for defaultBackend pods",
+                "items": {},
+                "type": "array"
               },
               "extraVolumeMounts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional volumeMounts to the default backend container.\n- name: copy-portal-skins\nmountPath: /var/lib/lemonldap-ng/portal/skins"
+                "description": "Additional volumeMounts to the default backend container.\n- name: copy-portal-skins\nmountPath: /var/lib/lemonldap-ng/portal/skins",
+                "items": {},
+                "type": "array"
               },
               "image": {
                 "properties": {
@@ -13663,20 +12747,14 @@
                 "type": "integer"
               },
               "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
+                "additionalProperties": {},
+                "description": "Node labels for default backend pod assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/",
+                "properties": {
+                  "kubernetes.io/os": {
                     "type": "string"
                   }
-                ],
-                "description": "Node labels for default backend pod assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
+                },
+                "type": "object"
               },
               "podAnnotations": {
                 "anyOf": [
@@ -13706,22 +12784,6 @@
                 ],
                 "description": "Labels to add to the pod container metadata\nkey: value"
               },
-              "podSecurityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Security context for default backend pods"
-              },
               "port": {
                 "type": "integer"
               },
@@ -13748,22 +12810,6 @@
                 },
                 "type": "object"
               },
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "limits:\ncpu: 10m\nmemory: 20Mi\nrequests:\ncpu: 10m\nmemory: 20Mi"
-              },
               "service": {
                 "properties": {
                   "annotations": {
@@ -13781,52 +12827,19 @@
                     "description": "clusterIP: \"\""
                   },
                   "clusterIPs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Pre-defined cluster internal IP addresses of the default backend service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
+                    "description": "Pre-defined cluster internal IP addresses of the default backend service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address",
+                    "items": {},
+                    "type": "array"
                   },
                   "externalIPs": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "List of IP addresses at which the default backend service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+                    "description": "List of IP addresses at which the default backend service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips",
+                    "items": {},
+                    "type": "array"
                   },
                   "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "loadBalancerIP: \"\""
+                    "description": "loadBalancerIP: \"\"",
+                    "items": {},
+                    "type": "array"
                   },
                   "servicePort": {
                     "type": "integer"
@@ -13846,36 +12859,9 @@
                 "type": "object"
               },
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\""
-              },
-              "updateStrategy": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The update strategy to apply to the Deployment or DaemonSet\nrollingUpdate:\nmaxUnavailable: 1\ntype: RollingUpdate"
+                "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\"",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -13931,19 +12917,13 @@
                     "type": "integer"
                   },
                   "seccompProfile": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "type": {
                         "type": "string"
                       }
-                    ]
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -14452,19 +13432,6 @@
           "type": "object"
         },
         "containerSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Security context for default backend containers"
         },
         "enabled": {
@@ -14659,19 +13626,6 @@
           "description": "Labels to add to the pod container metadata\nkey: value"
         },
         "podSecurityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Security context for default backend pods"
         },
         "port": {},
@@ -14689,19 +13643,6 @@
         },
         "replicaCount": {},
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "limits:\ncpu: 10m\nmemory: 20Mi\nrequests:\ncpu: 10m\nmemory: 20Mi"
         },
         "runtimeClassName": {
@@ -14807,19 +13748,6 @@
           "description": "Eviction policy for unhealthy pods guarded by PodDisruptionBudget.\nRef: https://kubernetes.io/blog/2023/01/06/unhealthy-pod-eviction-policy-for-pdbs/"
         },
         "updateStrategy": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "The update strategy to apply to the Deployment or DaemonSet\nrollingUpdate:\nmaxUnavailable: 1\ntype: RollingUpdate"
         }
       },
@@ -15035,25 +13963,9 @@
       "type": "object"
     },
     "tcp": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "object"
-        }
-      ],
       "description": "TCP service key-value pairs\nRef: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/exposing-tcp-udp-services.md\n\"8080\": \"default/example-tcp-svc:9000\""
     },
     "udp": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "object"
-        }
-      ],
       "description": "UDP service key-value pairs\nRef: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/exposing-tcp-udp-services.md\n\"53\": \"kube-system/kube-dns:53\""
     }
   },

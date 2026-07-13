@@ -116,122 +116,6 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object",
-                    "x-kubernetes-preserve-unknown-fields": true
-                  }
-                ],
-                "description": "Optional custom annotations to add to Pods in the cluster"
-              },
-              "configReload": {
-                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "pullPolicy": {
-                    "type": "string"
-                  },
-                  "repository": {
-                    "type": "string"
-                  },
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object",
-                        "x-kubernetes-preserve-unknown-fields": true
-                      }
-                    ],
-                    "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
-                  },
-                  "tag": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "metrics": {
-                "description": "Prometheus Metrics Exporter",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "pullPolicy": {
-                    "type": "string"
-                  },
-                  "repository": {
-                    "type": "string"
-                  },
-                  "tag": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "name": {
-                "type": "string"
-              },
-              "resources": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object",
-                    "x-kubernetes-preserve-unknown-fields": true
-                  }
-                ],
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
-              },
-              "size": {
-                "description": "Cluster Size",
-                "type": "integer"
-              },
-              "version": {
-                "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "anyOf": [
@@ -316,6 +200,86 @@
                 "type": "object"
               },
               "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "configReload": {
+                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "pullPolicy": {
+                    "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "metrics": {
+                "description": "Prometheus Metrics Exporter",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "pullPolicy": {
+                    "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "name": {
+                "type": "string"
+              },
+              "size": {
+                "description": "Cluster Size",
+                "type": "integer"
+              },
+              "version": {
+                "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
                 "type": "string"
               }
             },
@@ -493,15 +457,6 @@
       ],
       "properties": {
         "annotations": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "object",
-              "x-kubernetes-preserve-unknown-fields": true
-            }
-          ],
           "description": "Optional custom annotations to add to Pods in the cluster"
         },
         "auth": {
@@ -545,15 +500,6 @@
             },
             "repository": {},
             "resources": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "object",
-                  "x-kubernetes-preserve-unknown-fields": true
-                }
-              ],
               "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
             },
             "tag": {}
@@ -594,15 +540,6 @@
           "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
         },
         "resources": {
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "object",
-              "x-kubernetes-preserve-unknown-fields": true
-            }
-          ],
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
         },
         "size": {
@@ -732,21 +669,7 @@
       "type": "object"
     },
     "nameOverride": {},
-    "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "nodeSelector": {},
     "podAnnotations": {
       "anyOf": [
         {
@@ -848,19 +771,6 @@
       "type": "integer"
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 64Mi"
     },
     "rollingUpdateMaxSurge": {},
@@ -919,21 +829,7 @@
       },
       "type": "object"
     },
-    "tolerations": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "tolerations": {},
     "updateStrategy": {
       "anyOf": [
         {

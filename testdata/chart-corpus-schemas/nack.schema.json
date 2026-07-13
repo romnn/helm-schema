@@ -30,22 +30,95 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "if": {},
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "jetstream": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jetstream"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        ]
+      },
       "then": {
         "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
+          "jetstream": {
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            ]
+            },
+            "type": "object"
           }
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "nameOverride": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -202,48 +275,10 @@
       "description": "additionalVolumes are the additional volumes to add"
     },
     "affinity": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "automountServiceAccountToken": {},
     "containerSecurityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Configure a container security context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\ncontainerSecurityContext:\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true"
     },
     "global": {
@@ -282,63 +317,6 @@
     },
     "jetstream": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "image": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "additionalArgs": {
           "anyOf": [
@@ -406,8 +384,7 @@
                   },
                   "type": "object"
                 }
-              },
-              "type": "object"
+              }
             },
             "nkey": {
               "additionalProperties": {},
@@ -427,8 +404,7 @@
                   },
                   "type": "object"
                 }
-              },
-              "type": "object"
+              }
             },
             "url": {
               "anyOf": [
@@ -612,25 +588,6 @@
       "type": "boolean"
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
     },
     "podAnnotations": {
@@ -674,47 +631,9 @@
       "description": "Toggle to prevent the controller making changes to NATS streams/consumers."
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Resource requests and limits for primary nack container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
     },
     "securityContext": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Toggle whether to use setup a Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/\nsecurityContext:\nfsGroup: 1000\nrunAsUser: 1000\nrunAsNonRoot: true"
     },
     "serviceAccountName": {

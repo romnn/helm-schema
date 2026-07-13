@@ -155,7 +155,13 @@ fn push_conditional_entry(
         reconcile_node_host_with_branch_schema(node, &then_schema);
     }
     open_host_descendants_extended_by_schema(node, &then_schema);
-    let conditional = conditional_entry(condition, then_schema);
+    // A trivially-true condition (an unconditional requirement, e.g. an
+    // unguarded member-access contract) needs no `if`/`then` wrapper.
+    let conditional = if condition.is_empty_slot() {
+        then_schema
+    } else {
+        conditional_entry(condition, then_schema)
+    };
 
     if !matches!(
         node,
@@ -357,9 +363,10 @@ fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, Sche
     match node {
         SchemaNode::Object { .. } => {}
         SchemaNode::Foreign(value) if is_empty_schema(value) => {
-            *node = SchemaNode::object()
-                .with_empty_properties()
-                .with_additional_properties(SchemaNode::empty());
+            // An EMPTY slot coerced to host members carries no shape claim
+            // of its own: it stays open and untyped (guarded member reads
+            // supply the conditional object requirement).
+            *node = SchemaNode::untyped_member_host();
         }
         _ => {
             // Hosting a member under a non-object slot proves keys exist,

@@ -73,14 +73,11 @@ pub(crate) fn collect_conditional_schemas(
                 continue;
             }
             let target_segments = split_value_path(target_value_path);
-            let mut ancestor_segments =
-                conditional_ancestor_segments(&target_segments, &implication.outer_guards);
-            // Anchor at a STRICT ancestor: an arm appended at the target
-            // node itself lands inside one union alternative, letting the
-            // other alternatives bypass the requirement.
-            if ancestor_segments.len() == target_segments.len() {
-                ancestor_segments.pop();
-            }
+            // Anchor at the ROOT: an arm appended at (or under) the target
+            // node lands inside one union alternative, letting the other
+            // alternatives bypass the requirement — and union lanes can
+            // appear at ANY ancestor, so only the root is bypass-proof.
+            let ancestor_segments: Vec<String> = Vec::new();
             conditionals.push(ConditionalResolvedSchema {
                 target_value_path: target_value_path.clone(),
                 relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),

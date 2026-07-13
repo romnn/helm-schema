@@ -392,20 +392,14 @@
                   "windowsCluster": {
                     "properties": {
                       "nodeSelector": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
+                        "additionalProperties": {},
+                        "description": "Node selector for Linux nodes that can run user-deployed Longhorn components.",
+                        "properties": {
+                          "kubernetes.io/os": {
                             "type": "string"
                           }
-                        ],
-                        "description": "Node selector for Linux nodes that can run user-deployed Longhorn components."
+                        },
+                        "type": "object"
                       }
                     },
                     "type": "object"
@@ -783,20 +777,26 @@
                   "windowsCluster": {
                     "properties": {
                       "tolerations": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
+                        "description": "Toleration for Linux nodes that can run user-deployed Longhorn components.",
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "effect": {
+                              "type": "string"
+                            },
+                            "key": {
+                              "type": "string"
+                            },
+                            "operator": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
                           },
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Toleration for Linux nodes that can run user-deployed Longhorn components."
+                          "type": "object"
+                        },
+                        "type": "array"
                       }
                     },
                     "type": "object"
@@ -2244,526 +2244,6 @@
                 "properties": {
                   "global": {
                     "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "longhornDriver": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "longhornDriver"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "longhornDriver": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "longhornDriver"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "global": {
-            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
-              }
-            },
-            "type": "object"
-          },
-          "longhornDriver": {
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node selector for Longhorn Driver. Specify the nodes allowed to run Longhorn Driver."
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "cattle": {
-                        "properties": {
-                          "windowsCluster": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "windowsCluster"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cattle"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "longhornManager": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "longhornManager"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "longhornManager": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "longhornManager"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "global": {
-            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
-              }
-            },
-            "type": "object"
-          },
-          "longhornManager": {
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node selector for Longhorn Manager. Specify the nodes allowed to run Longhorn Manager.\nIf you want to set node selector for Longhorn Manager DaemonSet, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\""
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "cattle": {
-                        "properties": {
-                          "windowsCluster": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "windowsCluster"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cattle"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "longhornUI": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "longhornUI"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "longhornUI": {
-                    "properties": {
-                      "nodeSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "longhornUI"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "global": {
-            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
-              }
-            },
-            "type": "object"
-          },
-          "longhornUI": {
-            "description": "If you want to set node selector for Longhorn Driver Deployer Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Node selector for Longhorn UI. Specify the nodes allowed to run Longhorn UI."
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "cattle": {
-                        "properties": {
-                          "windowsCluster": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "windowsCluster"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cattle"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
                       "tolerations": {
                         "$ref": "#/$defs/helm-truthy"
                       }
@@ -2850,20 +2330,9 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
+                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -2871,20 +2340,9 @@
           "longhornDriver": {
             "properties": {
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Toleration for Longhorn Driver on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Driver Deployer Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
+                "description": "Toleration for Longhorn Driver on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Driver Deployer Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\"",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3023,20 +2481,9 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
+                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3044,20 +2491,9 @@
           "longhornManager": {
             "properties": {
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Toleration for Longhorn Manager on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Manager DaemonSet, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
+                "description": "Toleration for Longhorn Manager on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn Manager DaemonSet, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\"",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3196,20 +2632,9 @@
             "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
+                "description": "Toleration for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer.",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3218,20 +2643,9 @@
             "description": "If you want to set node selector for Longhorn Driver Deployer Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
             "properties": {
               "tolerations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Toleration for Longhorn UI on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn UI Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\""
+                "description": "Toleration for Longhorn UI on nodes allowed to run Longhorn components.\nIf you want to set tolerations for Longhorn UI Deployment, delete the `[]` in the line above\nand uncomment this example block\n- key: \"key\"\noperator: \"Equal\"\nvalue: \"value\"\neffect: \"NoSchedule\"",
+                "items": {},
+                "type": "array"
               }
             },
             "type": "object"
@@ -3386,6 +2800,71 @@
                 "type": "null"
               }
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "privateRegistry": {
+                "properties": {
+                  "createSecret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createSecret"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "privateRegistry"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "privateRegistry": {
+                "properties": {
+                  "registrySecret": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "registrySecret"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "privateRegistry"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "privateRegistry": {
+            "properties": {
+              "registrySecret": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "If create a new private registry secret is true, create a Kubernetes secret with this name; else use the existing secret of this name. Use it to pull images from your private registry."
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -3851,19 +3330,6 @@
           ]
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
         },
         "timezone": {
@@ -5532,9 +4998,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   }
                 ],
@@ -5725,19 +5188,6 @@
           "type": "object"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Node selector for Longhorn Driver. Specify the nodes allowed to run Longhorn Driver."
         },
         "priorityClass": {
@@ -5787,44 +5237,12 @@
           "type": "object"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Node selector for Longhorn Manager. Specify the nodes allowed to run Longhorn Manager.\nIf you want to set node selector for Longhorn Manager DaemonSet, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\""
         },
         "priorityClass": {
           "description": "PriorityClass for Longhorn Manager."
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "const": null
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Resource requests and limits for Longhorn Manager pods."
         },
         "serviceAnnotations": {
@@ -5955,19 +5373,6 @@
           "type": "object"
         },
         "nodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Node selector for Longhorn UI. Specify the nodes allowed to run Longhorn UI."
         },
         "priorityClass": {
@@ -6048,36 +5453,14 @@
                     "type": "string"
                   },
                   "metricRelabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Configures the relabeling rules to apply to the samples before ingestion. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
+                    "description": "Configures the relabeling rules to apply to the samples before ingestion. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details.",
+                    "items": {},
+                    "type": "array"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Configures the relabeling rules to apply the target’s metadata labels. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details."
+                    "description": "Configures the relabeling rules to apply the target’s metadata labels. See the [Prometheus Operator\ndocumentation](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint) for\nformatting details.",
+                    "items": {},
+                    "type": "array"
                   },
                   "sampleLimit": {
                     "description": "Per-scrape sample limit. A value of 0 (default) omits sampleLimit.",
@@ -6558,50 +5941,6 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "createSecret": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "createSecret"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "registrySecret": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "registrySecret"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "registrySecret": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "If create a new private registry secret is true, create a Kubernetes secret with this name; else use the existing secret of this name. Use it to pull images from your private registry."
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
             "properties": {
               "createSecret": {
                 "$ref": "#/$defs/helm-truthy"
@@ -6688,21 +6027,6 @@
                   "loadBalancerClass": {
                     "description": "Class of a load balancer implementation",
                     "type": "string"
-                  },
-                  "loadBalancerSourceRanges": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
@@ -6742,21 +6066,7 @@
               "description": "Class of a load balancer implementation"
             },
             "loadBalancerIP": {},
-            "loadBalancerSourceRanges": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "loadBalancerSourceRanges": {},
             "nodePort": {
               "description": "NodePort port number for Longhorn UI. When unspecified, Longhorn selects a free port between 30000 and 32767."
             },

@@ -218,42 +218,82 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
+        "properties": {
+          "reloader": {
             "properties": {
-              "reloader": {
+              "deployment": {
                 "properties": {
-                  "deployment": {
+                  "env": {
                     "properties": {
-                      "env": {
-                        "properties": {
-                          "secret": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "secret"
-                        ],
-                        "type": "object"
+                      "secret": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "env"
+                      "secret"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "deployment"
+                  "env"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "reloader"
+              "deployment"
             ],
             "type": "object"
+          }
+        },
+        "required": [
+          "reloader"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "namespace": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
+          "reloader": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "env": {
+                    "description": "Support for extra environment variables.",
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "properties": {
               "reloader": {
@@ -483,6 +523,710 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "deployment": {
+              "properties": {
+                "env": {
+                  "description": "Support for extra environment variables.",
+                  "properties": {
+                    "existing": {
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "properties": {
+                              "ALERT_ADDITIONAL_INFO": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "ALERT_ADDITIONAL_INFO"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "env": {
+                    "description": "Support for extra environment variables.",
+                    "properties": {
+                      "secret": {
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
+                        "properties": {
+                          "ALERT_ADDITIONAL_INFO": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "properties": {
+                              "ALERT_ON_RELOAD": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "ALERT_ON_RELOAD"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "env": {
+                    "description": "Support for extra environment variables.",
+                    "properties": {
+                      "secret": {
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
+                        "properties": {
+                          "ALERT_ON_RELOAD": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "properties": {
+                              "ALERT_SINK": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "ALERT_SINK"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "env": {
+                    "description": "Support for extra environment variables.",
+                    "properties": {
+                      "secret": {
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
+                        "properties": {
+                          "ALERT_SINK": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "properties": {
+                          "secret": {
+                            "properties": {
+                              "ALERT_WEBHOOK_URL": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "ALERT_WEBHOOK_URL"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "secret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "env": {
+                    "description": "Support for extra environment variables.",
+                    "properties": {
+                      "secret": {
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
+                        "properties": {
+                          "ALERT_WEBHOOK_URL": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "podMonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "podMonitor": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "podMonitor": {
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -577,68 +1321,6 @@
                 "properties": {
                   "deployment": {
                     "properties": {
-                      "affinity": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "affinity"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "deployment"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "enableHA": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableHA"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "deployment": {
-                "properties": {
-                  "affinity": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "An affinity stanza to be applied to the Deployment.\nExample:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: \"node-role.kubernetes.io/infra-worker\"\noperator: \"Exists\""
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
-                  "deployment": {
-                    "properties": {
                       "volumeMounts": {
                         "$ref": "#/$defs/helm-truthy"
                       }
@@ -674,19 +1356,8 @@
               "deployment": {
                 "properties": {
                   "volumeMounts": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -737,19 +1408,8 @@
               "deployment": {
                 "properties": {
                   "volumes": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -2485,136 +3145,16 @@
           "additionalProperties": {},
           "properties": {
             "affinity": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "An affinity stanza to be applied to the Deployment.\nExample:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: \"node-role.kubernetes.io/infra-worker\"\noperator: \"Exists\""
             },
             "annotations": {},
             "automountServiceAccountToken": {},
-            "containerSecurityContext": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "containerSecurityContext": {},
             "dnsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Specifies the deployment DNS configuration.\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\""
             },
             "env": {
               "additionalProperties": {},
-              "allOf": [
-                {
-                  "if": {},
-                  "then": {
-                    "properties": {
-                      "existing": {
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "type": "array"
-                            },
-                            {
-                              "type": "object"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key",
-                        "items": {
-                          "anyOf": [
-                            {
-                              "type": "array"
-                            },
-                            {
-                              "type": "object"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                {
-                  "if": {
-                    "properties": {
-                      "secret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "secret"
-                    ],
-                    "type": "object"
-                  },
-                  "then": {
-                    "properties": {
-                      "secret": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
-                      }
-                    },
-                    "type": "object"
-                  }
-                }
-              ],
               "description": "Support for extra environment variables.",
               "properties": {
                 "existing": {
@@ -2681,41 +3221,6 @@
                       "allOf": [
                         {
                           "if": {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              },
-                              {
-                                "properties": {
-                                  "ALERT_ADDITIONAL_INFO": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "ALERT_ADDITIONAL_INFO"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "then": {
-                            "properties": {
-                              "ALERT_ADDITIONAL_INFO": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ]
-                              }
-                            },
-                            "type": "object"
-                          }
-                        },
-                        {
-                          "if": {
                             "$ref": "#/$defs/helm-truthy"
                           },
                           "then": {
@@ -2742,111 +3247,6 @@
                                 "type": [
                                   "string",
                                   "null"
-                                ]
-                              }
-                            },
-                            "type": "object"
-                          }
-                        },
-                        {
-                          "if": {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              },
-                              {
-                                "properties": {
-                                  "ALERT_ON_RELOAD": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "ALERT_ON_RELOAD"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "then": {
-                            "properties": {
-                              "ALERT_ON_RELOAD": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ]
-                              }
-                            },
-                            "type": "object"
-                          }
-                        },
-                        {
-                          "if": {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              },
-                              {
-                                "properties": {
-                                  "ALERT_SINK": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "ALERT_SINK"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "then": {
-                            "properties": {
-                              "ALERT_SINK": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ]
-                              }
-                            },
-                            "type": "object"
-                          }
-                        },
-                        {
-                          "if": {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              },
-                              {
-                                "properties": {
-                                  "ALERT_WEBHOOK_URL": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "ALERT_WEBHOOK_URL"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "then": {
-                            "properties": {
-                              "ALERT_WEBHOOK_URL": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
                                 ]
                               }
                             },
@@ -2922,25 +3322,6 @@
               "type": "object"
             },
             "nodeSelector": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "const": null
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "cloud.google.com/gke-nodepool: default-pool"
             },
             "pod": {
@@ -2998,25 +3379,6 @@
               "description": "If you wish to run multiple replicas set reloader.enableHA = true"
             },
             "resources": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Specify resource requests/limits for the deployment.\nExample:\nresources:\nlimits:\ncpu: \"100m\"\nmemory: \"512Mi\"\nrequests:\ncpu: \"10m\"\nmemory: \"128Mi\""
             },
             "revisionHistoryLimit": {
@@ -3207,35 +3569,13 @@
               "then": {
                 "properties": {
                   "from": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "to": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "- podSelector:\nmatchLabels:\napp.kubernetes.io/name: prometheus"
+                    "description": "- podSelector:\nmatchLabels:\napp.kubernetes.io/name: prometheus",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -3318,93 +3658,13 @@
                     ]
                   },
                   "podTargetLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
-                  },
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "namespace": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "namespace"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -3462,21 +3722,7 @@
             },
             "scheme": {},
             "timeout": {},
-            "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "tlsConfig": {}
           },
           "type": "object"
         },
@@ -3600,19 +3846,16 @@
           "additionalProperties": {},
           "allOf": [
             {
-              "if": {},
-              "then": {
-                "properties": {
-                  "name": {
-                    "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
-              }
+              "properties": {
+                "name": {
+                  "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
             }
           ],
           "description": "Service account config for the agent pods",
@@ -3658,93 +3901,13 @@
                     ]
                   },
                   "relabelings": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
+                    "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
+                    "items": {},
+                    "type": "array"
                   },
                   "targetLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "namespace": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "namespace"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "items": {},
+                    "type": "array"
                   }
                 },
                 "type": "object"
@@ -3802,21 +3965,7 @@
               ]
             },
             "timeout": {},
-            "tlsConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "tlsConfig": {}
           },
           "type": "object"
         },
@@ -3862,82 +4011,19 @@
               "then": {
                 "properties": {
                   "controlledResources": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
-                  },
-                  "maxAllowed": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Define the max allowed resources for the pod"
-                  },
-                  "minAllowed": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
-                  },
-                  "recommenders": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits",
+                    "items": {},
+                    "type": "array"
                   },
                   "updatePolicy": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "type": "object"
-                      },
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
+                    "additionalProperties": {},
+                    "properties": {
+                      "updateMode": {
+                        "description": "Specifies minimal number of replicas which need to be alive for VPA Updater to attempt pod eviction\nminReplicas: 1\nSpecifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
                         "type": "string"
                       }
-                    ]
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -3966,52 +4052,12 @@
               "type": "boolean"
             },
             "maxAllowed": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Define the max allowed resources for the pod"
             },
             "minAllowed": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
             },
-            "recommenders": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
+            "recommenders": {},
             "updatePolicy": {
               "anyOf": [
                 {

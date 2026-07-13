@@ -413,12 +413,18 @@ struct SharedObjectProvider;
 
 impl ResourceSchemaOracle for SharedObjectProvider {
     fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
+        // An ARRAY subtree: object-typed provider positions no longer bound
+        // `toYaml` fragment inputs (F56), and this stub's consumers pin the
+        // `$defs` sharing machinery, not fragment typing.
         Some(ProviderSchemaFragment::new(serde_json::json!({
-            "type": "object",
-            "properties": {
-                "name": { "type": "string" }
-            },
-            "additionalProperties": false
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" }
+                },
+                "additionalProperties": false
+            }
         })))
     }
 }
@@ -792,11 +798,14 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
     ));
 
     let expected_definition = serde_json::json!({
-        "type": "object",
-        "properties": {
-            "name": { "type": "string" }
-        },
-        "additionalProperties": false
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            },
+            "additionalProperties": false
+        }
     });
     sim_assert_eq!(
         have: schema.pointer("/properties/first"),
@@ -938,6 +947,10 @@ fn bitnami_labels_helpers() -> String {
 /// True if the schema permits a `null` value — either directly via
 /// `{"type": "null"}` or as one branch of an `anyOf` union.
 fn permits_null(schema: &Value) -> bool {
+    // An unconstrained slot accepts null trivially.
+    if schema.as_object().is_some_and(serde_json::Map::is_empty) {
+        return true;
+    }
     if schema.get("const").is_some_and(Value::is_null) {
         return true;
     }
@@ -984,11 +997,16 @@ fn object_variant_with_property<'a>(schema: &'a Value, property: &str) -> Option
     if schema.pointer(&format!("/properties/{property}")).is_some() {
         return Some(schema);
     }
-    any_of_variant_matching(schema, |variant| {
-        variant
-            .pointer(&format!("/properties/{property}"))
-            .is_some()
-    })
+    // Union lanes may nest (`anyOf` inside `anyOf`): descend until a
+    // variant carries the property.
+    schema
+        .get("anyOf")
+        .and_then(Value::as_array)
+        .and_then(|variants| {
+            variants
+                .iter()
+                .find_map(|variant| object_variant_with_property(variant, property))
+        })
 }
 
 fn permits_type(schema: &Value, ty: &str) -> bool {
@@ -1516,12 +1534,12 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
         "additionalProperties": false,
         "properties": {
             "feature": {
-                "type": "object",
                 "additionalProperties": {},
                 "properties": {
                     "enabled": {},
                     "name": {}
-                }
+                },
+                "type": "object"
             }
         }
     });
@@ -5412,23 +5430,19 @@ fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
 
     let ir = parse_ir(src);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
-    let parameters = schema
-        .pointer("/properties/dataSource")
-        .expect("dataSource present");
 
-    let empty_variant = any_of_variant_matching(parameters, |variant| {
-        variant.get("type").and_then(Value::as_str) == Some("object")
-            && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
-    })
-    .unwrap_or_else(|| {
-        panic!("exact empty object placeholder variant missing: {parameters}; ir={ir:?}",)
-    });
-    sim_assert_eq!(
-        have: empty_variant
-            .get("additionalProperties")
-            .and_then(Value::as_bool),
-        want: Some(false),
-    );
+    // A `with`-guarded `toYaml` fragment is TOTAL (F56): the declared-empty
+    // off-state and every user-supplied shape stay valid.
+    for instance in [
+        serde_json::json!({ "dataSource": {} }),
+        serde_json::json!({ "dataSource": { "name": "snap", "kind": "VolumeSnapshot" } }),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the off-state and arbitrary fragment shapes render: instance={instance}; schema={schema}"
+        );
+    }
 }
 
 #[test]
@@ -7260,26 +7274,19 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    let requests = schema
-        .pointer("/properties/resources/properties/requests")
-        .expect("resources.requests present");
-    assert!(
-        requests
-            .pointer("/additionalProperties/oneOf")
-            .and_then(Value::as_array)
-            .is_some(),
-        "resources.requests should stay an open quantity map, got {requests}"
-    );
-    let limits = schema
-        .pointer("/properties/resources/properties/limits")
-        .expect("resources.limits present");
-    assert!(
-        limits
-            .pointer("/additionalProperties/oneOf")
-            .and_then(Value::as_array)
-            .is_some(),
-        "resources.limits should stay an open quantity map, got {limits}"
-    );
+    // Provider object typing no longer bounds `toYaml` fragment INPUTS
+    // (F56): the surviving contract is openness — user-supplied quantity
+    // keys of any shape stay valid.
+    for member in ["requests", "limits"] {
+        let node = schema
+            .pointer(&format!("/properties/resources/properties/{member}"))
+            .unwrap_or_else(|| panic!("resources.{member} present"));
+        sim_assert_eq!(
+            have: node.pointer("/additionalProperties"),
+            want: Some(&serde_json::json!({})),
+            "resources.{member} stays an open map: {node}"
+        );
+    }
 }
 
 #[test]
@@ -8094,7 +8101,7 @@ fn range_alternative_does_not_bypass_member_contract() {
         metadata:
           name: second
         data:
-          {{- if .Values.secret.ALERT_ON_RELOAD }}
+          {{- if .Values.secret }}
           alert: {{ .Values.secret.ALERT_ON_RELOAD }}
           {{- end }}
     "#};
@@ -8116,5 +8123,282 @@ fn range_alternative_does_not_bypass_member_contract() {
         !schema_accepts_instance(&schema, &serde_json::json!({ "secret": ["x"] })),
         "a truthy array reaches the second template's member access and \
          aborts rendering: {schema}"
+    );
+}
+
+/// F55: independent positive type-guarded blocks with NO catch-all leave
+/// unmatched types valid — they execute neither block (external-dns
+/// `extraArgs` shape, declared `{}`).
+#[test]
+fn independent_type_blocks_keep_silent_complement_open() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: main
+            args:
+              {{- if kindIs "map" .Values.extraArgs }}
+              {{- range $key, $value := .Values.extraArgs }}
+              - --{{ $key }}={{ $value }}
+              {{- end }}
+              {{- end }}
+              {{- if kindIs "slice" .Values.extraArgs }}
+              {{- range $value := .Values.extraArgs }}
+              - {{ $value }}
+              {{- end }}
+              {{- end }}
+    "#};
+    let values_yaml = "extraArgs: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "extraArgs": { "a": "b" } }),
+        serde_json::json!({ "extraArgs": ["--x"] }),
+        serde_json::json!({ "extraArgs": 7 }),
+        serde_json::json!({ "extraArgs": "s" }),
+        serde_json::json!({ "extraArgs": true }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "unmatched types execute neither block and render: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F54: a `kindIs "slice"` arm whose body serializes the value must stay
+/// SATISFIABLE for arrays — the branch resolve must never contradict its
+/// own partition (oauth2-proxy `extraArgs` list form, which the chart's
+/// own ci values render).
+#[test]
+fn slice_partition_overlay_accepts_arrays() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: main
+            args:
+              {{- if kindIs "map" .Values.extraArgs }}
+              {{- range $key, $value := .Values.extraArgs }}
+              - --{{ $key }}={{ $value }}
+              {{- end }}
+              {{- end }}
+              {{- if kindIs "slice" .Values.extraArgs }}
+              {{- with .Values.extraArgs }}
+              {{- toYaml . | nindent 10 }}
+              {{- end }}
+              {{- end }}
+    "#};
+    let values_yaml = "extraArgs: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "extraArgs": ["--a=1", "--b=2"] })
+        ),
+        "the slice arm serializes the list; its own partition must accept \
+         arrays: {schema}"
+    );
+}
+
+/// F56: `toYaml` into a MAPPING-VALUE slot is total — falsy values skip
+/// the `with`, and truthy scalars render as plain scalars (promtail
+/// `affinity` shape).
+#[test]
+fn mapping_value_fragment_accepts_all_types() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 4 }}
+          {{- end }}
+    "#};
+    let values_yaml = "affinity: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "affinity": false }),
+        serde_json::json!({ "affinity": 7 }),
+        serde_json::json!({ "affinity": {} }),
+        serde_json::json!({ "affinity": { "nodeAffinity": {} } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "toYaml is total in a mapping-value slot: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F57: a truthy-guarded object that is BOTH serialized and member-read is
+/// falsy-or-object — the fragment lane must not bypass the member access
+/// (coredns `podDisruptionBudget` shape).
+#[test]
+#[ignore = "F57 open: member-access object contracts need a size-aware encoding — the naive per-read arms pushed umbrella-chart schemas past helm's 5MiB chart-file limit (signoz)"]
+fn member_read_beside_serialize_requires_object_when_truthy() {
+    let src = indoc! {r#"
+        {{- if .Values.podDisruptionBudget }}
+        apiVersion: policy/v1
+        kind: PodDisruptionBudget
+        metadata:
+          name: test
+        spec:
+          selector: {{ .Values.podDisruptionBudget.selector }}
+          {{- toYaml .Values.podDisruptionBudget | nindent 2 }}
+        {{- end }}
+    "#};
+    let values_yaml = "podDisruptionBudget: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "podDisruptionBudget": false }),
+        serde_json::json!({ "podDisruptionBudget": 0 }),
+        serde_json::json!({ "podDisruptionBudget": { "selector": "x" } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "falsy skips the branch; objects render: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "podDisruptionBudget": "audit" }),
+        serde_json::json!({ "podDisruptionBudget": ["x"] }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a truthy non-object reaches the `.selector` access and aborts: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F63: a chained selector read requires every NONTERMINAL segment to be
+/// absent-or-object under the executing guard; the leaf itself stays free
+/// (surveyor `config.credentials.secret.key` shape).
+#[test]
+#[ignore = "F63 open: member-access object contracts need a size-aware encoding — the naive per-read arms pushed umbrella-chart schemas past helm's 5MiB chart-file limit (signoz)"]
+fn chained_member_read_requires_intermediate_objects() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.config.credentials }}
+          key: {{ .Values.config.credentials.secret.key }}
+          {{- end }}
+    "#};
+    let values_yaml = "config: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "config": { "credentials": { "secret": { "key": "k" } } } }),
+        serde_json::json!({ "config": { "credentials": { "secret": {} } } }),
+        serde_json::json!({ "config": {} }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "objects and missing leaves render: instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "config": { "credentials": { "secret": "audit" } } })
+        ),
+        "a truthy non-object at the intermediate `secret` segment aborts \
+         the chained access: {schema}"
+    );
+}
+
+/// F58: integer iteration is a zero/one-variable range feature — a
+/// TWO-variable range aborts on integers (`can't use 7 to iterate over
+/// more than one variable`), so the iterable domain must follow the
+/// parsed binding arity (ingress-nginx `controller.containerPort` shape).
+#[test]
+fn destructured_range_excludes_integer_iteration() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: main
+            ports:
+            {{- range $key, $value := .Values.containerPort }}
+            - name: {{ $key }}
+              containerPort: {{ $value }}
+            {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        containerPort:
+          http: 80
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "containerPort": { "http": 80 } })
+        ),
+        "map iteration renders: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "containerPort": 7 })),
+        "a two-variable range cannot iterate an integer; rendering aborts: {schema}"
+    );
+}
+
+/// F58 (guarded lane): the branch-scoped iterable domain of a GUARDED
+/// two-variable range excludes integers too (kyverno/prometheus extraArgs
+/// shape — the range sits under an enable guard).
+#[test]
+fn guarded_destructured_range_excludes_integer_iteration() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: main
+            args:
+            {{- if .Values.server.enabled }}
+            {{- range $key, $value := .Values.server.extraArgs }}
+            - --{{ $key }}={{ $value }}
+            {{- end }}
+            {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        server:
+          enabled: false
+          extraArgs: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "server": { "enabled": true, "extraArgs": { "a": "b" } } })
+        ),
+        "map iteration renders under the guard: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "server": { "enabled": true, "extraArgs": 7 } })
+        ),
+        "a two-variable range cannot iterate an integer in the live branch: {schema}"
     );
 }
