@@ -232,7 +232,6 @@ typedef struct {
     int16_t blk_imp_row;
     int16_t blk_imp_col;
     int16_t blk_imp_tab;
-    int8_t blk_str_ok;
     int16_t blk_map_colon;
     int8_t skip_empty_map_after_else;
     int16_t skip_empty_map_after_else_col;
@@ -261,8 +260,6 @@ static unsigned serialize(Scanner *scanner, char *buffer) {
     size += sizeof(int16_t);
     *(int16_t *)&buffer[size] = scanner->blk_imp_tab;
     size += sizeof(int16_t);
-    *(int8_t *)&buffer[size] = scanner->blk_str_ok;
-    size += sizeof(int8_t);
     *(int16_t *)&buffer[size] = scanner->blk_map_colon;
     size += sizeof(int16_t);
     *(int8_t *)&buffer[size] = scanner->skip_empty_map_after_else;
@@ -287,7 +284,6 @@ static void deserialize(Scanner *scanner, const char *buffer, unsigned length) {
     scanner->blk_imp_row = -1;
     scanner->blk_imp_col = -1;
     scanner->blk_imp_tab = 0;
-    scanner->blk_str_ok = 0;
     scanner->blk_map_colon = -1;
     scanner->skip_empty_map_after_else = 0;
     scanner->skip_empty_map_after_else_col = 0;
@@ -307,8 +303,6 @@ static void deserialize(Scanner *scanner, const char *buffer, unsigned length) {
         size += sizeof(int16_t);
         scanner->blk_imp_tab = *(int16_t *)&buffer[size];
         size += sizeof(int16_t);
-        scanner->blk_str_ok = *(int8_t *)&buffer[size];
-        size += sizeof(int8_t);
         if (size + sizeof(int16_t) + sizeof(int8_t) + sizeof(int16_t) <= length) {
             scanner->blk_map_colon = *(int16_t *)&buffer[size];
             size += sizeof(int16_t);
@@ -417,7 +411,7 @@ static inline bool is_c_indicator(int32_t c) {
 
 static inline bool is_c_flow_indicator(int32_t c) { return c == ',' || c == '[' || c == ']' || c == '{' || c == '}'; }
 
-static inline bool is_plain_safe_in_block(int32_t c) { return is_ns_char(c) && c != '[' && c != ']'; }
+static inline bool is_plain_safe_in_block(int32_t c) { return is_ns_char(c); }
 
 static inline bool is_plain_safe_in_flow(int32_t c) { return is_ns_char(c) && !is_c_flow_indicator(c); }
 
@@ -1070,10 +1064,6 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         scanner->skip_empty_map_after_else_col = 0;
     }
 
-    if (scanner->blk_str_ok && lexer->lookahead != '|' && lexer->lookahead != '>') {
-        scanner->blk_str_ok = 0;
-    }
-
     if (lexer->lookahead == 0) {
         if (valid_symbols[BL] && scanner->ind_typ_stk.size > 1) {
             mrk_end(scanner, lexer);
@@ -1515,10 +1505,6 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                     }
                 }
                 mrk_end(scanner, lexer);
-                bool is_key_colon_after = lexer->lookahead == ':';
-                bool is_concat_after = lexer->lookahead != 0 && !is_wht(lexer->lookahead) && !is_nwl(lexer->lookahead) &&
-                                       lexer->lookahead != '#' && lexer->lookahead != ',' && lexer->lookahead != ']' &&
-                                       lexer->lookahead != '}';
                 bool treat_as_tpl = can_hlm_tpl && !is_hlm_control && !is_hlm_blk_comment;
 
                 if (!can_hlm_tpl && !is_hlm_control && !is_hlm_blk_comment) {
@@ -1783,21 +1769,17 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
             if (is_r_blk_val_bgn) {
                 PUSH_BGN_IND(IND_MAP);
-                scanner->blk_str_ok = 1;
                 RET_SYM(R_BLK_VAL_BGN);
             }
             if (is_br_blk_val_bgn) {
                 PUSH_BGN_IND(IND_MAP);
-                scanner->blk_str_ok = 1;
                 RET_SYM(BR_BLK_VAL_BGN);
             }
             if (is_b_blk_val_bgn) {
-                scanner->blk_str_ok = 1;
                 RET_SYM(B_BLK_VAL_BGN);
             }
             if (is_r_blk_imp_bgn) {
                 MAY_PUSH_IMP_IND();
-                scanner->blk_str_ok = 1;
                 if (is_nwl(lexer->lookahead)) {
                     scanner->blk_map_colon = scanner->blk_imp_col;
                 }
@@ -1825,19 +1807,16 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             if (is_wht(lexer->lookahead)) {
                 if (is_r_blk_seq_bgn) {
                     PUSH_BGN_IND(IND_SEQ);
-                    scanner->blk_str_ok = 1;
                     mrk_end(scanner, lexer);
                     RET_SYM(R_BLK_SEQ_BGN)
                 }
                 if (is_br_blk_seq_bgn) {
                     PUSH_BGN_IND(IND_SEQ);
-                    scanner->blk_str_ok = 1;
                     mrk_end(scanner, lexer);
                     RET_SYM(BR_BLK_SEQ_BGN)
                 }
                 if (is_b_blk_seq_bgn) {
                     MAY_PUSH_SPC_SEQ_IND();
-                    scanner->blk_str_ok = 1;
                     mrk_end(scanner, lexer);
                     RET_SYM(B_BLK_SEQ_BGN)
                 }
@@ -1900,21 +1879,17 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             return false;
         }
     } else if (lexer->lookahead == '|') {
-        if (scanner->blk_str_ok && valid_symbols[R_BLK_LIT_BGN] && is_r) {
-            scanner->blk_str_ok = 0;
+        if (valid_symbols[R_BLK_LIT_BGN] && is_r) {
             return scn_blk_str_bgn(scanner, lexer, R_BLK_LIT_BGN);
         }
-        if (scanner->blk_str_ok && valid_symbols[BR_BLK_LIT_BGN] && is_br) {
-            scanner->blk_str_ok = 0;
+        if (valid_symbols[BR_BLK_LIT_BGN] && is_br) {
             return scn_blk_str_bgn(scanner, lexer, BR_BLK_LIT_BGN);
         }
     } else if (lexer->lookahead == '>') {
-        if (scanner->blk_str_ok && valid_symbols[R_BLK_FLD_BGN] && is_r) {
-            scanner->blk_str_ok = 0;
+        if (valid_symbols[R_BLK_FLD_BGN] && is_r) {
             return scn_blk_str_bgn(scanner, lexer, R_BLK_FLD_BGN);
         }
-        if (scanner->blk_str_ok && valid_symbols[BR_BLK_FLD_BGN] && is_br) {
-            scanner->blk_str_ok = 0;
+        if (valid_symbols[BR_BLK_FLD_BGN] && is_br) {
             return scn_blk_str_bgn(scanner, lexer, BR_BLK_FLD_BGN);
         }
     }
@@ -2009,30 +1984,30 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     return false;
 }
 
-void *tree_sitter_yaml_external_scanner_create() {
+void *tree_sitter_helm_template_external_scanner_create() {
     Scanner *scanner = ts_calloc(1, sizeof(Scanner));
     deserialize(scanner, NULL, 0);
     return scanner;
 }
 
-void tree_sitter_yaml_external_scanner_destroy(void *payload) {
+void tree_sitter_helm_template_external_scanner_destroy(void *payload) {
     Scanner *scanner = (Scanner *)payload;
     array_delete(&scanner->ind_len_stk);
     array_delete(&scanner->ind_typ_stk);
     ts_free(scanner);
 }
 
-unsigned tree_sitter_yaml_external_scanner_serialize(void *payload, char *buffer) {
+unsigned tree_sitter_helm_template_external_scanner_serialize(void *payload, char *buffer) {
     Scanner *scanner = (Scanner *)payload;
     return serialize(scanner, buffer);
 }
 
-void tree_sitter_yaml_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {
+void tree_sitter_helm_template_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {
     Scanner *scanner = (Scanner *)payload;
     deserialize(scanner, buffer, length);
 }
 
-bool tree_sitter_yaml_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
+bool tree_sitter_helm_template_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     Scanner *scanner = (Scanner *)payload;
     return scan(scanner, lexer, valid_symbols);
 }

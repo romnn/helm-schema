@@ -52,6 +52,7 @@
                 value: (helm_template :text "{{- include \"surveyor.labels\" . | nindent 4 }}")
               )
               (comment :text "{{- with .Values.serviceMonitor.labels }}")
+              (helm_template :text "{{- toYaml . | nindent 4 }}")
               (comment :text "{{- end }}")
               (comment :text "{{- with .Values.serviceMonitor.annotations }}")
               (block_mapping_pair

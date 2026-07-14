@@ -1,6 +1,6 @@
 {
   "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/grammar.schema.json",
-  "name": "yaml",
+  "name": "helm_template",
   "rules": {
     "stream": {
       "type": "SEQ",
@@ -71,15 +71,6 @@
                               "content": {
                                 "type": "SYMBOL",
                                 "name": "_exp_doc"
-                              },
-                              "named": true,
-                              "value": "document"
-                            },
-                            {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_imp_doc"
                               },
                               "named": true,
                               "value": "document"
@@ -783,12 +774,20 @@
       ]
     },
     "_r_prp_val": {
-      "type": "SYMBOL",
-      "name": "_r_prp"
+      "type": "PREC",
+      "value": -1,
+      "content": {
+        "type": "SYMBOL",
+        "name": "_r_prp"
+      }
     },
     "_br_prp_val": {
-      "type": "SYMBOL",
-      "name": "_br_prp"
+      "type": "PREC",
+      "value": -1,
+      "content": {
+        "type": "SYMBOL",
+        "name": "_br_prp"
+      }
     },
     "_r_sgl_prp_val": {
       "type": "SYMBOL",
@@ -1277,22 +1276,8 @@
           "type": "SEQ",
           "members": [
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "_br_prp"
-                },
-                {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_br_hlm_tpl"
-                  },
-                  "named": true,
-                  "value": "helm_template"
-                }
-              ]
+              "type": "SYMBOL",
+              "name": "_br_prp"
             },
             {
               "type": "CHOICE",
@@ -1737,8 +1722,39 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "_br_blk_map_itm"
+          "type": "REPEAT",
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_br_hlm_tpl"
+            },
+            "named": true,
+            "value": "helm_template"
+          }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_br_blk_exp_itm"
+              },
+              "named": true,
+              "value": "block_mapping_pair"
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_br_blk_imp_itm"
+              },
+              "named": true,
+              "value": "block_mapping_pair"
+            }
+          ]
         },
         {
           "type": "REPEAT",
@@ -6963,30 +6979,20 @@
       "_sgl_flw_seq_tal"
     ],
     [
-      "_imp_doc",
-      "_exp_doc_tal"
-    ],
-    [
       "_blk_seq_itm_tal",
       "_r_blk_map_br_val"
     ],
     [
-      "_blk_seq_itm_tal",
-      "_br_blk_map_itm"
-    ],
-    [
-      "_br_blk_map_itm",
       "_blk_imp_itm_tal"
     ],
     [
-      "_r_prp_val",
-      "_r_blk_seq_spc_val"
+      "_br_blk_seq_tpl",
+      "_blk_seq_itm_tal",
+      "_br_blk_map"
     ],
     [
-      "_br_prp_val",
-      "_br_blk_seq_spc_val"
-    ],
-    [
+      "_br_blk_seq_tpl",
+      "_br_blk_map",
       "_blk_imp_itm_tal"
     ],
     [

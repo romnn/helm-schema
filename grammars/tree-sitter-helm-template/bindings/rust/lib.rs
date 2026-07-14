@@ -1,17 +1,17 @@
-//! This crate provides YAML language support for the [tree-sitter] parsing library.
+//! This crate provides Helm template language support for the [tree-sitter] parsing library.
 //!
 //! Typically, you will use the [`LANGUAGE`] constant to add this language to a
 //! tree-sitter [`Parser`], and then use the parser to parse some code:
 //!
 //! ```
 //! let code = r#"
-//! key: value
+//! key: {{ .Values.value }}
 //! list:
 //!     - item1
 //!     - item2
 //! "#;
 //! let mut parser = tree_sitter::Parser::new();
-//! let language = tree_sitter_yaml::LANGUAGE;
+//! let language = tree_sitter_helm_template::LANGUAGE;
 //! parser.set_language(&language.into())?;
 //! let tree = parser
 //!     .parse(code, None)
@@ -26,13 +26,13 @@
 use tree_sitter_language::LanguageFn;
 
 unsafe extern "C" {
-    fn tree_sitter_yaml() -> *const ();
+    fn tree_sitter_helm_template() -> *const ();
 }
 
 /// The tree-sitter [`LanguageFn`] for this grammar.
 pub const LANGUAGE: LanguageFn = {
     // SAFETY: `parser.c` exports this symbol with tree-sitter's language-function ABI.
-    unsafe { LanguageFn::from_raw(tree_sitter_yaml) }
+    unsafe { LanguageFn::from_raw(tree_sitter_helm_template) }
 };
 
 /// The content of the [`node-types.json`] file for this grammar.
@@ -50,6 +50,6 @@ mod tests {
         let mut parser = tree_sitter::Parser::new();
         parser
             .set_language(&super::LANGUAGE.into())
-            .expect("Error loading YAML parser");
+            .expect("Error loading Helm template parser");
     }
 }

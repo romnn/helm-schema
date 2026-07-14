@@ -1,257 +1,363 @@
-(template
-  (if_action
-    condition: (selector_expression
-      operand: (selector_expression
-        operand: (field
-          name: (identifier :text "Values")
-        )
-        field: (field_identifier :text "ingress")
-      )
-      field: (field_identifier :text "enabled")
-    )
-    consequence: (variable_definition
-      variable: (variable
-        name: (identifier :text "fullName")
-      )
-      value: (function_call
-        function: (identifier :text "include")
-        arguments: (argument_list
-          (interpreted_string_literal :text "\"postgres-operator-ui.fullname\"")
-          (dot :text ".")
-        )
-      )
-    )
-    consequence: (variable_definition
-      variable: (variable
-        name: (identifier :text "svcPort")
-      )
-      value: (selector_expression
-        operand: (selector_expression
-          operand: (field
-            name: (identifier :text "Values")
-          )
-          field: (field_identifier :text "service")
-        )
-        field: (field_identifier :text "port")
-      )
-    )
-    consequence: (if_action
-      condition: (function_call
-        function: (identifier :text "semverCompare")
-        arguments: (argument_list
-          (interpreted_string_literal :text "\">=1.19-0\"")
-          (selector_expression
-            operand: (selector_expression
-              operand: (field
-                name: (identifier :text "Capabilities")
-              )
-              field: (field_identifier :text "KubeVersion")
+(stream
+  (comment :text "{{- if .Values.ingress.enabled -}}")
+  (document
+    (block_node
+      (block_mapping
+        (helm_template :text "{{- $fullName := include \"postgres-operator-ui.fullname\" . -}}")
+        (helm_template :text "{{- $svcPort := .Values.service.port -}}")
+        (comment :text "{{- if semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion -}}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
             )
-            field: (field_identifier :text "GitVersion")
           )
-        )
-      )
-      consequence: (text :text "apiVersion: networking.k8s.io/v1")
-      condition: (function_call
-        function: (identifier :text "semverCompare")
-        arguments: (argument_list
-          (interpreted_string_literal :text "\">=1.14-0\"")
-          (selector_expression
-            operand: (selector_expression
-              operand: (field
-                name: (identifier :text "Capabilities")
-              )
-              field: (field_identifier :text "KubeVersion")
-            )
-            field: (field_identifier :text "GitVersion")
-          )
-        )
-      )
-      option: (text :text "apiVersion: networking.k8s.io/v1beta1")
-      alternative: (text :text "apiVersion: extensions/v1beta1")
-    )
-    consequence: (text :text "kind: Ingress\nmetadata:\n  name:")
-    consequence: (variable
-      name: (identifier :text "fullName")
-    )
-    consequence: (text :text "namespace:")
-    consequence: (selector_expression
-      operand: (field
-        name: (identifier :text "Release")
-      )
-      field: (field_identifier :text "Namespace")
-    )
-    consequence: (text :text "labels:\n    app.kubernetes.io/name:")
-    consequence: (template_action
-      name: (interpreted_string_literal :text "\"postgres-operator-ui.name\"")
-      argument: (dot :text ".")
-    )
-    consequence: (text :text "helm.sh/chart:")
-    consequence: (template_action
-      name: (interpreted_string_literal :text "\"postgres-operator-ui.chart\"")
-      argument: (dot :text ".")
-    )
-    consequence: (text :text "app.kubernetes.io/managed-by:")
-    consequence: (selector_expression
-      operand: (field
-        name: (identifier :text "Release")
-      )
-      field: (field_identifier :text "Service")
-    )
-    consequence: (text :text "app.kubernetes.io/instance:")
-    consequence: (selector_expression
-      operand: (field
-        name: (identifier :text "Release")
-      )
-      field: (field_identifier :text "Name")
-    )
-    consequence: (with_action
-      condition: (selector_expression
-        operand: (selector_expression
-          operand: (field
-            name: (identifier :text "Values")
-          )
-          field: (field_identifier :text "ingress")
-        )
-        field: (field_identifier :text "annotations")
-      )
-      consequence: (text :text "annotations:")
-      consequence: (chained_pipeline
-        (function_call
-          function: (identifier :text "toYaml")
-          arguments: (argument_list
-            (dot :text ".")
-          )
-        )
-        (function_call
-          function: (identifier :text "nindent")
-          arguments: (argument_list
-            (int_literal :text "4")
-          )
-        )
-      )
-    )
-    consequence: (text :text "spec:")
-    consequence: (if_action
-      condition: (selector_expression
-        operand: (selector_expression
-          operand: (field
-            name: (identifier :text "Values")
-          )
-          field: (field_identifier :text "ingress")
-        )
-        field: (field_identifier :text "ingressClassName")
-      )
-      consequence: (text :text "ingressClassName:")
-      consequence: (selector_expression
-        operand: (selector_expression
-          operand: (field
-            name: (identifier :text "Values")
-          )
-          field: (field_identifier :text "ingress")
-        )
-        field: (field_identifier :text "ingressClassName")
-      )
-    )
-    consequence: (if_action
-      condition: (selector_expression
-        operand: (selector_expression
-          operand: (field
-            name: (identifier :text "Values")
-          )
-          field: (field_identifier :text "ingress")
-        )
-        field: (field_identifier :text "tls")
-      )
-      consequence: (text :text "tls:")
-      consequence: (range_action
-        range: (selector_expression
-          operand: (selector_expression
-            operand: (field
-              name: (identifier :text "Values")
-            )
-            field: (field_identifier :text "ingress")
-          )
-          field: (field_identifier :text "tls")
-        )
-        body: (text :text "- hosts:")
-        body: (range_action
-          range: (field
-            name: (identifier :text "hosts")
-          )
-          body: (text :text "-")
-          body: (chained_pipeline
-            (dot :text ".")
-            (function_call
-              function: (identifier :text "quote")
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "networking.k8s.io/v1")
             )
           )
         )
-        body: (text :text "secretName:")
-        body: (field
-          name: (identifier :text "secretName")
-        )
-      )
-    )
-    consequence: (text :text "rules:")
-    consequence: (range_action
-      range: (selector_expression
-        operand: (selector_expression
-          operand: (field
-            name: (identifier :text "Values")
+        (comment :text "{{- else if semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion -}}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
           )
-          field: (field_identifier :text "ingress")
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "networking.k8s.io/v1beta1")
+            )
+          )
         )
-        field: (field_identifier :text "hosts")
-      )
-      body: (text :text "- host:")
-      body: (chained_pipeline
-        (field
-          name: (identifier :text "host")
+        (comment :text "{{- else -}}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "apiVersion")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "extensions/v1beta1")
+            )
+          )
         )
-        (function_call
-          function: (identifier :text "quote")
+        (comment :text "{{- end }}")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "kind")
+            )
+          )
+          value: (flow_node
+            (plain_scalar
+              (string_scalar :text "Ingress")
+            )
+          )
         )
-      )
-      body: (text :text "http:\n        paths:")
-      body: (range_action
-        range: (field
-          name: (identifier :text "paths")
-        )
-        body: (text :text "- path:")
-        body: (dot :text ".")
-        body: (if_action
-          condition: (function_call
-            function: (identifier :text "semverCompare")
-            arguments: (argument_list
-              (interpreted_string_literal :text "\">=1.19-0\"")
-              (selector_expression
-                operand: (selector_expression
-                  operand: (selector_expression
-                    operand: (variable :text "$")
-                    field: (field_identifier :text "Capabilities")
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "metadata")
+            )
+          )
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "name")
                   )
-                  field: (field_identifier :text "KubeVersion")
                 )
-                field: (field_identifier :text "GitVersion")
+                value: (helm_template :text "{{ $fullName }}")
               )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "namespace")
+                  )
+                )
+                value: (helm_template :text "{{ .Release.Namespace }}")
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "labels")
+                  )
+                )
+                value: (block_node
+                  (block_mapping
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "app.kubernetes.io/name")
+                        )
+                      )
+                      value: (helm_template :text "{{ template \"postgres-operator-ui.name\" . }}")
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "helm.sh/chart")
+                        )
+                      )
+                      value: (helm_template :text "{{ template \"postgres-operator-ui.chart\" . }}")
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "app.kubernetes.io/managed-by")
+                        )
+                      )
+                      value: (helm_template :text "{{ .Release.Service }}")
+                    )
+                    (block_mapping_pair
+                      key: (flow_node
+                        (plain_scalar
+                          (string_scalar :text "app.kubernetes.io/instance")
+                        )
+                      )
+                      value: (helm_template :text "{{ .Release.Name }}")
+                    )
+                    (comment :text "{{- with .Values.ingress.annotations }}")
+                  )
+                )
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "annotations")
+                  )
+                )
+                value: (helm_template :text "{{- toYaml . | nindent 4 }}")
+              )
+              (comment :text "{{- end }}")
             )
           )
-          consequence: (text :text "pathType: Prefix\n            backend:\n              service:\n                name:")
-          consequence: (variable
-            name: (identifier :text "fullName")
+        )
+        (block_mapping_pair
+          key: (flow_node
+            (plain_scalar
+              (string_scalar :text "spec")
+            )
           )
-          consequence: (text :text "port:\n                  number:")
-          consequence: (variable
-            name: (identifier :text "svcPort")
-          )
-          alternative: (text :text "backend:\n              serviceName:")
-          alternative: (variable
-            name: (identifier :text "fullName")
-          )
-          alternative: (text :text "servicePort:")
-          alternative: (variable
-            name: (identifier :text "svcPort")
+          (comment :text "{{- if .Values.ingress.ingressClassName }}")
+          value: (block_node
+            (block_mapping
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "ingressClassName")
+                  )
+                )
+                value: (helm_template :text "{{ .Values.ingress.ingressClassName }}")
+              )
+              (comment :text "{{- end }}")
+              (comment :text "{{- if .Values.ingress.tls }}")
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "tls")
+                  )
+                )
+                (comment :text "{{- range .Values.ingress.tls }}")
+                value: (block_node
+                  (block_sequence
+                    (block_sequence_item
+                      (block_node
+                        (block_mapping
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "hosts")
+                              )
+                            )
+                            (comment :text "{{- range .hosts }}")
+                            value: (block_node
+                              (block_sequence
+                                (block_sequence_item
+                                  (helm_template :text "{{ . | quote }}")
+                                )
+                                (comment :text "{{- end }}")
+                              )
+                            )
+                          )
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "secretName")
+                              )
+                            )
+                            value: (helm_template :text "{{ .secretName }}")
+                          )
+                          (comment :text "{{- end }}")
+                          (comment :text "{{- end }}")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              (block_mapping_pair
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "rules")
+                  )
+                )
+                (comment :text "{{- range .Values.ingress.hosts }}")
+                value: (block_node
+                  (block_sequence
+                    (block_sequence_item
+                      (block_node
+                        (block_mapping
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "host")
+                              )
+                            )
+                            value: (helm_template :text "{{ .host | quote }}")
+                          )
+                          (block_mapping_pair
+                            key: (flow_node
+                              (plain_scalar
+                                (string_scalar :text "http")
+                              )
+                            )
+                            value: (block_node
+                              (block_mapping
+                                (block_mapping_pair
+                                  key: (flow_node
+                                    (plain_scalar
+                                      (string_scalar :text "paths")
+                                    )
+                                  )
+                                  (comment :text "{{- range .paths }}")
+                                  value: (block_node
+                                    (block_sequence
+                                      (block_sequence_item
+                                        (block_node
+                                          (block_mapping
+                                            (block_mapping_pair
+                                              key: (flow_node
+                                                (plain_scalar
+                                                  (string_scalar :text "path")
+                                                )
+                                              )
+                                              value: (helm_template :text "{{ . }}")
+                                            )
+                                            (comment :text "{{ if semverCompare \">=1.19-0\" $.Capabilities.KubeVersion.GitVersion -}}")
+                                            (block_mapping_pair
+                                              key: (flow_node
+                                                (plain_scalar
+                                                  (string_scalar :text "pathType")
+                                                )
+                                              )
+                                              value: (flow_node
+                                                (plain_scalar
+                                                  (string_scalar :text "Prefix")
+                                                )
+                                              )
+                                            )
+                                            (block_mapping_pair
+                                              key: (flow_node
+                                                (plain_scalar
+                                                  (string_scalar :text "backend")
+                                                )
+                                              )
+                                              value: (block_node
+                                                (block_mapping
+                                                  (block_mapping_pair
+                                                    key: (flow_node
+                                                      (plain_scalar
+                                                        (string_scalar :text "service")
+                                                      )
+                                                    )
+                                                    value: (block_node
+                                                      (block_mapping
+                                                        (block_mapping_pair
+                                                          key: (flow_node
+                                                            (plain_scalar
+                                                              (string_scalar :text "name")
+                                                            )
+                                                          )
+                                                          value: (helm_template :text "{{ $fullName }}")
+                                                        )
+                                                        (block_mapping_pair
+                                                          key: (flow_node
+                                                            (plain_scalar
+                                                              (string_scalar :text "port")
+                                                            )
+                                                          )
+                                                          value: (block_node
+                                                            (block_mapping
+                                                              (block_mapping_pair
+                                                                key: (flow_node
+                                                                  (plain_scalar
+                                                                    (string_scalar :text "number")
+                                                                  )
+                                                                )
+                                                                value: (helm_template :text "{{ $svcPort }}")
+                                                              )
+                                                              (comment :text "{{- else -}}")
+                                                            )
+                                                          )
+                                                        )
+                                                      )
+                                                    )
+                                                  )
+                                                )
+                                              )
+                                            )
+                                            (block_mapping_pair
+                                              key: (flow_node
+                                                (plain_scalar
+                                                  (string_scalar :text "backend")
+                                                )
+                                              )
+                                              value: (block_node
+                                                (block_mapping
+                                                  (block_mapping_pair
+                                                    key: (flow_node
+                                                      (plain_scalar
+                                                        (string_scalar :text "serviceName")
+                                                      )
+                                                    )
+                                                    value: (helm_template :text "{{ $fullName }}")
+                                                  )
+                                                  (block_mapping_pair
+                                                    key: (flow_node
+                                                      (plain_scalar
+                                                        (string_scalar :text "servicePort")
+                                                      )
+                                                    )
+                                                    value: (helm_template :text "{{ $svcPort }}")
+                                                  )
+                                                  (comment :text "{{- end -}}")
+                                                  (comment :text "{{- end }}")
+                                                  (comment :text "{{- end }}")
+                                                  (comment :text "{{- end }}")
+                                                )
+                                              )
+                                            )
+                                          )
+                                        )
+                                      )
+                                    )
+                                  )
+                                )
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
           )
         )
       )

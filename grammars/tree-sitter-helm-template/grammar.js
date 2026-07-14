@@ -1,5 +1,5 @@
 /**
- * @file YAML grammar for tree-sitter
+ * @file YAML and Helm template grammar for tree-sitter
  * @author Ika <ikatyang@gmail.com>
  * @license MIT
  */
@@ -7,7 +7,7 @@
 /// <reference types="tree-sitter-cli/dsl" />
 
 module.exports = grammar({
-  name: 'yaml',
+  name: 'helm_template',
 
   /* eslint-disable no-multi-spaces */
   /* eslint-disable indent */
@@ -84,13 +84,10 @@ module.exports = grammar({
     [$._r_prp, $._r_sgl_prp],
     [$._br_prp, $._br_sgl_prp],
     [$._flw_seq_tal, $._sgl_flw_seq_tal],
-    [$._imp_doc, $._exp_doc_tal],
     [$._blk_seq_itm_tal, $._r_blk_map_br_val],
-    [$._blk_seq_itm_tal, $._br_blk_map_itm],
-    [$._br_blk_map_itm, $._blk_imp_itm_tal],
-    [$._r_prp_val, $._r_blk_seq_spc_val],
-    [$._br_prp_val, $._br_blk_seq_spc_val],
     [$._blk_imp_itm_tal],
+    [$._br_blk_seq_tpl, $._blk_seq_itm_tal, $._br_blk_map],
+    [$._br_blk_seq_tpl, $._br_blk_map, $._blk_imp_itm_tal],
     [$._flw_map_tal, $._sgl_flw_map_tal],
     [$._flw_ann_par_tal, $._sgl_flw_ann_par_tal],
     [$._r_flw_seq_itm, $._r_sgl_flw_col_itm],
@@ -153,7 +150,7 @@ module.exports = grammar({
         $._eof,
         seq(choice(
           seq(
-            choice($._bgn_imp_doc, $._drs_doc, $._exp_doc, $._imp_doc),
+            choice($._bgn_imp_doc, $._drs_doc, $._exp_doc),
             optional(choice($._doc_w_bgn_w_end_seq, $._doc_w_bgn_wo_end_seq))),
           seq(
             choice($._bgn_imp_doc_end, $._drs_doc_end, $._exp_doc_end, $._doc_end),
@@ -234,8 +231,8 @@ module.exports = grammar({
 
     // property
 
-    _r_prp_val: $ => $._r_prp,
-    _br_prp_val: $ => $._br_prp,
+    _r_prp_val: $ => prec(-1, $._r_prp),
+    _br_prp_val: $ => prec(-1, $._br_prp),
 
     _r_sgl_prp_val: $ => $._r_sgl_prp,
     _br_sgl_prp_val: $ => $._br_sgl_prp,
@@ -253,7 +250,7 @@ module.exports = grammar({
     _r_blk_seq_val: $ => choice($._r_blk_seq_r_val, $._r_blk_seq_br_val),
     _r_blk_seq_r_val: $ => $._r_blk_seq,
     _r_blk_seq_br_val: $ => seq(choice($._r_prp, $._r_hlm_tpl), $._br_blk_seq),
-    _br_blk_seq_val: $ => choice($._br_blk_seq, $._br_blk_seq_tpl, seq(choice($._br_prp, $._br_hlm_tpl), choice($._br_blk_seq, $._br_blk_seq_tpl))),
+    _br_blk_seq_val: $ => choice($._br_blk_seq, $._br_blk_seq_tpl, seq($._br_prp, choice($._br_blk_seq, $._br_blk_seq_tpl))),
 
     _r_blk_seq_spc_val: $ => seq($._r_prp, $._b_blk_seq_spc),
     _br_blk_seq_spc_val: $ => seq($._br_prp, $._b_blk_seq_spc),
@@ -289,7 +286,12 @@ module.exports = grammar({
     _br_blk_map_val: $ => choice($._br_blk_map, seq($._br_prp, $._br_blk_map)),
 
     _r_blk_map: $ => seq($._r_blk_map_itm, repeat($._b_blk_map_itm), $._bl),
-    _br_blk_map: $ => seq($._br_blk_map_itm, repeat(choice($._b_blk_map_itm, $._br_blk_map_itm)), $._bl),
+    _br_blk_map: $ => seq(
+      repeat($._br_hlm_tpl),
+      choice($._br_blk_exp_itm, $._br_blk_imp_itm),
+      repeat(choice($._b_blk_map_itm, $._br_blk_map_itm)),
+      $._bl,
+    ),
 
     _r_blk_map_itm: $ => choice($._r_blk_exp_itm, $._r_blk_imp_itm),
     _br_blk_map_itm: $ => choice($._br_blk_exp_itm, $._br_blk_imp_itm, $._br_hlm_tpl),

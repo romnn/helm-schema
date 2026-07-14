@@ -67,16 +67,24 @@
           (comment :text "{{- range .Values.config.jetstream.accounts }}")
           value: (block_node
             (block_mapping
+              (helm_template :text "{{- $d := dict }}")
+              (comment :text "{{- if .tls }}")
+              (comment :text "{{- if .tls.ca }}")
+              (helm_template :text "{{- $_ := set $d \"tls_ca\" (printf \"/etc/nats-certs/accounts/%s/%s\" .name .tls.ca)}}")
+              (comment :text "{{- end }}")
+              (comment :text "{{- if .tls.cert }}")
+              (helm_template :text "{{- $_ := set $d \"tls_cert\" (printf \"/etc/nats-certs/accounts/%s/%s\" .name .tls.cert)}}")
+              (comment :text "{{- end }}")
+              (comment :text "{{- if .tls.key }}")
+              (helm_template :text "{{- $_ := set $d \"tls_key\" (printf \"/etc/nats-certs/accounts/%s/%s\" .name .tls.key)}}")
+              (comment :text "{{- end }}")
+              (comment :text "{{- end }}")
               (block_mapping_pair
-                key: (helm_template :text "{{- $d := dict }}")
-                (comment :text "{{- if .tls }}")
-                (comment :text "{{- if .tls.ca }}")
-                (comment :text "{{- end }}")
-                (comment :text "{{- if .tls.cert }}")
-                (comment :text "{{- end }}")
-                (comment :text "{{- if .tls.key }}")
-                (comment :text "{{- end }}")
-                (comment :text "{{- end }}")
+                key: (flow_node
+                  (plain_scalar
+                    (string_scalar :text "{{ .name }}.json")
+                  )
+                )
                 value: (block_node
                   (block_scalar
                     (comment :text "{{- end }}")
