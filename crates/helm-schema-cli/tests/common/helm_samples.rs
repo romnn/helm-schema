@@ -52,11 +52,18 @@ impl GeneratedSchemaHelmChart {
             &chart_dir,
         )
         .wrap_err("copy chart fixture into temp dir")?;
-        fs::write(
-            chart_dir.join("values.schema.json"),
-            serde_json::to_vec_pretty(schema).wrap_err("serialize generated schema")?,
+        // Mirror the CLI's default output policy (pretty, degrading to
+        // compact past Helm's chart-file limit) so `helm lint` sees the
+        // same file a real generation run would ship.
+        let mut bytes = Vec::new();
+        helm_schema::output::write_schema_json(
+            &mut bytes,
+            schema,
+            helm_schema::output::JsonOutputFormat::Pretty,
         )
-        .wrap_err("write generated values.schema.json")?;
+        .wrap_err("serialize generated schema")?;
+        fs::write(chart_dir.join("values.schema.json"), bytes)
+            .wrap_err("write generated values.schema.json")?;
         Ok(Self {
             _temp_dir: temp_dir,
             chart_dir,
