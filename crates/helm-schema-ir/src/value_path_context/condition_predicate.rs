@@ -17,6 +17,40 @@ fn is_files_get_function(function: &str) -> bool {
     function == "Files.Get" || function.ends_with(".Files.Get")
 }
 
+/// Dispatch-arm headers may themselves compare helper outputs; one level
+/// covers the chart shapes seen so far, and the cap keeps mutually
+/// recursive helpers from looping the decoder.
+const MAX_HELPER_DISPATCH_DEPTH: u8 = 2;
+
+thread_local! {
+    static HELPER_DISPATCH_DEPTH: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
+}
+
+/// An `include`/`template` call whose context argument carries the root
+/// (`.` or `$`), so the callee's `.Values.*` conditions keep their paths.
+fn helper_root_call(expr: &TemplateExpr) -> Option<&str> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    let name = crate::expr_eval::literal_helper_call_callee(function, args)?;
+    let [_, context] = args.as_slice() else {
+        return None;
+    };
+    let root_context = match context.deparen() {
+        TemplateExpr::Field(path) => path.is_empty(),
+        TemplateExpr::Variable(variable) => variable.is_empty(),
+        _ => false,
+    };
+    root_context.then_some(name)
+}
+
+fn literal_string(expr: &TemplateExpr) -> Option<&str> {
+    match expr.deparen() {
+        TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => Some(text),
+        _ => None,
+    }
+}
+
 /// Split a printf format around a single `%s` verb; any other verb (or a
 /// second `%s`) makes the produced name undecodable.
 fn single_string_verb_split(format: &str) -> Option<(&str, &str)> {
@@ -462,6 +496,92 @@ impl ValuePathContext<'_> {
         (!predicates.is_empty()).then(|| Predicate::all(predicates))
     }
 
+    /// `eq (include "mode" .) "literal"`: when the called helper is a pure
+    /// LITERAL DISPATCH invoked with a root-carrying context, the
+    /// comparison selects exactly the arms returning that literal — the
+    /// predicate is the any-of of their branch conditions, each conjoined
+    /// with the negations of the arms before them (the chain is ordered
+    /// and exclusive). Every arm header must decode faithfully, or the
+    /// comparison abstains: a degraded arm would make those negations
+    /// select states the helper never maps to the literal.
+    fn helper_literal_dispatch_predicate(
+        &self,
+        left: &TemplateExpr,
+        right: &TemplateExpr,
+        negated: bool,
+    ) -> Option<Predicate> {
+        let (name, target) = match (helper_root_call(left), helper_root_call(right)) {
+            (Some(name), None) => (name, literal_string(right)?),
+            (None, Some(name)) => (name, literal_string(left)?),
+            _ => return None,
+        };
+        // The dispatch helper reads `.Values.*` absolutely, so its
+        // conditions keep their meaning only under a root dot.
+        if !self
+            .current_dot_binding
+            .as_ref()
+            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
+        {
+            return None;
+        }
+        if HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH {
+            return None;
+        }
+        let arms = crate::helper_literal_dispatch::helper_literal_dispatch(
+            self.fragment_context.analysis_db,
+            name,
+        )?;
+        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
+        let predicate = self.literal_dispatch_arms_predicate(&arms, target);
+        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
+        let predicate = predicate?;
+        Some(if negated {
+            predicate.negated()
+        } else {
+            predicate
+        })
+    }
+
+    fn literal_dispatch_arms_predicate(
+        &self,
+        arms: &[crate::helper_literal_dispatch::LiteralDispatchArm],
+        target: &str,
+    ) -> Option<Predicate> {
+        let mut prior: Vec<Predicate> = Vec::new();
+        let mut matching: Vec<Predicate> = Vec::new();
+        for arm in arms {
+            match &arm.header {
+                Some(header) => {
+                    if !self.condition_lowering_is_faithful(header.expr()) {
+                        return None;
+                    }
+                    let condition = self.condition_predicate_expr(header.expr());
+                    if arm.literal == target {
+                        let mut conjuncts: Vec<Predicate> =
+                            prior.iter().map(Predicate::negated).collect();
+                        conjuncts.push(condition.clone());
+                        matching.push(Predicate::all(conjuncts));
+                    }
+                    prior.push(condition);
+                }
+                None => {
+                    if arm.literal == target {
+                        matching.push(Predicate::all(
+                            prior.iter().map(Predicate::negated).collect(),
+                        ));
+                    }
+                }
+            }
+        }
+        Some(match matching.len() {
+            // No arm renders the literal: the dispatch is total, so the
+            // comparison can never hold.
+            0 => Predicate::False,
+            1 => matching.remove(0),
+            _ => Predicate::Or(matching),
+        })
+    }
+
     fn truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
         let paths = self.paths_for_expr(expr);
         (!paths.is_empty())
@@ -516,7 +636,7 @@ impl ValuePathContext<'_> {
         let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
             (Some(value), None) if direct_selector(right) => (value, self.paths_for_expr(right)),
             (None, Some(value)) if direct_selector(left) => (value, self.paths_for_expr(left)),
-            _ => return None,
+            _ => return self.helper_literal_dispatch_predicate(left, right, negated),
         };
         let predicates = paths
             .iter()

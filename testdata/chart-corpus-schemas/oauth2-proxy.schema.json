@@ -31,6 +31,113 @@
   "allOf": [
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "alphaConfig": {
+                "properties": {
+                  "configFile": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "configFile"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "alphaConfig"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "alphaConfig": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "alphaConfig"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "alphaConfig": {
+                  "properties": {
+                    "existingConfig": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfig"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "alphaConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "alphaConfig": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "alphaConfig"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "alphaConfig": {
+            "properties": {
+              "configFile": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Example: Multiple upstreams with path-based routing\nconfigData:\nupstreamConfig:\nupstreams:\n- id: service1\npath: /\nuri: http://service1:8080\nflushInterval: 1s\npassHostHeader: true\nproxyWebSockets: true\n- id: service2\npath: /api/\nuri: http://service2:8081\nrewriteTarget: /v1/\ninjectResponseHeaders:\n- name: X-Custom-Header\nvalues:\n- value: custom-value\ninjectResponseHeaders:\n- name: X-Auth-Request-Email\nvalues:\n- claim: email\nFor more information on alpha config options, see:\nhttps://oauth2-proxy.github.io/oauth2-proxy/configuration/alpha-config\nArbitrary configuration to append\nThis is treated as a Go template and rendered with the root context"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -451,107 +558,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "alphaConfig": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "alphaConfig"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "config": {
-                "properties": {
-                  "existingConfig": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "existingConfig"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "forceLegacyConfig": {}
-                      },
-                      "required": [
-                        "forceLegacyConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "forceLegacyConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "forceLegacyConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "config": {
-            "description": "Oauth client configuration specifics",
-            "properties": {
-              "configFile": {
-                "description": "adminEmail: xxxx\nuseApplicationDefaultCredentials: true\ntargetPrincipal: xxxx\nserviceAccountJson: xxxx\nAlternatively, use an existing secret (see google-secret.yaml for required fields)\nExample:\nexistingSecret: google-secret\ngroups: []\nExample:\n- group1@example.com\n- group2@example.com\nConfiguration file generation precedence\n1. If configFile is set, it takes precedence over the structured\nconfig below.\n2. When alphaConfig.enabled=true and forceLegacyConfig=false,\nboth configFile and existingConfig are ignored and the chart\ngenerates a minimal legacy config from emailDomains only.\n3. If configFile is empty/not set, the config is auto-generated\nfrom emailDomains and, when alphaConfig is disabled, upstreams.\n4. When alphaConfig.enabled=false and forceLegacyConfig=false,\nand neither config.configFile nor config.existingConfig are set,\nno ConfigMap is generated or mounted. Use this when you manage\noauth2-proxy configuration entirely via external means (e.g.,\nCSI SecretStore Driver, extraVolumes, etc.).",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "properties": {
           "config": {
             "properties": {
@@ -761,6 +767,162 @@
               }
             ],
             "description": "Override the deployment namespace"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "alphaConfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alphaConfig"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "configFile": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "configFile"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "existingConfig": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "alphaConfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alphaConfig"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "config": {
+                            "properties": {
+                              "forceLegacyConfig": {}
+                            },
+                            "required": [
+                              "forceLegacyConfig"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "forceLegacyConfig": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "forceLegacyConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "description": "Oauth client configuration specifics",
+            "properties": {
+              "emailDomains": {
+                "description": "Email domains allowed to authenticate when the chart generates\nthe main oauth2_proxy.cfg.\nThis is always included in generated config, including the\nminimal alphaConfig-compatible legacy config.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -3836,42 +3998,46 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "alphaConfig": {
-                    "properties": {
-                      "existingConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "existingConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "alphaConfig"
-                ],
-                "type": "object"
+                "not": {
+                  "properties": {
+                    "alphaConfig": {
+                      "properties": {
+                        "existingConfig": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "alphaConfig"
+                  ],
+                  "type": "object"
+                }
               },
               {
-                "properties": {
-                  "alphaConfig": {
-                    "properties": {
-                      "existingSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "existingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "alphaConfig"
-                ],
-                "type": "object"
+                "not": {
+                  "properties": {
+                    "alphaConfig": {
+                      "properties": {
+                        "existingSecret": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingSecret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "alphaConfig"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -14045,15 +14211,17 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "existingSecret": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "existingSecret"
-                ],
-                "type": "object"
+                "not": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -14061,10 +14229,7 @@
             "properties": {
               "existingConfig": {
                 "description": "Use an existing config map (see secret-alpha.yaml for required fields).\nMutually exclusive with existingSecret and all generated alpha config\ncontent options (serverConfigData, metricsConfigData, configData, configFile).",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               }
             },
             "type": "object"
@@ -14085,15 +14250,17 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "existingConfig": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "existingConfig"
-                ],
-                "type": "object"
+                "not": {
+                  "properties": {
+                    "existingConfig": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfig"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -14101,10 +14268,7 @@
             "properties": {
               "existingSecret": {
                 "description": "Use an existing secret.\nMutually exclusive with existingConfig and all generated alpha config\ncontent options (serverConfigData, metricsConfigData, configData, configFile).\nNOTE: When using alphaConfig with external secrets (e.g., Azure\nKey Vault CSI Driver), you can inject secrets via the top-level\nextraEnv (see the extraEnv section below) instead of embedding\nthem in the config:\nextraEnv:\n- name: OAUTH2_PROXY_CLIENT_ID\nvalueFrom:\nsecretKeyRef:\nname: external-secret\nkey: client-id\n- name: OAUTH2_PROXY_CLIENT_SECRET\nvalueFrom:\nsecretKeyRef:\nname: external-secret\nkey: client-secret",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string"
               }
             },
             "type": "object"
@@ -14534,6 +14698,37 @@
                   }
                 ],
                 "description": "Create a new secret with the following command\nopenssl rand -base64 32 | head -c 32 | base64\nUse an existing secret for OAuth2 credentials (see secret.yaml for required fields)\nExample:\nexistingSecret: secret"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "existingConfig": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "existingConfig"
+              ],
+              "type": "object"
+            }
+          },
+          "then": {
+            "properties": {
+              "configFile": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "adminEmail: xxxx\nuseApplicationDefaultCredentials: true\ntargetPrincipal: xxxx\nserviceAccountJson: xxxx\nAlternatively, use an existing secret (see google-secret.yaml for required fields)\nExample:\nexistingSecret: google-secret\ngroups: []\nExample:\n- group1@example.com\n- group2@example.com\nConfiguration file generation precedence\n1. If configFile is set, it takes precedence over the structured\nconfig below.\n2. When alphaConfig.enabled=true and forceLegacyConfig=false,\nboth configFile and existingConfig are ignored and the chart\ngenerates a minimal legacy config from emailDomains only.\n3. If configFile is empty/not set, the config is auto-generated\nfrom emailDomains and, when alphaConfig is disabled, upstreams.\n4. When alphaConfig.enabled=false and forceLegacyConfig=false,\nand neither config.configFile nor config.existingConfig are set,\nno ConfigMap is generated or mounted. Use this when you manage\noauth2-proxy configuration entirely via external means (e.g.,\nCSI SecretStore Driver, extraVolumes, etc.)."
               }
             },
             "type": "object"

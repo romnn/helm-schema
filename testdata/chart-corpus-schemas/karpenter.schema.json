@@ -1301,36 +1301,45 @@
               "type": "object"
             },
             "podAffinity": {
-              "additionalProperties": {},
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "podAffinityTerm": {
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {
+                      "items": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "podAffinityTerm": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "labelSelector": {}
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "requiredDuringSchedulingIgnoredDuringExecution": {
+                      "items": {
                         "additionalProperties": {},
                         "properties": {
                           "labelSelector": {}
                         },
                         "type": "object"
-                      }
-                    },
-                    "type": "object"
+                      },
+                      "type": "array"
+                    }
                   },
-                  "type": "array"
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelSelector": {}
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
+                  "type": "object"
                 }
-              },
-              "type": "object"
+              ]
             },
             "podAntiAffinity": {
               "additionalProperties": {},

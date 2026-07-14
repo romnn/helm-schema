@@ -2505,7 +2505,7 @@ phase while keeping their prose out of YAML resource detection. Parse their Go
 template actions structurally, propagate helper calls and terminal effects,
 and pin both a strict consumer and an explicit migration failure.
 
-### F53. `tpl` contracts inside named helpers do not reach callers (PARTIAL 2026-07-14)
+### F53. `tpl` contracts inside named helpers do not reach callers (FIXED 2026-07-14)
 
 F45 and the F50 summary claim helper summaries carry truthy-to-string `tpl`
 contracts, but current chart fixtures still lose them.
@@ -2990,3 +2990,41 @@ and yields nil when it is nil. Each access therefore implies
   base (serialized/fragment/render/ranged/partial-scalar uses, a type
   dispatch) or the declared default is not a mapping (F57's serialized
   sibling is exactly such a lane).
+
+## Helper literal-return branch decoding (2026-07-14)
+
+The F53 residual: `eq (include "mode" .) "literal"` conditions now decode
+structurally, closing the last pinned reproducer — the workspace runs
+with ZERO ignored tests. All 967 tests pass, scans stay at baseline
+(the ci-values residual returned to 4/119 after the fix below removed a
+transient datadog false rejection), and check:local is green.
+
+- **Literal-dispatch analysis** (`helper_literal_dispatch.rs`): a helper
+  whose body is ONE `if`/`else if`/`else` chain rendering only static
+  text per arm (oauth2 `legacy-config.mode`, datadog's `should-enable-*`
+  family). Anything else — mixed content, nested actions, unparseable
+  headers — abstains.
+- **Condition decode**: `eq`/`ne` comparing such a helper's output (called
+  with a root-carrying context under a root dot) against a string literal
+  becomes the any-of of the matching arms' branch conditions, each
+  conjoined with the negations of the arms before them (the chain is
+  ordered and exclusive). Every arm header must itself decode faithfully
+  or the comparison abstains — a degraded arm would make those negations
+  select states the helper never maps to the literal. Nested dispatch
+  helpers (datadog `cluster-agent-enabled` → `existingClusterAgent-
+  configured`) decode through a depth-capped recursion.
+- **Lossless conjunct pushing**: the decoded predicates exposed a
+  pre-existing soundness bug — `contract_guards()` flattening DROPS
+  conjuncts it cannot spell (`¬(a ∨ (b ∧ c))`), so a fail conjunction
+  under such a condition negated into states the validator never rejects
+  (datadog's cluster-agent NOTES checks briefly rejected a CI values
+  file). `Predicate::contract_guards_are_exact` now gates the flatten:
+  inexact conjuncts stay RAW predicates, which fail captures keep and
+  row conditions widen through the DNF conversion.
+- **Tautology pruning**: fail tests whose requirements contradict (a
+  type-dispatch arm's own partition conjunct joining its test) can never
+  fire; dropping them removed 31 pre-existing vacuous arms from the
+  zookeeper fixture alone.
+- Runtime-verified on the real oauth2-proxy chart: inline-custom mode
+  rejects map `config.configFile`, existing-configmap mode accepts it,
+  strings render in both legacy and alpha paths.

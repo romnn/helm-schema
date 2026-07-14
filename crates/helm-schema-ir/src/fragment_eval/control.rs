@@ -419,15 +419,30 @@ impl Interpreter<'_> {
                     .collect(),
             );
         }
-        let guards = predicate.contract_guards();
-        for guard in &guards {
-            for path in guard.value_paths() {
-                self.push_read(path, std::slice::from_ref(guard));
+        // Conjuncts a flat guard cannot spell (a decoded literal-dispatch
+        // arm like `¬(a ∨ (b ∧ c))`) stay RAW predicates: the guard
+        // flattening DROPS them, and a fail conjunction missing a conjunct
+        // negates into states the validator never rejects (datadog's
+        // cluster-agent NOTES checks). Row conditions tolerate raw
+        // conjuncts — the DNF conversion widens.
+        let conjuncts: Vec<Predicate> = match &predicate {
+            Predicate::And(items) => items.clone(),
+            other => vec![other.clone()],
+        };
+        for conjunct in conjuncts {
+            if conjunct.contract_guards_are_exact() {
+                for guard in &conjunct.contract_guards() {
+                    for path in guard.value_paths() {
+                        self.push_read(path, std::slice::from_ref(guard));
+                    }
+                    self.push_predicate(Predicate::from(guard.clone()));
+                }
+            } else if !conjunct.is_trivial() {
+                for path in conjunct.value_paths() {
+                    self.push_read(&path, &[]);
+                }
+                self.push_predicate(conjunct);
             }
-            self.push_predicate(Predicate::from(guard.clone()));
-        }
-        if guards.is_empty() {
-            self.push_predicate(predicate.clone());
         }
         Some(predicate)
     }
@@ -537,18 +552,25 @@ impl Interpreter<'_> {
             self.approximate_condition_paths.extend(paths);
         }
         // The with-predicate is pushed before its reads so the reads carry
-        // the `Guard::With` markers, mirroring the current walker.
-        let guards = predicate.contract_guards();
-        for guard in &guards {
-            self.push_predicate(Predicate::from(guard.clone()));
-        }
-        if guards.is_empty() {
-            self.push_predicate(predicate.clone());
+        // the `Guard::With` markers, mirroring the current walker. Inexact
+        // conjuncts stay raw, the same rule as `if` headers.
+        let conjuncts: Vec<Predicate> = match &predicate {
+            Predicate::And(items) => items.clone(),
+            other => vec![other.clone()],
+        };
+        for conjunct in conjuncts {
+            if conjunct.contract_guards_are_exact() {
+                for guard in &conjunct.contract_guards() {
+                    self.push_predicate(Predicate::from(guard.clone()));
+                }
+            } else if !conjunct.is_trivial() {
+                self.push_predicate(conjunct);
+            }
         }
         for path in &bound_values {
             self.push_read(path, &[]);
         }
-        for guard in &guards {
+        for guard in &predicate.contract_guards() {
             for path in guard.value_paths() {
                 self.push_read(path, &[]);
             }

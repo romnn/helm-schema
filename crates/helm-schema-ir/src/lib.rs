@@ -11,6 +11,7 @@ mod expr_eval;
 mod fragment_assignment;
 pub mod fragment_eval;
 mod fragment_expr_eval;
+mod helper_literal_dispatch;
 mod helper_meta;
 mod node_eval;
 mod resource_identity;

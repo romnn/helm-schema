@@ -4558,6 +4558,39 @@
                 "not": {
                   "type": "array"
                 }
+              },
+              "loader": {
+                "description": "Configuration for the Falco init container.",
+                "properties": {
+                  "initContainer": {
+                    "properties": {
+                      "args": {
+                        "description": "Arguments to pass to the Falco driver loader init container.",
+                        "items": {},
+                        "type": "array"
+                      },
+                      "image": {
+                        "properties": {
+                          "pullPolicy": {
+                            "description": "The image pull policy.",
+                            "type": "string"
+                          },
+                          "registry": {
+                            "description": "The image registry to pull from.",
+                            "type": "string"
+                          },
+                          "tag": {
+                            "description": "Overrides the image tag whose default is the chart appVersion.",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -4719,42 +4752,423 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "driver": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "enabled": {}
+                    "driver": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "enabled"
+                    "driver"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "driver"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "driver": {
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "driver": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "driver"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "driver"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "kind": {}
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "daemonset"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "modern-bpf"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "modern_ebpf"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "driver": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "driver"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "driver": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "driver"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "driver": {
+                                  "properties": {
+                                    "loader": {
+                                      "properties": {
+                                        "enabled": {}
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "loader"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "driver"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "driver": {
+                                "properties": {
+                                  "loader": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "loader"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "driver"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "deployment"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "modern-bpf"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "modern_ebpf"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "driver": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "driver"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "driver": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "driver"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "driver": {
+                                  "properties": {
+                                    "loader": {
+                                      "properties": {
+                                        "enabled": {}
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "loader"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "driver"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "driver": {
+                                "properties": {
+                                  "loader": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "loader"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "driver"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           }
         ]
       },
@@ -4843,413 +5257,6 @@
         }
       },
       "type": "object"
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "driver": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "driver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "driver": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "driver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "driver": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "driver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "driver": {
-                        "properties": {
-                          "kind": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "driver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "driver": {
-                          "properties": {
-                            "loader": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "loader"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "driver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "driver": {
-                        "properties": {
-                          "loader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "loader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "driver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "controller": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "controller"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "daemonset"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "driver": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "driver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "driver": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "driver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "driver": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "driver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "driver": {
-                        "properties": {
-                          "kind": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "driver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "driver": {
-                          "properties": {
-                            "loader": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "loader"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "driver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "driver": {
-                        "properties": {
-                          "loader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "loader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "driver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "deployment"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "driver": {
-            "description": "Driver settings (scenario requirement)",
-            "properties": {
-              "loader": {
-                "description": "Configuration for the Falco init container.",
-                "properties": {
-                  "initContainer": {
-                    "properties": {
-                      "args": {
-                        "description": "Arguments to pass to the Falco driver loader init container.",
-                        "items": {},
-                        "type": "array"
-                      },
-                      "image": {
-                        "properties": {
-                          "pullPolicy": {
-                            "description": "The image pull policy.",
-                            "type": "string"
-                          },
-                          "registry": {
-                            "description": "The image registry to pull from.",
-                            "type": "string"
-                          },
-                          "tag": {
-                            "description": "Overrides the image tag whose default is the chart appVersion.",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
     },
     {
       "if": {
@@ -6026,149 +6033,6 @@
                 "anyOf": [
                   {
                     "additionalProperties": {}
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Extra environment variables that will be pass onto Falco containers."
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "extra": {
-                    "properties": {
-                      "env": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "env"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "extra"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "controller": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "controller"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "daemonset"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "extra": {
-                    "properties": {
-                      "env": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "env"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "extra"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "deployment"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "extra": {
-            "properties": {
-              "env": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -8431,676 +8295,6 @@
                           "properties": {
                             "artifact": {
                               "properties": {
-                                "follow": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "follow"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "follow": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "follow"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "follow": {
-                            "properties": {
-                              "env": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "env"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "follow"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "controller": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "controller"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "daemonset"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
-                                "follow": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "follow"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "follow": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "follow"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "follow": {
-                            "properties": {
-                              "env": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "env"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "follow"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "deployment"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "falcoctl": {
-            "description": "falcoctl config  #",
-            "properties": {
-              "artifact": {
-                "properties": {
-                  "follow": {
-                    "description": "Runs \"falcoctl artifact follow\" command as a sidecar container. It is used to automatically check for\nupdates given a list of artifacts. If an update is found it downloads and installs it in a shared folder (emptyDir)\nthat is accessible by Falco. Rulesfiles are automatically detected and loaded by Falco once they are installed in the\ncorrect folder by falcoctl. To prevent new versions of artifacts from breaking Falco, the tool checks if it is compatible\nwith the running version of Falco before installing it.",
-                    "properties": {
-                      "env": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Extra environment variables that will be pass onto falcoctl-artifact-follow sidecar container."
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
-                                "follow": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "follow"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "follow": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "follow"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "follow": {
-                            "properties": {
-                              "envFrom": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "follow"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "controller": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "controller"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "daemonset"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
-                                "follow": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "follow"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "follow": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "follow"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "follow": {
-                            "properties": {
-                              "envFrom": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "follow"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "deployment"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "falcoctl": {
-            "description": "falcoctl config  #",
-            "properties": {
-              "artifact": {
-                "properties": {
-                  "follow": {
-                    "description": "Runs \"falcoctl artifact follow\" command as a sidecar container. It is used to automatically check for\nupdates given a list of artifacts. If an update is found it downloads and installs it in a shared folder (emptyDir)\nthat is accessible by Falco. Rulesfiles are automatically detected and loaded by Falco once they are installed in the\ncorrect folder by falcoctl. To prevent new versions of artifacts from breaking Falco, the tool checks if it is compatible\nwith the running version of Falco before installing it.",
-                    "properties": {
-                      "envFrom": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Extra environment variables that will be passed onto falcoctl-artifact-follow sidecar container that can come from a ConfigMap or Secret."
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
                                 "install": {
                                   "properties": {
                                     "enabled": {}
@@ -9380,676 +8574,6 @@
                   "pullPolicy": {
                     "description": "The image pull policy.",
                     "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
-                                "install": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "install"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "install": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "install"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "install": {
-                            "properties": {
-                              "env": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "env"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "install"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "controller": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "controller"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "daemonset"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
-                                "install": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "install"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "install": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "install"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "install": {
-                            "properties": {
-                              "env": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "env"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "install"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "deployment"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "falcoctl": {
-            "description": "falcoctl config  #",
-            "properties": {
-              "artifact": {
-                "properties": {
-                  "install": {
-                    "description": "Runs \"falcoctl artifact install\" command as an init container. It is used to install artifacts before\nFalco starts. It provides them to Falco by using an emptyDir volume.",
-                    "properties": {
-                      "env": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Extra environment variables that will be pass onto falcoctl-artifact-install init container."
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
-                                "install": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "install"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "install": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "install"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "install": {
-                            "properties": {
-                              "envFrom": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "install"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "controller": {
-                          "properties": {
-                            "kind": {}
-                          },
-                          "required": [
-                            "kind"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "controller"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "daemonset"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "falcoctl": {
-                          "properties": {
-                            "artifact": {
-                              "properties": {
-                                "install": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "install"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "artifact"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "falcoctl"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "falcoctl": {
-                        "properties": {
-                          "artifact": {
-                            "properties": {
-                              "install": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "install"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "artifact"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "falcoctl"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "falcoctl": {
-                    "properties": {
-                      "artifact": {
-                        "properties": {
-                          "install": {
-                            "properties": {
-                              "envFrom": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "install"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "artifact"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "falcoctl"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "deployment"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "falcoctl": {
-            "description": "falcoctl config  #",
-            "properties": {
-              "artifact": {
-                "properties": {
-                  "install": {
-                    "description": "Runs \"falcoctl artifact install\" command as an init container. It is used to install artifacts before\nFalco starts. It provides them to Falco by using an emptyDir volume.",
-                    "properties": {
-                      "envFrom": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Extra environment variables that will be passed onto falcoctl-artifact-install sidecar container that can come from a ConfigMap or Secret."
-                      }
-                    },
-                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -20629,6 +19153,9 @@
           },
           "type": "object"
         },
+        "containerd": {},
+        "cri": {},
+        "docker": {},
         "enabled": {
           "description": "Enable/disable all the metadata collectors.",
           "type": "boolean"

@@ -10385,6 +10385,449 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "alerts": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alerts"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "alerts": {
+                    "properties": {
+                      "initAlerts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "initAlerts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alerts"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "alerts": {
+                    "properties": {
+                      "startupProbe": {
+                        "properties": {
+                          "httpGet": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpGet"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "startupProbe"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alerts"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "useStatefulSet": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "useStatefulSet"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "alerts": {
+                            "properties": {
+                              "startupProbe": {}
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "alerts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "alerts": {
+                          "properties": {
+                            "startupProbe": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "alerts"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "alerts": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {}
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "alerts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "alerts": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "enum": [
+                                    null
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "alerts"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "alerts": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "port": {}
+                                    },
+                                    "required": [
+                                      "port"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "alerts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "alerts": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "properties": {
+                                    "port": {
+                                      "enum": [
+                                        null
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "port"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "alerts"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "type": {}
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "pvc"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "sidecar": {
+            "description": "Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders\nRequires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards",
+            "properties": {
+              "alerts": {
+                "description": "Log level default for all sidecars. Can be one of: DEBUG, INFO, WARN, ERROR, CRITICAL. Defaults to INFO\nlogLevel: INFO",
+                "properties": {
+                  "startupProbe": {
+                    "properties": {
+                      "httpGet": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -15086,6 +15529,448 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "dashboards": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "dashboards"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "dashboards": {
+                    "properties": {
+                      "initDashboards": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "initDashboards"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "dashboards"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "dashboards": {
+                    "properties": {
+                      "startupProbe": {
+                        "properties": {
+                          "httpGet": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpGet"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "startupProbe"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "dashboards"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "useStatefulSet": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "useStatefulSet"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "dashboards": {
+                            "properties": {
+                              "startupProbe": {}
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "dashboards"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "dashboards": {
+                          "properties": {
+                            "startupProbe": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "dashboards"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "dashboards": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {}
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "dashboards"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "dashboards": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "enum": [
+                                    null
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "dashboards"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "dashboards": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "port": {}
+                                    },
+                                    "required": [
+                                      "port"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "dashboards"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "dashboards": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "properties": {
+                                    "port": {
+                                      "enum": [
+                                        null
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "port"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "dashboards"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "type": {}
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "pvc"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "sidecar": {
+            "description": "Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders\nRequires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards",
+            "properties": {
+              "dashboards": {
+                "properties": {
+                  "startupProbe": {
+                    "properties": {
+                      "httpGet": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -19166,6 +20051,448 @@
                         "type": "null"
                       }
                     ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "datasources": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datasources"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "datasources": {
+                    "properties": {
+                      "initDatasources": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "initDatasources"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datasources"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "datasources": {
+                    "properties": {
+                      "startupProbe": {
+                        "properties": {
+                          "httpGet": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpGet"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "startupProbe"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datasources"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "useStatefulSet": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "useStatefulSet"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "datasources": {
+                            "properties": {
+                              "startupProbe": {}
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datasources"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "datasources": {
+                          "properties": {
+                            "startupProbe": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "datasources"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "datasources": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {}
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datasources"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "datasources": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "enum": [
+                                    null
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "datasources"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "datasources": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "port": {}
+                                    },
+                                    "required": [
+                                      "port"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datasources"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "datasources": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "properties": {
+                                    "port": {
+                                      "enum": [
+                                        null
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "port"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "datasources"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "type": {}
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "pvc"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "sidecar": {
+            "description": "Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders\nRequires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards",
+            "properties": {
+              "datasources": {
+                "properties": {
+                  "startupProbe": {
+                    "properties": {
+                      "httpGet": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -24234,6 +25561,448 @@
                         "type": "null"
                       }
                     ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "notifiers": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "notifiers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "notifiers": {
+                    "properties": {
+                      "initNotifiers": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "initNotifiers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "notifiers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "sidecar": {
+                "properties": {
+                  "notifiers": {
+                    "properties": {
+                      "startupProbe": {
+                        "properties": {
+                          "httpGet": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpGet"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "startupProbe"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "notifiers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecar"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "useStatefulSet": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "useStatefulSet"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "notifiers": {
+                            "properties": {
+                              "startupProbe": {}
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "notifiers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "notifiers": {
+                          "properties": {
+                            "startupProbe": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "notifiers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "notifiers": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {}
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "notifiers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "notifiers": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "enum": [
+                                    null
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "notifiers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "sidecar": {
+                        "properties": {
+                          "notifiers": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "port": {}
+                                    },
+                                    "required": [
+                                      "port"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "notifiers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sidecar"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "notifiers": {
+                          "properties": {
+                            "startupProbe": {
+                              "properties": {
+                                "httpGet": {
+                                  "properties": {
+                                    "port": {
+                                      "enum": [
+                                        null
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "port"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "httpGet"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "startupProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "notifiers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "type": {}
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "pvc"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "sidecar": {
+            "description": "Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders\nRequires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards",
+            "properties": {
+              "notifiers": {
+                "properties": {
+                  "startupProbe": {
+                    "properties": {
+                      "httpGet": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
                   }
                 },
                 "type": "object"
@@ -35042,7 +36811,17 @@
               "type": "boolean"
             },
             "skipTlsVerify": {},
-            "startupProbe": {},
+            "startupProbe": {
+              "additionalProperties": {},
+              "properties": {
+                "httpGet": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "port": {}
+                  }
+                }
+              }
+            },
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
@@ -35172,7 +36951,17 @@
             "skipReload": {
               "type": "boolean"
             },
-            "startupProbe": {},
+            "startupProbe": {
+              "additionalProperties": {},
+              "properties": {
+                "httpGet": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "port": {}
+                  }
+                }
+              }
+            },
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
@@ -35249,7 +37038,17 @@
             "skipReload": {
               "type": "boolean"
             },
-            "startupProbe": {},
+            "startupProbe": {
+              "additionalProperties": {},
+              "properties": {
+                "httpGet": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "port": {}
+                  }
+                }
+              }
+            },
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
@@ -35353,7 +37152,17 @@
             "skipReload": {
               "type": "boolean"
             },
-            "startupProbe": {},
+            "startupProbe": {
+              "additionalProperties": {},
+              "properties": {
+                "httpGet": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "port": {}
+                  }
+                }
+              }
+            },
             "watchClientTimeout": {},
             "watchMethod": {
               "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."

@@ -8532,11 +8532,10 @@ fn helper_internal_self_guarded_tpl_contract_reaches_callers() {
 /// F53 (literal-returning helper condition): a `tpl` guarded by
 /// `eq (include "mode" .) "literal"` binds where the mode helper's OWN
 /// branch guards select that literal (oauth2-proxy
-/// `legacy-config.content` chain). The valid forms already validate;
-/// the rejection needs literal-return dispatch decoding — expanding the
-/// mode helper's branch→literal map into the eq condition's predicate.
+/// `legacy-config.content` chain). The mode helper is a pure literal
+/// dispatch, so the comparison decodes into the matching arms' branch
+/// conditions conjoined with the negations of the arms before them.
 #[test]
-#[ignore = "F53 residual: `eq (include …) \"literal\"` conditions need helper literal-return branch decoding"]
 fn tpl_behind_literal_helper_mode_condition_binds_branch_guards() {
     let src = indoc! {r#"
         apiVersion: v1

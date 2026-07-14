@@ -124,6 +124,35 @@
     },
     {
       "if": {
+        "properties": {
+          "configMaps": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "configMaps"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "configMaps": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Velero ConfigMaps.\nEg:\nconfigMaps:\nSee: https://velero.io/docs/v1.11/file-system-backup/\nfs-restore-action-config:\nlabels:\nvelero.io/plugin-config: \"\"\nvelero.io/pod-volume-restore: RestoreItemAction\ndata:\nimage: velero/velero:v1.17.1\ncpuRequest: 200m\nmemRequest: 128Mi\ncpuLimit: 200m\nmemLimit: 128Mi\nsecCtx: |\ncapabilities:\ndrop:\n- ALL\nadd: []\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true\nrunAsUser: 1001\nrunAsGroup: 999"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -2141,40 +2170,6 @@
               }
             },
             "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "initContainers": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "initContainers"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "initContainers": {
-            "anyOf": [
-              {
-                "not": {
-                  "type": "string"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Init containers to add to the Velero deployment's pod spec. At least one plugin provider image is required.\nIf the value is a string then it is evaluated as a template.\n- name: velero-plugin-for-aws\nimage: velero/velero-plugin-for-aws:v1.13.1\nimagePullPolicy: IfNotPresent\nvolumeMounts:\n- mountPath: /target\nname: plugins"
           }
         },
         "type": "object"
@@ -4698,10 +4693,13 @@
           ],
           "description": "The address to expose the pprof profiler. Default: localhost:6060"
         },
+        "provider": {},
         "repositoryMaintenanceJob": {
           "additionalProperties": {},
           "description": "Resource requests/limits to specify for the repository-maintenance job. Optional.\nhttps://velero.io/docs/v1.14/repository-maintenance/#resource-limitation",
           "properties": {
+            "latestJobsCount": {},
+            "limits": {},
             "repositoryConfigData": {
               "additionalProperties": {},
               "description": "Per-repository resource settings ConfigMap\nThis ConfigMap allows specifying different settings for different repositories\nSee: https://velero.io/docs/main/repository-maintenance/",
@@ -4761,7 +4759,8 @@
                 }
               },
               "type": "object"
-            }
+            },
+            "requests": {}
           },
           "type": "object"
         },
@@ -5015,10 +5014,13 @@
       },
       "type": "object"
     },
+    "defaultResticPruneFrequency": {},
+    "defaultVolumesToRestic": {},
     "deployNodeAgent": {
       "description": "Whether to deploy the node-agent daemonset.",
       "type": "boolean"
     },
+    "deployRestic": {},
     "dnsConfig": {
       "description": "DNS configuration to use for the Velero deployment. Optional."
     },
@@ -6431,6 +6433,8 @@
     "resources": {
       "description": "Resource requests/limits to specify for the Velero deployment.\nhttps://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits\nrequests:\ncpu: 500m\nmemory: 128Mi\nlimits:\ncpu: 1000m\nmemory: 512Mi"
     },
+    "restic": {},
+    "resticTimeout": {},
     "revisionHistoryLimit": {},
     "runtimeClassName": {
       "description": "Pod runtime class name to use for the Velero deployment. Optional.",

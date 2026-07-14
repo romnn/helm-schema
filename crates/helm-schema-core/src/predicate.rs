@@ -135,6 +135,34 @@ impl Predicate {
         }
     }
 
+    /// Whether [`Self::contract_guards`] represents this predicate
+    /// EXACTLY: the flattened guard conjunction selects the same states.
+    /// Complex negations (`¬(a ∨ (b ∧ c))`) flatten to NOTHING, which an
+    /// `And` flatten silently drops — a fail conjunction missing such a
+    /// conjunct negates into states the validator never rejects, so
+    /// callers keep inexact conjuncts as raw predicates instead.
+    #[must_use]
+    pub fn contract_guards_are_exact(&self) -> bool {
+        match self {
+            Self::True | Self::Guard(_) => true,
+            Self::False => false,
+            Self::Not(inner) => match inner.as_ref() {
+                Self::Guard(
+                    Guard::Truthy { .. }
+                    | Guard::Eq { .. }
+                    | Guard::NotEq { .. }
+                    | Guard::TypeIs { .. }
+                    | Guard::NotTypeIs { .. },
+                ) => true,
+                Self::Not(inner) => inner.contract_guards_are_exact(),
+                _ => false,
+            },
+            Self::And(predicates) | Self::Or(predicates) => {
+                predicates.iter().all(Self::contract_guards_are_exact)
+            }
+        }
+    }
+
     fn collect_value_paths(&self, out: &mut BTreeSet<String>) {
         match self {
             Self::True | Self::False => {}

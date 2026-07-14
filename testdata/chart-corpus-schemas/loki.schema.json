@@ -14104,6 +14104,73 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "properties": {
+                    "enterprise": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "enterprise"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "enterprise": {
+                            "properties": {
+                              "gelGateway": {}
+                            },
+                            "required": [
+                              "gelGateway"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "enterprise"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "enterprise": {
+                          "properties": {
+                            "gelGateway": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "gelGateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "enterprise"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              ]
+            }
           }
         ]
       },
@@ -14344,6 +14411,73 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "properties": {
+                    "enterprise": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "enterprise"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "enterprise": {
+                            "properties": {
+                              "gelGateway": {}
+                            },
+                            "required": [
+                              "gelGateway"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "enterprise"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "enterprise": {
+                          "properties": {
+                            "gelGateway": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "gelGateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "enterprise"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              ]
+            }
           }
         ]
       },
@@ -34542,417 +34676,6 @@
                 "properties": {
                   "minio": {
                     "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "minio": {
-                          "properties": {
-                            "mode": {}
-                          },
-                          "required": [
-                            "mode"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "minio"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "minio": {
-                        "properties": {
-                          "mode": {
-                            "enum": [
-                              "distributed"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "mode"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "minio"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "standalone"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "minio": {
-                          "properties": {
-                            "mode": {}
-                          },
-                          "required": [
-                            "mode"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "minio"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "minio": {
-                        "properties": {
-                          "mode": {
-                            "enum": [
-                              "distributed"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "mode"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "minio"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "enabled": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "extraContainers": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraContainers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "standalone"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "enabled": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "minio": {
-            "description": "Configuration for the minio subchart",
-            "properties": {
-              "extraContainers": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Additional sidecar containers"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minio"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "minio": {
-                    "properties": {
                       "fullnameOverride": {
                         "$ref": "#/$defs/helm-truthy"
                       }
@@ -47017,6 +46740,67 @@
           {
             "allOf": [
               {
+                "properties": {
+                  "enterprise": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "enterprise"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "enterprise": {
+                          "properties": {
+                            "gelGateway": {}
+                          },
+                          "required": [
+                            "gelGateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "enterprise"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "enterprise": {
+                        "properties": {
+                          "gelGateway": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "gelGateway"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "enterprise"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
                 "anyOf": [
                   {
                     "not": {
@@ -47076,6 +46860,138 @@
                   "serviceAccount"
                 ],
                 "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "gateway": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "gateway"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "gateway": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "gateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "name": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "enterprise": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "enterprise"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "enterprise": {
+                                "properties": {
+                                  "gelGateway": {}
+                                },
+                                "required": [
+                                  "gelGateway"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "enterprise"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "enterprise": {
+                              "properties": {
+                                "gelGateway": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "gelGateway"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "enterprise"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           },

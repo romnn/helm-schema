@@ -720,6 +720,20 @@ fn record_fail_conjunction(
     }
     requirements.sort();
     requirements.dedup();
+    // A test whose requirements contradict (a type-dispatch arm's own
+    // partition conjunct joins the test on the same path) can never fire;
+    // its arm would encode as a tautology, so it is dropped as noise.
+    let contradictory = requirements.iter().any(|requirement| {
+        matches!(
+            requirement,
+            FailValueRequirement::SchemaType(schema_type)
+                if requirements
+                    .contains(&FailValueRequirement::NotSchemaType(schema_type.clone()))
+        )
+    });
+    if contradictory {
+        return;
+    }
     outer_guards.sort();
     outer_guards.dedup();
     let implication = ContractFailImplication {
