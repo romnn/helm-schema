@@ -45,7 +45,7 @@ pub(crate) enum TokenKind {
     RegionBranch { region: usize },
     /// The `{{ end }}` closer.
     RegionEnd { region: usize },
-    /// Unparseable action content.
+    /// Unparsable action content.
     Error,
 }
 

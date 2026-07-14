@@ -348,6 +348,6 @@ pub enum OpaqueKind {
     InlineRegion,
     /// Literal YAML text sharing a line with a standalone action.
     ActionLineText,
-    /// Unparseable template content (tree-sitter `ERROR` output).
+    /// Unparsable template content (tree-sitter `ERROR` output).
     ParseError,
 }

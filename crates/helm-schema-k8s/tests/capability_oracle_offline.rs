@@ -131,7 +131,7 @@ fn traced_offline_partial_cache_records_uncertain_source_probe() {
 
 /// Offline + completely empty cache: the oracle has no information
 /// either way and must abstain with `None`. A `Some(false)` here
-/// would let a just-initialised cache silently mis-route branch
+/// would let a just-initialised cache silently misroute branch
 /// selection.
 #[test]
 fn offline_empty_cache_returns_none() {

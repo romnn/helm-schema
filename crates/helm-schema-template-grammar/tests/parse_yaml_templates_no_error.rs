@@ -506,7 +506,7 @@ fn contains_kind(root: tree_sitter::Node<'_>, kind: &str) -> bool {
 /// - falco-talon `rbac.yaml`: the ClusterRole emits `rules` sequence items at
 ///   indent 2, but its legacy PodSecurityPolicy branch emits further items at
 ///   indent 0 of the same sequence; the branches are never both live on a
-///   modern cluster, and their concatenation is unparseable by construction.
+///   modern cluster, and their concatenation is unparsable by construction.
 const SKIP_STRUCTURALLY_ILL_NESTED: &[&str] = &["falco-talon/templates/rbac.yaml"];
 
 #[test]
